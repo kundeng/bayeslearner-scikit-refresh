@@ -182,12 +182,14 @@ y_ms = np.where(regime == 0,
                 rng.normal(0.05, 0.5, n_ms),
                 rng.normal(-0.02, 2.0, n_ms))
 
-ms = MarkovRegression(y_ms, k_regimes=2, trend='c').fit(disp=0)
+ms = MarkovRegression(
+    y_ms, k_regimes=2, trend='c', switching_variance=True,
+).fit(disp=0)
 
-print(f"Regime 0: mean={ms.params[2]:.3f}, sigma={ms.params[4]:.3f}")
-print(f"Regime 1: mean={ms.params[3]:.3f}, sigma={ms.params[5]:.3f}")
+print(f"Regime 0: mean={ms.params[2]:.3f}, sigma2={ms.params[4]:.3f}")
+print(f"Regime 1: mean={ms.params[3]:.3f}, sigma2={ms.params[5]:.3f}")
 print(f"P(stay in 0): {ms.params[0]:.3f}")
-print(f"P(stay in 1): {ms.params[1]:.3f}")
+print(f"P(stay in 1): {1 - ms.params[1]:.3f}")
 ```
 
 ```{python}
@@ -291,7 +293,7 @@ $v_t / \sqrt{F_t}$ should be i.i.d. standard normal.
 #| label: fig-ss-diagnostics
 #| fig-cap: "Diagnostics for the unobserved components model: standardized prediction errors should be white noise with unit variance."
 
-std_resid = uc.resid / np.sqrt(uc.params[-1])
+std_resid = uc.standardized_forecasts_error[0]
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 ax1.plot(std_resid, linewidth=0.5)
