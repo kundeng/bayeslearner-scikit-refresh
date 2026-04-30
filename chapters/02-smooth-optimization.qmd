@@ -1356,11 +1356,12 @@ print("-" * 42)
 for name, kwargs in configs.items():
     t0 = time.perf_counter()
     # Run 100 times for stable timing
+    kw = {k: v for k, v in kwargs.items() if k != 'options'}
+    opts = {**kwargs.get('options', {}), 'gtol': 1e-8}
     for _ in range(100):
         res = minimize(
             lambda w: neg_log_lik(w, X, y), x0,
-            **kwargs, options={**kwargs.get('options', {}),
-                               'gtol': 1e-8},
+            **kw, options=opts,
         )
     elapsed = (time.perf_counter() - t0) / 100 * 1000
     print(f"{name:<20} {res.nfev:>5} {res.njev:>5} "
