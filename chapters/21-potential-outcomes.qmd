@@ -2,29 +2,304 @@
 title: "Potential Outcomes, Identification, and Estimation Under Unconfoundedness"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning |
+|--------|---------|
+| $Y_i(1), Y_i(0)$ | Potential outcomes (treated, control) |
+| $D_i \in \{0, 1\}$ | Treatment indicator |
+| $Y_i = D_i Y_i(1) + (1-D_i) Y_i(0)$ | Observed outcome |
+| $\tau = \mathbb{E}[Y(1) - Y(0)]$ | Average treatment effect (ATE) |
+| $e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{x})$ | Propensity score |
+
+
+# Motivation {#sec-ch21-motivation}
+
+The question that separates causal inference from prediction: *what
+would have happened if the treatment had been different?* Regression
+tells you the association between treatment and outcome. Causal
+inference tells you whether changing the treatment would change the
+outcome.
+
+This chapter develops the potential-outcomes framework and three
+estimators for causal effects under unconfoundedness: regression
+adjustment, inverse probability weighting (IPW), and the augmented
+IPW (AIPW) estimator. All three are built from statsmodels and
+scikit-learn components.
+
+
+# Mathematical Foundation {#sec-ch21-math}
+
+## The fundamental problem of causal inference
+
+For each unit $i$, there are two potential outcomes: $Y_i(1)$ (outcome
+under treatment) and $Y_i(0)$ (outcome under control). We observe only
+one: $Y_i = D_i Y_i(1) + (1-D_i)Y_i(0)$.
+
+The ATE is $\tau = \mathbb{E}[Y(1) - Y(0)]$. We cannot compute this
+directly because we never observe both potential outcomes for the same
+unit.
+
+## Identification under unconfoundedness
+
+**SUTVA:** Stable Unit Treatment Value Assumption — no interference
+between units.
+
+**Unconfoundedness (ignorability):**
+$(Y(1), Y(0)) \perp D \mid \mathbf{X}$ — treatment assignment is
+independent of potential outcomes, conditional on covariates.
+
+**Positivity:** $0 < e(\mathbf{x}) < 1$ — every unit has a positive
+probability of being treated and untreated.
+
+Under these three conditions:
+$$
+\tau = \mathbb{E}\!\left[\frac{D_i Y_i}{e(\mathbf{X}_i)} - \frac{(1-D_i)Y_i}{1-e(\mathbf{X}_i)}\right]
+$$ {#eq-ipw}
+
+## The propensity score
+
+The propensity score $e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{X}=\mathbf{x})$
+is a scalar summary of the covariates that achieves balance: conditional
+on $e(\mathbf{X})$, treatment is independent of covariates.
+
+**Why this matters:** Instead of matching on all covariates (impossible
+in high dimensions), you can match on a single number. This is the
+Rosenbaum--Rubin theorem (1983).
+
+## AIPW: double robustness
+
+The Augmented IPW estimator combines regression adjustment and IPW:
+
+$$
+\hat{\tau}_{\text{AIPW}} = \frac{1}{n}\sum_i \left[\hat{\mu}_1(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i)
++ \frac{D_i(Y_i - \hat{\mu}_1(\mathbf{X}_i))}{\hat{e}(\mathbf{X}_i)}
+- \frac{(1-D_i)(Y_i - \hat{\mu}_0(\mathbf{X}_i))}{1-\hat{e}(\mathbf{X}_i)}\right],
+$$ {#eq-aipw}
+
+where $\hat{\mu}_d(\mathbf{x}) = \hat{\mathbb{E}}[Y \mid \mathbf{X}=\mathbf{x}, D=d]$.
+
+**Double robustness:** AIPW is consistent if *either* the outcome model
+$\hat{\mu}$ or the propensity model $\hat{e}$ is correct (but not
+necessarily both). This is the key advantage over regression adjustment
+(needs correct $\hat{\mu}$) or IPW (needs correct $\hat{e}$).
+
+
+# The Algorithm {#sec-ch21-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 21.1: AIPW Estimator
+
+1. Estimate propensity score: $\hat{e}(\mathbf{x})$ via logistic regression
+2. Estimate outcome models: $\hat{\mu}_1(\mathbf{x}), \hat{\mu}_0(\mathbf{x})$ via OLS
+3. Compute AIPW for each observation using @eq-aipw
+4. ATE estimate: $\hat{\tau} = \bar{\text{AIPW}}$
+5. SE via influence function: $\hat{\text{se}} = \text{sd}(\text{AIPW}_i) / \sqrt{n}$
 :::
 
-# Motivation {#sec-ch20-motivation}
 
-# Mathematical Foundation {#sec-ch20-math}
+# Statsmodels Implementation {#sec-ch21-impl}
 
-# The Algorithm {#sec-ch20-algorithm}
+## Simulating observational data
 
-# Statistical Properties {#sec-ch20-stats}
+```{python}
+#| label: sim-data
+n = 1000
+# Covariates
+x1 = rng.standard_normal(n)
+x2 = rng.standard_normal(n)
+X = np.column_stack([x1, x2])
 
-# Implementation {#sec-ch20-impl}
+# Treatment assignment (confounded by x1)
+e_true = 1 / (1 + np.exp(-(0.5*x1 - 0.3*x2)))
+D = rng.binomial(1, e_true)
 
-# From-Scratch Implementation {#sec-ch20-scratch}
+# Potential outcomes
+tau_true = 2.0  # true ATE
+Y0 = 1 + x1 + 0.5*x2 + rng.standard_normal(n)
+Y1 = Y0 + tau_true
+Y = D*Y1 + (1-D)*Y0
 
-# Diagnostics {#sec-ch20-diagnostics}
+print(f"True ATE: {tau_true}")
+print(f"Naive diff in means: {Y[D==1].mean() - Y[D==0].mean():.3f}")
+print(f"(Biased because treatment is confounded by x1)")
+```
 
-# Computational Considerations {#sec-ch20-computation}
+## Three estimators
 
-# Worked Example {#sec-ch20-example}
+```{python}
+#| label: estimators
+X_sm = sm.add_constant(X)
 
-# Exercises {#sec-ch20-exercises}
+# 1. Regression adjustment
+ols_1 = sm.OLS(Y[D==1], X_sm[D==1]).fit()
+ols_0 = sm.OLS(Y[D==0], X_sm[D==0]).fit()
+mu1_hat = ols_1.predict(X_sm)
+mu0_hat = ols_0.predict(X_sm)
+ate_reg = (mu1_hat - mu0_hat).mean()
 
-# Bibliographic Notes {#sec-ch20-biblio}
+# 2. IPW
+lr = LogisticRegression(C=1e10, max_iter=1000)
+lr.fit(X, D)
+e_hat = lr.predict_proba(X)[:, 1]
+e_hat = np.clip(e_hat, 0.01, 0.99)  # trim extreme weights
+
+ate_ipw = np.mean(D*Y/e_hat - (1-D)*Y/(1-e_hat))
+
+# 3. AIPW
+aipw_scores = (mu1_hat - mu0_hat
+               + D*(Y - mu1_hat)/e_hat
+               - (1-D)*(Y - mu0_hat)/(1-e_hat))
+ate_aipw = aipw_scores.mean()
+se_aipw = aipw_scores.std() / np.sqrt(n)
+
+print(f"{'Method':<15} {'ATE':>8} {'SE':>8}")
+print(f"{'True':<15} {tau_true:>8.3f}")
+print(f"{'Naive':<15} {Y[D==1].mean()-Y[D==0].mean():>8.3f}")
+print(f"{'Regression':<15} {ate_reg:>8.3f}")
+print(f"{'IPW':<15} {ate_ipw:>8.3f}")
+print(f"{'AIPW':<15} {ate_aipw:>8.3f} {se_aipw:>8.3f}")
+```
+
+## Balance diagnostics
+
+```{python}
+#| label: fig-balance
+#| fig-cap: "Propensity score distributions by treatment group. Good overlap (both distributions cover the same range) is necessary for causal identification. Regions with poor overlap indicate positivity violations."
+
+fig, ax = plt.subplots()
+ax.hist(e_hat[D==1], bins=30, alpha=0.5, density=True, label="Treated", color="C0")
+ax.hist(e_hat[D==0], bins=30, alpha=0.5, density=True, label="Control", color="C1")
+ax.set_xlabel("Propensity score")
+ax.set_ylabel("Density")
+ax.legend()
+plt.show()
+
+# Standardized mean differences before/after weighting
+for j, name in enumerate(['x1', 'x2']):
+    smd_raw = (X[D==1, j].mean() - X[D==0, j].mean()) / X[:, j].std()
+    w1 = 1/e_hat[D==1]; w0 = 1/(1-e_hat[D==0])
+    smd_wt = ((X[D==1,j]*w1).sum()/w1.sum() -
+              (X[D==0,j]*w0).sum()/w0.sum()) / X[:,j].std()
+    print(f"{name}: SMD raw={smd_raw:.3f}, weighted={smd_wt:.3f}")
+```
+
+
+# Exercises {#sec-ch21-exercises}
+
+**Exercise 21.1** ($\star\star$, diagnostic failure). Simulate data
+with a positivity violation: $e(\mathbf{x}) \approx 0$ for some
+covariate values. Show that IPW becomes unstable (extreme weights)
+while AIPW remains more stable.
+
+%%
+
+```{python}
+#| label: ex-21-1
+# Strong confounding → near-violation of positivity
+x_strong = rng.standard_normal(500)
+e_strong = 1/(1+np.exp(-(3*x_strong)))  # e ranges from ~0.05 to ~0.95
+D_s = rng.binomial(1, e_strong)
+Y_s = x_strong + 2*D_s + rng.standard_normal(500)
+
+lr_s = LogisticRegression(C=1e10).fit(x_strong.reshape(-1,1), D_s)
+e_s = np.clip(lr_s.predict_proba(x_strong.reshape(-1,1))[:,1], 0.01, 0.99)
+
+ipw_s = np.mean(D_s*Y_s/e_s - (1-D_s)*Y_s/(1-e_s))
+weights = np.where(D_s, 1/e_s, 1/(1-e_s))
+print(f"Max IPW weight: {weights.max():.1f}")
+print(f"IPW ATE: {ipw_s:.3f} (true=2.0)")
+print("Extreme weights make IPW unstable.")
+print("AIPW uses the outcome model to stabilize near boundaries.")
+```
+
+%%
+
+**Exercise 21.2** ($\star\star$, implementation). Implement IPW and
+AIPW from scratch. Verify that AIPW recovers the correct ATE when
+the propensity model is correct but the outcome model is wrong.
+
+%%
+
+```{python}
+#| label: ex-21-2
+# Already implemented above. Verify double-robustness:
+# Wrong outcome model (constant), correct propensity
+mu1_wrong = np.full(n, Y[D==1].mean())
+mu0_wrong = np.full(n, Y[D==0].mean())
+aipw_wrong_outcome = (mu1_wrong - mu0_wrong
+    + D*(Y-mu1_wrong)/e_hat - (1-D)*(Y-mu0_wrong)/(1-e_hat))
+print(f"AIPW (wrong outcome, right propensity): {aipw_wrong_outcome.mean():.3f}")
+print(f"True ATE: {tau_true}")
+print("AIPW is consistent because propensity is correct.")
+```
+
+%%
+
+**Exercise 21.3** ($\star\star$, comparison). Compare naive, regression,
+IPW, and AIPW across 200 simulations. Report bias and RMSE for each.
+Which estimator has the best bias-variance tradeoff?
+
+%%
+
+```{python}
+#| label: ex-21-3
+results = {m: [] for m in ['Naive', 'Reg', 'IPW', 'AIPW']}
+for rep in range(200):
+    r = np.random.default_rng(rep)
+    x = r.standard_normal((300,2))
+    e = 1/(1+np.exp(-(0.5*x[:,0]-0.3*x[:,1])))
+    d = r.binomial(1,e)
+    y0 = 1+x[:,0]+0.5*x[:,1]+r.standard_normal(300)
+    y = y0 + 2*d
+    xs = sm.add_constant(x)
+
+    results['Naive'].append(y[d==1].mean()-y[d==0].mean())
+    m1=sm.OLS(y[d==1],xs[d==1]).fit(); m0=sm.OLS(y[d==0],xs[d==0]).fit()
+    results['Reg'].append((m1.predict(xs)-m0.predict(xs)).mean())
+    lr2=LogisticRegression(C=1e10).fit(x,d)
+    eh=np.clip(lr2.predict_proba(x)[:,1],0.01,0.99)
+    results['IPW'].append(np.mean(d*y/eh-(1-d)*y/(1-eh)))
+    aipw=((m1.predict(xs)-m0.predict(xs))+d*(y-m1.predict(xs))/eh-(1-d)*(y-m0.predict(xs))/(1-eh))
+    results['AIPW'].append(aipw.mean())
+
+print(f"{'Method':<8} {'Bias':>8} {'RMSE':>8}")
+for m in results:
+    b = np.mean(results[m])-2; rmse=np.sqrt(np.mean((np.array(results[m])-2)**2))
+    print(f"{m:<8} {b:>8.3f} {rmse:>8.3f}")
+```
+
+%%
+
+**Exercise 21.4** ($\star\star\star$, conceptual). Explain why AIPW is
+"doubly robust." Under what conditions does it achieve the
+semiparametric efficiency bound?
+
+%%
+
+AIPW adds augmentation terms to IPW: $D(Y-\hat{\mu}_1)/e + (1-D)(Y-\hat{\mu}_0)/(1-e)$. If the propensity model is correct ($\hat{e} = e$), the augmentation terms have mean zero regardless of $\hat{\mu}$ — so $\hat{\tau}$ is consistent. If the outcome model is correct ($\hat{\mu}_d = \mu_d$), the augmentation terms correct the IPW bias from propensity misspecification.
+
+AIPW achieves the semiparametric efficiency bound (Hahn, 1998) when *both* models are correct. The bound is $\text{Var}(\tau_i) = \text{Var}(Y(1))/e + \text{Var}(Y(0))/(1-e) + \text{Var}(\tau(\mathbf{X}))$, the smallest possible variance for any estimator of the ATE under unconfoundedness.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch21-biblio}
+
+Potential outcomes: Neyman (1923), Rubin (1974). The Rubin Causal Model:
+Holland (1986). Propensity score: Rosenbaum and Rubin (1983). IPW:
+Horvitz and Thompson (1952). AIPW/double robustness: Robins, Rotnitzky,
+and Zhao (1994). Semiparametric efficiency: Hahn (1998). For textbooks:
+Imbens and Rubin (2015), Hernán and Robins (2020).

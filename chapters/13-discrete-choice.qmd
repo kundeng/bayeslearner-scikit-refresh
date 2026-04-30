@@ -334,9 +334,9 @@ ame_ours, se_ours = logit_margeff_ame(
 mfx_sm = logit_res.get_margeff(at='overall')
 
 print(f"{'':>12} {'Our AME':>10} {'SM AME':>10} {'Our SE':>8} {'SM SE':>8}")
-for j in range(len(ame_ours)):
-    print(f"x{j:<10} {ame_ours[j]:>10.4f} {mfx_sm.margeff[j]:>10.4f} "
-          f"{se_ours[j]:>8.4f} {mfx_sm.margeff_se[j]:>8.4f}")
+for j in range(len(mfx_sm.margeff)):
+    print(f"x{j+1:<10} {ame_ours[j+1]:>10.4f} {mfx_sm.margeff[j]:>10.4f} "
+          f"{se_ours[j+1]:>8.4f} {mfx_sm.margeff_se[j]:>8.4f}")
 ```
 
 
@@ -376,8 +376,8 @@ apply. The Vuong test compares the pointwise log-likelihood ratios:
 ```{python}
 #| label: vuong-test
 # Vuong test: Poisson vs ZIP
-ll_pois = pois_res.llnobs  # per-observation log-likelihood
-ll_zip = zip_res.llnobs
+ll_pois = pois_res.model.loglikeobs(pois_res.params)
+ll_zip = zip_res.model.loglikeobs(zip_res.params)
 
 m = ll_zip - ll_pois
 vuong_stat = np.sqrt(n) * m.mean() / m.std()
@@ -496,7 +496,7 @@ print(f"Gap:                        {obs_zeros - pois_pred_zeros:.3f}")
 print(f"\nPoisson underpredicts zeros by {(obs_zeros-pois_pred_zeros)/obs_zeros:.0%}")
 
 # Vuong test (reuse from diagnostics)
-m = zip_res.llnobs - pois_res.llnobs
+m = zip_res.model.loglikeobs(zip_res.params) - pois_res.model.loglikeobs(pois_res.params)
 v_stat = np.sqrt(len(m)) * m.mean() / m.std()
 print(f"\nVuong: z={v_stat:.2f}, p={2*(1-stats.norm.cdf(abs(v_stat))):.4f}")
 print("ZIP is significantly better at capturing the zero-inflation.")

@@ -268,7 +268,7 @@ fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(range(T_w), y_w, color="C0", linewidth=0.8, label="Data")
 ax.plot(range(T_w, T_w+24), fc.predicted_mean, color="C2", linewidth=1.5, label="Forecast")
 ci = fc.conf_int()
-ax.fill_between(range(T_w, T_w+24), ci.iloc[:,0], ci.iloc[:,1], alpha=0.2, color="C2")
+ax.fill_between(range(T_w, T_w+24), ci[:,0], ci[:,1], alpha=0.2, color="C2")
 ax.axvline(T_w, color="gray", linestyle="--", alpha=0.5); ax.legend()
 plt.show()
 ```

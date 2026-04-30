@@ -125,12 +125,12 @@ working correlation structure, tolerance $\epsilon$
 **Output:** $\hat{\boldsymbol{\beta}}$, sandwich covariance
 
 1. $\boldsymbol{\beta}^{(0)} \leftarrow$ GLM fit (ignoring clusters)
-2. **for** $t = 0, 1, \ldots$ **do**
-3. $\quad$ Compute $\boldsymbol{\mu}_i = g^{-1}(\mathbf{X}_i\boldsymbol{\beta}^{(t)})$
+2. **for** $k = 0, 1, \ldots$ **do**
+3. $\quad$ Compute $\boldsymbol{\mu}_i = g^{-1}(\mathbf{X}_i\boldsymbol{\beta}^{(k)})$
 4. $\quad$ Estimate $\hat{\boldsymbol{\alpha}}$ from Pearson residuals
 5. $\quad$ Form $\mathbf{V}_i = \mathbf{A}_i^{1/2}\mathbf{R}(\hat{\boldsymbol{\alpha}})\mathbf{A}_i^{1/2}$
-6. $\quad$ $\boldsymbol{\beta}^{(t+1)} \leftarrow$ solve @eq-gee (modified Fisher scoring)
-7. $\quad$ **if** $\|\boldsymbol{\beta}^{(t+1)} - \boldsymbol{\beta}^{(t)}\| < \epsilon$ **then break**
+6. $\quad$ $\boldsymbol{\beta}^{(k+1)} \leftarrow$ solve @eq-gee (modified Fisher scoring)
+7. $\quad$ **if** $\|\boldsymbol{\beta}^{(k+1)} - \boldsymbol{\beta}^{(k)}\| < \epsilon$ **then break**
 8. **end for**
 9. Compute sandwich covariance (robust to working correlation misspecification)
 10. **return** $\hat{\boldsymbol{\beta}}$, sandwich SE
@@ -361,7 +361,7 @@ print(f"\nICC > 0.05 generally justifies a mixed model over OLS.")
 #| fig-cap: "Random effect diagnostics. Left: predicted random intercepts (school effects) with 95% prediction intervals. Schools are sorted by their estimated effect. Right: QQ plot of random effects — normality assumption check."
 
 re = mlm.random_effects
-re_vals = np.array([re[g]['Group'] for g in re])
+re_vals = np.array([re[g].iloc[0] for g in re])
 re_se = np.sqrt(np.array([
     mlm.cov_re.iloc[0,0] * mlm.scale /
     (df['school'].value_counts()[g] * mlm.cov_re.iloc[0,0] + mlm.scale)
@@ -401,7 +401,7 @@ for name, struct in [
         data=df, cov_struct=struct,
     ).fit()
     # QIC (Quasi-likelihood under Independence model Criterion)
-    print(f"{name:<16} {res.qic[0]:>8.1f} {len(res.params):>8}")
+    print(f"{name:<16} {res.qic()[0]:>8.1f} {len(res.params):>8}")
 ```
 
 
@@ -463,7 +463,7 @@ gee_bp = GEE.from_formula(
     'bp ~ age + treatment + visit',
     groups='patient',
     data=df_bp,
-    cov_struct=Autoregressive(),
+    cov_struct=Autoregressive(grid=False),
 ).fit()
 
 print(f"{'':>12} {'MixedLM':>10} {'GEE AR(1)':>12}")
@@ -527,7 +527,7 @@ print(f"{'Structure':<16} {'Treatment':>10} {'SE':>8}")
 for name, struct in [
     ('Independence', Independence()),
     ('Exchangeable', Exchangeable()),
-    ('AR(1)', Autoregressive()),
+    ('AR(1)', Autoregressive(grid=False)),
 ]:
     res = GEE.from_formula(
         'bp ~ age + treatment + visit', groups='patient',

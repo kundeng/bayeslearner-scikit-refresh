@@ -2,29 +2,446 @@
 title: "Heterogeneous Treatment Effects and Double Machine Learning"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from sklearn.linear_model import LassoCV, LogisticRegressionCV
+from sklearn.model_selection import KFold
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+# Motivation {#sec-ch23-motivation}
+
+Chapter 21 estimated the *average* treatment effect. But treatment
+effects are rarely constant: a drug may help older patients more than
+younger ones; a job training program may benefit the least skilled
+most. Estimating how the effect varies across the population is
+*heterogeneous treatment effect (HTE)* estimation.
+
+The challenge: estimating $\tau(\mathbf{x}) = \mathbb{E}[Y(1) - Y(0) \mid \mathbf{X} = \mathbf{x}]$
+requires flexible models for the outcome and propensity, but plugging
+in ML predictions naively introduces *regularization bias*.
+
+**Double Machine Learning (DML)** solves this by using *Neyman
+orthogonality* and *cross-fitting* to remove the first-order bias from
+nuisance estimation. The result: $\sqrt{n}$-consistent ATE estimates
+even when the nuisance models converge at slower-than-$\sqrt{n}$ rates.
+
+This chapter implements DML from scratch using statsmodels for the
+final inference and scikit-learn for the nuisance models.
+
+
+# Mathematical Foundation {#sec-ch23-math}
+
+## The partially linear model
+
+$$
+Y = D\tau + g_0(\mathbf{X}) + U, \qquad D = m_0(\mathbf{X}) + V,
+$$
+
+where $g_0$ and $m_0$ are unknown nuisance functions. The target is
+$\tau$ (the treatment effect); $g_0$ and $m_0$ are nuisances that must
+be estimated but are not of primary interest.
+
+## Why naive plug-in fails
+
+If you estimate $\hat{g}$ and $\hat{m}$ by ML, then regress
+$Y - \hat{g}(\mathbf{X})$ on $D - \hat{m}(\mathbf{X})$, the estimate
+of $\tau$ is biased by $O(\|\hat{g} - g_0\| \cdot \|\hat{m} - m_0\|)$.
+For $n^{-1/4}$-rate nuisance estimators (typical for ML), this bias is
+$O(n^{-1/2})$ — the same order as the standard error. The bias doesn't
+vanish.
+
+## Neyman orthogonality
+
+DML uses a *Neyman-orthogonal* moment condition:
+
+$$
+\psi(\tau; \eta) = (Y - D\tau - g(\mathbf{X}))(D - m(\mathbf{X})) + (D - m(\mathbf{X}))\tau - (Y - g(\mathbf{X}))(D - m(\mathbf{X})),
+$$
+
+where $\eta = (g, m)$ are the nuisance parameters. The key property:
+$\partial_\eta \mathbb{E}[\psi(\tau_0; \eta_0)] = 0$. This means
+first-order errors in $\hat{\eta}$ do not affect $\hat{\tau}$.
+
+In practice, DML for the partially linear model reduces to:
+
+1. Residualize $Y$ on $\mathbf{X}$: $\tilde{Y} = Y - \hat{g}(\mathbf{X})$
+2. Residualize $D$ on $\mathbf{X}$: $\tilde{D} = D - \hat{m}(\mathbf{X})$
+3. Regress $\tilde{Y}$ on $\tilde{D}$: $\hat{\tau} = \frac{\sum \tilde{D}_i \tilde{Y}_i}{\sum \tilde{D}_i^2}$
+
+## Cross-fitting
+
+To avoid overfitting bias, DML uses *cross-fitting*: split the data
+into $K$ folds. For each fold, estimate $\hat{g}$ and $\hat{m}$ on
+the other $K-1$ folds, then compute residuals on the held-out fold.
+This ensures the nuisance predictions are independent of the
+observations they're evaluated on.
+
+
+# The Algorithm {#sec-ch23-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 23.1: Double Machine Learning (Partially Linear Model)
+
+**Input:** Data $(\mathbf{X}, D, Y)$, ML learners for $g$ and $m$,
+number of folds $K$
+
+**Output:** $\hat{\tau}$, SE, 95% CI
+
+1. Split data into $K$ folds
+2. **for** $k = 1, \ldots, K$ **do**
+3. $\quad$ Train $\hat{g}^{(-k)}$ on folds $\neq k$: predict $Y$ from $\mathbf{X}$
+4. $\quad$ Train $\hat{m}^{(-k)}$ on folds $\neq k$: predict $D$ from $\mathbf{X}$
+5. $\quad$ On fold $k$: $\tilde{Y}_i = Y_i - \hat{g}^{(-k)}(\mathbf{X}_i)$
+6. $\quad$ On fold $k$: $\tilde{D}_i = D_i - \hat{m}^{(-k)}(\mathbf{X}_i)$
+7. **end for**
+8. $\hat{\tau} = \sum_i \tilde{D}_i \tilde{Y}_i / \sum_i \tilde{D}_i^2$
+9. $\hat{\text{se}} = \sqrt{\frac{1}{n}\sum_i (\tilde{Y}_i - \hat{\tau}\tilde{D}_i)^2 / (\frac{1}{n}\sum_i \tilde{D}_i^2)^2}$
+10. **return** $\hat{\tau}$, $\hat{\text{se}}$
 :::
 
-# Motivation {#sec-ch22-motivation}
 
-# Mathematical Foundation {#sec-ch22-math}
+# From-Scratch Implementation {#sec-ch23-scratch}
 
-# The Algorithm {#sec-ch22-algorithm}
+```{python}
+#| label: dml-scratch
 
-# Statistical Properties {#sec-ch22-stats}
+def double_ml(X, D, Y, n_folds=5, seed=42):
+    """Double Machine Learning for the partially linear model.
 
-# Implementation {#sec-ch22-impl}
+    Uses LassoCV for the outcome model and LogisticRegressionCV
+    for the propensity model (binary D) or LassoCV (continuous D).
 
-# From-Scratch Implementation {#sec-ch22-scratch}
+    Implements Algorithm 23.1.
+    """
+    n = len(Y)
+    Y_tilde = np.zeros(n)
+    D_tilde = np.zeros(n)
 
-# Diagnostics {#sec-ch22-diagnostics}
+    kf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
 
-# Computational Considerations {#sec-ch22-computation}
+    for train_idx, test_idx in kf.split(X):
+        # Outcome model: E[Y | X]
+        g_model = LassoCV(cv=3, random_state=seed, max_iter=5000)
+        g_model.fit(X[train_idx], Y[train_idx])
+        Y_tilde[test_idx] = Y[test_idx] - g_model.predict(X[test_idx])
 
-# Worked Example {#sec-ch22-example}
+        # Propensity model: E[D | X]
+        if len(np.unique(D)) == 2:
+            m_model = LogisticRegressionCV(cv=3, random_state=seed,
+                                           max_iter=5000)
+            m_model.fit(X[train_idx], D[train_idx])
+            D_tilde[test_idx] = D[test_idx] - m_model.predict_proba(
+                X[test_idx])[:, 1]
+        else:
+            m_model = LassoCV(cv=3, random_state=seed, max_iter=5000)
+            m_model.fit(X[train_idx], D[train_idx])
+            D_tilde[test_idx] = D[test_idx] - m_model.predict(X[test_idx])
 
-# Exercises {#sec-ch22-exercises}
+    # DML estimate
+    tau_hat = np.sum(D_tilde * Y_tilde) / np.sum(D_tilde**2)
 
-# Bibliographic Notes {#sec-ch22-biblio}
+    # Standard error (heteroscedasticity-robust)
+    residuals = Y_tilde - tau_hat * D_tilde
+    V = np.mean(residuals**2 * D_tilde**2) / np.mean(D_tilde**2)**2
+    se = np.sqrt(V / n)
+
+    return {
+        'tau': tau_hat,
+        'se': se,
+        'ci': (tau_hat - 1.96*se, tau_hat + 1.96*se),
+        'Y_tilde': Y_tilde,
+        'D_tilde': D_tilde,
+    }
+```
+
+## Demonstration
+
+```{python}
+#| label: dml-demo
+# Simulate data with confounding
+n = 2000
+p = 20
+X = rng.standard_normal((n, p))
+
+# Nonlinear confounding
+g0 = np.sin(X[:, 0]) + X[:, 1]**2 - X[:, 2]
+m0 = 1 / (1 + np.exp(-(X[:, 0] + 0.5*X[:, 3])))
+
+D = rng.binomial(1, m0)
+tau_true = 2.0
+Y = tau_true * D + g0 + rng.standard_normal(n)
+
+# Naive OLS (ignoring confounding)
+ols_naive = sm.OLS(Y, sm.add_constant(D)).fit()
+
+# DML
+dml_result = double_ml(X, D, Y, n_folds=5)
+
+print(f"{'Method':<15} {'tau':>8} {'SE':>8} {'95% CI':>20}")
+print(f"{'True':<15} {tau_true:>8.3f}")
+print(f"{'Naive OLS':<15} {ols_naive.params[1]:>8.3f} "
+      f"{ols_naive.bse[1]:>8.3f}")
+print(f"{'DML':<15} {dml_result['tau']:>8.3f} "
+      f"{dml_result['se']:>8.3f} "
+      f"{'({:.3f}, {:.3f})'.format(*dml_result['ci']):>20}")
+```
+
+## Why cross-fitting matters
+
+```{python}
+#| label: crossfit-comparison
+# DML without cross-fitting (train and predict on same data)
+g_full = LassoCV(cv=3, random_state=42, max_iter=5000).fit(X, Y)
+m_full = LogisticRegressionCV(cv=3, random_state=42, max_iter=5000).fit(X, D)
+Y_tilde_nc = Y - g_full.predict(X)
+D_tilde_nc = D - m_full.predict_proba(X)[:, 1]
+tau_nocf = np.sum(D_tilde_nc * Y_tilde_nc) / np.sum(D_tilde_nc**2)
+
+print(f"DML with cross-fitting:    {dml_result['tau']:.3f}")
+print(f"DML without cross-fitting: {tau_nocf:.3f}")
+print(f"True:                      {tau_true:.3f}")
+print(f"\nWithout cross-fitting, overfitting in nuisance models")
+print(f"biases tau toward the naive estimate.")
+```
+
+
+# Statistical Properties {#sec-ch23-stats}
+
+Under regularity conditions (nuisance rates $n^{-1/4}$ or better,
+Neyman orthogonality), the DML estimator satisfies:
+
+$$
+\sqrt{n}(\hat{\tau} - \tau_0) \xrightarrow{d} \mathcal{N}(0, V),
+$$
+
+where $V$ is the semiparametric efficiency bound. The key requirements:
+(1) the nuisance estimators converge at rate $o(n^{-1/4})$ in $L^2$
+norm, and (2) cross-fitting eliminates the Donsker condition. Lasso,
+random forests, and neural networks all satisfy (1) under sparsity or
+smoothness conditions.
+
+
+# Diagnostics {#sec-ch23-diagnostics}
+
+```{python}
+#| label: fig-residuals
+#| fig-cap: "DML residual diagnostics. Left: residualized outcome vs residualized treatment — the slope is the DML estimate of tau. Right: histogram of influence function values — used for the SE."
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+ax1.scatter(dml_result['D_tilde'], dml_result['Y_tilde'],
+            s=5, alpha=0.3)
+x_line = np.linspace(-1, 1, 100)
+ax1.plot(x_line, dml_result['tau'] * x_line, color="C1", linewidth=2)
+ax1.set_xlabel(r"$\tilde{D}$"); ax1.set_ylabel(r"$\tilde{Y}$")
+ax1.set_title(f"Partialled-out regression (τ={dml_result['tau']:.3f})")
+
+psi = dml_result['D_tilde'] * (dml_result['Y_tilde'] -
+      dml_result['tau'] * dml_result['D_tilde'])
+ax2.hist(psi, bins=40, density=True, alpha=0.7, color="C0")
+ax2.set_xlabel("Influence function")
+ax2.set_title("IF distribution")
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Worked Example {#sec-ch23-example}
+
+Estimating the effect of job training on earnings with high-dimensional
+confounders.
+
+```{python}
+#| label: worked
+# Simulated job training data
+n_w = 3000
+# Many potential confounders
+X_w = rng.standard_normal((n_w, 30))
+
+# Selection into training depends on skills
+skill = X_w[:, :5] @ np.array([0.5, 0.3, -0.2, 0.4, 0.1])
+e_w = 1 / (1 + np.exp(-skill))
+D_w = rng.binomial(1, e_w)
+
+# Heterogeneous treatment effect
+tau_x = 2 + X_w[:, 0]  # effect varies with x1
+Y_w = tau_x * D_w + skill + rng.standard_normal(n_w)
+
+# DML for ATE
+dml_ate = double_ml(X_w, D_w, Y_w, n_folds=5)
+print(f"DML ATE: {dml_ate['tau']:.3f} (SE={dml_ate['se']:.3f})")
+print(f"True ATE: {(2 + X_w[:, 0]).mean():.3f}")
+
+# Naive OLS
+ols_w = sm.OLS(Y_w, sm.add_constant(D_w)).fit()
+print(f"Naive OLS: {ols_w.params[1]:.3f}")
+```
+
+```{python}
+#| label: worked-cate
+# Simple CATE estimation: DML by subgroup
+for name, mask in [("x1 < 0", X_w[:, 0] < 0),
+                    ("x1 >= 0", X_w[:, 0] >= 0)]:
+    dml_sub = double_ml(X_w[mask], D_w[mask], Y_w[mask])
+    true_sub = tau_x[mask].mean()
+    print(f"{name}: DML={dml_sub['tau']:.3f}, true={true_sub:.3f}")
+```
+
+
+# Exercises {#sec-ch23-exercises}
+
+**Exercise 23.1** ($\star\star$, diagnostic failure). Run DML with a
+deliberately bad nuisance model (e.g., intercept-only for both $g$ and
+$m$). Show that the DML estimate degrades to the naive OLS estimate.
+Why does double robustness (from AIPW, Ch. 21) not save you here?
+
+%%
+
+```{python}
+#| label: ex-23-1
+# Bad nuisance: predict Y and D with just the mean
+Y_tilde_bad = Y - Y.mean()
+D_tilde_bad = D - D.mean()
+tau_bad = np.sum(D_tilde_bad * Y_tilde_bad) / np.sum(D_tilde_bad**2)
+
+print(f"DML (bad nuisance): {tau_bad:.3f}")
+print(f"Naive OLS:          {ols_naive.params[1]:.3f}")
+print(f"DML (good nuisance): {dml_result['tau']:.3f}")
+print(f"True:                {tau_true}")
+print(f"\nWith bad nuisance, residualization doesn't remove")
+print(f"confounding, so DML = naive. Neyman orthogonality")
+print(f"protects against SMALL nuisance errors, not large ones.")
+```
+
+%%
+
+**Exercise 23.2** ($\star\star$, implementation). Implement DML for the
+interactive model (where the treatment effect is also a function of X):
+$Y = g_0(X) + D \cdot \tau_0(X) + U$. Use separate outcome models for
+treated and control: $\hat{\mu}_1(X)$ and $\hat{\mu}_0(X)$. The ATE is
+estimated via AIPW (Ch. 21) with cross-fitted nuisance models.
+
+%%
+
+```{python}
+#| label: ex-23-2
+
+def dml_interactive(X, D, Y, n_folds=5, seed=42):
+    """DML for the interactive model using AIPW."""
+    n = len(Y)
+    aipw_scores = np.zeros(n)
+    kf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
+
+    for train_idx, test_idx in kf.split(X):
+        # Outcome models
+        g1 = LassoCV(cv=3, random_state=seed, max_iter=5000)
+        g0 = LassoCV(cv=3, random_state=seed, max_iter=5000)
+        g1.fit(X[train_idx][D[train_idx]==1], Y[train_idx][D[train_idx]==1])
+        g0.fit(X[train_idx][D[train_idx]==0], Y[train_idx][D[train_idx]==0])
+
+        # Propensity
+        m = LogisticRegressionCV(cv=3, random_state=seed, max_iter=5000)
+        m.fit(X[train_idx], D[train_idx])
+
+        # Predict on test fold
+        mu1 = g1.predict(X[test_idx])
+        mu0 = g0.predict(X[test_idx])
+        e = np.clip(m.predict_proba(X[test_idx])[:, 1], 0.01, 0.99)
+        d_test = D[test_idx]
+        y_test = Y[test_idx]
+
+        # AIPW scores
+        aipw_scores[test_idx] = (mu1 - mu0
+            + d_test*(y_test - mu1)/e
+            - (1-d_test)*(y_test - mu0)/(1-e))
+
+    tau = aipw_scores.mean()
+    se = aipw_scores.std() / np.sqrt(n)
+    return tau, se
+
+tau_int, se_int = dml_interactive(X, D, Y)
+print(f"DML interactive: {tau_int:.3f} (SE={se_int:.3f})")
+print(f"DML partially linear: {dml_result['tau']:.3f}")
+print(f"True: {tau_true}")
+```
+
+%%
+
+**Exercise 23.3** ($\star\star$, comparison). Compare 3 estimators on
+the heterogeneous treatment effect data: naive OLS, AIPW (Ch. 21),
+and DML. Which has the smallest bias? Which has the smallest RMSE?
+
+%%
+
+```{python}
+#| label: ex-23-3
+# Single run comparison (for simulation, see Ch. 21 exercise)
+print(f"{'Method':<20} {'ATE':>8}")
+print(f"{'True':<20} {tau_x.mean():>8.3f}")
+print(f"{'Naive OLS':<20} {ols_w.params[1]:>8.3f}")
+print(f"{'DML (PLM)':<20} {dml_ate['tau']:>8.3f}")
+tau_int_w, _ = dml_interactive(X_w, D_w, Y_w)
+print(f"{'DML (Interactive)':<20} {tau_int_w:>8.3f}")
+```
+
+%%
+
+**Exercise 23.4** ($\star\star\star$, conceptual). Explain Neyman
+orthogonality: why does the condition
+$\partial_\eta \mathbb{E}[\psi(\tau_0; \eta_0)] = 0$ make the
+estimator insensitive to first-order nuisance errors? Relate this
+to the influence function from Chapter 12.
+
+%%
+
+The moment condition $\mathbb{E}[\psi(\tau_0; \eta_0)] = 0$ defines
+$\tau_0$. When we plug in $\hat{\eta}$ instead of $\eta_0$, the
+error in $\hat{\tau}$ is approximately:
+
+$\hat{\tau} - \tau_0 \approx -(\partial_\tau \mathbb{E}[\psi])^{-1} \cdot \mathbb{E}[\psi(\tau_0; \hat{\eta})]$
+
+Taylor expanding in $\hat{\eta} - \eta_0$:
+
+$\mathbb{E}[\psi(\tau_0; \hat{\eta})] \approx \underbrace{\partial_\eta \mathbb{E}[\psi(\tau_0; \eta_0)]}_{= 0 \text{ by orthogonality}} \cdot (\hat{\eta} - \eta_0) + O(\|\hat{\eta} - \eta_0\|^2)$
+
+The first-order term vanishes! The bias is $O(\|\hat{\eta} - \eta_0\|^2)$,
+which is $O(n^{-1/2})$ for $n^{-1/4}$-rate nuisance estimators — fast
+enough to be negligible relative to the $n^{-1/2}$ sampling error of
+$\hat{\tau}$.
+
+This is the same structure as the influence function (Chapter 12):
+AIPW's $\psi$ is the efficient influence function for the ATE
+functional, and Neyman orthogonality is the property that makes it
+robust to nuisance estimation.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch23-biblio}
+
+Double/debiased machine learning: Chernozhukov et al. (2018). Neyman
+orthogonality: Neyman (1959) for the concept; Chernozhukov et al.
+(2018) for the modern formulation.
+
+CATE estimation: T-learner, S-learner, X-learner (Künzel et al., 2019),
+R-learner (Nie and Wager, 2021), DR-learner (Kennedy, 2020). Causal
+forests: Wager and Athey (2018). Meta-learner comparison: Curth and
+van der Schaar (2021).
+
+The `econml` package (Microsoft) implements DML, causal forests, and
+all meta-learners. Not used in this chapter because it is not in the
+pinned `requirements.txt`, but recommended for production use.
+
+The connection between influence functions (Chapter 12), AIPW (Chapter
+21), and DML (this chapter) is the book's closing arc: the same
+mathematical structure — the efficient influence function — underlies
+robust M-estimation, doubly robust causal inference, and debiased
+machine learning.

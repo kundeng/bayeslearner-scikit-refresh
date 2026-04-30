@@ -2,29 +2,325 @@
 title: "Quasi-Experimental Designs: RDD, DiD, and Synthetic Control"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
-:::
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import statsmodels.api as sm
+from scipy import stats
 
-# Motivation {#sec-ch21-motivation}
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
 
-# Mathematical Foundation {#sec-ch21-math}
+# Motivation {#sec-ch22-motivation}
 
-# The Algorithm {#sec-ch21-algorithm}
+Chapter 21 required unconfoundedness: treatment assignment is random
+conditional on observables. When unconfoundedness fails (unobserved
+confounders exist), we need *designs* that create quasi-randomization:
 
-# Statistical Properties {#sec-ch21-stats}
+- **RDD:** Treatment assigned by whether a running variable crosses a
+  cutoff (test score → scholarship, age → eligibility)
+- **DiD:** Compare treated and control groups before and after an
+  intervention, assuming parallel trends
+- **Synthetic control:** Construct a weighted combination of control
+  units that matches the treated unit's pre-treatment trajectory
 
-# Implementation {#sec-ch21-impl}
+All three exploit specific design features rather than assuming away
+confounders.
 
-# From-Scratch Implementation {#sec-ch21-scratch}
 
-# Diagnostics {#sec-ch21-diagnostics}
+# Mathematical Foundation {#sec-ch22-math}
 
-# Computational Considerations {#sec-ch21-computation}
+## RDD: identification at the cutoff
 
-# Worked Example {#sec-ch21-example}
+In a sharp RDD, $D_i = \mathbb{1}(X_i \geq c)$ where $X_i$ is the
+running variable and $c$ is the cutoff. The causal effect at the
+cutoff is:
+$$
+\tau_{\text{RDD}} = \lim_{x \downarrow c} \mathbb{E}[Y \mid X=x] - \lim_{x \uparrow c} \mathbb{E}[Y \mid X=x].
+$$ {#eq-rdd}
 
-# Exercises {#sec-ch21-exercises}
+This is identified because units just above and just below the cutoff
+are quasi-randomly assigned (they differ by an infinitesimal amount of
+the running variable).
 
-# Bibliographic Notes {#sec-ch21-biblio}
+## DiD: parallel trends
+
+$$
+\tau_{\text{DiD}} = (\bar{Y}_{\text{treated,post}} - \bar{Y}_{\text{treated,pre}})
+- (\bar{Y}_{\text{control,post}} - \bar{Y}_{\text{control,pre}}).
+$$ {#eq-did}
+
+The identifying assumption: absent treatment, the treated and control
+groups would have followed *parallel trends*. DiD removes time-invariant
+confounders (the "difference" in "difference-in-differences").
+
+**The TWFE problem:** Two-way fixed effects regression
+$Y_{it} = \alpha_i + \gamma_t + \tau D_{it} + \varepsilon_{it}$
+gives $\hat{\tau} = \tau_{\text{DiD}}$ in the 2×2 case. But with
+*staggered adoption* (different units treated at different times)
+and *heterogeneous effects*, TWFE is a weighted average of
+$2 \times 2$ DiD comparisons where some weights are *negative*
+(Goodman-Bacon, 2021). This can produce estimates with the wrong sign.
+
+## Synthetic control
+
+For a single treated unit, construct a weighted combination of control
+units that minimizes the pre-treatment prediction error:
+$\hat{\mathbf{w}} = \arg\min_\mathbf{w} \|\mathbf{Y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}}\mathbf{w}\|^2$
+subject to $\mathbf{w} \geq 0$, $\sum w_j = 1$. The treatment effect
+is $\hat{\tau}_t = Y_{1t} - \hat{Y}_{0t}$ for $t$ in the post-period.
+
+
+# Statsmodels / From-Scratch Implementation {#sec-ch22-impl}
+
+## RDD from scratch
+
+```{python}
+#| label: rdd-demo
+# Simulate sharp RDD data
+n = 500
+x_run = rng.uniform(-3, 3, n)  # running variable
+cutoff = 0
+D_rdd = (x_run >= cutoff).astype(int)
+
+# Outcome: continuous at cutoff, treatment adds 2
+y_rdd = 1 + 0.5*x_run + 2*D_rdd + rng.standard_normal(n)
+
+# Local linear regression near cutoff
+bw = 1.0  # bandwidth
+mask = np.abs(x_run - cutoff) <= bw
+X_rdd = sm.add_constant(np.column_stack([x_run[mask], D_rdd[mask],
+                                          x_run[mask]*D_rdd[mask]]))
+rdd_fit = sm.OLS(y_rdd[mask], X_rdd).fit(cov_type='HC1')
+
+print(f"RDD estimate: {rdd_fit.params[2]:.3f} "
+      f"(SE={rdd_fit.bse[2]:.3f})")
+print(f"True effect: 2.0")
+```
+
+```{python}
+#| label: fig-rdd
+#| fig-cap: "Regression discontinuity: the jump at the cutoff identifies the treatment effect. Local linear fits on each side of the cutoff estimate the discontinuity."
+
+fig, ax = plt.subplots()
+ax.scatter(x_run, y_rdd, s=5, alpha=0.3, color="C0")
+
+# Fit separate lines on each side
+for side, color in [(x_run < cutoff, "C1"), (x_run >= cutoff, "C2")]:
+    mask_s = side & (np.abs(x_run) < 2)
+    fit = np.polyfit(x_run[mask_s], y_rdd[mask_s], 1)
+    x_grid = np.linspace(x_run[mask_s].min(), x_run[mask_s].max(), 50)
+    ax.plot(x_grid, np.polyval(fit, x_grid), color=color, linewidth=2)
+
+ax.axvline(cutoff, color="gray", linestyle="--", alpha=0.5)
+ax.set_xlabel("Running variable")
+ax.set_ylabel("Outcome")
+plt.show()
+```
+
+## DiD from scratch
+
+```{python}
+#| label: did-demo
+# Simulate 2x2 DiD
+n_did = 200
+treated = np.repeat([0, 1], n_did // 2)
+post = np.tile([0, 1], n_did // 2)
+
+# Parallel trends + treatment effect
+y_did = (5 + 2*treated + 3*post + 1.5*treated*post
+         + rng.standard_normal(n_did))
+
+# DiD estimate
+y00 = y_did[(treated==0) & (post==0)].mean()
+y01 = y_did[(treated==0) & (post==1)].mean()
+y10 = y_did[(treated==1) & (post==0)].mean()
+y11 = y_did[(treated==1) & (post==1)].mean()
+did_est = (y11 - y10) - (y01 - y00)
+
+print(f"DiD estimate: {did_est:.3f} (true=1.5)")
+print(f"Means: Y00={y00:.2f}, Y01={y01:.2f}, Y10={y10:.2f}, Y11={y11:.2f}")
+
+# Equivalent regression
+X_did = sm.add_constant(np.column_stack([treated, post, treated*post]))
+did_reg = sm.OLS(y_did, X_did).fit(cov_type='HC1')
+print(f"Regression DiD: {did_reg.params[3]:.3f} (SE={did_reg.bse[3]:.3f})")
+```
+
+```{python}
+#| label: fig-did
+#| fig-cap: "Difference-in-differences: the parallel trends assumption (dashed line) shows where the treated group would have been without treatment. The DiD estimate is the gap between actual and counterfactual."
+
+fig, ax = plt.subplots()
+ax.plot([0, 1], [y00, y01], 'o-', color="C0", markersize=8, label="Control")
+ax.plot([0, 1], [y10, y11], 's-', color="C1", markersize=8, label="Treated (actual)")
+ax.plot([0, 1], [y10, y10 + (y01-y00)], 's--', color="C1", alpha=0.5,
+        markersize=8, label="Treated (counterfactual)")
+ax.set_xticks([0, 1]); ax.set_xticklabels(["Pre", "Post"])
+ax.set_ylabel("Outcome"); ax.legend()
+plt.show()
+```
+
+## Synthetic control from scratch
+
+```{python}
+#| label: synth-demo
+from scipy.optimize import minimize
+
+# 1 treated unit, 5 control units, 20 pre + 10 post periods
+n_pre, n_post = 20, 10
+n_control = 5
+
+# Pre-treatment: treated and controls have similar trends
+Y_control_pre = np.cumsum(rng.standard_normal((n_pre, n_control)), axis=0) + 50
+Y_treated_pre = (Y_control_pre @ np.array([0.3, 0.25, 0.2, 0.15, 0.1])
+                 + rng.standard_normal(n_pre))
+
+# Post-treatment: treated diverges
+Y_control_post = (Y_control_pre[-1:] +
+                  np.cumsum(rng.standard_normal((n_post, n_control)), axis=0))
+Y_treated_post = (Y_control_post @ np.array([0.3, 0.25, 0.2, 0.15, 0.1])
+                  + 5  # treatment effect
+                  + rng.standard_normal(n_post))
+
+# Find synthetic control weights
+def synth_objective(w, Y_treated, Y_control):
+    return np.sum((Y_treated - Y_control @ w)**2)
+
+from scipy.optimize import LinearConstraint
+constraints = [
+    LinearConstraint(np.ones((1, n_control)), 1, 1),  # sum = 1
+]
+bounds = [(0, 1)] * n_control
+w0 = np.ones(n_control) / n_control
+
+res = minimize(synth_objective, w0, args=(Y_treated_pre, Y_control_pre),
+               bounds=bounds, constraints=constraints, method='SLSQP')
+w_synth = res.x
+
+print(f"Synthetic weights: {w_synth.round(3)}")
+print(f"Pre-treatment RMSE: {np.sqrt(res.fun/n_pre):.3f}")
+
+# Treatment effect
+Y_synth_post = Y_control_post @ w_synth
+tau_synth = Y_treated_post - Y_synth_post
+print(f"Avg treatment effect (post): {tau_synth.mean():.3f} (true≈5)")
+```
+
+```{python}
+#| label: fig-synth
+#| fig-cap: "Synthetic control: the synthetic (dashed) closely tracks the treated unit pre-treatment. Post-treatment, the gap between actual and synthetic estimates the treatment effect."
+
+Y_all_treated = np.concatenate([Y_treated_pre, Y_treated_post])
+Y_all_synth = np.concatenate([Y_control_pre @ w_synth, Y_synth_post])
+
+fig, ax = plt.subplots()
+t = range(n_pre + n_post)
+ax.plot(t, Y_all_treated, color="C0", linewidth=1.5, label="Treated")
+ax.plot(t, Y_all_synth, '--', color="C1", linewidth=1.5, label="Synthetic control")
+ax.axvline(n_pre, color="gray", linestyle="--", alpha=0.5)
+ax.fill_between(range(n_pre, n_pre+n_post),
+                Y_treated_post, Y_synth_post, alpha=0.2, color="C2",
+                label="Treatment effect")
+ax.set_xlabel("Time period"); ax.legend()
+plt.show()
+```
+
+
+# Exercises {#sec-ch22-exercises}
+
+**Exercise 22.1** ($\star\star$, diagnostic failure). Run a "placebo"
+RDD at a fake cutoff (where there is no treatment). Does the test
+reject? Repeat at 10 different fake cutoffs and report the rejection
+rate. It should be ≈5%.
+
+%%
+
+```{python}
+#| label: ex-22-1
+rejections = 0
+for fake_c in np.linspace(-2, -0.5, 10):
+    mask = np.abs(x_run - fake_c) <= 1.0
+    D_fake = (x_run[mask] >= fake_c).astype(int)
+    X_fake = sm.add_constant(np.column_stack([x_run[mask], D_fake]))
+    res = sm.OLS(y_rdd[mask], X_fake).fit(cov_type='HC1')
+    if res.pvalues[2] < 0.05:
+        rejections += 1
+print(f"Placebo rejections: {rejections}/10 (should be ≈0-1)")
+```
+
+%%
+
+**Exercise 22.2** ($\star\star$, comparison). Compare the DiD estimate
+using the 2×2 formula vs. TWFE regression. Show they give the same
+answer in the 2×2 case.
+
+%%
+
+```{python}
+#| label: ex-22-2
+print(f"2x2 formula:   {did_est:.4f}")
+print(f"TWFE regression: {did_reg.params[3]:.4f}")
+print(f"Match: {np.isclose(did_est, did_reg.params[3], atol=0.01)}")
+```
+
+%%
+
+**Exercise 22.3** ($\star\star$, implementation). Implement synthetic
+control from scratch using `scipy.optimize.minimize` with constraints
+$w_j \geq 0$, $\sum w_j = 1$. Verify on the simulated data.
+
+%%
+
+```{python}
+#| label: ex-22-3
+# Already implemented above
+print(f"Weights sum: {w_synth.sum():.4f}")
+print(f"All non-negative: {(w_synth >= -1e-10).all()}")
+print(f"Treatment effect: {tau_synth.mean():.3f}")
+```
+
+%%
+
+**Exercise 22.4** ($\star\star\star$, conceptual). Explain the
+Goodman-Bacon (2021) decomposition: why does TWFE with staggered
+adoption produce negative weights, and why can this give a wrong-sign
+estimate even when all group-specific effects are positive?
+
+%%
+
+TWFE with staggered adoption computes $\hat{\tau}$ as a weighted
+average of all $2 \times 2$ DiD comparisons between groups treated at
+different times. Some comparisons use *already-treated* units as
+controls for *newly-treated* units. When treatment effects are
+heterogeneous (growing over time), the already-treated group's outcome
+is elevated by their own treatment effect, making them a poor control.
+The resulting weights on these comparisons can be negative.
+
+Example: if early adopters have a small effect that grows over time,
+and late adopters have a large initial effect, the TWFE estimate can
+be negative even though every individual effect is positive. The
+negative weight on the early-vs-late comparison (where the "control"
+is already treated) pulls the estimate below zero.
+
+Fix: Callaway--Sant'Anna (2021) or Sun--Abraham (2021) estimators
+that only use not-yet-treated units as controls.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch22-biblio}
+
+RDD: Thistlethwaite and Campbell (1960) for the idea; Imbens and
+Kalyanaraman (2012) for optimal bandwidth; Cattaneo, Idrobo, and
+Titiunik (2020) for a modern guide.
+
+DiD: Ashenfelter and Card (1985) for the canonical application;
+Goodman-Bacon (2021) for the decomposition; Callaway and Sant'Anna
+(2021) and Sun and Abraham (2021) for heterogeneity-robust estimators.
+
+Synthetic control: Abadie, Diamond, and Hainmueller (2010). For
+inference: Abadie, Diamond, and Hainmueller (2015) for permutation.
