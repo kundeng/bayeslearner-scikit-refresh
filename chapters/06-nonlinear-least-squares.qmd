@@ -2,29 +2,749 @@
 title: "Nonlinear Least Squares and Implicit Estimation"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import least_squares, curve_fit, root, minimize
+from scipy.linalg import svd
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | scipy parameter |
+|--------|---------|-----------------|
+| $\mathbf{r}(\boldsymbol{\theta})$ | Residual vector: $r_i = y_i - m(\mathbf{x}_i; \boldsymbol{\theta})$ | `fun` in `least_squares` |
+| $\mathbf{J}(\boldsymbol{\theta})$ | Jacobian of residuals ($n \times p$) | `jac` in `least_squares` |
+| $m(\mathbf{x}; \boldsymbol{\theta})$ | Model function | `f` in `curve_fit` |
+| $\boldsymbol{\theta}$ | Parameter vector | `x0` / `p0` |
+| $S(\boldsymbol{\theta}) = \|\mathbf{r}(\boldsymbol{\theta})\|^2$ | Sum of squared residuals | `2 * result.cost` |
+| $\Delta$ | Trust-region radius (Levenberg--Marquardt) | |
+| $\lambda$ | Damping parameter (LM) | |
+
+
+# Motivation {#sec-ch06-motivation}
+
+Every time you fit a model to data by minimizing squared error, you
+are solving a nonlinear least-squares problem. `curve_fit` is the
+one-liner that most Python users reach for: give it a model function,
+data, and initial parameters, and it returns estimates with standard
+errors. Under the hood, it calls `least_squares`, which dispatches to
+one of three algorithms: Levenberg--Marquardt (`lm`), trust-region
+reflective (`trf`), or dogleg (`dogbox`).
+
+This chapter explains what these algorithms do, why they work, and
+when they fail. The key insight is structural: a sum-of-squares
+objective $S(\boldsymbol{\theta}) = \sum_i r_i(\boldsymbol{\theta})^2$
+has a Hessian that decomposes as
+$\nabla^2 S = 2\mathbf{J}^\top\mathbf{J} + 2\sum_i r_i \nabla^2 r_i$.
+When the residuals are small at the solution, the second term is
+negligible, and the Hessian is well-approximated by $2\mathbf{J}^\top\mathbf{J}$---a
+matrix you already have from the Jacobian. This is why least-squares
+problems are easier than general optimization: you get second-order
+information (the approximate Hessian) for the price of first-order
+information (the Jacobian).
+
+The chapter also covers root finding (`scipy.optimize.root`), because
+root finding and least squares are two views of the same problem: find
+$\boldsymbol{\theta}$ such that $\mathbf{F}(\boldsymbol{\theta}) = \mathbf{0}$.
+For least squares, $\mathbf{F} = \nabla S = 2\mathbf{J}^\top\mathbf{r}$.
+For root finding, $\mathbf{F}$ is the system of equations directly.
+
+
+# Mathematical Foundation {#sec-ch06-math}
+
+## The Gauss--Newton approximation
+
+The objective is $S(\boldsymbol{\theta}) = \mathbf{r}(\boldsymbol{\theta})^\top \mathbf{r}(\boldsymbol{\theta})$.
+Its gradient and Hessian are:
+\begin{align}
+\nabla S &= 2\mathbf{J}^\top \mathbf{r}, \\
+\nabla^2 S &= 2\mathbf{J}^\top\mathbf{J} + 2\sum_{i=1}^n r_i \nabla^2 r_i.
+\end{align}
+
+The Gauss--Newton method *drops the second-order term*
+$\sum r_i \nabla^2 r_i$ and uses $\mathbf{J}^\top\mathbf{J}$ as the
+approximate Hessian. The resulting step is:
+
+$$
+\mathbf{p}_k = -(\mathbf{J}_k^\top\mathbf{J}_k)^{-1}\mathbf{J}_k^\top\mathbf{r}_k.
+$$ {#eq-gauss-newton}
+
+This is the solution to the linear least-squares problem
+$\min_\mathbf{p} \|\mathbf{J}_k \mathbf{p} + \mathbf{r}_k\|^2$---i.e.,
+minimizing the *linearized* residual. The connection to Newton's
+method: if the residuals are small at the solution ($\|\mathbf{r}^*\| \approx 0$),
+the omitted term is small and Gauss--Newton inherits Newton's fast
+convergence. If the residuals are large (the model doesn't fit well),
+the approximation is poor and Gauss--Newton may converge slowly or
+diverge.
+
+**Why this matters for `curve_fit`:** The standard errors reported by
+`curve_fit` come from the inverse of $\mathbf{J}^\top\mathbf{J}$ at
+the solution:
+$\text{Cov}(\hat{\boldsymbol{\theta}}) \approx \hat{\sigma}^2 (\mathbf{J}^\top\mathbf{J})^{-1}$,
+where $\hat{\sigma}^2 = S(\hat{\boldsymbol{\theta}})/(n-p)$. This is
+the Gauss--Newton Hessian approximation, inverted and scaled. When the
+residuals are large, these standard errors are unreliable because the
+Hessian approximation is poor.
+
+
+## Levenberg--Marquardt: trust-region least squares
+
+Gauss--Newton can fail when $\mathbf{J}^\top\mathbf{J}$ is nearly
+singular or when the step @eq-gauss-newton is too large. The
+Levenberg--Marquardt (LM) method adds a damping term:
+
+$$
+\mathbf{p}_k = -(\mathbf{J}_k^\top\mathbf{J}_k + \lambda_k \mathbf{I})^{-1}\mathbf{J}_k^\top\mathbf{r}_k.
+$$ {#eq-lm-step}
+
+When $\lambda_k$ is small, this is close to the Gauss--Newton step.
+When $\lambda_k$ is large, the step is close to the scaled steepest-descent
+direction $-\frac{1}{\lambda_k}\mathbf{J}^\top\mathbf{r}$. The LM
+method is equivalent to solving a trust-region subproblem with the
+Gauss--Newton Hessian approximation:
+
+$$
+\min_\mathbf{p} \|\mathbf{J}_k\mathbf{p} + \mathbf{r}_k\|^2 \quad \text{s.t.} \quad \|\mathbf{p}\| \leq \Delta_k.
+$$
+
+The damping parameter $\lambda_k$ is the Lagrange multiplier for this
+constraint. Scipy's `least_squares(method='lm')` implements this.
+
+**Why scipy has three methods:**
+
+- `'lm'` (Levenberg--Marquardt): the classic. Fast for small-to-medium
+  problems. No bound constraints. Wraps MINPACK's `lmder`.
+- `'trf'` (trust-region reflective): handles bound constraints.
+  Reflects the step when it hits a bound. Better for bounded problems.
+- `'dogbox'` (dogleg in a box): combines Gauss--Newton and steepest
+  descent steps within bounds. Simpler than TRF, sometimes faster.
+
+
+## Root finding
+
+A system of $n$ equations in $n$ unknowns
+$\mathbf{F}(\mathbf{x}) = \mathbf{0}$ is solved by Newton's method:
+
+$$
+\mathbf{x}_{k+1} = \mathbf{x}_k - \mathbf{J}_F(\mathbf{x}_k)^{-1}\mathbf{F}(\mathbf{x}_k),
+$$
+
+where $\mathbf{J}_F$ is the Jacobian of $\mathbf{F}$. This is the
+same as Newton's method for optimization when $\mathbf{F} = \nabla f$.
+
+When the Jacobian is expensive, Broyden's method approximates it:
+
+$$
+\mathbf{B}_{k+1} = \mathbf{B}_k + \frac{(\mathbf{F}_{k+1} - \mathbf{F}_k - \mathbf{B}_k \mathbf{s}_k)\mathbf{s}_k^\top}{\mathbf{s}_k^\top \mathbf{s}_k}.
+$$ {#eq-broyden}
+
+This is the rank-one analogue of the BFGS update from Chapter 2:
+it satisfies the secant equation
+$\mathbf{B}_{k+1}\mathbf{s}_k = \mathbf{F}_{k+1} - \mathbf{F}_k$
+with the minimal change from $\mathbf{B}_k$. Scipy's
+`root(method='broyden1')` implements this.
+
+
+# The Algorithm {#sec-ch06-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 6.1: Gauss--Newton
+
+**Input:** Model $m(\mathbf{x}; \boldsymbol{\theta})$, data
+$(\mathbf{x}_i, y_i)_{i=1}^n$, initial $\boldsymbol{\theta}_0$,
+tolerance $\epsilon$
+
+**Output:** Least-squares estimate $\hat{\boldsymbol{\theta}}$
+
+1. **for** $k = 0, 1, 2, \ldots$ **do**
+2. $\quad$ $\mathbf{r}_k \leftarrow \mathbf{y} - m(\mathbf{X}; \boldsymbol{\theta}_k)$ $\triangleright$ residuals
+3. $\quad$ $\mathbf{J}_k \leftarrow \partial \mathbf{r} / \partial \boldsymbol{\theta}\big|_{\boldsymbol{\theta}_k}$ $\triangleright$ Jacobian
+4. $\quad$ $\mathbf{p}_k \leftarrow (\mathbf{J}_k^\top\mathbf{J}_k)^{-1}\mathbf{J}_k^\top\mathbf{r}_k$ $\triangleright$ solve normal equations
+5. $\quad$ $\boldsymbol{\theta}_{k+1} \leftarrow \boldsymbol{\theta}_k + \mathbf{p}_k$
+6. $\quad$ **if** $\|\mathbf{p}_k\| < \epsilon$ **then return** $\boldsymbol{\theta}_{k+1}$
+7. **end for**
 :::
 
-# Motivation {#sec-ch05-motivation}
+::: {.callout-note appearance="minimal"}
+## Algorithm 6.2: Levenberg--Marquardt
 
-# Mathematical Foundation {#sec-ch05-math}
+**Input:** Same as Algorithm 6.1, plus initial damping $\lambda_0 > 0$
 
-# The Algorithm {#sec-ch05-algorithm}
+**Output:** Least-squares estimate $\hat{\boldsymbol{\theta}}$
 
-# Statistical Properties {#sec-ch05-stats}
+1. **for** $k = 0, 1, 2, \ldots$ **do**
+2. $\quad$ $\mathbf{r}_k$, $\mathbf{J}_k$ as in Algorithm 6.1
+3. $\quad$ $\mathbf{p}_k \leftarrow (\mathbf{J}_k^\top\mathbf{J}_k + \lambda_k\mathbf{I})^{-1}\mathbf{J}_k^\top\mathbf{r}_k$
+4. $\quad$ $\rho_k \leftarrow \frac{\|\mathbf{r}_k\|^2 - \|\mathbf{r}(\boldsymbol{\theta}_k + \mathbf{p}_k)\|^2}{\|\mathbf{r}_k\|^2 - \|\mathbf{J}_k\mathbf{p}_k + \mathbf{r}_k\|^2}$ $\triangleright$ actual/predicted
+5. $\quad$ **if** $\rho_k > 0.25$ **then** $\lambda_{k+1} \leftarrow \lambda_k / 3$; accept step
+6. $\quad$ **else if** $\rho_k < 0.25$ **then** $\lambda_{k+1} \leftarrow 2\lambda_k$; reject step
+7. $\quad$ **if** $\|\mathbf{p}_k\| < \epsilon$ **then return** $\boldsymbol{\theta}_{k+1}$
+8. **end for**
+:::
 
-# SciPy Implementation {#sec-ch05-scipy}
 
-# From-Scratch Implementation {#sec-ch05-scratch}
+# Statistical Properties {#sec-ch06-stats}
 
-# Diagnostics {#sec-ch05-diagnostics}
+The connection between nonlinear least squares and statistical
+inference is through the **Gauss--Newton covariance**:
 
-# Computational Considerations {#sec-ch05-computation}
+$$
+\text{Cov}(\hat{\boldsymbol{\theta}}) \approx \hat{\sigma}^2 (\mathbf{J}^\top\mathbf{J})^{-1},
+\quad \hat{\sigma}^2 = \frac{S(\hat{\boldsymbol{\theta}})}{n - p}.
+$$
 
-# Worked Example {#sec-ch05-example}
+This is the formula behind `curve_fit`'s `pcov` output. It is valid
+when: (1) the model is approximately linear near $\hat{\boldsymbol{\theta}}$,
+(2) the residuals are small (the model fits), and (3) the errors are
+approximately homoscedastic. When any of these fail, the standard
+errors are unreliable --- and `curve_fit` gives no warning.
 
-# Exercises {#sec-ch05-exercises}
+The matrix $\mathbf{J}^\top\mathbf{J}$ is the observed information in
+the Gauss--Newton approximation. In Chapter 10 (Wald/Score/LR), we
+develop the full observed information and show when this approximation
+is exact (linear models) and when it is not (nonlinear models with
+large residuals).
 
-# Bibliographic Notes {#sec-ch05-biblio}
+
+# SciPy Implementation {#sec-ch06-scipy}
+
+## `curve_fit`: the one-liner
+
+```{python}
+#| label: curve-fit-demo
+def exp_decay(x, a, b, c):
+    """Exponential decay model: a * exp(-b*x) + c."""
+    return a * np.exp(-b * x) + c
+
+# Generate synthetic data
+x_data = np.linspace(0, 4, 50)
+y_true = exp_decay(x_data, 2.5, 1.3, 0.5)
+y_data = y_true + 0.2 * rng.standard_normal(50)
+
+# Fit
+popt, pcov = curve_fit(
+    f=exp_decay,
+    xdata=x_data,
+    ydata=y_data,
+    p0=[1, 1, 0],             # initial guess (required for nonlinear)
+    method='lm',              # default: Levenberg-Marquardt
+)
+perr = np.sqrt(np.diag(pcov))  # standard errors
+
+print(f"{'Param':<6} {'True':>8} {'Estimate':>10} {'SE':>8}")
+for name, true, est, se in zip(
+    ['a', 'b', 'c'], [2.5, 1.3, 0.5], popt, perr
+):
+    print(f"{name:<6} {true:>8.3f} {est:>10.4f} {se:>8.4f}")
+```
+
+**Key defaults to know:**
+
+- `method='lm'`: Levenberg--Marquardt (MINPACK). No bounds support.
+  Switch to `method='trf'` if you need parameter bounds.
+- `p0`: Initial guess. **Required** for nonlinear models. A bad `p0`
+  can land you in a local minimum. There is no global search.
+- `absolute_sigma=False` (default): `pcov` is scaled by the reduced
+  chi-squared $\chi^2/(n-p)$. Set `absolute_sigma=True` if your
+  errors have known absolute scale.
+
+## `least_squares`: the full API
+
+```{python}
+#| label: least-squares-demo
+def residuals(params, x, y):
+    a, b, c = params
+    return exp_decay(x, a, b, c) - y
+
+def jacobian(params, x, y):
+    a, b, c = params
+    J = np.zeros((len(x), 3))
+    J[:, 0] = np.exp(-b * x)           # dr/da
+    J[:, 1] = -a * x * np.exp(-b * x)  # dr/db
+    J[:, 2] = np.ones(len(x))          # dr/dc
+    return J
+
+# Method comparison
+for method in ['lm', 'trf', 'dogbox']:
+    res = least_squares(
+        fun=residuals,
+        x0=[1, 1, 0],
+        jac=jacobian,
+        args=(x_data, y_data),
+        method=method,
+    )
+    print(f"{method:>6}: params={res.x.round(4)}, "
+          f"cost={res.cost:.4f}, nfev={res.nfev}")
+```
+
+**Why three methods?**
+
+| Method | Algorithm | Bounds | Best for |
+|---|---|---|---|
+| `'lm'` | Levenberg--Marquardt (MINPACK) | No | Small unbounded problems |
+| `'trf'` | Trust-region reflective | Yes | Bounded problems, sparse Jacobians |
+| `'dogbox'` | Dogleg in a box | Yes | Small bounded problems |
+
+## `root`: solving nonlinear systems
+
+```{python}
+#| label: root-demo
+# Solve: x0 + 0.5*(x0-x1)^3 = 1, 0.5*(x1-x0)^3 + x1 = 0
+def system(x):
+    return [
+        x[0] + 0.5 * (x[0] - x[1])**3 - 1,
+        0.5 * (x[1] - x[0])**3 + x[1],
+    ]
+
+for method in ['hybr', 'broyden1']:
+    sol = root(system, [0, 0], method=method)
+    print(f"{method:>9}: x={sol.x.round(6)}, "
+          f"success={sol.success}, nfev={sol.nfev}")
+```
+
+`hybr` (default) uses Powell's hybrid method: Newton with a dogleg
+trust region. `broyden1` uses Broyden's rank-one update (@eq-broyden),
+which avoids computing the Jacobian at every step.
+
+
+# From-Scratch Implementation {#sec-ch06-scratch}
+
+Gauss--Newton in ~20 lines of NumPy.
+
+```{python}
+#| label: gauss-newton-scratch
+
+def gauss_newton(fun, jac, x0, args=(), tol=1e-8, maxiter=100):
+    """Gauss-Newton for nonlinear least squares.
+
+    Implements Algorithm 6.1. Parameters match least_squares API.
+
+    Parameters
+    ----------
+    fun : callable
+        Residual function r(params, *args) -> (n,) array.
+    jac : callable
+        Jacobian function jac(params, *args) -> (n, p) array.
+    x0 : array
+        Initial parameter guess.
+    """
+    x = np.asarray(x0, dtype=float).copy()
+
+    for k in range(maxiter):
+        r = fun(x, *args)
+        J = jac(x, *args)
+        # Normal equations: (J'J) p = J'r
+        p = np.linalg.solve(J.T @ J, J.T @ r)
+        x = x - p                 # note: residual = data - model, so subtract
+        if np.linalg.norm(p) < tol:
+            break
+
+    return {'x': x, 'cost': 0.5 * np.sum(fun(x, *args)**2),
+            'nit': k, 'success': np.linalg.norm(p) < tol}
+```
+
+## Verification
+
+```{python}
+#| label: gauss-newton-verify
+# Note: our residuals are model - data, so the Gauss-Newton step adds p
+def residuals_gn(params, x, y):
+    return exp_decay(x, *params) - y
+
+res_gn = gauss_newton(residuals_gn, jacobian, [1, 1, 0],
+                      args=(x_data, y_data))
+res_scipy = least_squares(residuals, [1, 1, 0], jac=jacobian,
+                          args=(x_data, y_data), method='lm')
+
+print(f"Gauss-Newton: params={res_gn['x'].round(4)}, "
+      f"cost={res_gn['cost']:.4f}")
+print(f"scipy LM:     params={res_scipy.x.round(4)}, "
+      f"cost={res_scipy.cost:.4f}")
+print(f"Match: {np.allclose(res_gn['x'], res_scipy.x, atol=1e-3)}")
+```
+
+
+# Diagnostics {#sec-ch06-diagnostics}
+
+## Residual analysis
+
+```{python}
+#| label: fig-residuals
+#| fig-cap: "Residuals from the exponential decay fit. Left: residuals vs. fitted values — no pattern means the model structure is adequate. Right: residuals vs. x — any systematic pattern here indicates a missing term in the model."
+
+r_final = residuals(popt, x_data, y_data)
+y_fitted = exp_decay(x_data, *popt)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+ax1.scatter(y_fitted, r_final, s=20, alpha=0.7)
+ax1.axhline(0, color='gray', linewidth=0.5)
+ax1.set_xlabel("Fitted values")
+ax1.set_ylabel("Residuals")
+ax1.set_title("Residuals vs. fitted")
+
+ax2.scatter(x_data, r_final, s=20, alpha=0.7)
+ax2.axhline(0, color='gray', linewidth=0.5)
+ax2.set_xlabel("x")
+ax2.set_ylabel("Residuals")
+ax2.set_title("Residuals vs. x")
+
+plt.tight_layout()
+plt.show()
+```
+
+## Checking the covariance matrix
+
+```{python}
+#| label: cov-check
+# Compare curve_fit's pcov with the Gauss-Newton formula
+J_final = jacobian(popt, x_data, y_data)
+sigma2 = np.sum(r_final**2) / (len(y_data) - len(popt))
+cov_manual = sigma2 * np.linalg.inv(J_final.T @ J_final)
+
+print("curve_fit pcov diagonal:", np.diag(pcov).round(6))
+print("Manual J'J inverse:     ", np.diag(cov_manual).round(6))
+print("Match:", np.allclose(pcov, cov_manual, rtol=1e-4))
+```
+
+When these don't match, it usually means `curve_fit` used
+`absolute_sigma=False` (the default) while your manual calculation
+used the raw residuals. The scaling factor is $\chi^2/(n-p)$.
+
+## When to distrust `curve_fit`'s standard errors
+
+Three warning signs:
+
+1. **Large residuals.** If $\hat{\sigma}^2 \gg$ the variance of your
+   measurements, the model doesn't fit and the Gauss--Newton
+   covariance is unreliable.
+
+2. **Near-singular Jacobian.** If `np.linalg.cond(J.T @ J)` is large
+   ($> 10^{10}$), the parameters are poorly identified---small changes
+   in the data cause large changes in the estimates.
+
+3. **Dependence on `p0`.** If different starting points give different
+   solutions with similar cost, the problem has multiple local minima
+   and `curve_fit` found only one.
+
+
+# Computational Considerations {#sec-ch06-computation}
+
+| Method | Per-iteration cost | Storage | Notes |
+|---|---|---|---|
+| Gauss--Newton | $O(np^2)$ for $\mathbf{J}^\top\mathbf{J}$ + $O(p^3)$ solve | $O(np)$ for $\mathbf{J}$ | Fails if $\mathbf{J}^\top\mathbf{J}$ singular |
+| LM | Same as GN + $O(p^2)$ for damping | Same | Robust to singularity |
+| TRF | $O(np^2)$ + sparse structure if available | $O(np)$ | Best for sparse $\mathbf{J}$ |
+
+For large $n$ and small $p$ (typical in curve fitting: thousands of
+data points, 3--10 parameters), the dominant cost is the $n \times p$
+Jacobian evaluation. Supplying an analytical Jacobian (as we did above)
+avoids the $O(np)$ cost of finite differencing.
+
+
+# Worked Example {#sec-ch06-example}
+
+Fitting a pharmacokinetic model: drug concentration as a function of
+time after oral administration.
+
+```{python}
+#| label: worked-model
+def pk_model(t, ka, ke, V, D=100):
+    """One-compartment PK model with first-order absorption.
+
+    Parameters: ka (absorption rate), ke (elimination rate),
+    V (volume of distribution), D (dose, fixed at 100).
+    """
+    return (D * ka / (V * (ka - ke))) * (np.exp(-ke * t) - np.exp(-ka * t))
+
+# Simulate data
+t_data = np.array([0.25, 0.5, 1, 2, 3, 4, 6, 8, 12, 24])
+true_params = [1.5, 0.3, 10]
+y_pk = pk_model(t_data, *true_params)
+y_pk_noisy = y_pk + 0.3 * rng.standard_normal(len(t_data))
+y_pk_noisy = np.maximum(y_pk_noisy, 0)  # concentrations can't be negative
+```
+
+```{python}
+#| label: worked-fit
+# Fit with bounds (rates and volume must be positive)
+res_pk = least_squares(
+    fun=lambda p, t, y: pk_model(t, *p) - y,
+    x0=[1.0, 0.5, 15],
+    args=(t_data, y_pk_noisy),
+    bounds=([0, 0, 0], [np.inf, np.inf, np.inf]),
+    method='trf',
+)
+
+# Also fit with curve_fit for standard errors
+popt_pk, pcov_pk = curve_fit(
+    pk_model, t_data, y_pk_noisy,
+    p0=[1.0, 0.5, 15],
+    bounds=([0, 0, 0], [np.inf, np.inf, np.inf]),
+    method='trf',
+)
+perr_pk = np.sqrt(np.diag(pcov_pk))
+
+print(f"{'Param':<5} {'True':>8} {'Est':>8} {'SE':>8}")
+for name, true, est, se in zip(
+    ['ka', 'ke', 'V'], true_params, popt_pk, perr_pk
+):
+    print(f"{name:<5} {true:>8.3f} {est:>8.3f} {se:>8.3f}")
+```
+
+```{python}
+#| label: fig-pk-fit
+#| fig-cap: "Pharmacokinetic model fit. The one-compartment model with first-order absorption captures the rise and fall of drug concentration. The shaded band shows the 95% prediction interval from the Gauss-Newton covariance — note that it is wider where the model is more curved, reflecting greater sensitivity to parameter uncertainty."
+
+t_fine = np.linspace(0.1, 24, 200)
+y_fit = pk_model(t_fine, *popt_pk)
+
+# Prediction interval via delta method
+J_fine = np.zeros((len(t_fine), 3))
+eps = 1e-6
+for j in range(3):
+    p_up = popt_pk.copy(); p_up[j] += eps
+    p_dn = popt_pk.copy(); p_dn[j] -= eps
+    J_fine[:, j] = (pk_model(t_fine, *p_up) - pk_model(t_fine, *p_dn)) / (2*eps)
+var_pred = np.sum((J_fine @ pcov_pk) * J_fine, axis=1)
+se_pred = np.sqrt(var_pred)
+
+fig, ax = plt.subplots()
+ax.scatter(t_data, y_pk_noisy, s=40, zorder=5, label="Data")
+ax.plot(t_fine, y_fit, color="C0", linewidth=1.8, label="Fit")
+ax.fill_between(t_fine, y_fit - 1.96*se_pred, y_fit + 1.96*se_pred,
+                alpha=0.2, color="C0", label="95% prediction")
+ax.set_xlabel("Time (hours)")
+ax.set_ylabel("Concentration")
+ax.legend()
+plt.show()
+```
+
+
+# Exercises {#sec-ch06-exercises}
+
+**Exercise 6.1** ($\star\star$, diagnostic failure). Fit `curve_fit`
+to the model $y = a \sin(bx + c) + d$ with data that actually follows
+$y = a_1 \sin(b_1 x) + a_2 \sin(b_2 x) + \text{noise}$ (two
+frequencies). Try different starting points `p0`. Report: how many
+local minima do you find? What do the residual plots look like for
+each? How do the standard errors compare?
+
+%%
+
+```{python}
+#| label: ex-6-1-solution
+# Two-frequency signal
+x_ex = np.linspace(0, 10, 100)
+y_ex = 2*np.sin(3*x_ex) + 1.5*np.sin(7*x_ex) + 0.3*rng.standard_normal(100)
+
+def single_sine(x, a, b, c, d):
+    return a * np.sin(b * x + c) + d
+
+# Try multiple starting points
+results = []
+for b0 in [1, 3, 5, 7, 10]:
+    try:
+        p, cov = curve_fit(single_sine, x_ex, y_ex,
+                           p0=[2, b0, 0, 0], maxfev=10000)
+        cost = np.sum((single_sine(x_ex, *p) - y_ex)**2)
+        results.append((b0, p, cost, np.sqrt(np.diag(cov))))
+    except RuntimeError:
+        results.append((b0, None, np.inf, None))
+
+print(f"{'b0':>4} {'b_est':>8} {'cost':>10} {'converged':>10}")
+for b0, p, cost, se in results:
+    if p is not None:
+        print(f"{b0:>4} {p[1]:>8.3f} {cost:>10.3f} {'yes':>10}")
+    else:
+        print(f"{b0:>4} {'---':>8} {cost:>10} {'no':>10}")
+```
+
+A single-sine model cannot capture two-frequency data. Different
+starting points converge to different local minima, each locking onto
+one of the two frequencies (or a harmonic). The residual plots show
+clear periodic structure --- the signature of a missing model term.
+The standard errors may look reasonable at each local minimum, but
+the model is wrong; the Gauss--Newton covariance tells you about
+precision (how well you've estimated the wrong model), not about
+accuracy (whether the model is right).
+
+%%
+
+
+**Exercise 6.2** ($\star\star$, comparison). Fit the exponential decay
+model using `least_squares` with `method='lm'`, `method='trf'`, and
+`method='dogbox'`. Compare iterations, function evaluations, and final
+cost. Then add bounds $b \in [0, 10]$ and repeat --- which methods
+support bounds?
+
+%%
+
+```{python}
+#| label: ex-6-2-solution
+print("=== Without bounds ===")
+for method in ['lm', 'trf', 'dogbox']:
+    res = least_squares(residuals, [1, 1, 0], jac=jacobian,
+                        args=(x_data, y_data), method=method)
+    print(f"  {method:>6}: cost={res.cost:.4f}, nfev={res.nfev}")
+
+print("\n=== With bounds b in [0, 10] ===")
+for method in ['trf', 'dogbox']:
+    res = least_squares(
+        residuals, [1, 1, 0], jac=jacobian,
+        args=(x_data, y_data), method=method,
+        bounds=([-np.inf, 0, -np.inf], [np.inf, 10, np.inf]),
+    )
+    print(f"  {method:>6}: cost={res.cost:.4f}, nfev={res.nfev}")
+
+print("\n  'lm' does not support bounds — raises ValueError.")
+```
+
+LM (MINPACK) does not support bounds. For bounded problems, use `trf`
+(trust-region reflective) or `dogbox`. Both give the same result here
+because the true parameter $b = 1.3$ is well inside the bounds.
+
+%%
+
+
+**Exercise 6.3** ($\star\star$, conceptual). The `curve_fit` standard
+errors come from $\hat{\sigma}^2(\mathbf{J}^\top\mathbf{J})^{-1}$.
+Explain why this formula assumes: (a) the model is correct (small
+residuals), (b) the errors are homoscedastic, and (c) the model is
+approximately linear near $\hat{\boldsymbol{\theta}}$. For each
+assumption, describe what happens to the standard errors when it fails.
+
+%%
+
+(a) **Model correctness.** The Gauss--Newton Hessian
+$2\mathbf{J}^\top\mathbf{J}$ approximates the true Hessian
+$2\mathbf{J}^\top\mathbf{J} + 2\sum r_i \nabla^2 r_i$ by dropping
+the second-order term. When residuals are large ($r_i$ far from zero),
+the dropped term is large and the Hessian approximation is poor. The
+covariance matrix will be too small (overconfident) because it ignores
+the curvature from the residual term.
+
+(b) **Homoscedasticity.** The formula uses a single $\hat{\sigma}^2$
+for all observations. If $\text{Var}(y_i)$ varies across $i$, the
+correct formula is
+$(\mathbf{J}^\top\mathbf{W}\mathbf{J})^{-1}\mathbf{J}^\top\mathbf{W}\boldsymbol{\Sigma}\mathbf{W}\mathbf{J}(\mathbf{J}^\top\mathbf{W}\mathbf{J})^{-1}$
+--- the sandwich form from Chapter 11. Without this correction,
+standard errors are wrong in both directions (too large for
+well-measured points, too small for noisy ones).
+
+(c) **Linearity.** The covariance formula is exact for linear models
+and approximate for nonlinear ones. The approximation is good when the
+model curvature is small relative to the noise level. When the model
+is highly nonlinear (e.g., near a saturation point), the parameter
+uncertainty is non-Gaussian and the symmetric confidence intervals
+from $\pm 1.96 \cdot \text{SE}$ can be badly wrong. Profile likelihood
+(Chapter 3 statistical properties) gives better intervals.
+
+%%
+
+
+**Exercise 6.4** ($\star\star\star$, implementation). Implement
+Levenberg--Marquardt from scratch (Algorithm 6.2). Verify against
+`least_squares(method='lm')` on the exponential decay problem. Show
+that your implementation adaptively adjusts $\lambda$: plot $\lambda_k$
+vs. iteration.
+
+%%
+
+```{python}
+#| label: ex-6-4-solution
+
+def levenberg_marquardt(fun, jac, x0, args=(), tol=1e-8,
+                        maxiter=100, lam0=1e-3):
+    """Levenberg-Marquardt. Implements Algorithm 6.2."""
+    x = np.asarray(x0, dtype=float).copy()
+    lam = lam0
+    lam_history = [lam]
+
+    for k in range(maxiter):
+        r = fun(x, *args)
+        J = jac(x, *args)
+        JtJ = J.T @ J
+        Jtr = J.T @ r
+
+        # LM step
+        p = np.linalg.solve(JtJ + lam * np.eye(len(x)), Jtr)
+        x_new = x - p
+
+        # Actual vs predicted reduction
+        r_new = fun(x_new, *args)
+        actual = np.sum(r**2) - np.sum(r_new**2)
+        predicted = np.sum(r**2) - np.sum((J @ (-p) + r)**2)
+
+        if predicted > 0:
+            rho = actual / predicted
+        else:
+            rho = 0
+
+        if rho > 0.25:
+            x = x_new
+            lam = max(lam / 3, 1e-15)
+        else:
+            lam = min(lam * 2, 1e15)
+
+        lam_history.append(lam)
+
+        if np.linalg.norm(p) < tol:
+            break
+
+    return {'x': x, 'cost': 0.5 * np.sum(fun(x, *args)**2),
+            'nit': k, 'lam_history': lam_history}
+
+res_lm = levenberg_marquardt(residuals_gn, jacobian, [1, 1, 0],
+                             args=(x_data, y_data))
+res_sp = least_squares(residuals, [1, 1, 0], jac=jacobian,
+                       args=(x_data, y_data), method='lm')
+
+print(f"From-scratch LM: {res_lm['x'].round(4)}, cost={res_lm['cost']:.4f}")
+print(f"scipy LM:        {res_sp.x.round(4)}, cost={res_sp.cost:.4f}")
+print(f"Match: {np.allclose(res_lm['x'], res_sp.x, atol=1e-3)}")
+
+fig, ax = plt.subplots(figsize=(6, 3))
+ax.semilogy(res_lm['lam_history'], color="C0", linewidth=1.8)
+ax.set_xlabel("Iteration")
+ax.set_ylabel(r"$\lambda_k$")
+ax.set_title("LM damping parameter")
+plt.tight_layout()
+plt.show()
+```
+
+The damping parameter $\lambda_k$ starts large (cautious, steepest-descent-like)
+and decreases as the algorithm approaches the minimum (switching to
+Gauss--Newton-like steps). This adaptive behavior is why LM is robust:
+it acts like steepest descent far from the solution and like
+Gauss--Newton near it.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch06-biblio}
+
+The Gauss--Newton method dates to Gauss (1809). Levenberg (1944)
+introduced the damping parameter; Marquardt (1963) added the adaptive
+adjustment strategy. The MINPACK implementation used by scipy's
+`method='lm'` is from Moré, Garbow, and Hillstrom (1980).
+
+The trust-region reflective method (`trf`) is from Branch, Coleman,
+and Li (1999). The dogleg method (`dogbox`) combines ideas from
+Powell's dogleg and box-constrained optimization.
+
+Broyden's method (1965) for root finding is the rank-one analogue of
+BFGS. The connection between nonlinear least squares and
+M-estimation---both are "find the zero of an estimating equation"---is
+developed in Chapter 12 (GLMs and M-estimation).
+
+`curve_fit`'s covariance matrix and its limitations are rarely
+discussed in the scipy documentation. The delta-method prediction
+intervals shown in the worked example are developed formally in
+Chapter 13 (discrete choice, marginal effects via delta method).
