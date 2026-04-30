@@ -2,29 +2,384 @@
 title: "Global, Stochastic, and Derivative-Free Optimization"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import (
+    minimize, differential_evolution, dual_annealing,
+    basinhopping, shgo, direct,
+)
+
+plt.style.use('assets/book.mplstyle')
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning |
+|--------|---------|
+| $f(\mathbf{x})$ | Objective function (possibly nonconvex, nondifferentiable) |
+| $\Omega$ | Bounded search domain ($\mathbf{x} \in \Omega \subset \mathbb{R}^p$) |
+| $f^* = \min_{\mathbf{x} \in \Omega} f(\mathbf{x})$ | Global minimum |
+| $T_k$ | Temperature at iteration $k$ (simulated annealing) |
+| $\mathcal{S}_k$ | Simplex at iteration $k$ (Nelder--Mead) |
+| $\mathcal{H}$ | Set of hyperrectangles (DIRECT) |
+| $K_f$ | Lipschitz constant of $f$ |
+
+
+# Motivation {#sec-ch05-motivation}
+
+Chapters 2--4 solved smooth optimization problems. The methods
+converge quickly---superlinearly or even quadratically---but they find
+*local* minima, not global ones. For a convex objective, every local
+minimum is global, so this distinction does not matter. For a nonconvex
+objective, it matters enormously.
+
+In statistical applications, nonconvexity arises more often than
+textbooks admit. Gaussian mixture models have multiple local maxima in
+the likelihood (Chapter 14). Nonlinear least squares with a bad model
+can have many local minima (Chapter 6). The CASH problem from Chapter 1
+is a mixed discrete-continuous optimization over a noisy, nonconvex
+landscape. Even when the objective is technically convex, a poor
+starting point can put a local solver in a region where the landscape
+*looks* nonconvex due to ill-conditioning.
+
+This chapter covers three classes of methods:
+
+- **Derivative-free local methods** (Nelder--Mead, Powell, COBYLA):
+  they do not use gradients, which makes them applicable to noisy or
+  nondifferentiable objectives, but they have no convergence
+  guarantees even for smooth problems.
+
+- **Stochastic global methods** (simulated annealing, differential
+  evolution, basin-hopping): they explore the landscape stochastically
+  and have global convergence results *in theory*, but the theory
+  requires conditions (like logarithmic cooling) that make the methods
+  impractically slow.
+
+- **Deterministic global methods** (DIRECT, SHGO): they systematically
+  partition the search space and have rigorous guarantees under
+  Lipschitz continuity, but they scale poorly with dimension.
+
+The honest message of this chapter: global optimization is hard. The
+methods here are useful tools, but none of them is a substitute for
+understanding the problem's structure. When a global method is
+needed, the first question should be: can I make the problem easier
+(better parameterization, fewer local minima, a warm start from domain
+knowledge)?
+
+
+# Mathematical Foundation {#sec-ch05-math}
+
+## The hardness of global optimization
+
+::: {#asm-global .callout-important}
+## Assumption 5.1 (Lipschitz continuity)
+$f: \Omega \to \mathbb{R}$ is Lipschitz continuous on a bounded domain
+$\Omega \subset \mathbb{R}^p$:
+$$
+|f(\mathbf{x}) - f(\mathbf{y})| \leq K_f \|\mathbf{x} - \mathbf{y}\| \quad \forall \mathbf{x}, \mathbf{y} \in \Omega.
+$$
 :::
 
-# Motivation {#sec-ch04-motivation}
+Under Assumption 5.1, the global minimum exists (by compactness of
+$\Omega$ and continuity of $f$) but finding it is fundamentally
+different from finding a local minimum. A local method can verify local
+optimality by checking the gradient and Hessian. A global method must
+rule out *every other point* in $\Omega$---which requires either
+exhaustive search or structural assumptions (like Lipschitz continuity)
+that allow pruning.
 
-# Mathematical Foundation {#sec-ch04-math}
+Without Lipschitz continuity or another regularity assumption, no
+algorithm can guarantee finding the global minimum with finitely many
+function evaluations. The function could have an arbitrarily deep,
+narrow well at a point the algorithm never queries.
 
-# The Algorithm {#sec-ch04-algorithm}
 
-# Statistical Properties {#sec-ch04-stats}
+## Simulated annealing
 
-# SciPy Implementation {#sec-ch04-scipy}
+Simulated annealing is a stochastic method inspired by the physical
+process of slow cooling in metallurgy. At each iteration, a candidate
+point $\mathbf{x}'$ is drawn from a proposal distribution around the
+current point $\mathbf{x}_k$. If $f(\mathbf{x}') < f(\mathbf{x}_k)$,
+the candidate is accepted. If $f(\mathbf{x}') \geq f(\mathbf{x}_k)$,
+the candidate is accepted with probability
+$\exp(-(f(\mathbf{x}') - f(\mathbf{x}_k))/T_k)$, where $T_k$ is the
+*temperature*. High temperature makes uphill moves likely (exploration);
+low temperature makes them unlikely (exploitation).
 
-# From-Scratch Implementation {#sec-ch04-scratch}
+::: {#thm-sa .callout-note}
+## Theorem 5.1 (Simulated annealing convergence under logarithmic cooling)
+Let $f: \Omega \to \mathbb{R}$ be continuous on a compact set $\Omega$,
+and let $\{T_k\}$ be a temperature schedule satisfying
+$T_k \geq C / \ln(k + 2)$ for a sufficiently large constant $C$
+(depending on the depth of the deepest local minimum relative to the
+global minimum). Then the iterates of simulated annealing satisfy
+$$
+\Pr(\mathbf{x}_k \in \Omega^*_\epsilon) \to 1 \quad \text{as } k \to \infty,
+$$
+where $\Omega^*_\epsilon = \{\mathbf{x} \in \Omega : f(\mathbf{x}) \leq f^* + \epsilon\}$.
+:::
 
-# Diagnostics {#sec-ch04-diagnostics}
+*Proof.* The proof uses the theory of inhomogeneous Markov chains.
+At fixed temperature $T$, the Metropolis acceptance rule defines a
+Markov chain on $\Omega$ (discretized to a finite state space for the
+formal argument). The stationary distribution of this chain is the
+Boltzmann distribution $\pi_T(\mathbf{x}) \propto \exp(-f(\mathbf{x})/T)$.
+As $T \to 0$, $\pi_T$ concentrates on the global minimizers of $f$.
 
-# Computational Considerations {#sec-ch04-computation}
+The question is how fast $T_k$ can decrease while maintaining
+convergence. The key result (Hajek, 1988) shows that convergence
+in probability to $\Omega^*_\epsilon$ holds if and only if:
+$$
+\sum_{k=1}^{\infty} \exp(-d^* / T_k) = \infty,
+$$ {#eq-hajek}
+where $d^*$ is the *depth* of the deepest local minimum---the maximum
+energy barrier the chain must cross to reach the global minimum from
+any local minimum.
 
-# Worked Example {#sec-ch04-example}
+With $T_k = C/\ln(k+2)$ and $C \geq d^*$:
+$$
+\exp(-d^*/T_k) = \exp(-d^* \ln(k+2)/C) = (k+2)^{-d^*/C} \geq (k+2)^{-1}.
+$$
+The series $\sum (k+2)^{-1}$ diverges (harmonic series), so @eq-hajek
+is satisfied. The Markov chain theory (Hajek, 1988, Theorem 1) then
+gives convergence in probability.
 
-# Exercises {#sec-ch04-exercises}
+Conversely, if $T_k$ decreases faster than $C/\ln k$---for example,
+$T_k = C/k$ (geometric cooling)---then the series in @eq-hajek
+converges, and the chain can get trapped in a local minimum with
+positive probability. $\square$
 
-# Bibliographic Notes {#sec-ch04-biblio}
+::: {.callout-warning}
+## The logarithmic cooling schedule is useless in practice
+Theorem 5.1 guarantees convergence, but the rate is
+$O(1/\ln k)$---slower than any polynomial. To reduce
+$\Pr(\mathbf{x}_k \notin \Omega^*_\epsilon)$ to $0.01$ requires
+$k \sim e^{100 d^*/C}$ iterations. For any nontrivial problem
+($d^* > 0$), this is astronomical.
+
+Every practical simulated annealing implementation uses a faster
+cooling schedule (geometric: $T_{k+1} = \alpha T_k$ with
+$\alpha \approx 0.95$) that violates the theorem's conditions. These
+implementations can and do get trapped in local minima. Simulated
+annealing is a useful heuristic, not a reliable global optimizer.
+:::
+
+
+## DIRECT: deterministic global search under Lipschitz continuity
+
+The DIRECT algorithm (Dividing Rectangles, Jones et al. 1993)
+systematically partitions $\Omega$ into hyperrectangles, evaluates $f$
+at the center of each, and identifies which rectangles are
+"potentially optimal"---meaning they could contain the global minimum
+for some Lipschitz constant $K_f$.
+
+::: {#thm-direct .callout-note}
+## Theorem 5.2 (DIRECT correctness on Lipschitz functions)
+Under Assumption 5.1, the DIRECT algorithm samples a dense subset of
+$\Omega$: the set of evaluated points $\{\mathbf{x}_1, \mathbf{x}_2, \ldots\}$
+is dense in $\Omega$ as the number of evaluations $N \to \infty$.
+Consequently,
+$$
+\min_{i \leq N} f(\mathbf{x}_i) \to f^* \quad \text{as } N \to \infty.
+$$
+:::
+
+*Proof.* At each iteration, DIRECT identifies all *potentially optimal*
+hyperrectangles: a rectangle $\mathcal{R}$ with center $\mathbf{c}$
+and half-diagonal $d$ is potentially optimal if there exists
+$\tilde{K} > 0$ such that
+$$
+f(\mathbf{c}) - \tilde{K} d \leq f(\mathbf{c}') - \tilde{K} d' \quad \forall \text{ rectangles } \mathcal{R}',
+$$
+and $f(\mathbf{c}) - \tilde{K} d \leq f^{\text{min}} - \epsilon$
+(where $f^{\text{min}}$ is the current best value and $\epsilon > 0$
+is a tolerance). Potentially optimal rectangles are divided into
+smaller rectangles by trisecting along their longest dimension.
+
+The key observation: the hyperrectangle containing the global minimizer
+is always potentially optimal (for $\tilde{K} = K_f$, the Lipschitz
+constant). Therefore, this rectangle is divided at every iteration,
+and its diameter shrinks geometrically. After $O(3^p)$ iterations per
+refinement level, the center of the rectangle containing $\mathbf{x}^*$
+is within $\epsilon$ of $\mathbf{x}^*$.
+
+More precisely: after $N$ function evaluations, the smallest
+hyperrectangle containing $\mathbf{x}^*$ has diameter at most
+$O(N^{-1/p})$ (from the trisection geometry). By Lipschitz continuity:
+$f(\mathbf{c}_N) - f^* \leq K_f \cdot O(N^{-1/p})$,
+which tends to zero. $\square$
+
+The $O(N^{-1/p})$ rate reveals the fundamental limitation of
+deterministic global optimization: the cost grows exponentially in
+dimension $p$. For $p = 10$, achieving $\epsilon = 0.01$ requires
+$N \sim (K_f/\epsilon)^{10}$ evaluations. This is why DIRECT is
+practical only for low-dimensional problems ($p \leq 5$--$10$).
+
+
+## Nelder--Mead: a method without guarantees
+
+The Nelder--Mead simplex method maintains a simplex of $p + 1$ points
+in $\mathbb{R}^p$ and deforms it through reflection, expansion,
+contraction, and shrinkage steps, always replacing the worst vertex.
+It uses no derivatives.
+
+Unlike every other method in this book, Nelder--Mead has *no
+convergence guarantee*---not even to a local minimum, not even for
+smooth convex functions in dimension $p \geq 2$.
+
+::: {.callout-warning}
+## Counterexample 5.1 (McKinnon, 1998)
+McKinnon constructed a smooth, strictly convex function
+$f: \mathbb{R}^2 \to \mathbb{R}$ and a starting simplex from which
+Nelder--Mead converges to a non-stationary point. The function is:
+$$
+f(x_1, x_2) = \begin{cases}
+\theta \phi |x_1|^\tau + x_2 + x_2^2 & \text{if } x_1 \leq 0, \\
+\theta |x_1|^\tau + x_2 + x_2^2 & \text{if } x_1 > 0,
+\end{cases}
+$$
+with parameters $\theta = 6$, $\phi = 60$, $\tau = 2$, and starting
+simplex $\{(0, 0), (1, 1), (\frac{1+\sqrt{33}}{8}, \frac{1-\sqrt{33}}{8})\}$.
+
+The minimum is at $(0, -1/2)$ with $f^* = -1/4$. The Nelder--Mead
+iterates converge to $(0, 0)$ with $f = 0 \neq f^*$. The simplex
+collapses to a line segment and the method stalls.
+:::
+
+This counterexample is not academic: Nelder--Mead failures occur in
+practice whenever the simplex degenerates (flattens into a
+lower-dimensional subspace). Scipy's implementation includes
+*adaptive* parameters (scaling the reflection, expansion, and
+contraction coefficients with dimension) that reduce but do not
+eliminate this failure mode.
+
+Despite the lack of guarantees, Nelder--Mead remains widely used
+because it is simple, requires no derivatives, and works well on many
+practical problems when $p$ is small ($p \leq 10$). It is scipy's
+default method when no gradient is supplied.
+
+
+# The Algorithm {#sec-ch05-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 5.1: Simulated Annealing (Metropolis--Hastings)
+
+**Input:** $f$, starting point $\mathbf{x}_0$, initial temperature $T_0$,
+cooling schedule $\{T_k\}$, proposal distribution $q(\cdot | \mathbf{x})$
+
+**Output:** Approximate global minimizer $\mathbf{x}^*$
+
+1. $\mathbf{x}_{\text{best}} \leftarrow \mathbf{x}_0$
+2. **for** $k = 0, 1, 2, \ldots$ **do**
+3. $\quad$ $\mathbf{x}' \sim q(\cdot | \mathbf{x}_k)$ $\triangleright$ propose candidate
+4. $\quad$ $\Delta \leftarrow f(\mathbf{x}') - f(\mathbf{x}_k)$
+5. $\quad$ **if** $\Delta < 0$ **or** $\text{Uniform}(0,1) < \exp(-\Delta/T_k)$ **then**
+6. $\quad\quad$ $\mathbf{x}_{k+1} \leftarrow \mathbf{x}'$ $\triangleright$ accept
+7. $\quad$ **else**
+8. $\quad\quad$ $\mathbf{x}_{k+1} \leftarrow \mathbf{x}_k$ $\triangleright$ reject
+9. $\quad$ **end if**
+10. $\quad$ **if** $f(\mathbf{x}_{k+1}) < f(\mathbf{x}_{\text{best}})$ **then**
+11. $\quad\quad$ $\mathbf{x}_{\text{best}} \leftarrow \mathbf{x}_{k+1}$
+12. $\quad$ **end if**
+13. $\quad$ $T_{k+1} \leftarrow \text{cool}(T_k)$ $\triangleright$ e.g., $T_{k+1} = \alpha T_k$ (geometric) or $C/\ln(k+3)$ (logarithmic)
+14. **end for**
+15. **return** $\mathbf{x}_{\text{best}}$
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 5.2: Nelder--Mead Simplex
+
+**Input:** $f$, initial simplex $\mathcal{S}_0 = \{\mathbf{v}_0, \ldots, \mathbf{v}_p\}$,
+parameters $\alpha_r = 1$ (reflection), $\alpha_e = 2$ (expansion),
+$\alpha_c = 1/2$ (contraction), $\alpha_s = 1/2$ (shrinkage)
+
+**Output:** Approximate minimizer $\mathbf{v}_0$ (best vertex)
+
+1. **repeat**
+2. $\quad$ Sort vertices: $f(\mathbf{v}_0) \leq f(\mathbf{v}_1) \leq \cdots \leq f(\mathbf{v}_p)$
+3. $\quad$ $\bar{\mathbf{v}} \leftarrow \frac{1}{p}\sum_{i=0}^{p-1} \mathbf{v}_i$ $\triangleright$ centroid of best $p$ vertices
+4. $\quad$ $\mathbf{v}_r \leftarrow \bar{\mathbf{v}} + \alpha_r(\bar{\mathbf{v}} - \mathbf{v}_p)$ $\triangleright$ reflect worst vertex
+5. $\quad$ **if** $f(\mathbf{v}_0) \leq f(\mathbf{v}_r) < f(\mathbf{v}_{p-1})$ **then**
+6. $\quad\quad$ $\mathbf{v}_p \leftarrow \mathbf{v}_r$ $\triangleright$ accept reflection
+7. $\quad$ **else if** $f(\mathbf{v}_r) < f(\mathbf{v}_0)$ **then**
+8. $\quad\quad$ $\mathbf{v}_e \leftarrow \bar{\mathbf{v}} + \alpha_e(\mathbf{v}_r - \bar{\mathbf{v}})$ $\triangleright$ expand
+9. $\quad\quad$ $\mathbf{v}_p \leftarrow \min(f(\mathbf{v}_r), f(\mathbf{v}_e))$ $\triangleright$ keep better
+10. $\quad$ **else** $\triangleright$ $f(\mathbf{v}_r) \geq f(\mathbf{v}_{p-1})$
+11. $\quad\quad$ $\mathbf{v}_c \leftarrow \bar{\mathbf{v}} + \alpha_c(\mathbf{v}_p - \bar{\mathbf{v}})$ $\triangleright$ contract
+12. $\quad\quad$ **if** $f(\mathbf{v}_c) < f(\mathbf{v}_p)$ **then**
+13. $\quad\quad\quad$ $\mathbf{v}_p \leftarrow \mathbf{v}_c$
+14. $\quad\quad$ **else** $\triangleright$ shrink toward best vertex
+15. $\quad\quad\quad$ **for** $i = 1, \ldots, p$ **do**
+16. $\quad\quad\quad\quad$ $\mathbf{v}_i \leftarrow \mathbf{v}_0 + \alpha_s(\mathbf{v}_i - \mathbf{v}_0)$
+17. $\quad\quad$ **end if**
+18. $\quad$ **end if**
+19. **until** $\text{diam}(\mathcal{S}_k) < \epsilon$ **or** $\max_i |f(\mathbf{v}_i) - f(\mathbf{v}_0)| < \epsilon$
+:::
+
+
+# Statistical Properties {#sec-ch05-stats}
+
+The methods in this chapter arise in statistics when the objective
+landscape is nonconvex or the gradient is unavailable.
+
+**Gaussian mixtures.** The log-likelihood of a Gaussian mixture model
+with $K$ components has $O(K!)$ equivalent global maxima (from label
+permutations) and potentially many additional local maxima. EM
+(Chapter 14) converges to a local maximum; global search methods can
+explore multiple basins. In practice, random restarts of EM are more
+effective than applying a global optimizer to the raw likelihood.
+
+**The CASH problem (Chapter 1).** AutoML searches over a mixed
+discrete-continuous space (algorithm choice × hyperparameters) with a
+noisy, nonconvex objective (cross-validated loss). `differential_evolution`
+and `dual_annealing` are natural tools here. But the CASH objective
+has a distinctive structure---the discrete component (algorithm
+selection) creates disjoint subspaces, and within each subspace the
+landscape may be smooth---that generic global optimizers do not exploit.
+Bayesian optimization (not covered in this book; see the bibliographic
+notes) exploits this structure by building a surrogate model.
+
+**Simulation-based inference.** When the likelihood is intractable but
+the model can be simulated (agent-based models, complex stochastic
+systems), derivatives are unavailable and the objective is noisy.
+Nelder--Mead applied to a smoothed or averaged objective, or
+derivative-free pattern search, are standard approaches. The
+convergence theory is weak, but the practical alternative is often no
+inference at all.
+
+
+# SciPy Implementation {#sec-ch05-scipy}
+
+*To be written in the implementation pass.*
+
+
+# From-Scratch Implementation {#sec-ch05-scratch}
+
+*To be written in the implementation pass.*
+
+
+# Diagnostics {#sec-ch05-diagnostics}
+
+*To be written in the implementation pass.*
+
+
+# Computational Considerations {#sec-ch05-computation}
+
+*To be written in the implementation pass.*
+
+
+# Worked Example {#sec-ch05-example}
+
+*To be written in the worked-example pass.*
+
+
+# Exercises {#sec-ch05-exercises}
+
+*To be written in the worked-example pass.*
+
+
+# Bibliographic Notes {#sec-ch05-biblio}
+
+*To be written in the worked-example pass.*
