@@ -2,29 +2,666 @@
 title: "Resampling Inference and the Bootstrap"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.stats import bootstrap, permutation_test
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning |
+|--------|---------|
+| $\hat{\theta}_n$ | Estimator (function of the sample) |
+| $\hat{\theta}_n^{*(b)}$ | $b$-th bootstrap replicate |
+| $B$ | Number of bootstrap resamples |
+| $\hat{F}_n$ | Empirical distribution function |
+| $\hat{\text{se}}_{\text{boot}}$ | Bootstrap standard error |
+| $z_\alpha$ | Standard normal quantile |
+
+
+# Motivation {#sec-ch09-motivation}
+
+You have an estimator $\hat{\theta}_n$ computed from $n$ observations.
+You need a confidence interval. The textbook answer uses the CLT:
+$\hat{\theta}_n \pm z_{\alpha/2} \cdot \hat{\text{se}}$. But this
+requires: (1) knowing $\hat{\text{se}}$ analytically, and (2) the
+sampling distribution being approximately normal. Neither is guaranteed.
+
+The bootstrap replaces both requirements with computation: resample
+the data with replacement, recompute $\hat{\theta}$, and use the
+distribution of replicates to estimate the sampling distribution
+directly. When it works, it is remarkably general --- applicable to
+any estimator, any sample size, any distribution. When it fails, the
+failures are instructive and predictable.
+
+Scipy provides `scipy.stats.bootstrap` for confidence intervals and
+`scipy.stats.permutation_test` for hypothesis tests. This chapter
+explains what these functions do, implements the core algorithms from
+scratch, and catalogs the failure modes that the documentation does
+not mention.
+
+
+# Mathematical Foundation {#sec-ch09-math}
+
+## The bootstrap principle
+
+The *bootstrap principle*: replace the unknown population distribution
+$F$ with the empirical distribution $\hat{F}_n$ (the discrete
+distribution putting mass $1/n$ on each observation). Then the
+*bootstrap distribution* of $\hat{\theta}_n^* - \hat{\theta}_n$ (where
+$\hat{\theta}_n^*$ is computed from a resample from $\hat{F}_n$)
+approximates the sampling distribution of $\hat{\theta}_n - \theta$.
+
+**Why it works (intuition):** $\hat{F}_n \to F$ by the
+Glivenko--Cantelli theorem. If $\hat{\theta}$ is a smooth functional
+of $F$, then the bootstrap distribution (which depends on $\hat{F}_n$)
+converges to the sampling distribution (which depends on $F$). The
+bootstrap is consistent when $\hat{\theta}$ is a smooth function of
+$\hat{F}_n$ --- and inconsistent when it is not.
+
+## Confidence intervals
+
+Three types, from least to most sophisticated:
+
+**Percentile interval:** $(\hat{\theta}^*_{\alpha/2}, \hat{\theta}^*_{1-\alpha/2})$
+--- the $\alpha/2$ and $1-\alpha/2$ quantiles of the bootstrap
+distribution. Simple but can have poor coverage when the bootstrap
+distribution is skewed or biased.
+
+**Basic (pivotal) interval:** $(2\hat{\theta}_n - \hat{\theta}^*_{1-\alpha/2}, 2\hat{\theta}_n - \hat{\theta}^*_{\alpha/2})$.
+Reflects the bootstrap distribution around $\hat{\theta}_n$. Better
+coverage than percentile for symmetric distributions.
+
+**BCa (bias-corrected and accelerated):** Adjusts the percentile
+interval for both bias and skewness. The correction uses the jackknife
+to estimate the acceleration constant $a$ and the proportion of
+bootstrap replicates below $\hat{\theta}_n$ for the bias correction
+$z_0$. BCa is scipy's default because it has the best coverage
+properties among non-parametric bootstrap intervals.
+
+The BCa quantile adjustment:
+$$
+\alpha_1 = \Phi\!\left(z_0 + \frac{z_0 + z_\alpha}{1 - a(z_0 + z_\alpha)}\right),
+\quad
+\alpha_2 = \Phi\!\left(z_0 + \frac{z_0 + z_{1-\alpha}}{1 - a(z_0 + z_{1-\alpha})}\right),
+$$
+where $z_0 = \Phi^{-1}(\text{proportion of boot reps below } \hat{\theta})$
+and $a = \frac{\sum_i (\hat{\theta}_{(-i)} - \bar{\hat{\theta}}_{(\cdot)})^3}{6(\sum_i (\hat{\theta}_{(-i)} - \bar{\hat{\theta}}_{(\cdot)})^2)^{3/2}}$
+(from the jackknife).
+
+## Permutation tests
+
+A permutation test of $H_0$: two groups have the same distribution
+works by computing the test statistic under all (or many random)
+permutations of the group labels. The $p$-value is the fraction of
+permutations giving a test statistic as extreme as the observed one.
+
+**Exactness:** Under exchangeability (i.e., $H_0$ is true), every
+permutation is equally likely, so the permutation $p$-value is exact
+--- no large-sample approximation needed, no distributional assumptions.
+
+## When the bootstrap fails
+
+The bootstrap is not universal. It fails when $\hat{\theta}$ is not a
+smooth functional of $\hat{F}_n$. The canonical failures:
+
+1. **The sample maximum.** $\hat{\theta} = X_{(n)}$ converges at rate
+   $n$ (not $\sqrt{n}$), and the bootstrap cannot reproduce this
+   non-standard rate.
+
+2. **Heavy tails.** When $\text{Var}(X) = \infty$ (e.g., Cauchy), the
+   bootstrap variance is infinite and the bootstrap CI has zero
+   coverage asymptotically.
+
+3. **Boundary parameters.** When $\theta$ lies on the boundary of the
+   parameter space (e.g., $\sigma^2 = 0$ in a variance component),
+   the bootstrap distribution concentrates at the boundary incorrectly.
+
+We demonstrate each failure with code.
+
+
+# The Algorithm {#sec-ch09-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 9.1: Nonparametric Bootstrap
+
+**Input:** Data $\mathbf{x} = (x_1, \ldots, x_n)$, statistic $\hat{\theta}(\cdot)$,
+number of resamples $B$
+
+**Output:** Bootstrap distribution $\hat{\theta}^{*(1)}, \ldots, \hat{\theta}^{*(B)}$
+
+1. **for** $b = 1, \ldots, B$ **do**
+2. $\quad$ Draw $\mathbf{x}^{*(b)}$ by sampling $n$ values from $\mathbf{x}$ **with replacement**
+3. $\quad$ $\hat{\theta}^{*(b)} \leftarrow \hat{\theta}(\mathbf{x}^{*(b)})$
+4. **end for**
+5. $\hat{\text{se}}_{\text{boot}} \leftarrow \text{sd}(\hat{\theta}^{*(1)}, \ldots, \hat{\theta}^{*(B)})$
+6. **return** $\{\hat{\theta}^{*(b)}\}$, $\hat{\text{se}}_{\text{boot}}$
 :::
 
-# Motivation {#sec-ch08-motivation}
+::: {.callout-note appearance="minimal"}
+## Algorithm 9.2: Permutation Test
 
-# Mathematical Foundation {#sec-ch08-math}
+**Input:** Two samples $\mathbf{x} = (x_1, \ldots, x_m)$,
+$\mathbf{y} = (y_1, \ldots, y_k)$, test statistic $T(\cdot, \cdot)$,
+number of permutations $B$
 
-# The Algorithm {#sec-ch08-algorithm}
+**Output:** $p$-value
 
-# Statistical Properties {#sec-ch08-stats}
+1. $T_{\text{obs}} \leftarrow T(\mathbf{x}, \mathbf{y})$
+2. **for** $b = 1, \ldots, B$ **do**
+3. $\quad$ Randomly permute the combined sample $(x_1, \ldots, x_m, y_1, \ldots, y_k)$
+4. $\quad$ $\mathbf{x}^{*(b)} \leftarrow$ first $m$ elements; $\mathbf{y}^{*(b)} \leftarrow$ last $k$ elements
+5. $\quad$ $T^{*(b)} \leftarrow T(\mathbf{x}^{*(b)}, \mathbf{y}^{*(b)})$
+6. **end for**
+7. $p \leftarrow \frac{1}{B}\sum_{b=1}^B \mathbb{1}(|T^{*(b)}| \geq |T_{\text{obs}}|)$
+8. **return** $p$
+:::
 
-# SciPy Implementation {#sec-ch08-scipy}
 
-# From-Scratch Implementation {#sec-ch08-scratch}
+# Statistical Properties {#sec-ch09-stats}
 
-# Diagnostics {#sec-ch08-diagnostics}
+**Bootstrap consistency:** For smooth functionals (means, quantiles,
+regression coefficients), the bootstrap distribution converges to the
+sampling distribution at rate $O(n^{-1/2})$ --- the same rate as the CLT.
+BCa intervals achieve *second-order accuracy*: their coverage error is
+$O(n^{-1})$ instead of $O(n^{-1/2})$ for the standard normal interval.
 
-# Computational Considerations {#sec-ch08-computation}
+**Permutation test power:** The permutation test controls Type I error
+exactly under $H_0$ (exchangeability). Its power depends on the test
+statistic: the difference of means is optimal for shift alternatives,
+but the Kolmogorov--Smirnov statistic is better for distributional
+alternatives.
 
-# Worked Example {#sec-ch08-example}
 
-# Exercises {#sec-ch08-exercises}
+# SciPy Implementation {#sec-ch09-scipy}
 
-# Bibliographic Notes {#sec-ch08-biblio}
+## `scipy.stats.bootstrap`
+
+```{python}
+#| label: bootstrap-demo
+# Bootstrap CI for the mean
+x = rng.standard_normal(50) + 1  # true mean = 1
+result = bootstrap(
+    data=(x,),
+    statistic=np.mean,
+    n_resamples=9999,
+    confidence_level=0.95,
+    method='BCa',                # default: bias-corrected and accelerated
+    random_state=42,
+)
+print(f"Sample mean: {x.mean():.4f}")
+print(f"Bootstrap SE: {result.standard_error:.4f}")
+print(f"BCa 95% CI: ({result.confidence_interval.low:.4f}, "
+      f"{result.confidence_interval.high:.4f})")
+```
+
+**Key parameters:**
+
+- `method='BCa'` (default): Best coverage. Falls back to `'percentile'`
+  if the jackknife fails (e.g., for non-differentiable statistics).
+- `method='percentile'`: Simpler, worse coverage for skewed distributions.
+- `method='basic'`: Pivotal interval.
+- `n_resamples=9999`: Odd number recommended (avoids interpolation
+  artifacts at the percentile boundaries).
+- `vectorized=False` (default): `statistic` is called once per
+  resample. Set `vectorized=True` and write `statistic(x, axis=axis)`
+  for massive speedup.
+
+## `scipy.stats.permutation_test`
+
+```{python}
+#| label: permutation-demo
+# Two-sample test: is the mean of x different from the mean of y?
+x = rng.standard_normal(40) + 0.5
+y = rng.standard_normal(50)
+
+def mean_diff(x, y, axis):
+    return np.mean(x, axis=axis) - np.mean(y, axis=axis)
+
+result = permutation_test(
+    data=(x, y),
+    statistic=mean_diff,
+    n_resamples=9999,
+    alternative='two-sided',
+    random_state=42,
+)
+print(f"Observed diff: {result.statistic:.4f}")
+print(f"Permutation p-value: {result.pvalue:.4f}")
+```
+
+
+# From-Scratch Implementation {#sec-ch09-scratch}
+
+## Bootstrap with BCa
+
+```{python}
+#| label: bootstrap-scratch
+
+def bootstrap_ci(x, statistic, n_boot=9999, alpha=0.05, seed=42):
+    """Nonparametric bootstrap with BCa interval.
+
+    Implements Algorithm 9.1 + BCa correction.
+
+    Parameters
+    ----------
+    x : array
+        Data.
+    statistic : callable
+        Function: statistic(sample) -> scalar.
+    n_boot : int
+        Number of bootstrap resamples.
+    alpha : float
+        Significance level (0.05 for 95% CI).
+
+    Returns
+    -------
+    dict with keys: ci, se, boot_dist, z0, a
+    """
+    local_rng = np.random.default_rng(seed)
+    n = len(x)
+    theta_hat = statistic(x)
+
+    # Bootstrap resamples
+    boot_stats = np.zeros(n_boot)
+    for b in range(n_boot):
+        idx = local_rng.integers(0, n, size=n)
+        boot_stats[b] = statistic(x[idx])
+
+    se = boot_stats.std(ddof=1)
+
+    # BCa corrections
+    # Bias correction z0
+    z0 = stats.norm.ppf(np.mean(boot_stats < theta_hat))
+
+    # Acceleration a (jackknife)
+    jack_stats = np.zeros(n)
+    for i in range(n):
+        jack_stats[i] = statistic(np.delete(x, i))
+    jack_mean = jack_stats.mean()
+    num = np.sum((jack_mean - jack_stats)**3)
+    den = 6 * np.sum((jack_mean - jack_stats)**2)**1.5
+    a = num / den if den > 0 else 0
+
+    # Adjusted percentiles
+    z_lo = stats.norm.ppf(alpha / 2)
+    z_hi = stats.norm.ppf(1 - alpha / 2)
+
+    a1 = stats.norm.cdf(z0 + (z0 + z_lo) / (1 - a*(z0 + z_lo)))
+    a2 = stats.norm.cdf(z0 + (z0 + z_hi) / (1 - a*(z0 + z_hi)))
+
+    ci = (np.percentile(boot_stats, 100*a1),
+          np.percentile(boot_stats, 100*a2))
+
+    return {'ci': ci, 'se': se, 'boot_dist': boot_stats,
+            'z0': z0, 'a': a}
+```
+
+## Verification against scipy
+
+```{python}
+#| label: bootstrap-verify
+x = rng.standard_normal(50) + 1
+
+# Our implementation
+res_ours = bootstrap_ci(x, np.mean, n_boot=9999)
+
+# Scipy
+res_scipy = bootstrap((x,), np.mean, n_resamples=9999,
+                       method='BCa', random_state=42)
+
+print(f"From-scratch: CI=({res_ours['ci'][0]:.4f}, {res_ours['ci'][1]:.4f}), "
+      f"SE={res_ours['se']:.4f}")
+print(f"scipy:        CI=({res_scipy.confidence_interval.low:.4f}, "
+      f"{res_scipy.confidence_interval.high:.4f}), "
+      f"SE={res_scipy.standard_error:.4f}")
+print(f"z0={res_ours['z0']:.4f}, a={res_ours['a']:.4f}")
+```
+
+The CIs won't match exactly (different random draws), but the standard
+errors and BCa parameters should be similar.
+
+
+# Diagnostics {#sec-ch09-diagnostics}
+
+## Bootstrap failure modes (with code)
+
+### Failure 1: The sample maximum
+
+```{python}
+#| label: fig-boot-max-failure
+#| fig-cap: "Bootstrap failure for the sample maximum. Left: the true sampling distribution of max(X) for n=50 uniform observations concentrates near 1 at rate n. Right: the bootstrap distribution concentrates at the observed maximum, missing the true distribution entirely. The bootstrap cannot reproduce the non-standard O(1/n) rate."
+
+n = 50
+x = rng.uniform(0, 1, n)
+x_max = x.max()
+
+# True distribution of max: Beta(n, 1), CDF = t^n
+true_grid = np.linspace(0.8, 1.0, 200)
+true_pdf = stats.beta.pdf(true_grid, n, 1)
+
+# Bootstrap distribution of max
+n_boot = 5000
+boot_max = np.zeros(n_boot)
+for b in range(n_boot):
+    boot_max[b] = x[rng.integers(0, n, n)].max()
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+ax1.plot(true_grid, true_pdf, color="C0", linewidth=1.8)
+ax1.axvline(1, color="gray", linestyle="--", alpha=0.5)
+ax1.set_xlabel(r"$X_{(n)}$"); ax1.set_title("True distribution of max")
+
+ax2.hist(boot_max, bins=40, density=True, alpha=0.7, color="C0")
+ax2.axvline(x_max, color="C1", linestyle="--", linewidth=1.5,
+            label=f"Observed max = {x_max:.4f}")
+ax2.set_xlabel(r"$X^*_{(n)}$"); ax2.set_title("Bootstrap distribution of max")
+ax2.legend()
+plt.tight_layout()
+plt.show()
+```
+
+### Failure 2: Heavy tails (Cauchy)
+
+```{python}
+#| label: boot-cauchy-failure
+# Bootstrap CI for the mean of a Cauchy sample
+# The mean doesn't exist — bootstrap CI is meaningless
+cauchy_x = stats.cauchy.rvs(size=100, random_state=42)
+
+# Run bootstrap 10 times to show instability
+widths = []
+for seed in range(10):
+    res = bootstrap((cauchy_x,), np.mean, n_resamples=999,
+                     method='percentile', random_state=seed)
+    width = res.confidence_interval.high - res.confidence_interval.low
+    widths.append(width)
+
+print(f"Bootstrap CI widths across 10 runs:")
+print(f"  Mean width:  {np.mean(widths):.1f}")
+print(f"  Std width:   {np.std(widths):.1f}")
+print(f"  Min / Max:   {np.min(widths):.1f} / {np.max(widths):.1f}")
+print(f"\nThe widths are wildly unstable because Var(X) = ∞.")
+print("The bootstrap CI for a Cauchy mean is meaningless.")
+```
+
+
+# Computational Considerations {#sec-ch09-computation}
+
+| Method | Cost | Storage | Notes |
+|---|---|---|---|
+| Nonparametric bootstrap | $O(B \cdot n \cdot C_\theta)$ | $O(B)$ for boot stats | $C_\theta$ = cost of computing $\hat{\theta}$ |
+| BCa | Same + $O(n \cdot C_\theta)$ for jackknife | $O(n)$ for jackknife | Jackknife adds $n$ extra evaluations |
+| Permutation test | $O(B \cdot (m+k) \cdot C_T)$ | $O(B)$ | $C_T$ = cost of test statistic |
+
+The vectorized interface (`vectorized=True`) in `scipy.stats.bootstrap`
+computes all resamples in a single NumPy operation, which is 10--100x
+faster than the loop. Always use it for simple statistics (mean, median,
+variance).
+
+
+# Worked Example {#sec-ch09-example}
+
+Bootstrap inference for the median income in California Housing data.
+
+```{python}
+#| label: worked-data
+from sklearn.datasets import fetch_california_housing
+housing = fetch_california_housing()
+income = housing.data[:, 0]  # MedInc feature
+n = len(income)
+print(f"n = {n}")
+print(f"Median income: {np.median(income):.4f}")
+print(f"Mean income:   {np.mean(income):.4f}")
+```
+
+```{python}
+#| label: worked-bootstrap
+# Bootstrap CI for the median
+res_median = bootstrap(
+    data=(income,),
+    statistic=np.median,
+    n_resamples=9999,
+    method='BCa',
+    random_state=42,
+)
+print(f"Median: {np.median(income):.4f}")
+print(f"Bootstrap SE: {res_median.standard_error:.4f}")
+print(f"BCa 95% CI: ({res_median.confidence_interval.low:.4f}, "
+      f"{res_median.confidence_interval.high:.4f})")
+
+# Compare with bootstrap CI for the mean
+res_mean = bootstrap(
+    data=(income,),
+    statistic=np.mean,
+    n_resamples=9999,
+    method='BCa',
+    random_state=42,
+)
+print(f"\nMean: {np.mean(income):.4f}")
+print(f"Bootstrap SE: {res_mean.standard_error:.4f}")
+print(f"BCa 95% CI: ({res_mean.confidence_interval.low:.4f}, "
+      f"{res_mean.confidence_interval.high:.4f})")
+```
+
+```{python}
+#| label: fig-worked-boot
+#| fig-cap: "Bootstrap distributions for the median (left) and mean (right) of California Housing income data. The median's bootstrap distribution is slightly skewed — this is where BCa's bias correction improves coverage over the percentile method. The mean's distribution is nearly symmetric, so BCa and percentile give similar results."
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+# Median bootstrap distribution (from our implementation)
+res_med_ours = bootstrap_ci(income, np.median, n_boot=9999)
+ax1.hist(res_med_ours['boot_dist'], bins=50, density=True, alpha=0.7,
+         color="C0")
+ax1.axvline(np.median(income), color="C1", linestyle="--")
+ax1.set_xlabel("Median income")
+ax1.set_title(f"Bootstrap median (z₀={res_med_ours['z0']:.3f})")
+
+# Mean bootstrap distribution
+res_mean_ours = bootstrap_ci(income, np.mean, n_boot=9999)
+ax2.hist(res_mean_ours['boot_dist'], bins=50, density=True, alpha=0.7,
+         color="C0")
+ax2.axvline(np.mean(income), color="C1", linestyle="--")
+ax2.set_xlabel("Mean income")
+ax2.set_title(f"Bootstrap mean (z₀={res_mean_ours['z0']:.3f})")
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Exercises {#sec-ch09-exercises}
+
+**Exercise 9.1** ($\star\star$, diagnostic failure). Generate 50
+observations from a Uniform(0, 1) distribution. Compute the bootstrap
+95% CI for the sample maximum. Then compute the true 95% CI using the
+known distribution of the order statistic $X_{(n)} \sim \text{Beta}(n, 1)$.
+Compare coverages across 200 simulation runs: what fraction of the
+time does each CI contain the true maximum (which is 1)?
+
+%%
+
+```{python}
+#| label: ex-9-1-solution
+n, n_sim = 50, 200
+boot_coverage = 0
+true_coverage = 0
+
+for sim in range(n_sim):
+    x = np.random.default_rng(sim).uniform(0, 1, n)
+
+    # Bootstrap CI for max
+    res = bootstrap((x,), np.max, n_resamples=999,
+                     method='percentile', random_state=sim)
+    if res.confidence_interval.low <= 1 <= res.confidence_interval.high:
+        boot_coverage += 1
+
+    # True CI: max ~ Beta(n, 1)
+    lo = stats.beta.ppf(0.025, n, 1)
+    hi = stats.beta.ppf(0.975, n, 1)
+    if lo <= 1 <= hi:
+        true_coverage += 1
+
+print(f"Bootstrap CI coverage: {boot_coverage/n_sim:.1%}")
+print(f"True CI coverage:      {true_coverage/n_sim:.1%}")
+print(f"\nBootstrap under-covers because max converges at rate n,")
+print("not sqrt(n). The bootstrap replicates can never exceed the")
+print("observed maximum, so the CI's upper bound is always ≤ x_(n).")
+```
+
+%%
+
+
+**Exercise 9.2** ($\star\star$, implementation). Implement the jackknife
+estimator of bias and variance for an arbitrary statistic. Verify on
+the sample variance: the jackknife bias estimate should be approximately
+$-\text{Var}(X)/(n-1)$ (the bias of the uncorrected sample variance).
+
+%%
+
+```{python}
+#| label: ex-9-2-solution
+
+def jackknife(x, statistic):
+    """Jackknife estimates of bias and variance."""
+    n = len(x)
+    theta_hat = statistic(x)
+    jack_stats = np.array([statistic(np.delete(x, i)) for i in range(n)])
+    jack_mean = jack_stats.mean()
+    bias = (n - 1) * (jack_mean - theta_hat)
+    variance = (n - 1) / n * np.sum((jack_stats - jack_mean)**2)
+    return {'bias': bias, 'variance': variance, 'se': np.sqrt(variance)}
+
+# Test: sample variance (biased version: divide by n, not n-1)
+x = rng.standard_normal(100)
+biased_var = lambda x: np.var(x, ddof=0)  # biased: divides by n
+
+jk = jackknife(x, biased_var)
+true_bias = -np.var(x, ddof=1) / len(x)  # approx -Var(X)/n
+
+print(f"Jackknife bias estimate: {jk['bias']:.6f}")
+print(f"True bias (approx):     {true_bias:.6f}")
+print(f"Jackknife SE:           {jk['se']:.6f}")
+```
+
+The jackknife bias is $(n-1)(\bar{\theta}_{(\cdot)} - \hat{\theta})$,
+where $\bar{\theta}_{(\cdot)}$ is the mean of the leave-one-out
+estimates. For the biased sample variance, this correctly identifies
+the $-1/n$ bias.
+
+%%
+
+
+**Exercise 9.3** ($\star\star$, comparison). Compare three bootstrap CI
+methods (percentile, basic, BCa) on a skewed distribution
+(Exponential with rate 1). Generate 30 observations, compute all three
+95% CIs for the mean, and repeat 1000 times. Report the empirical
+coverage of each method. Which achieves closest to 95%?
+
+%%
+
+```{python}
+#| label: ex-9-3-solution
+n, n_sim = 30, 1000
+true_mean = 1.0  # Exp(1) mean
+coverages = {'percentile': 0, 'basic': 0, 'BCa': 0}
+
+for sim in range(n_sim):
+    x = np.random.default_rng(sim).exponential(1, n)
+    for method in coverages:
+        res = bootstrap((x,), np.mean, n_resamples=999,
+                         method=method, random_state=sim)
+        if (res.confidence_interval.low <= true_mean <=
+            res.confidence_interval.high):
+            coverages[method] += 1
+
+print(f"{'Method':<12} {'Coverage':>10}")
+for method, count in coverages.items():
+    print(f"{method:<12} {count/n_sim:>10.1%}")
+```
+
+BCa typically achieves the best coverage for skewed distributions
+because it corrects for both bias ($z_0 \neq 0$ when the bootstrap
+distribution is off-center) and acceleration ($a \neq 0$ when the
+variance of $\hat{\theta}$ depends on $\theta$). The percentile
+method under-covers on one side and over-covers on the other.
+
+%%
+
+
+**Exercise 9.4** ($\star\star\star$, conceptual). The permutation test
+for the difference of means is exact under the null hypothesis
+$H_0: F_X = F_Y$ (exchangeability). But it tests more than just
+"equal means" --- it tests "equal distributions." Construct an example
+where $\mu_X = \mu_Y$ but $\text{Var}(X) \neq \text{Var}(Y)$, and show
+that the permutation test rejects using the difference of means as the
+test statistic. What does this tell you about interpreting permutation
+test results?
+
+%%
+
+```{python}
+#| label: ex-9-4-solution
+# Equal means, different variances
+x = rng.normal(0, 1, 100)    # N(0, 1)
+y = rng.normal(0, 5, 100)    # N(0, 25) — same mean, much larger variance
+
+def mean_diff(x, y, axis):
+    return np.mean(x, axis=axis) - np.mean(y, axis=axis)
+
+# This might reject even though means are equal
+res = permutation_test((x, y), mean_diff, n_resamples=9999,
+                        random_state=42)
+print(f"Observed mean diff: {res.statistic:.4f}")
+print(f"Permutation p-value: {res.pvalue:.4f}")
+
+# The test statistic (mean diff) is not the right statistic
+# for testing equality of means when variances differ.
+# Use Welch's t-test instead:
+from scipy.stats import ttest_ind
+t_stat, t_pval = ttest_ind(x, y, equal_var=False)
+print(f"\nWelch t-test p-value: {t_pval:.4f}")
+print(f"\nThe permutation test may reject because it's testing")
+print("F_X = F_Y (equal distributions), not just equal means.")
+print("When variances differ, permuting labels changes the")
+print("variance structure, which affects the mean difference")
+print("distribution even when the true means are equal.")
+```
+
+The permutation test is a test of *exchangeability*, which implies
+equal distributions, not just equal means. When $\text{Var}(X) \neq
+\text{Var}(Y)$, the permutation distribution of the mean difference
+has the wrong variance (it uses the pooled variance of both groups),
+leading to potentially incorrect $p$-values. For testing equal means
+with unequal variances, use Welch's $t$-test or a bootstrap test that
+preserves the group structure.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch09-biblio}
+
+The bootstrap was introduced by Efron (1979). The BCa interval is from
+Efron (1987); it is the default in `scipy.stats.bootstrap` because of
+its second-order accuracy properties (DiCiccio and Efron, 1996).
+
+The jackknife predates the bootstrap: Quenouille (1949) for bias
+estimation, Tukey (1958) for variance estimation. The connection
+between jackknife and bootstrap is through the influence function
+(Chapter 12).
+
+Permutation tests: Fisher (1935) for the idea, Pitman (1937) and
+others for the formal development. The modern treatment is in Lehmann
+and Romano (2005), Chapter 5. `scipy.stats.permutation_test` implements
+the approximate version with random permutations.
+
+Bootstrap failure modes: Bickel and Freedman (1981) for consistency
+conditions, Beran and Srivastava (1985) for the maximum failure,
+Hall (1992) for a comprehensive treatment of bootstrap asymptotics.
+Subsampling (Politis, Romano, and Wolf, 1999) works under weaker
+conditions but converges more slowly.
