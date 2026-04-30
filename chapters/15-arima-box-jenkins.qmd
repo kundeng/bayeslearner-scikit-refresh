@@ -1,30 +1,352 @@
 ---
-title: "ARIMA, Exponential Smoothing, and the Box–Jenkins Methodology"
+title: "ARIMA, Exponential Smoothing, and the Box-Jenkins Methodology"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $y_t$ | Observation at time $t$ | `endog` |
+| $\phi_1, \ldots, \phi_p$ | AR coefficients | `.params` |
+| $\theta_1, \ldots, \theta_q$ | MA coefficients | `.params` |
+| $(p, d, q)$ | ARIMA order | `order=(p,d,q)` |
+| $\rho(k)$ | ACF at lag $k$ | `acf()` |
+| $\alpha(k)$ | PACF at lag $k$ | `pacf()` |
+
+
+# Motivation {#sec-ch15-motivation}
+
+Time series data is ordered in time, and nearby observations are
+correlated. Applying standard regression (Chapter 11) to time series
+gives wrong standard errors and misleading inferences because it
+assumes independent errors.
+
+This chapter covers the workhorses of univariate time series: AR, MA,
+ARIMA, exponential smoothing, and the Box--Jenkins identification
+workflow. The primary library is `statsmodels.tsa`.
+
+
+# Mathematical Foundation {#sec-ch15-math}
+
+## Stationarity and why it matters for the API
+
+A series is *weakly stationary* if its mean and autocovariance don't
+depend on time. `ARIMA(order=(p,0,q))` assumes stationarity. The ADF
+test checks for unit roots; KPSS checks for stationarity. Use both.
+
+## ACF and PACF as model identification tools
+
+| Model | ACF pattern | PACF pattern |
+|---|---|---|
+| AR($p$) | Exponential decay | Cuts off after lag $p$ |
+| MA($q$) | Cuts off after lag $q$ | Exponential decay |
+| ARMA($p,q$) | Exponential decay | Exponential decay |
+
+## The Dickey--Fuller test (intuition)
+
+Under the unit-root null ($\phi = 1$), the regressor $y_{t-1}$ is
+non-stationary, so the standard $t$-distribution doesn't apply. The
+ADF distribution is shifted left --- this is why `adfuller` uses
+special critical values, not normal quantiles.
+
+
+# The Algorithm {#sec-ch15-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 15.1: Box--Jenkins Methodology
+
+1. **Test stationarity:** ADF + KPSS. Difference if needed.
+2. **Identify orders:** ACF/PACF cutoff patterns → choose $p, q$.
+3. **Estimate:** `ARIMA(order=(p,d,q)).fit()`.
+4. **Diagnose:** Ljung--Box on residuals. If not white noise, revise.
+5. **Forecast.**
 :::
 
-# Motivation {#sec-ch14-motivation}
 
-# Mathematical Foundation {#sec-ch14-math}
+# Statistical Properties {#sec-ch15-stats}
 
-# The Algorithm {#sec-ch14-algorithm}
+ARIMA MLE is asymptotically normal under correct specification. AIC
+and BIC (Chapter 10) select among candidate orders. Exponential
+smoothing is equivalent to a state-space model (Chapter 16).
 
-# Statistical Properties {#sec-ch14-stats}
 
-# Statsmodels Implementation {#sec-ch14-statsmodels}
+# Statsmodels Implementation {#sec-ch15-statsmodels}
 
-# From-Scratch Implementation {#sec-ch14-scratch}
+## Simulating and fitting AR processes
 
-# Diagnostics {#sec-ch14-diagnostics}
+```{python}
+#| label: ar-demo
+# Simulate AR(2)
+n = 300
+phi1, phi2 = 0.6, -0.3
+y_ar = np.zeros(n)
+for t in range(2, n):
+    y_ar[t] = phi1*y_ar[t-1] + phi2*y_ar[t-2] + rng.standard_normal()
 
-# Computational Considerations {#sec-ch14-computation}
+model = ARIMA(y_ar, order=(2, 0, 0)).fit()
+print(f"AR(2) fit: phi1={model.params[1]:.3f} (true {phi1}), "
+      f"phi2={model.params[2]:.3f} (true {phi2})")
+print(f"AIC: {model.aic:.1f}")
+```
 
-# Worked Example {#sec-ch14-example}
+```{python}
+#| label: fig-acf-pacf
+#| fig-cap: "ACF and PACF of a simulated AR(2). The ACF shows damped oscillation. The PACF cuts off after lag 2, correctly identifying p=2."
 
-# Exercises {#sec-ch14-exercises}
+fig, axes = plt.subplots(1, 3, figsize=(14, 3.5))
+axes[0].plot(y_ar[:100], linewidth=0.8)
+axes[0].set_title("AR(2) series")
+plot_acf(y_ar, lags=20, ax=axes[1], alpha=0.05)
+plot_pacf(y_ar, lags=20, ax=axes[2], alpha=0.05)
+plt.tight_layout()
+plt.show()
+```
 
-# Bibliographic Notes {#sec-ch14-biblio}
+## Unit root testing
+
+```{python}
+#| label: unit-root
+# Stationary series
+adf = adfuller(y_ar, autolag='AIC')
+print(f"AR(2): ADF p={adf[1]:.4f} (stationary)")
+
+# Random walk
+y_rw = np.cumsum(rng.standard_normal(300))
+adf_rw = adfuller(y_rw, autolag='AIC')
+print(f"RW:    ADF p={adf_rw[1]:.4f} (non-stationary)")
+```
+
+## Exponential smoothing
+
+```{python}
+#| label: ets-demo
+# Monthly data with trend + seasonality
+T = 120
+trend = np.linspace(100, 150, T)
+seasonal = 10 * np.sin(2*np.pi*np.arange(T)/12)
+y_ets = trend + seasonal + 3*rng.standard_normal(T)
+
+ets = ExponentialSmoothing(
+    y_ets, seasonal_periods=12, trend='add', seasonal='add',
+).fit(optimized=True)
+
+print(f"alpha={ets.params['smoothing_level']:.3f}, "
+      f"beta={ets.params['smoothing_trend']:.3f}, "
+      f"gamma={ets.params['smoothing_seasonal']:.3f}")
+```
+
+```{python}
+#| label: fig-ets-forecast
+#| fig-cap: "ETS fit and 24-month forecast with prediction interval."
+
+forecast = ets.forecast(24)
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(range(T), y_ets, color="C0", linewidth=0.8, label="Data")
+ax.plot(range(T), ets.fittedvalues, color="C1", linewidth=1, label="Fitted")
+ax.plot(range(T, T+24), forecast, color="C2", linewidth=1.5, label="Forecast")
+ax.fill_between(range(T, T+24), forecast - 2*np.std(ets.resid),
+                forecast + 2*np.std(ets.resid), alpha=0.2, color="C2")
+ax.axvline(T, color="gray", linestyle="--", alpha=0.5)
+ax.legend(); ax.set_xlabel("Month")
+plt.show()
+```
+
+## SARIMAX (seasonal ARIMA)
+
+```{python}
+#| label: sarimax-demo
+sarima = SARIMAX(
+    y_ets, order=(1, 1, 1), seasonal_order=(1, 0, 1, 12),
+    enforce_stationarity=True, enforce_invertibility=True,
+).fit(disp=0)
+print(f"SARIMAX AIC: {sarima.aic:.1f}")
+print(f"ETS AIC:     {ets.aic:.1f}")
+```
+
+
+# From-Scratch Implementation {#sec-ch15-scratch}
+
+## AR(p) via Yule--Walker
+
+```{python}
+#| label: yule-walker
+
+def fit_ar_yule_walker(y, p):
+    """AR(p) via Yule-Walker equations (moment estimator)."""
+    n = len(y); yc = y - y.mean()
+    gamma = np.array([np.sum(yc[:n-k]*yc[k:])/n for k in range(p+1)])
+    R = np.array([[gamma[abs(i-j)] for j in range(p)] for i in range(p)])
+    r = gamma[1:p+1]
+    phi = np.linalg.solve(R, r)
+    sigma2 = gamma[0] - phi @ r
+    return phi, sigma2
+
+phi_yw, sig2_yw = fit_ar_yule_walker(y_ar, 2)
+print(f"Yule-Walker: phi={phi_yw.round(3)}")
+print(f"ARIMA MLE:   phi={model.params[1:3].round(3)}")
+print(f"True:        phi=[{phi1}, {phi2}]")
+```
+
+
+# Diagnostics {#sec-ch15-diagnostics}
+
+```{python}
+#| label: fig-diagnostics
+#| fig-cap: "Residual diagnostics for AR(2): standardized residuals, residual ACF, QQ plot, and Ljung-Box p-values."
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 7))
+resid = model.resid
+axes[0,0].plot(resid/resid.std(), linewidth=0.5)
+axes[0,0].set_title("Std. residuals")
+plot_acf(resid, lags=20, ax=axes[0,1], alpha=0.05)
+stats.probplot(resid, plot=axes[1,0])
+lb = acorr_ljungbox(resid, lags=range(1,21), return_df=True)
+axes[1,1].scatter(lb.index, lb['lb_pvalue'], s=20)
+axes[1,1].axhline(0.05, color="C1", linestyle="--", alpha=0.5)
+axes[1,1].set_xlabel("Lag"); axes[1,1].set_ylabel("p-value")
+plt.tight_layout()
+plt.show()
+```
+
+
+# Computational Considerations {#sec-ch15-computation}
+
+| Method | Cost | Notes |
+|---|---|---|
+| AR Yule-Walker | $O(Tp + p^3)$ | Non-iterative |
+| ARIMA MLE | $O(T(p+q)^2)$ per iter | Via Kalman filter |
+| ETS | $O(T)$ per eval | Numerical optimization of $\alpha,\beta,\gamma$ |
+
+
+# Worked Example {#sec-ch15-example}
+
+```{python}
+#| label: worked-bj
+# Box-Jenkins workflow on seasonal data
+T_w = 144
+y_w = (100 + 2.5*np.arange(T_w) + 30*np.sin(2*np.pi*np.arange(T_w)/12)
+       + 10*rng.standard_normal(T_w))
+
+# Step 1: Stationarity
+print(f"ADF on raw: p={adfuller(y_w)[1]:.4f}")
+print(f"ADF on diff: p={adfuller(np.diff(y_w))[1]:.4f}")
+
+# Step 2-3: Fit SARIMAX
+sarima_w = SARIMAX(y_w, order=(1,1,1), seasonal_order=(1,0,1,12),
+                    enforce_stationarity=True, enforce_invertibility=True).fit(disp=0)
+print(f"AIC: {sarima_w.aic:.1f}")
+
+# Step 4: Diagnostics
+lb_w = acorr_ljungbox(sarima_w.resid, lags=20, return_df=True)
+print(f"Ljung-Box min p: {lb_w['lb_pvalue'].min():.4f}")
+```
+
+```{python}
+#| label: fig-worked-forecast
+#| fig-cap: "SARIMA forecast with prediction intervals."
+
+fc = sarima_w.get_forecast(24)
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(range(T_w), y_w, color="C0", linewidth=0.8, label="Data")
+ax.plot(range(T_w, T_w+24), fc.predicted_mean, color="C2", linewidth=1.5, label="Forecast")
+ci = fc.conf_int()
+ax.fill_between(range(T_w, T_w+24), ci.iloc[:,0], ci.iloc[:,1], alpha=0.2, color="C2")
+ax.axvline(T_w, color="gray", linestyle="--", alpha=0.5); ax.legend()
+plt.show()
+```
+
+
+# Exercises {#sec-ch15-exercises}
+
+**Exercise 15.1** ($\star\star$, diagnostic failure). Fit AR(1) to a
+random walk without differencing. What's $\hat{\phi}$? Is it near 1?
+What does ADF say about the original vs differenced series?
+
+%%
+
+```{python}
+#| label: ex-15-1
+y_rw2 = np.cumsum(rng.standard_normal(200))
+ar_wrong = ARIMA(y_rw2, order=(1,0,0)).fit()
+print(f"phi_hat = {ar_wrong.params[1]:.3f} (near 1 = unit root)")
+print(f"ADF raw: p={adfuller(y_rw2)[1]:.4f}")
+print(f"ADF diff: p={adfuller(np.diff(y_rw2))[1]:.4f}")
+print("Always test stationarity before fitting AR/MA.")
+```
+
+%%
+
+**Exercise 15.2** ($\star\star$, comparison). Fit ARIMA with orders
+(1,0,0), (2,0,0), (0,0,1), (1,0,1), (2,0,1) to the AR(2) data.
+Compare AIC/BIC. Does model selection recover the true order?
+
+%%
+
+```{python}
+#| label: ex-15-2
+print(f"{'Order':<10} {'AIC':>8} {'BIC':>8}")
+for order in [(1,0,0),(2,0,0),(0,0,1),(1,0,1),(2,0,1)]:
+    r = ARIMA(y_ar, order=order).fit()
+    print(f"{str(order):<10} {r.aic:>8.1f} {r.bic:>8.1f}")
+```
+
+%%
+
+**Exercise 15.3** ($\star\star$, implementation). Show that for AR(1)
+with $\phi=0.8$, the ACF is $\rho(k) = 0.8^k$. Generate 1000
+observations, overlay sample and theoretical ACF.
+
+%%
+
+```{python}
+#| label: ex-15-3
+T2 = 1000; y2 = np.zeros(T2)
+for t in range(1,T2): y2[t] = 0.8*y2[t-1]+rng.standard_normal()
+s_acf = acf(y2, nlags=20)
+t_acf = [0.8**k for k in range(21)]
+fig, ax = plt.subplots()
+ax.bar(range(21), s_acf, width=0.4, alpha=0.7, label="Sample")
+ax.plot(range(21), t_acf, 'o-', color="C1", markersize=4, label=r"$0.8^k$")
+ax.legend(); plt.show()
+```
+
+%%
+
+**Exercise 15.4** ($\star\star\star$, conceptual). ADF and KPSS test
+opposite nulls. Explain why using both gives more information. What
+does "ADF doesn't reject, KPSS rejects" mean?
+
+%%
+
+ADF doesn't reject = can't conclude stationarity (but doesn't prove
+unit root — may lack power). KPSS rejects = evidence against
+stationarity. Together: strong evidence of a unit root. This is more
+informative than either test alone because it rules out the ambiguous
+"insufficient evidence" interpretation of a single non-rejection.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch15-biblio}
+
+Box and Jenkins (1970) for the methodology. Dickey and Fuller (1979)
+for ADF. KPSS: Kwiatkowski et al. (1992). ETS taxonomy: Hyndman et al.
+(2002). Hamilton (1994) for the asymptotic theory of unit root tests.
