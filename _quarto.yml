@@ -12,7 +12,7 @@ book:
     - index.qmd
     - part: "Part I — Motivation and Overview"
       chapters:
-        - chapters/01-ml-pipeline.qmd
+        - chapters/01-ml-pipeline.qmd  # Getting Started with SciPy
     - part: "Part II — Optimization for Statistical Estimation"
       chapters:
         - chapters/02-smooth-optimization.qmd
