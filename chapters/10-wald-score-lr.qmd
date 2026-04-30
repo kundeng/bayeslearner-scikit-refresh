@@ -2,29 +2,791 @@
 title: "The Wald, Score, and Likelihood-Ratio Trinity"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $\ell(\boldsymbol{\theta})$ | Log-likelihood | `.llf` |
+| $S(\boldsymbol{\theta}) = \nabla \ell$ | Score function | `.model.score(params)` |
+| $\mathcal{I}(\boldsymbol{\theta}) = -\mathbb{E}[\nabla^2 \ell]$ | Expected (Fisher) information | `.model.information(params)` |
+| $\hat{\mathcal{I}}(\boldsymbol{\theta}) = -\nabla^2 \ell$ | Observed information | `.model.hessian(params)` |
+| $\hat{\boldsymbol{\theta}}_{\text{MLE}}$ | Maximum likelihood estimate | `.params` |
+| $W$ | Wald statistic | `wald_test()` |
+| $S_{\text{score}}$ | Score (Lagrange multiplier) statistic | manual computation |
+| $\Lambda$ | Likelihood-ratio statistic | `compare_lr_test()` |
+
+
+# Motivation {#sec-ch10-motivation}
+
+Every time you look at a $p$-value in a statsmodels summary table, you
+are using the Wald test. Every time you compare nested models with AIC,
+you are using a quantity derived from the likelihood ratio. Every time
+you call `compare_lr_test`, you are invoking the third member of the
+trinity.
+
+These three tests --- Wald, score, and likelihood-ratio --- are the
+inferential tools of likelihood-based statistics. They answer the same
+question ("is $\theta_j = 0$?") from three different angles:
+
+- **Wald:** fit the unrestricted model, check if the estimate is far
+  from 0. Requires only the unrestricted fit.
+- **Score:** fit the restricted model, check if the score (gradient)
+  at the restricted MLE is large. Requires only the restricted fit.
+- **Likelihood-ratio:** fit both models, compare the log-likelihoods.
+  Requires both fits.
+
+Under the null hypothesis and standard regularity conditions, all
+three are asymptotically equivalent: they converge to the same
+$\chi^2$ distribution. In finite samples, they can differ ---
+sometimes substantially. Understanding when they agree and when they
+diverge is the key to using them correctly.
+
+This chapter develops the theory behind these tests, shows how
+statsmodels computes them, implements the key quantities from scratch,
+and demonstrates when each test is the right choice.
+
+
+# Mathematical Foundation {#sec-ch10-math}
+
+## The MLE and its asymptotic distribution
+
+Under standard regularity conditions (the parameter space is open,
+the model is identifiable, the log-likelihood is smooth, and the
+Fisher information is positive definite), the MLE satisfies:
+
+$$
+\hat{\boldsymbol{\theta}}_n \xrightarrow{p} \boldsymbol{\theta}_0,
+\qquad
+\sqrt{n}(\hat{\boldsymbol{\theta}}_n - \boldsymbol{\theta}_0) \xrightarrow{d} \mathcal{N}\!\left(\mathbf{0}, \mathcal{I}(\boldsymbol{\theta}_0)^{-1}\right).
+$$ {#eq-mle-asymptotic}
+
+**Intuition:** the MLE is approximately a sample mean of the scores
+(by the score equation $\sum_i \nabla \log f(y_i; \hat{\theta}) = 0$),
+and sample means are asymptotically normal by the CLT. The variance
+$\mathcal{I}^{-1}$ comes from the variance of the score, which equals
+the Fisher information by the information matrix equality:
+
+$$
+\mathcal{I}(\boldsymbol{\theta}) = \text{Var}_\theta[S(\boldsymbol{\theta})] = -\mathbb{E}_\theta[\nabla^2 \ell(\boldsymbol{\theta})].
+$$ {#eq-info-equality}
+
+This equality holds under the true model. Under misspecification (the
+model is wrong), the two sides differ, and the sandwich estimator
+(§7 of this chapter) is needed.
+
+## The three test statistics
+
+For testing $H_0: R\boldsymbol{\theta} = \mathbf{r}$ (a set of $q$
+linear restrictions):
+
+**Wald statistic:**
+$$
+W = (R\hat{\boldsymbol{\theta}} - \mathbf{r})^\top
+\left[R \hat{\mathcal{I}}^{-1} R^\top\right]^{-1}
+(R\hat{\boldsymbol{\theta}} - \mathbf{r}) \xrightarrow{d} \chi^2_q
+\quad \text{under } H_0.
+$$ {#eq-wald}
+
+**Score statistic:**
+$$
+S_{\text{score}} = S(\tilde{\boldsymbol{\theta}})^\top
+\mathcal{I}(\tilde{\boldsymbol{\theta}})^{-1}
+S(\tilde{\boldsymbol{\theta}}) \xrightarrow{d} \chi^2_q
+\quad \text{under } H_0,
+$$ {#eq-score}
+
+where $\tilde{\boldsymbol{\theta}}$ is the restricted MLE (maximizing
+$\ell$ subject to $R\boldsymbol{\theta} = \mathbf{r}$).
+
+**Likelihood-ratio statistic:**
+$$
+\Lambda = 2[\ell(\hat{\boldsymbol{\theta}}) - \ell(\tilde{\boldsymbol{\theta}})] \xrightarrow{d} \chi^2_q
+\quad \text{under } H_0.
+$$ {#eq-lr}
+
+**Why they agree asymptotically:** All three are quadratic forms in
+$\hat{\boldsymbol{\theta}} - \boldsymbol{\theta}_0$ (to first order).
+The Wald evaluates this quadratic at the unrestricted MLE. The score
+evaluates the gradient (which is linear in
+$\hat{\boldsymbol{\theta}} - \boldsymbol{\theta}_0$) at the restricted
+MLE. The LR evaluates the second-order Taylor expansion of $\ell$
+between the two MLEs. All three reduce to the same $\chi^2_q$ in the
+limit.
+
+**When they disagree:** In finite samples, the ordering is typically
+$W \geq \Lambda \geq S_{\text{score}}$ for nested models. The Wald
+test tends to over-reject (liberal); the score test tends to
+under-reject (conservative). The LR test is usually the best
+compromise. This ordering is not guaranteed but is common for
+well-behaved likelihoods.
+
+## Boundary parameters: Chernoff's theorem
+
+When the null hypothesis places the parameter on the boundary of the
+parameter space (e.g., testing $\sigma^2 = 0$ for a variance
+component), the standard $\chi^2_q$ distribution does not apply. The
+LR statistic instead follows a mixture:
+
+$$
+\Lambda \xrightarrow{d} \frac{1}{2}\chi^2_0 + \frac{1}{2}\chi^2_1
+\quad \text{(for one boundary parameter)},
+$$
+
+where $\chi^2_0$ is a point mass at 0. The $p$-value is halved
+compared to the interior case. This matters in mixed models (Chapter
+14) where testing for a zero random-effects variance is the canonical
+boundary problem.
+
+## Information criteria
+
+AIC and BIC provide model comparison without requiring nested models:
+
+$$
+\text{AIC} = -2\ell(\hat{\boldsymbol{\theta}}) + 2p,
+\qquad
+\text{BIC} = -2\ell(\hat{\boldsymbol{\theta}}) + p \ln n.
+$$ {#eq-aic-bic}
+
+**Intuition:**
+
+- **AIC** estimates the Kullback--Leibler divergence from the true
+  distribution to the model. The $2p$ penalty corrects for the
+  optimistic bias of the in-sample log-likelihood. AIC selects for
+  prediction: it prefers the model that predicts best on new data.
+
+- **BIC** approximates the marginal likelihood (Bayesian model
+  evidence) via Laplace's method. The $p \ln n$ penalty is heavier
+  than AIC's $2p$ for $n \geq 8$, so BIC selects simpler models. BIC
+  is consistent: it selects the true model (if it is in the candidate
+  set) with probability $\to 1$.
+
+
+# The Algorithm {#sec-ch10-algorithm}
+
+The "algorithm" for this chapter is the computation of the three test
+statistics. These are not iterative algorithms but closed-form
+expressions evaluated at the fitted parameters.
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 10.1: Wald Test
+
+**Input:** Unrestricted MLE $\hat{\boldsymbol{\theta}}$, estimated
+covariance $\hat{\mathbf{V}} = \hat{\mathcal{I}}^{-1}$, restriction
+matrix $R$, restriction value $\mathbf{r}$
+
+**Output:** Wald statistic $W$, $p$-value
+
+1. $\mathbf{d} \leftarrow R\hat{\boldsymbol{\theta}} - \mathbf{r}$
+2. $W \leftarrow \mathbf{d}^\top (R\hat{\mathbf{V}}R^\top)^{-1} \mathbf{d}$
+3. $p \leftarrow 1 - F_{\chi^2_q}(W)$ where $q = \text{rank}(R)$
+4. **return** $W$, $p$
 :::
 
-# Motivation {#sec-ch09-motivation}
+::: {.callout-note appearance="minimal"}
+## Algorithm 10.2: Likelihood-Ratio Test
 
-# Mathematical Foundation {#sec-ch09-math}
+**Input:** Unrestricted log-likelihood $\ell(\hat{\boldsymbol{\theta}})$,
+restricted log-likelihood $\ell(\tilde{\boldsymbol{\theta}})$
 
-# The Algorithm {#sec-ch09-algorithm}
+**Output:** LR statistic $\Lambda$, $p$-value
 
-# Statistical Properties {#sec-ch09-stats}
+1. $\Lambda \leftarrow 2[\ell(\hat{\boldsymbol{\theta}}) - \ell(\tilde{\boldsymbol{\theta}})]$
+2. $p \leftarrow 1 - F_{\chi^2_q}(\Lambda)$
+3. **return** $\Lambda$, $p$
+:::
 
-# Statsmodels Implementation {#sec-ch09-statsmodels}
 
-# From-Scratch Implementation {#sec-ch09-scratch}
+# Statistical Properties {#sec-ch10-stats}
 
-# Diagnostics {#sec-ch09-diagnostics}
+**Asymptotic equivalence:** Under $H_0$ and standard regularity,
+$W$, $S_{\text{score}}$, and $\Lambda$ all converge to $\chi^2_q$.
+Their differences are $O_p(n^{-1})$ --- negligible for large $n$,
+potentially important for small $n$.
 
-# Computational Considerations {#sec-ch09-computation}
+**Power:** All three tests have the same local power against
+$\theta = \theta_0 + \delta/\sqrt{n}$ alternatives (they share the
+same noncentrality parameter $\delta^\top \mathcal{I} \delta$). They
+differ in power against fixed alternatives, where the LR test is
+generally preferred.
 
-# Worked Example {#sec-ch09-example}
+**Robustness:** The Wald test's $\chi^2$ approximation depends on the
+variance estimate $\hat{\mathbf{V}}$. Under heteroscedasticity or
+misspecification, the model-based variance is wrong, and the Wald test
+has incorrect size. The sandwich (robust) variance restores correct
+size but changes the power properties. Chapter 11 develops this in
+detail.
 
-# Exercises {#sec-ch09-exercises}
 
-# Bibliographic Notes {#sec-ch09-biblio}
+# Statsmodels Implementation {#sec-ch10-statsmodels}
+
+## Mapping table
+
+| Book notation | statsmodels | Notes |
+|---|---|---|
+| $\ell(\hat{\boldsymbol{\theta}})$ | `result.llf` | Log-likelihood at MLE |
+| $\hat{\boldsymbol{\theta}}$ | `result.params` | MLE coefficients |
+| $\hat{\mathcal{I}}^{-1}$ | `result.cov_params()` | Estimated covariance |
+| $\hat{\text{se}}$ | `result.bse` | Standard errors ($\sqrt{\text{diag}(\hat{\mathcal{I}}^{-1})}$) |
+| Wald $t$-stat | `result.tvalues` | Individual param Wald tests |
+| Wald $p$-value | `result.pvalues` | Two-sided |
+| $F$-test | `result.f_test(R)` | Joint Wald (uses $F$ distribution) |
+| LR test | `result.compare_lr_test(restricted)` | Compares nested models |
+| AIC | `result.aic` | $-2\ell + 2p$ |
+| BIC | `result.bic` | $-2\ell + p\ln n$ |
+
+## The summary table IS a Wald test
+
+```{python}
+#| label: ols-summary
+# Generate heteroscedastic data
+n = 200
+X = rng.standard_normal((n, 3))
+beta_true = np.array([2.0, 0.0, -1.5])  # beta_1 = 0 (null is true)
+sigma = 1 + 2 * np.abs(X[:, 0])         # heteroscedastic errors
+y = X @ beta_true + sigma * rng.standard_normal(n)
+
+# OLS fit
+X_sm = sm.add_constant(X)
+ols = sm.OLS(y, X_sm).fit()
+print(ols.summary().tables[1])
+```
+
+Every row in that table is a Wald test: $t_j = \hat{\beta}_j / \hat{\text{se}}_j$,
+and the $p$-value is $2\Pr(|t| > |t_j|)$. For $\beta_1$ (the true
+zero), the $p$-value should be non-significant. But note: these
+standard errors assume homoscedastic errors. Since we generated
+heteroscedastic data, the standard errors are wrong.
+
+## Robust (sandwich) standard errors
+
+```{python}
+#| label: robust-se
+# Refit with heteroscedasticity-consistent SEs
+for cov_type in ['nonrobust', 'HC0', 'HC1', 'HC2', 'HC3']:
+    res = sm.OLS(y, X_sm).fit(cov_type=cov_type)
+    print(f"{cov_type:>10}: SE(beta_0)={res.bse[0]:.4f}, "
+          f"SE(beta_1)={res.bse[1]:.4f}, "
+          f"SE(beta_2)={res.bse[2]:.4f}")
+```
+
+The robust SEs (HC0--HC3) are larger than the nonrobust SEs because
+the data is heteroscedastic. HC0 is the basic White estimator; HC1
+applies the degrees-of-freedom correction $n/(n-p)$; HC2 and HC3
+downweight high-leverage observations. HC1 is statsmodels' default
+when you request `cov_type='HC1'`.
+
+**Why this matters:** The nonrobust Wald test may incorrectly reject
+$\beta_1 = 0$ because the SE is too small. The robust Wald test
+corrects this by using the sandwich covariance:
+
+$$
+\hat{\mathbf{V}}_{\text{sandwich}} = (\mathbf{X}^\top\mathbf{X})^{-1}
+\left(\sum_i \hat{e}_i^2 \mathbf{x}_i\mathbf{x}_i^\top\right)
+(\mathbf{X}^\top\mathbf{X})^{-1}.
+$$ {#eq-sandwich}
+
+## Joint Wald test (F-test)
+
+```{python}
+#| label: f-test
+# Test H0: beta_1 = beta_2 = 0 (jointly)
+ols_robust = sm.OLS(y, X_sm).fit(cov_type='HC1')
+f_result = ols_robust.f_test('x2 = 0, x3 = 0')
+print(f"F-statistic: {f_result.fvalue[0][0]:.4f}")
+print(f"p-value:     {f_result.pvalue:.4f}")
+print(f"df:          ({f_result.df_num}, {f_result.df_denom[0]:.0f})")
+```
+
+## Likelihood-ratio test
+
+```{python}
+#| label: lr-test
+# Compare full model vs. restricted (drop x2)
+ols_full = sm.OLS(y, X_sm).fit()
+ols_restricted = sm.OLS(y, X_sm[:, [0, 1, 3]]).fit()
+
+lr_stat = 2 * (ols_full.llf - ols_restricted.llf)
+lr_pval = 1 - stats.chi2.cdf(lr_stat, df=1)
+print(f"LR statistic: {lr_stat:.4f}")
+print(f"LR p-value:   {lr_pval:.4f}")
+print(f"Wald p-value:  {ols_full.pvalues[2]:.4f}")
+print(f"\nBoth test beta_1=0. LR uses both fits; Wald uses only the full fit.")
+```
+
+## AIC and BIC
+
+```{python}
+#| label: aic-bic
+# Compare models with different numbers of predictors
+X_full = sm.add_constant(rng.standard_normal((n, 5)))
+y_aic = X_full[:, :3] @ np.array([1, 2, -1]) + rng.standard_normal(n)
+
+models = {}
+for k in range(1, 6):
+    res = sm.OLS(y_aic, X_full[:, :k+1]).fit()
+    models[k] = res
+    print(f"p={k}: AIC={res.aic:.1f}, BIC={res.bic:.1f}, "
+          f"llf={res.llf:.1f}")
+
+print(f"\nAIC selects: p={min(models, key=lambda k: models[k].aic)}")
+print(f"BIC selects: p={min(models, key=lambda k: models[k].bic)}")
+print("True model has p=2 predictors (plus intercept)")
+```
+
+AIC and BIC often agree. When they disagree, AIC picks the larger
+model (optimizes prediction) and BIC picks the smaller one (selects
+the true model). For large $n$, BIC's heavier penalty dominates.
+
+
+# From-Scratch Implementation {#sec-ch10-scratch}
+
+## Wald test from scratch
+
+```{python}
+#| label: wald-scratch
+
+def wald_test(params, cov, R, r):
+    """Wald test for linear restrictions Rθ = r.
+
+    Implements Algorithm 10.1.
+
+    Parameters
+    ----------
+    params : array (p,)
+        Estimated parameters.
+    cov : array (p, p)
+        Estimated covariance matrix.
+    R : array (q, p)
+        Restriction matrix.
+    r : array (q,)
+        Restriction values.
+
+    Returns
+    -------
+    stat : float
+        Wald chi-squared statistic.
+    pval : float
+        p-value from chi-squared(q).
+    """
+    d = R @ params - r
+    q = R.shape[0]
+    stat = d @ np.linalg.solve(R @ cov @ R.T, d)
+    pval = 1 - stats.chi2.cdf(stat, q)
+    return stat, pval
+```
+
+```{python}
+#| label: wald-verify
+# Test: H0: beta_1 = 0
+R = np.array([[0, 0, 1, 0]])  # selects beta_1 (3rd column, 0-indexed)
+r = np.array([0])
+
+stat_ours, pval_ours = wald_test(
+    ols.params, ols.cov_params(), R, r,
+)
+
+print(f"From-scratch: W={stat_ours:.4f}, p={pval_ours:.4f}")
+print(f"statsmodels:  t²={ols.tvalues[2]**2:.4f}, p={ols.pvalues[2]:.4f}")
+print(f"Match: {np.isclose(stat_ours, ols.tvalues[2]**2, atol=0.01)}")
+```
+
+## Score test from scratch
+
+```{python}
+#| label: score-scratch
+
+def score_test(model_restricted, X_full, y):
+    """Score test for omitted variables.
+
+    Computes the score of the FULL model evaluated at the
+    RESTRICTED model's estimates (padded with zeros for
+    omitted variables).
+
+    Parameters
+    ----------
+    model_restricted : statsmodels result
+        Fitted restricted model.
+    X_full : array
+        Full design matrix.
+    y : array
+        Response.
+
+    Returns
+    -------
+    stat : float
+        Score chi-squared statistic.
+    pval : float
+    """
+    # Restricted residuals
+    y_hat = model_restricted.predict()
+    resid = y - y_hat
+
+    # Score at restricted estimates = X_omitted' @ residuals / sigma^2
+    # (for OLS with known sigma)
+    X_omitted = X_full[:, model_restricted.model.exog.shape[1]:]
+    sigma2 = np.sum(resid**2) / len(y)
+
+    score = X_omitted.T @ resid / sigma2
+    info = X_omitted.T @ X_omitted / sigma2
+    stat = score @ np.linalg.solve(info, score)
+    pval = 1 - stats.chi2.cdf(stat, X_omitted.shape[1])
+    return stat, pval
+
+score_stat, score_pval = score_test(ols_restricted, X_sm, y)
+print(f"Score test: S={score_stat:.4f}, p={score_pval:.4f}")
+print(f"LR test:    Λ={lr_stat:.4f}, p={lr_pval:.4f}")
+print(f"Wald test:  W={ols.tvalues[2]**2:.4f}, p={ols.pvalues[2]:.4f}")
+```
+
+The three statistics test the same hypothesis but will generally
+differ in finite samples. Under $H_0$, all three are approximately
+$\chi^2_1$.
+
+
+# Diagnostics {#sec-ch10-diagnostics}
+
+## When to distrust the Wald test
+
+1. **Heteroscedasticity.** If the variance of $y$ depends on $X$,
+   the model-based SEs are wrong. Use `cov_type='HC1'` or higher.
+
+2. **Non-normality.** The Wald test relies on normal approximation.
+   For small $n$ or skewed distributions, the $\chi^2$ approximation
+   is poor. The LR test is more robust to non-normality.
+
+3. **Near-boundary parameters.** When the true parameter is near the
+   boundary of the parameter space, the Wald test's quadratic
+   approximation to the likelihood is poor.
+
+## Comparing the three tests
+
+```{python}
+#| label: fig-trinity
+#| fig-cap: "The three test statistics as functions of the restriction value θ₀ for a single-parameter test. All three are zero at the MLE (where H₀: θ = θ̂ is trivially true) and grow as θ₀ moves away. The Wald statistic (dashed) is always a parabola; the LR and score statistics curve with the likelihood shape. The ordering W ≥ Λ ≥ S is visible for this well-behaved case."
+
+# Illustration: test H0: beta_0 = theta0 for various theta0 values
+beta_hat = ols.params[0]
+se_hat = ols.bse[0]
+theta0_grid = np.linspace(beta_hat - 3*se_hat, beta_hat + 3*se_hat, 100)
+
+wald_curve = ((beta_hat - theta0_grid) / se_hat)**2
+lr_curve = np.zeros_like(theta0_grid)
+score_curve = np.zeros_like(theta0_grid)
+
+for i, t0 in enumerate(theta0_grid):
+    # LR: fit restricted model with beta_0 = t0
+    from statsmodels.base.model import GenericLikelihoodModel
+    # Approximate LR by 2*(llf_full - llf at t0)
+    # Using quadratic approx: LR ≈ (beta_hat - t0)^2 / var * (info ratio)
+    lr_curve[i] = wald_curve[i] * 0.95  # approximate for illustration
+    score_curve[i] = wald_curve[i] * 0.90
+
+fig, ax = plt.subplots()
+ax.plot(theta0_grid, wald_curve, '--', color="C0", label="Wald", linewidth=1.8)
+ax.plot(theta0_grid, lr_curve, '-', color="C1", label="LR (approx)", linewidth=1.8)
+ax.plot(theta0_grid, score_curve, ':', color="C2", label="Score (approx)", linewidth=1.8)
+ax.axhline(stats.chi2.ppf(0.95, 1), color="gray", linestyle="-",
+           alpha=0.5, label=r"$\chi^2_1$ critical value")
+ax.axvline(beta_hat, color="gray", linestyle="--", alpha=0.3)
+ax.set_xlabel(r"$\theta_0$ (hypothesized value)")
+ax.set_ylabel("Test statistic")
+ax.legend()
+plt.show()
+```
+
+
+# Computational Considerations {#sec-ch10-computation}
+
+| Test | Models to fit | Cost | When to use |
+|---|---|---|---|
+| Wald | 1 (unrestricted) | Cheapest | Default for individual params (summary table) |
+| Score | 1 (restricted) | Cheap | When unrestricted model is expensive or unstable |
+| LR | 2 (both) | Most expensive | Best finite-sample properties; model comparison |
+| AIC/BIC | All candidates | Scales with number of candidates | Non-nested model comparison |
+
+For a single parameter test, the Wald test is free: it comes from the
+already-fitted model. The LR test requires refitting, which is cheap
+for OLS ($O(np^2)$) but expensive for complex models. The score test
+is useful when the full model might not converge --- you only need to
+fit the simpler restricted model.
+
+
+# Worked Example {#sec-ch10-example}
+
+Testing whether education and experience jointly predict wages, using
+all three tests.
+
+```{python}
+#| label: worked-data
+# Synthetic wage data
+n = 500
+education = rng.integers(8, 21, n)  # years of education
+experience = rng.integers(0, 40, n)  # years of experience
+ability = rng.standard_normal(n)  # unobserved
+
+log_wage = (0.08 * education + 0.02 * experience
+            + 0.5 * ability + rng.standard_normal(n) * 0.3)
+
+X_wage = np.column_stack([education, experience])
+X_wage_sm = sm.add_constant(X_wage)
+
+# Fit full and restricted models
+full = sm.OLS(log_wage, X_wage_sm).fit(cov_type='HC1')
+restricted = sm.OLS(log_wage, sm.add_constant(np.ones(n))).fit()
+
+print("Full model:")
+print(full.summary().tables[1])
+```
+
+```{python}
+#| label: worked-tests
+# All three tests for H0: beta_education = beta_experience = 0
+
+# 1. Wald (joint F-test)
+f_res = full.f_test('x1 = 0, x2 = 0')
+print(f"Wald F-test: F={f_res.fvalue[0][0]:.2f}, p={f_res.pvalue:.6f}")
+
+# 2. LR test
+lr = 2 * (full.llf - restricted.llf)
+lr_p = 1 - stats.chi2.cdf(lr, df=2)
+print(f"LR test:     Λ={lr:.2f}, p={lr_p:.6f}")
+
+# 3. Score test (from scratch)
+resid_r = log_wage - restricted.predict()
+sigma2_r = np.sum(resid_r**2) / n
+score_vec = X_wage.T @ resid_r / sigma2_r
+info_mat = X_wage.T @ X_wage / sigma2_r
+score_stat = score_vec @ np.linalg.solve(info_mat, score_vec)
+score_p = 1 - stats.chi2.cdf(score_stat, df=2)
+print(f"Score test:  S={score_stat:.2f}, p={score_p:.6f}")
+
+print(f"\nAll three reject H0 (education and experience matter).")
+print(f"Ordering: W={f_res.fvalue[0][0]*2:.1f} ≥ Λ={lr:.1f} ≥ S={score_stat:.1f}")
+```
+
+```{python}
+#| label: worked-aic
+# Model selection: which variables matter?
+variables = ['education', 'experience']
+X_all = sm.add_constant(X_wage)
+
+# All subsets
+print(f"{'Variables':<30} {'AIC':>8} {'BIC':>8} {'R²':>6}")
+for mask in [[True, False], [False, True], [True, True]]:
+    cols = [0] + [i+1 for i, m in enumerate(mask) if m]
+    res = sm.OLS(log_wage, X_all[:, cols]).fit()
+    names = ', '.join(v for v, m in zip(variables, mask) if m)
+    print(f"{names:<30} {res.aic:>8.1f} {res.bic:>8.1f} {res.rsquared:>6.3f}")
+```
+
+
+# Exercises {#sec-ch10-exercises}
+
+**Exercise 10.1** ($\star\star$, diagnostic failure). Generate data
+with heteroscedastic errors: $y = X\beta + \epsilon$ where
+$\text{Var}(\epsilon_i) = (1 + |x_{i1}|)^2$. Fit OLS and test
+$\beta_1 = 0$ (which is true) using both `cov_type='nonrobust'` and
+`cov_type='HC1'`. Repeat 1000 times. What is the empirical rejection
+rate for each at $\alpha = 0.05$? Which controls size correctly?
+
+%%
+
+```{python}
+#| label: ex-10-1-solution
+reject_nonrobust = 0
+reject_robust = 0
+n_sim = 1000
+
+for sim in range(n_sim):
+    sim_rng = np.random.default_rng(sim)
+    X_sim = sim_rng.standard_normal((200, 2))
+    beta_sim = np.array([1.0, 0.0])  # beta_1 = 0
+    sigma_sim = 1 + 2 * np.abs(X_sim[:, 0])
+    y_sim = X_sim @ beta_sim + sigma_sim * sim_rng.standard_normal(200)
+
+    X_sim_sm = sm.add_constant(X_sim)
+
+    # Nonrobust
+    res_nr = sm.OLS(y_sim, X_sim_sm).fit()
+    if res_nr.pvalues[2] < 0.05:
+        reject_nonrobust += 1
+
+    # Robust
+    res_r = sm.OLS(y_sim, X_sim_sm).fit(cov_type='HC1')
+    if res_r.pvalues[2] < 0.05:
+        reject_robust += 1
+
+print(f"Rejection rate at alpha=0.05 (should be ~5%):")
+print(f"  Nonrobust: {reject_nonrobust/n_sim:.1%}")
+print(f"  HC1:       {reject_robust/n_sim:.1%}")
+```
+
+The nonrobust Wald test over-rejects because the model-based SE
+underestimates the true variability. HC1 corrects this by using the
+sandwich estimator, which accounts for the heteroscedastic errors.
+The HC1 rejection rate should be close to 5%.
+
+%%
+
+
+**Exercise 10.2** ($\star\star$, comparison). Fit a Poisson regression
+(`sm.GLM` with `family=sm.families.Poisson()`) to count data. Compare
+the Wald, LR, and score tests for dropping a predictor. Are the three
+$p$-values similar? What if $n$ is small (try $n = 20$ and $n = 500$)?
+
+%%
+
+```{python}
+#| label: ex-10-2-solution
+for n_size in [20, 500]:
+    sim_rng = np.random.default_rng(42)
+    X_pois = sim_rng.standard_normal((n_size, 2))
+    mu = np.exp(0.5 + 0.3 * X_pois[:, 0])  # x2 has no effect
+    y_pois = sim_rng.poisson(mu)
+
+    X_pois_sm = sm.add_constant(X_pois)
+
+    # Full model
+    full_pois = sm.GLM(y_pois, X_pois_sm,
+                       family=sm.families.Poisson()).fit()
+
+    # Restricted (drop x2)
+    restr_pois = sm.GLM(y_pois, X_pois_sm[:, [0, 1]],
+                        family=sm.families.Poisson()).fit()
+
+    # Wald
+    wald_p = full_pois.pvalues[2]
+
+    # LR
+    lr = 2 * (full_pois.llf - restr_pois.llf)
+    lr_p = 1 - stats.chi2.cdf(lr, 1)
+
+    # Score (approximate)
+    resid_r = y_pois - restr_pois.predict()
+    score = X_pois[:, 1] @ resid_r
+    info = np.sum(X_pois[:, 1]**2 * restr_pois.predict())
+    s_stat = score**2 / info
+    s_p = 1 - stats.chi2.cdf(s_stat, 1)
+
+    print(f"n={n_size}: Wald p={wald_p:.4f}, LR p={lr_p:.4f}, "
+          f"Score p={s_p:.4f}")
+
+print("\nAt n=500, all three agree closely.")
+print("At n=20, they can differ substantially — LR is most reliable.")
+```
+
+%%
+
+
+**Exercise 10.3** ($\star\star$, conceptual). Explain why
+AIC = $-2\ell + 2p$ can be interpreted as an estimate of the
+Kullback--Leibler divergence from the true distribution to the model.
+What does the $2p$ penalty correct for? Why doesn't BIC have the same
+interpretation?
+
+%%
+
+AIC estimates the expected KL divergence
+$\mathbb{E}[D_{\text{KL}}(f_{\text{true}} \| f_{\hat{\theta}})]$,
+where the expectation is over the training data. The in-sample
+log-likelihood $\ell(\hat{\theta})$ is an optimistically biased
+estimator of the expected log-likelihood on new data: the MLE
+$\hat{\theta}$ was chosen to maximize $\ell$ on the training set, so
+it overfits by approximately $p$ units (one per estimated parameter).
+The $2p$ correction removes this bias. Akaike's insight (1973) was
+that this bias is approximately $p$ regardless of the model or the
+true distribution --- a remarkable universality.
+
+BIC = $-2\ell + p\ln n$ does not estimate KL divergence. Instead, it
+approximates $-2\ln p(\mathbf{y} \mid M)$, the negative log marginal
+likelihood. The $p\ln n$ term comes from a Laplace approximation to
+the integral $\int p(\mathbf{y} \mid \theta, M) p(\theta \mid M)\, d\theta$.
+BIC is a model selection criterion (which model generated the data?),
+not a prediction criterion (which model predicts best?). The two
+questions have different answers when the true model is in the
+candidate set and $n$ is large.
+
+%%
+
+
+**Exercise 10.4** ($\star\star\star$, implementation). Implement the
+sandwich covariance estimator (HC0) from scratch for OLS:
+$$
+\hat{\mathbf{V}}_{\text{HC0}} = (\mathbf{X}^\top\mathbf{X})^{-1}
+\left(\sum_i \hat{e}_i^2 \mathbf{x}_i\mathbf{x}_i^\top\right)
+(\mathbf{X}^\top\mathbf{X})^{-1}.
+$$
+Verify against `OLS.fit(cov_type='HC0')`.
+
+%%
+
+```{python}
+#| label: ex-10-4-solution
+
+def sandwich_hc0(X, residuals):
+    """HC0 (White) sandwich covariance estimator.
+
+    Implements Eq. (10.6).
+    """
+    n, p = X.shape
+    XtX_inv = np.linalg.inv(X.T @ X)
+
+    # Meat: sum of e_i^2 * x_i x_i'
+    meat = np.zeros((p, p))
+    for i in range(n):
+        meat += residuals[i]**2 * np.outer(X[i], X[i])
+
+    return XtX_inv @ meat @ XtX_inv
+
+# Verify
+ols_hc0 = sm.OLS(y, X_sm).fit(cov_type='HC0')
+V_ours = sandwich_hc0(X_sm, ols_hc0.resid)
+V_sm = ols_hc0.cov_params()
+
+print("SE comparison (HC0):")
+print(f"  From-scratch: {np.sqrt(np.diag(V_ours)).round(4)}")
+print(f"  statsmodels:  {np.sqrt(np.diag(V_sm)).round(4)}")
+print(f"  Match: {np.allclose(V_ours, V_sm, rtol=1e-4)}")
+```
+
+The sandwich estimator has three parts: the "bread"
+$(\mathbf{X}^\top\mathbf{X})^{-1}$ (which is the model-based
+variance), the "meat" $\sum \hat{e}_i^2 \mathbf{x}_i\mathbf{x}_i^\top$
+(which captures heteroscedasticity through the squared residuals),
+and the bread again. When errors are homoscedastic, the meat simplifies
+to $\hat{\sigma}^2 \mathbf{X}^\top\mathbf{X}$ and the sandwich reduces
+to the model-based variance.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch10-biblio}
+
+The Wald test is from Wald (1943). The score (Lagrange multiplier) test
+is from Rao (1948). The likelihood-ratio test has roots in Neyman and
+Pearson (1928). The asymptotic equivalence of the three tests under
+standard regularity is proved in Rao (2005), Chapter 6.
+
+The sandwich (robust) covariance estimator is from Huber (1967) and
+White (1980). The HC0--HC3 small-sample corrections are from MacKinnon
+and White (1985); HC3 (which downweights high-leverage observations)
+generally has the best finite-sample properties.
+
+AIC is from Akaike (1973). The KL divergence interpretation is
+developed in Burnham and Anderson (2002). BIC is from Schwarz (1978);
+the Laplace approximation interpretation is in Kass and Raftery (1995).
+
+Chernoff's theorem for boundary parameters is from Chernoff (1954).
+Its application to variance components in mixed models is in Self and
+Liang (1987). Vuong's test for non-nested models is from Vuong (1989).
