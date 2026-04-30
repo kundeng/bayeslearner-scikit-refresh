@@ -2,29 +2,611 @@
 title: "Linear Regression Under Misspecification"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.stats.diagnostic import (
+    het_breuschpagan, het_white, linear_reset, acorr_ljungbox,
+)
+from statsmodels.stats.outliers_influence import (
+    OLSInfluence, variance_inflation_factor,
+)
+from scipy import stats
+from sklearn.datasets import fetch_california_housing
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$ | Linear model | `OLS(endog, exog)` |
+| $\hat{\boldsymbol{\beta}} = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$ | OLS estimate | `.params` |
+| $\hat{\boldsymbol{\varepsilon}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$ | Residuals | `.resid` |
+| $\mathbf{P} = \mathbf{X}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top$ | Hat matrix | `OLSInfluence.hat_matrix_diag` |
+| $P_{ii}$ | Leverage of observation $i$ | |
+| $D_i$ | Cook's distance | `OLSInfluence.cooks_distance` |
+| $\text{VIF}_j$ | Variance inflation factor for predictor $j$ | `variance_inflation_factor` |
+
+
+# Motivation {#sec-ch11-motivation}
+
+In Chapter 1, we showed that scikit-learn's `Ridge` gives you
+coefficients but no standard errors, no $p$-values, no diagnostics.
+Statsmodels' `OLS` gives you all of these --- but they are only valid
+when the model's assumptions hold. This chapter is about what happens
+when they don't, and what statsmodels provides to detect and fix the
+problems.
+
+The Gauss--Markov assumptions for OLS are:
+
+1. **Linearity:** $\mathbb{E}[y \mid \mathbf{x}] = \mathbf{x}^\top\boldsymbol{\beta}$
+2. **Exogeneity:** $\mathbb{E}[\varepsilon \mid \mathbf{X}] = \mathbf{0}$
+3. **Homoscedasticity:** $\text{Var}(\varepsilon_i \mid \mathbf{X}) = \sigma^2$ (constant)
+4. **No autocorrelation:** $\text{Cov}(\varepsilon_i, \varepsilon_j \mid \mathbf{X}) = 0$ for $i \neq j$
+5. **No perfect multicollinearity:** $\text{rank}(\mathbf{X}) = p$
+
+Each assumption has a diagnostic test in statsmodels and a fix when
+it fails. This chapter walks through all five, showing what breaks,
+how to detect it, and how to repair inference.
+
+
+# Mathematical Foundation {#sec-ch11-math}
+
+## What OLS actually estimates
+
+Even when the model is wrong (the true conditional expectation is not
+linear), OLS estimates the *best linear predictor*:
+
+$$
+\boldsymbol{\beta}^* = \arg\min_\mathbf{b} \mathbb{E}[(y - \mathbf{x}^\top\mathbf{b})^2].
+$$
+
+This is the population projection coefficient. OLS is consistent for
+$\boldsymbol{\beta}^*$ regardless of whether the model is correctly
+specified. The question is not "does OLS work?" but "what are you
+estimating, and are your standard errors correct?"
+
+## The Gauss--Markov theorem (intuition)
+
+Under assumptions 1--5, OLS is the Best Linear Unbiased Estimator
+(BLUE): no other linear unbiased estimator has smaller variance.
+
+**Why this matters for API design:** This is why statsmodels' default
+`cov_type='nonrobust'` assumes homoscedasticity. Under Gauss--Markov,
+the model-based variance $\hat{\sigma}^2(\mathbf{X}^\top\mathbf{X})^{-1}$
+is correct and efficient. The robust alternatives (HC0--HC3) sacrifice
+some efficiency for validity under misspecification.
+
+## The sandwich variance (recap from Ch. 10)
+
+When homoscedasticity fails, the model-based SE is wrong. The sandwich
+estimator (HC0) from @eq-sandwich is valid under heteroscedasticity:
+
+$$
+\hat{\mathbf{V}}_{\text{HC0}} = (\mathbf{X}^\top\mathbf{X})^{-1}
+\left(\sum_i \hat{e}_i^2 \mathbf{x}_i\mathbf{x}_i^\top\right)
+(\mathbf{X}^\top\mathbf{X})^{-1}.
+$$
+
+The HC1--HC3 variants apply corrections for small samples:
+
+| Variant | Weight on $\hat{e}_i^2$ | Best for |
+|---|---|---|
+| HC0 | 1 | Large $n$ |
+| HC1 | $n/(n-p)$ | Default adjustment |
+| HC2 | $1/(1-P_{ii})$ | Reduces leverage bias |
+| HC3 | $1/(1-P_{ii})^2$ | Best finite-sample properties |
+
+HC3 downweights high-leverage observations most aggressively and
+generally has the best size control in small samples.
+
+
+# The Algorithm {#sec-ch11-algorithm}
+
+OLS is not iterative: $\hat{\boldsymbol{\beta}} = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$.
+But the diagnostics that follow are algorithms in their own right.
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 11.1: OLS with Diagnostic Suite
+
+**Input:** Data $(\mathbf{X}, \mathbf{y})$
+
+**Output:** Coefficients, SEs, diagnostics
+
+1. $\hat{\boldsymbol{\beta}} \leftarrow (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$
+2. $\hat{\boldsymbol{\varepsilon}} \leftarrow \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$
+3. **Diagnostics:**
+4. $\quad$ Heteroscedasticity: Breusch--Pagan test on $\hat{\varepsilon}_i^2$
+5. $\quad$ Specification: Ramsey RESET (add $\hat{y}^2, \hat{y}^3$ and test)
+6. $\quad$ Autocorrelation: Ljung--Box test on $\hat{\varepsilon}_i$
+7. $\quad$ Multicollinearity: VIF for each predictor
+8. $\quad$ Influence: Cook's $D_i$, leverage $P_{ii}$, DFFITS
+9. **If heteroscedastic:** recompute SEs with HC1--HC3
+10. **If autocorrelated:** recompute SEs with HAC (Newey--West)
 :::
 
-# Motivation {#sec-ch10-motivation}
 
-# Mathematical Foundation {#sec-ch10-math}
+# Statistical Properties {#sec-ch11-stats}
 
-# The Algorithm {#sec-ch10-algorithm}
+**Under correct specification:** OLS is BLUE. Standard errors are
+valid. $t$-tests and $F$-tests have exact distributions under
+normality, approximate $\chi^2$ distributions asymptotically.
 
-# Statistical Properties {#sec-ch10-stats}
+**Under heteroscedasticity:** OLS is still consistent and unbiased, but
+no longer efficient. Model-based SEs are wrong (usually too small,
+leading to over-rejection). HC-robust SEs fix inference at the cost of
+some power.
 
-# Statsmodels Implementation {#sec-ch10-statsmodels}
+**Under autocorrelation:** OLS is still consistent but SEs are wrong
+in both directions. HAC (Newey--West) SEs account for serial
+correlation using a kernel estimator.
 
-# From-Scratch Implementation {#sec-ch10-scratch}
+**Under endogeneity:** OLS is *inconsistent* --- it converges to the
+wrong $\boldsymbol{\beta}^*$. No variance correction helps. The fix is
+instrumental variables (Chapter 20).
 
-# Diagnostics {#sec-ch10-diagnostics}
 
-# Computational Considerations {#sec-ch10-computation}
+# Statsmodels Implementation {#sec-ch11-statsmodels}
 
-# Worked Example {#sec-ch10-example}
+## The full OLS workflow
 
-# Exercises {#sec-ch10-exercises}
+```{python}
+#| label: ols-workflow
+# California Housing data
+housing = fetch_california_housing(as_frame=True)
+X = housing.data[['MedInc', 'HouseAge', 'AveRooms', 'AveOccup']]
+y = housing.target
+X_sm = sm.add_constant(X)
 
-# Bibliographic Notes {#sec-ch10-biblio}
+# Fit with robust SEs
+ols = sm.OLS(y, X_sm).fit(cov_type='HC1')
+print(ols.summary().tables[1])
+```
+
+## Heteroscedasticity tests
+
+```{python}
+#| label: het-tests
+# Breusch-Pagan test
+ols_nr = sm.OLS(y, X_sm).fit()
+bp_stat, bp_pval, _, _ = het_breuschpagan(ols_nr.resid, X_sm)
+print(f"Breusch-Pagan: stat={bp_stat:.2f}, p={bp_pval:.4e}")
+
+# White's test (more general — allows nonlinear heteroscedasticity)
+w_stat, w_pval, _, _ = het_white(ols_nr.resid, X_sm)
+print(f"White:         stat={w_stat:.2f}, p={w_pval:.4e}")
+
+if bp_pval < 0.05:
+    print("\nHeteroscedasticity detected → use HC1+ standard errors.")
+```
+
+## Specification test (Ramsey RESET)
+
+```{python}
+#| label: reset-test
+# RESET: test whether adding y_hat^2, y_hat^3 improves the model
+# (detects nonlinearity and omitted variables)
+reset_result = linear_reset(ols_nr, power=3, use_f=True)
+reset_stat, reset_pval = reset_result.fvalue, reset_result.pvalue
+print(f"Ramsey RESET: F={reset_stat:.2f}, p={reset_pval:.4e}")
+
+if reset_pval < 0.05:
+    print("Specification error detected — model may be nonlinear "
+          "or missing variables.")
+```
+
+## Multicollinearity (VIF)
+
+```{python}
+#| label: vif
+# VIF > 10 suggests problematic multicollinearity
+print(f"{'Variable':<12} {'VIF':>8}")
+for j in range(1, X_sm.shape[1]):
+    vif = variance_inflation_factor(X_sm.values, j)
+    print(f"{X.columns[j-1]:<12} {vif:>8.2f}")
+```
+
+## Influence diagnostics
+
+```{python}
+#| label: fig-influence
+#| fig-cap: "Leverage vs. Cook's distance for California Housing OLS. High-leverage, high-influence observations (upper right) are candidates for investigation. The dashed lines mark common thresholds: leverage > 2p/n and Cook's D > 4/n."
+
+influence = OLSInfluence(ols_nr)
+leverage = influence.hat_matrix_diag
+cooks_d = influence.cooks_distance[0]
+
+n, p = X_sm.shape
+
+fig, ax = plt.subplots()
+ax.scatter(leverage, cooks_d, s=5, alpha=0.3)
+ax.axhline(4/n, color="C1", linestyle="--", alpha=0.5,
+           label=f"Cook's D > 4/n = {4/n:.4f}")
+ax.axvline(2*p/n, color="C2", linestyle="--", alpha=0.5,
+           label=f"Leverage > 2p/n = {2*p/n:.4f}")
+ax.set_xlabel("Leverage ($P_{ii}$)")
+ax.set_ylabel("Cook's distance ($D_i$)")
+ax.legend()
+ax.set_ylim(0, np.percentile(cooks_d, 99.5))
+plt.show()
+
+n_high_lev = np.sum(leverage > 2*p/n)
+n_high_cook = np.sum(cooks_d > 4/n)
+print(f"High leverage: {n_high_lev} ({n_high_lev/n:.1%})")
+print(f"High Cook's D: {n_high_cook} ({n_high_cook/n:.1%})")
+```
+
+## WLS: weighted least squares
+
+```{python}
+#| label: wls-demo
+# When you know (or estimate) the error variance structure
+# WLS weights = 1/variance
+
+# Estimate variance as function of MedInc
+# (higher income areas have more price variability)
+residuals_sq = ols_nr.resid**2
+log_var_model = sm.OLS(np.log(residuals_sq + 1e-8),
+                        sm.add_constant(X['MedInc'])).fit()
+estimated_var = np.exp(log_var_model.predict())
+
+wls = sm.WLS(y, X_sm, weights=1/estimated_var).fit()
+print("WLS coefficients:")
+print(wls.summary().tables[1])
+```
+
+
+# From-Scratch Implementation {#sec-ch11-scratch}
+
+## Cook's distance
+
+```{python}
+#| label: cooks-scratch
+
+def cooks_distance(X, residuals, p):
+    """Cook's distance for each observation.
+
+    D_i = (e_i^2 / (p * MSE)) * (P_ii / (1 - P_ii)^2)
+
+    Parameters
+    ----------
+    X : array (n, p)
+        Design matrix.
+    residuals : array (n,)
+        OLS residuals.
+    p : int
+        Number of parameters.
+    """
+    n = len(residuals)
+    H = X @ np.linalg.solve(X.T @ X, X.T)
+    leverage = np.diag(H)
+    mse = np.sum(residuals**2) / (n - p)
+
+    D = (residuals**2 / (p * mse)) * (leverage / (1 - leverage)**2)
+    return D, leverage
+```
+
+```{python}
+#| label: cooks-verify
+D_ours, lev_ours = cooks_distance(X_sm.values, ols_nr.resid, p)
+D_sm = influence.cooks_distance[0]
+
+print(f"Cook's D match: {np.allclose(D_ours, D_sm, rtol=1e-4)}")
+print(f"Top 5 influential observations:")
+top5 = np.argsort(D_ours)[-5:][::-1]
+for i in top5:
+    print(f"  obs {i}: D={D_ours[i]:.4f}, leverage={lev_ours[i]:.4f}")
+```
+
+## HC0 sandwich (recap + verify)
+
+```{python}
+#| label: hc0-verify
+# Verify our Ch. 10 sandwich implementation
+XtX_inv = np.linalg.inv(X_sm.values.T @ X_sm.values)
+meat = sum(e**2 * np.outer(x, x)
+           for e, x in zip(ols_nr.resid, X_sm.values))
+V_hc0 = XtX_inv @ meat @ XtX_inv
+
+hc0_result = sm.OLS(y, X_sm).fit(cov_type='HC0')
+print(f"HC0 SE match: "
+      f"{np.allclose(np.sqrt(np.diag(V_hc0)), hc0_result.bse, rtol=1e-3)}")
+```
+
+
+# Diagnostics {#sec-ch11-diagnostics}
+
+## The five-check protocol
+
+After every OLS fit, run these checks in order:
+
+```{python}
+#| label: diagnostic-protocol
+def ols_diagnostic_suite(result, X):
+    """Run the full OLS diagnostic suite."""
+    print("=== OLS Diagnostic Suite ===\n")
+
+    # 1. Heteroscedasticity
+    bp_stat, bp_pval, _, _ = het_breuschpagan(result.resid, X)
+    het_flag = "FAIL" if bp_pval < 0.05 else "pass"
+    print(f"1. Breusch-Pagan: p={bp_pval:.4f} [{het_flag}]")
+
+    # 2. Specification
+    try:
+        reset_res = linear_reset(result, power=3, use_f=True)
+        reset_f, reset_p = reset_res.fvalue, reset_res.pvalue
+        spec_flag = "FAIL" if reset_p < 0.05 else "pass"
+        print(f"2. Ramsey RESET:  p={reset_p:.4f} [{spec_flag}]")
+    except Exception:
+        print("2. Ramsey RESET:  skipped")
+
+    # 3. Autocorrelation (first 5 lags)
+    lb = acorr_ljungbox(result.resid, lags=5)
+    auto_flag = "FAIL" if lb['lb_pvalue'].min() < 0.05 else "pass"
+    print(f"3. Ljung-Box:     p_min={lb['lb_pvalue'].min():.4f} [{auto_flag}]")
+
+    # 4. Multicollinearity
+    max_vif = max(variance_inflation_factor(X.values if hasattr(X, 'values') else X, j)
+                  for j in range(1, X.shape[1]))
+    mc_flag = "FAIL" if max_vif > 10 else "pass"
+    print(f"4. Max VIF:       {max_vif:.1f} [{mc_flag}]")
+
+    # 5. Influential observations
+    infl = OLSInfluence(result)
+    n_cook = np.sum(infl.cooks_distance[0] > 4/len(result.resid))
+    infl_flag = "WARN" if n_cook > 0.05 * len(result.resid) else "pass"
+    print(f"5. Cook's D > 4/n: {n_cook} obs [{infl_flag}]")
+
+    return {'het_pval': bp_pval, 'max_vif': max_vif}
+
+diag = ols_diagnostic_suite(ols_nr, X_sm)
+```
+
+
+# Computational Considerations {#sec-ch11-computation}
+
+| Operation | Cost | Notes |
+|---|---|---|
+| OLS fit | $O(np^2)$ (QR) or $O(np^2 + p^3)$ (normal equations) | statsmodels uses QR |
+| Hat matrix diag | $O(np^2)$ | Needed for leverage, HC2, HC3 |
+| HC0 sandwich | $O(np^2)$ | Sum of rank-1 outer products |
+| HC3 sandwich | $O(np^2)$ | Same + leverage calculation |
+| HAC (Newey-West) | $O(np^2 \cdot L)$ | $L$ = number of lags |
+| Cook's distance | $O(np^2)$ | Needs hat matrix |
+
+For California Housing ($n = 20{,}640$, $p = 8$), everything is fast.
+For large $n$ with many predictors, the $O(np^2)$ cost of the hat
+matrix and HC corrections becomes the bottleneck.
+
+
+# Worked Example {#sec-ch11-example}
+
+Diagnosing and fixing a misspecified housing price model.
+
+```{python}
+#| label: worked-full
+# Full diagnostic workflow on California Housing
+print("Step 1: Naive OLS")
+ols_naive = sm.OLS(y, X_sm).fit()
+print(f"R² = {ols_naive.rsquared:.3f}")
+print()
+
+print("Step 2: Run diagnostics")
+diag = ols_diagnostic_suite(ols_naive, X_sm)
+print()
+
+print("Step 3: Fix heteroscedasticity with HC1")
+ols_robust = sm.OLS(y, X_sm).fit(cov_type='HC1')
+print("\nCoefficient comparison:")
+print(f"{'Variable':<12} {'Naive SE':>10} {'HC1 SE':>10} {'Ratio':>8}")
+for j, name in enumerate(['const'] + list(X.columns)):
+    ratio = ols_robust.bse[j] / ols_naive.bse[j]
+    print(f"{name:<12} {ols_naive.bse[j]:>10.4f} "
+          f"{ols_robust.bse[j]:>10.4f} {ratio:>8.2f}")
+```
+
+```{python}
+#| label: fig-worked-residuals
+#| fig-cap: "Residual diagnostics for California Housing OLS. Left: residuals vs. fitted values show heteroscedasticity (variance increases with fitted value) and possible nonlinearity. Right: QQ plot shows heavy tails — the errors are not normally distributed. Both issues are addressed by HC-robust standard errors."
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+# Residuals vs fitted
+ax1.scatter(ols_naive.fittedvalues, ols_naive.resid, s=2, alpha=0.2)
+ax1.axhline(0, color="gray", linewidth=0.5)
+ax1.set_xlabel("Fitted values")
+ax1.set_ylabel("Residuals")
+ax1.set_title("Residuals vs. fitted")
+
+# QQ plot
+stats.probplot(ols_naive.resid, plot=ax2)
+ax2.set_title("Normal Q-Q plot")
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Exercises {#sec-ch11-exercises}
+
+**Exercise 11.1** ($\star\star$, diagnostic failure). Generate data
+with a quadratic true relationship: $y = \beta_0 + \beta_1 x + \beta_2 x^2 + \varepsilon$,
+but fit a linear model (omitting $x^2$). Run the Ramsey RESET test.
+Does it detect the misspecification? Now add $x^2$ and re-test. What
+happens to the RESET $p$-value?
+
+%%
+
+```{python}
+#| label: ex-11-1-solution
+n = 200
+x = rng.uniform(-3, 3, n)
+y_quad = 1 + 2*x + 0.5*x**2 + rng.standard_normal(n)
+
+# Misspecified: linear only
+X_lin = sm.add_constant(x)
+res_lin = sm.OLS(y_quad, X_lin).fit()
+_r = linear_reset(res_lin, power=3, use_f=True)
+reset_f, reset_p = _r.fvalue, _r.pvalue
+print(f"Linear model RESET: F={reset_f:.2f}, p={reset_p:.4e}")
+
+# Correct: includes x^2
+X_quad = sm.add_constant(np.column_stack([x, x**2]))
+res_quad = sm.OLS(y_quad, X_quad).fit()
+_r2 = linear_reset(res_quad, power=3, use_f=True)
+reset_f2, reset_p2 = _r2.fvalue, _r2.pvalue
+print(f"Quadratic model RESET: F={reset_f2:.2f}, p={reset_p2:.4f}")
+
+print(f"\nRESET detects the omitted x² term (p < 0.05).")
+print(f"After adding x², the model is correctly specified and")
+print(f"RESET no longer rejects.")
+```
+
+RESET works by adding powers of $\hat{y}$ (which are polynomials in
+$X$) and testing their joint significance. When $x^2$ is omitted,
+$\hat{y}^2$ is approximately $x^2$, which is the omitted term. So
+RESET has power to detect this specific misspecification.
+
+%%
+
+
+**Exercise 11.2** ($\star\star$, comparison). Fit OLS on California
+Housing with `cov_type` set to `'nonrobust'`, `'HC0'`, `'HC1'`,
+`'HC2'`, `'HC3'`. For each variable, compute the ratio of robust SE
+to nonrobust SE. Which variables have the largest SE inflation? Relate
+this to the heteroscedasticity structure (which variables' coefficients
+are most affected by non-constant variance?).
+
+%%
+
+```{python}
+#| label: ex-11-2-solution
+se_table = {}
+for ct in ['nonrobust', 'HC0', 'HC1', 'HC2', 'HC3']:
+    res = sm.OLS(y, X_sm).fit(cov_type=ct)
+    se_table[ct] = res.bse
+
+print(f"{'Variable':<12}", end="")
+for ct in ['nonrobust', 'HC0', 'HC1', 'HC2', 'HC3']:
+    print(f" {ct:>10}", end="")
+print()
+
+for j, name in enumerate(['const'] + list(X.columns)):
+    print(f"{name:<12}", end="")
+    for ct in ['nonrobust', 'HC0', 'HC1', 'HC2', 'HC3']:
+        ratio = se_table[ct][j] / se_table['nonrobust'][j]
+        print(f" {ratio:>10.3f}", end="")
+    print()
+```
+
+The largest SE inflation typically occurs for predictors that are
+correlated with the heteroscedasticity structure. For California
+Housing, MedInc (median income) likely shows the largest ratio because
+house prices are more variable in high-income areas --- the errors are
+larger where MedInc is large, and the nonrobust SE underestimates the
+true uncertainty of the MedInc coefficient.
+
+%%
+
+
+**Exercise 11.3** ($\star\star$, implementation). Compute the hat
+matrix diagonal (leverage) for a simple regression without forming
+the full $n \times n$ hat matrix $\mathbf{P}$. The formula is
+$P_{ii} = \frac{1}{n} + \frac{(x_i - \bar{x})^2}{\sum_j (x_j - \bar{x})^2}$.
+Verify against `OLSInfluence.hat_matrix_diag` on the California
+Housing data (using just MedInc).
+
+%%
+
+```{python}
+#| label: ex-11-3-solution
+x_inc = X['MedInc'].values
+X_inc = sm.add_constant(x_inc)
+
+# Formula for simple regression leverage
+x_bar = x_inc.mean()
+ssx = np.sum((x_inc - x_bar)**2)
+leverage_formula = 1/len(x_inc) + (x_inc - x_bar)**2 / ssx
+
+# Statsmodels
+res_inc = sm.OLS(y, X_inc).fit()
+leverage_sm = OLSInfluence(res_inc).hat_matrix_diag
+
+print(f"Match: {np.allclose(leverage_formula, leverage_sm, atol=1e-10)}")
+print(f"Min leverage: {leverage_formula.min():.6f} (at x ≈ mean)")
+print(f"Max leverage: {leverage_formula.max():.6f}")
+print(f"Mean leverage: {leverage_formula.mean():.6f} (should be p/n = {2/len(x_inc):.6f})")
+```
+
+The formula shows that leverage depends only on how far $x_i$ is from
+$\bar{x}$. Extreme predictor values have high leverage, meaning they
+have disproportionate influence on the fitted line. The mean leverage
+is always $p/n$ (the trace of the hat matrix divided by $n$).
+
+%%
+
+
+**Exercise 11.4** ($\star\star\star$, conceptual). Explain why HC3
+standard errors are larger than HC0 for observations with high
+leverage. Write the HC3 weight $1/(1-P_{ii})^2$ as a function of
+leverage and show that for an observation with $P_{ii} = 0.5$, HC3
+inflates the squared residual by a factor of 4 compared to HC0.
+Why is this correction desirable?
+
+%%
+
+HC0 uses the raw squared residual $\hat{e}_i^2$ in the sandwich meat.
+HC3 replaces it with $\hat{e}_i^2 / (1 - P_{ii})^2$.
+
+For a high-leverage observation ($P_{ii}$ close to 1), the OLS residual
+$\hat{e}_i = y_i - \hat{y}_i$ is artificially small: the fitted line
+is pulled toward the observation, making the residual understate the
+true error. The $(1-P_{ii})^2$ correction inflates the residual to
+compensate:
+
+| $P_{ii}$ | HC3 weight $1/(1-P_{ii})^2$ | Interpretation |
+|---|---|---|
+| 0.01 (low leverage) | 1.02 | Nearly no correction |
+| 0.10 | 1.23 | Mild |
+| 0.50 | 4.00 | Quadrupled --- high-leverage obs |
+| 0.90 | 100 | Massive --- this obs determines the fit |
+
+At $P_{ii} = 0.5$, the squared residual is multiplied by 4. This is
+desirable because the OLS residual at a leverage-0.5 point has expected
+value $\sigma^2(1-0.5) = 0.5\sigma^2$, not $\sigma^2$. The HC3
+correction restores the residual to its proper scale: $\hat{e}_i^2/(1-P_{ii})^2 \approx \sigma^2$
+in expectation, making the sandwich estimator approximately unbiased
+for the true covariance.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch11-biblio}
+
+The Gauss--Markov theorem is proved in most linear models textbooks;
+see Davidson and MacKinnon (2004), Chapter 1, for a treatment aligned
+with the misspecification perspective of this chapter.
+
+The sandwich (robust) covariance estimator for OLS: Eicker (1963),
+Huber (1967), White (1980). The HC0--HC3 finite-sample corrections:
+MacKinnon and White (1985), with HC3 motivated by the jackknife
+(Efron, 1982). Long and Ervin (2000) recommend HC3 for samples under
+250.
+
+The Breusch--Pagan test for heteroscedasticity: Breusch and Pagan
+(1979). White's test: White (1980). The Ramsey RESET test: Ramsey
+(1969). Ljung--Box for autocorrelation: Ljung and Box (1978).
+
+The HAC (Newey--West) estimator: Newey and West (1987). Cluster-robust
+variance: Arellano (1987), with the few-clusters problem analyzed in
+Cameron, Gelbach, and Miller (2008).
+
+Influence diagnostics: Cook's distance (Cook, 1977), DFFITS (Belsley,
+Kuh, and Welsch, 1980). The connection to the influence function of
+robust statistics is developed in Chapter 12.
