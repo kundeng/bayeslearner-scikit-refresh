@@ -246,7 +246,7 @@ ax.scatter(x_data, y_data, s=20, alpha=0.7, label='Data')
 x_fine = np.linspace(0, 4, 200)
 ax.plot(x_fine, exp_decay(x_fine, *popt), color='C1', linewidth=2,
         label='Fitted')
-ax.plot(x_fine, y_true[:1].item() * np.exp(-1.3*x_fine) + 0.5,
+ax.plot(x_fine, exp_decay(x_fine, 2.5, 1.3, 0.5),
         '--', color='gray', alpha=0.5, label='True')
 ax.set_xlabel('x'); ax.set_ylabel('y')
 ax.legend()
@@ -435,10 +435,10 @@ print(f"CV MSE: {-scores.mean():.4f} (+/- {scores.std():.4f})")
 from sklearn.linear_model import LinearRegression
 
 # sklearn: prediction-focused
-lr = LinearRegression().fit(X, y)
+lr = LinearRegression().fit(np.column_stack([x1, x2]), y)
 print(f"sklearn coefficients: {lr.coef_.round(3)}")
 print(f"sklearn gives: coef_, intercept_, predict()")
-print(f"sklearn does NOT give: standard errors, p-values, R²")
+print(f"sklearn does NOT give: standard errors, p-values, conf. intervals")
 
 # statsmodels: inference-focused
 print(f"\nstatsmodels gives everything sklearn gives, plus:")
@@ -487,7 +487,7 @@ print(f"Match: {np.allclose(lr_sk.coef_.ravel(), result.x[:-1], atol=1e-3)}")
 
 The coefficients match because sklearn *is* calling scipy. The
 algorithm is L-BFGS-B --- a limited-memory quasi-Newton method
-developed in Chapter 2.
+developed in Chapter 4.
 
 
 # The Roadmap {#sec-ch01-roadmap}
@@ -638,8 +638,8 @@ uses QR decomposition via `scipy.linalg`.
 
 Scikit-learn: Pedregosa et al. (2011). The `LogisticRegression`
 implementation with `solver='lbfgs'` calls `scipy.optimize.minimize`
-with `method='L-BFGS-B'` --- verified by tracing the source code in
-Chapter 1.
+with `method='L-BFGS-B'` --- as demonstrated in the `.fit()` trace
+above.
 
 For NumPy foundations: Harris et al. (2020), *Array programming with
 NumPy*, Nature.
