@@ -2,29 +2,639 @@
 title: "Generalized Linear Models and M-Estimation"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from statsmodels.genmod.families import Gaussian, Binomial, Poisson, NegativeBinomial, Gamma
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $\mu_i = \mathbb{E}[y_i \mid \mathbf{x}_i]$ | Conditional mean | `.mu` |
+| $g(\mu) = \eta = \mathbf{x}^\top\boldsymbol{\beta}$ | Link function | `family.link` |
+| $b(\theta)$ | Cumulant function (exp. family) | |
+| $\phi$ | Dispersion parameter | `.scale` |
+| $\psi(r)$ | M-estimator loss function | `sm.robust.norms` |
+| $\psi'(r)$ | Influence (weight) function | |
+| $\rho_\tau(u) = u(\tau - \mathbb{1}(u < 0))$ | Check loss (quantile regression) | |
+
+
+# Motivation {#sec-ch12-motivation}
+
+Chapters 10--11 covered linear regression: $y = \mathbf{x}^\top\boldsymbol{\beta} + \varepsilon$
+with continuous $y$ and constant variance. But many response variables
+are not continuous: counts (number of doctor visits), binary (default /
+no default), positive continuous (insurance claims). And many
+relationships are not linear: the effect of income on spending
+probability is S-shaped, not a straight line.
+
+Generalized linear models (GLMs) extend regression to non-normal
+responses through a *link function* that maps the linear predictor
+$\eta = \mathbf{x}^\top\boldsymbol{\beta}$ to the mean $\mu$. Logistic
+regression (Chapter 1's `LogisticRegression`) is a GLM. So is Poisson
+regression for counts and Gamma regression for positive continuous data.
+
+But the real insight of this chapter is that GLMs are a special case of
+something more general: **M-estimation**. An M-estimator solves
+$\sum_i \psi(y_i, \mathbf{x}_i; \boldsymbol{\theta}) = \mathbf{0}$
+for some function $\psi$. When $\psi$ is the score of a GLM,
+M-estimation is maximum likelihood. When $\psi$ is Huber's function,
+M-estimation is robust regression. When $\psi$ is the subgradient of
+the check loss, M-estimation is quantile regression.
+
+This unification matters because the *inference* is the same:
+all three use the sandwich covariance from Chapter 10, all three
+support Wald/score/LR tests from Chapter 10, and all three have the
+same asymptotic theory. Learn it once, use it everywhere.
+
+
+# Mathematical Foundation {#sec-ch12-math}
+
+## The GLM framework
+
+A GLM has three components:
+
+1. **Random component:** $y_i \sim \text{ExponentialFamily}(\theta_i, \phi)$
+   with density $f(y; \theta, \phi) = \exp\left[\frac{y\theta - b(\theta)}{\phi} + c(y, \phi)\right]$.
+
+2. **Systematic component:** $\eta_i = \mathbf{x}_i^\top\boldsymbol{\beta}$
+   (the linear predictor).
+
+3. **Link function:** $g(\mu_i) = \eta_i$, where
+   $\mu_i = \mathbb{E}[y_i] = b'(\theta_i)$.
+
+The *canonical link* is $g(\mu) = \theta$ (the natural parameter is
+the linear predictor). For the canonical link, the score has a
+particularly simple form:
+$S(\boldsymbol{\beta}) = \mathbf{X}^\top(\mathbf{y} - \boldsymbol{\mu})$.
+
+| Family | $b(\theta)$ | Canonical link $g(\mu)$ | $\text{Var}(y)$ |
+|---|---|---|---|
+| Gaussian | $\theta^2/2$ | Identity: $\mu$ | $\phi$ |
+| Binomial | $\ln(1 + e^\theta)$ | Logit: $\ln(\mu/(1-\mu))$ | $\mu(1-\mu)$ |
+| Poisson | $e^\theta$ | Log: $\ln(\mu)$ | $\mu$ |
+| Gamma | $-\ln(-\theta)$ | Inverse: $1/\mu$ | $\mu^2$ |
+| Negative Binomial | $-r\ln(1-e^\theta)$ | Log | $\mu + \mu^2/r$ |
+
+## IRLS: how statsmodels fits GLMs
+
+GLM fitting uses Iteratively Reweighted Least Squares (IRLS), which
+is Fisher scoring (Newton's method with expected information):
+
+At each iteration:
+$$
+\boldsymbol{\beta}^{(t+1)} = (\mathbf{X}^\top\mathbf{W}^{(t)}\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{W}^{(t)}\mathbf{z}^{(t)},
+$$
+where $\mathbf{W} = \text{diag}(w_i)$ with
+$w_i = 1/[\text{Var}(\mu_i) \cdot g'(\mu_i)^2]$ and the working
+response is $z_i = \eta_i + (y_i - \mu_i) g'(\mu_i)$.
+
+**This is just weighted OLS** at each step --- hence the name "reweighted
+least squares." The connection to Chapter 2: IRLS is Newton's method on
+the negative log-likelihood, using the expected information instead of
+the observed information. Each iteration costs $O(np^2)$, the same as
+OLS.
+
+## M-estimation: the unifying framework
+
+An M-estimator solves:
+$$
+\sum_{i=1}^n \psi(y_i, \mathbf{x}_i; \hat{\boldsymbol{\theta}}) = \mathbf{0},
+$$ {#eq-m-estimator}
+
+where $\psi$ is a vector-valued estimating equation.
+
+| Estimator | $\psi$ function | Statsmodels |
+|---|---|---|
+| GLM (MLE) | Score: $\nabla_\theta \log f(y; \theta)$ | `GLM` |
+| OLS | $\mathbf{x}(y - \mathbf{x}^\top\boldsymbol{\beta})$ | `OLS` |
+| Huber robust | $\mathbf{x} \cdot \psi_H(r_i/\hat{\sigma})$ | `RLM(M=HuberT())` |
+| Quantile regression | $\mathbf{x}(\tau - \mathbb{1}(r_i < 0))$ | `QuantReg` |
+
+The sandwich covariance applies to all M-estimators:
+$$
+\text{Cov}(\hat{\boldsymbol{\theta}}) \approx
+\underbrace{\left[-\frac{1}{n}\sum_i \frac{\partial \psi_i}{\partial \boldsymbol{\theta}}\right]^{-1}}_{\text{bread}}
+\underbrace{\left[\frac{1}{n}\sum_i \psi_i \psi_i^\top\right]}_{\text{meat}}
+\underbrace{\left[-\frac{1}{n}\sum_i \frac{\partial \psi_i}{\partial \boldsymbol{\theta}}\right]^{-1}}_{\text{bread}}.
+$$ {#eq-m-sandwich}
+
+For correctly specified GLMs, the bread and meat simplify to
+$\mathcal{I}^{-1}$ (the information matrix inverse). Under
+misspecification, they don't --- and the sandwich is needed.
+
+## Robust regression: bounding the influence
+
+The influence function measures how much an estimator changes when you
+add one observation at $(x_0, y_0)$:
+
+$$
+\text{IF}(x_0, y_0; \hat{\theta}, F) = \lim_{\epsilon \to 0}
+\frac{\hat{\theta}((1-\epsilon)F + \epsilon \delta_{(x_0, y_0)}) - \hat{\theta}(F)}{\epsilon}.
+$$
+
+For OLS, the influence function is unbounded: a single outlier can
+move the estimate arbitrarily far. Robust M-estimators (Huber, Tukey
+biweight) bound the influence function by replacing the quadratic loss
+with a loss that grows more slowly in the tails.
+
+## Quantile regression: the check loss
+
+Quantile regression estimates the conditional $\tau$-th quantile by
+minimizing the *check loss*:
+
+$$
+\sum_i \rho_\tau(y_i - \mathbf{x}_i^\top\boldsymbol{\beta}),
+\qquad \rho_\tau(u) = u(\tau - \mathbb{1}(u < 0)).
+$$
+
+This is an M-estimator with $\psi_\tau(u) = \tau - \mathbb{1}(u < 0)$
+--- the subgradient of the check loss. Unlike OLS (which estimates the
+conditional mean), quantile regression is robust to outliers and
+provides a complete picture of how predictors affect the distribution,
+not just its center.
+
+
+# The Algorithm {#sec-ch12-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 12.1: IRLS for GLMs
+
+**Input:** $(\mathbf{X}, \mathbf{y})$, family, link, tolerance $\epsilon$
+
+**Output:** $\hat{\boldsymbol{\beta}}$
+
+1. $\boldsymbol{\beta}^{(0)} \leftarrow$ initial guess (e.g., from OLS on $g(y)$)
+2. **for** $t = 0, 1, 2, \ldots$ **do**
+3. $\quad$ $\boldsymbol{\eta} \leftarrow \mathbf{X}\boldsymbol{\beta}^{(t)}$
+4. $\quad$ $\boldsymbol{\mu} \leftarrow g^{-1}(\boldsymbol{\eta})$
+5. $\quad$ $w_i \leftarrow 1/[\text{Var}(\mu_i) \cdot g'(\mu_i)^2]$ $\triangleright$ weights
+6. $\quad$ $z_i \leftarrow \eta_i + (y_i - \mu_i)g'(\mu_i)$ $\triangleright$ working response
+7. $\quad$ $\boldsymbol{\beta}^{(t+1)} \leftarrow (\mathbf{X}^\top\mathbf{W}\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{W}\mathbf{z}$ $\triangleright$ weighted OLS
+8. $\quad$ **if** $\|\boldsymbol{\beta}^{(t+1)} - \boldsymbol{\beta}^{(t)}\| < \epsilon$ **then return** $\boldsymbol{\beta}^{(t+1)}$
+9. **end for**
 :::
 
-# Motivation {#sec-ch11-motivation}
 
-# Mathematical Foundation {#sec-ch11-math}
+# Statistical Properties {#sec-ch12-stats}
 
-# The Algorithm {#sec-ch11-algorithm}
+**GLM inference reuses the trinity.** The Wald, score, and LR tests
+from Chapter 10 apply directly to GLMs. The deviance
+$D = 2[\ell_{\text{saturated}} - \ell(\hat{\boldsymbol{\beta}})]$
+serves as the GLM's analogue of the residual sum of squares.
+Under the true model, $D/\phi \xrightarrow{d} \chi^2_{n-p}$.
 
-# Statistical Properties {#sec-ch11-stats}
+**Overdispersion.** When the observed variance exceeds what the model
+predicts ($\text{Var}(y) > \phi \cdot V(\mu)$), the standard errors
+are too small and $p$-values too liberal. The fix: estimate $\phi$ from
+the Pearson chi-squared statistic and use quasi-likelihood inference
+(multiply the covariance by $\hat{\phi}$). Statsmodels' `scale='X2'`
+does this.
 
-# Statsmodels Implementation {#sec-ch11-statsmodels}
+**Robust M-estimators trade bias for robustness.** Huber's estimator
+is biased at the true model (because it downweights large residuals
+that may be legitimate), but has bounded influence. The bias is small
+when the fraction of outliers is small --- the classic
+bias-robustness tradeoff.
 
-# From-Scratch Implementation {#sec-ch11-scratch}
 
-# Diagnostics {#sec-ch11-diagnostics}
+# Statsmodels Implementation {#sec-ch12-statsmodels}
 
-# Computational Considerations {#sec-ch11-computation}
+## GLM: the exponential family
 
-# Worked Example {#sec-ch11-example}
+```{python}
+#| label: glm-demo
+# Poisson regression for count data
+n = 500
+X = rng.standard_normal((n, 2))
+mu = np.exp(0.5 + 0.8*X[:, 0] - 0.3*X[:, 1])
+y_counts = rng.poisson(mu)
 
-# Exercises {#sec-ch11-exercises}
+X_sm = sm.add_constant(X)
 
-# Bibliographic Notes {#sec-ch11-biblio}
+# Fit Poisson GLM
+glm_pois = sm.GLM(
+    endog=y_counts,
+    exog=X_sm,
+    family=Poisson(),       # log link is default for Poisson
+).fit()
+
+print(glm_pois.summary().tables[1])
+print(f"\nDeviance: {glm_pois.deviance:.2f}")
+print(f"Pearson chi2: {glm_pois.pearson_chi2:.2f}")
+print(f"AIC: {glm_pois.aic:.2f}")
+```
+
+**Key defaults:**
+
+- Each family has a *canonical link* by default. Override with
+  `family=Poisson(link=sm.families.links.Identity())`.
+- `scale=None`: dispersion estimated by Pearson chi2 / (n-p) for
+  families with unknown dispersion (Gaussian, Gamma). For Poisson
+  and Binomial, $\phi = 1$ is assumed.
+- `cov_type='nonrobust'`: model-based covariance. Use `'HC1'` for
+  heteroscedasticity-robust (just like OLS).
+
+## Robust regression: `RLM`
+
+```{python}
+#| label: rlm-demo
+# Data with outliers
+y_clean = X @ [2.0, -1.0] + rng.standard_normal(n)
+y_outlier = y_clean.copy()
+y_outlier[:10] = 50  # 10 extreme outliers
+
+# OLS vs Huber vs Tukey biweight
+ols_res = sm.OLS(y_outlier, X_sm).fit()
+rlm_huber = sm.RLM(y_outlier, X_sm,
+                     M=sm.robust.norms.HuberT()).fit()
+rlm_tukey = sm.RLM(y_outlier, X_sm,
+                     M=sm.robust.norms.TukeyBiweight()).fit()
+
+print(f"{'Method':<15} {'beta_1':>8} {'beta_2':>8}")
+print(f"{'True':<15} {'2.000':>8} {'-1.000':>8}")
+print(f"{'OLS':<15} {ols_res.params[1]:>8.3f} {ols_res.params[2]:>8.3f}")
+print(f"{'Huber':<15} {rlm_huber.params[1]:>8.3f} {rlm_huber.params[2]:>8.3f}")
+print(f"{'Tukey':<15} {rlm_tukey.params[1]:>8.3f} {rlm_tukey.params[2]:>8.3f}")
+```
+
+OLS is pulled toward the outliers. Huber downweights them. Tukey
+biweight completely ignores them (bounded influence). The tradeoff:
+Tukey is more robust but has lower efficiency under the normal model.
+
+## Quantile regression
+
+```{python}
+#| label: quantreg-demo
+# Quantile regression at tau = 0.25, 0.50, 0.75
+print(f"{'tau':<6} {'beta_0':>8} {'beta_1':>8} {'beta_2':>8}")
+for tau in [0.25, 0.50, 0.75]:
+    qr = sm.QuantReg(y_clean, X_sm).fit(q=tau)
+    print(f"{tau:<6.2f} {qr.params[0]:>8.3f} "
+          f"{qr.params[1]:>8.3f} {qr.params[2]:>8.3f}")
+
+print(f"\nOLS:   {sm.OLS(y_clean, X_sm).fit().params.round(3)}")
+```
+
+The intercept changes across quantiles (the conditional distribution
+shifts); the slopes are roughly constant (homoscedastic data has
+parallel quantile lines). With heteroscedastic data, the slopes would
+differ.
+
+
+# From-Scratch Implementation {#sec-ch12-scratch}
+
+## IRLS for Poisson regression
+
+```{python}
+#| label: irls-scratch
+
+def irls_poisson(X, y, tol=1e-8, maxiter=25):
+    """IRLS for Poisson regression with log link.
+
+    Implements Algorithm 12.1 for the Poisson family.
+    """
+    n, p = X.shape
+    beta = np.zeros(p)  # initialize at zero
+
+    for t in range(maxiter):
+        eta = X @ beta
+        mu = np.exp(eta)             # inverse link: exp
+        w = mu                       # Var(Y) = mu, g'(mu) = 1/mu
+        z = eta + (y - mu) / mu      # working response
+
+        # Weighted OLS: (X'WX)^-1 X'Wz
+        W = np.diag(w)
+        beta_new = np.linalg.solve(X.T @ W @ X, X.T @ W @ z)
+
+        if np.max(np.abs(beta_new - beta)) < tol:
+            beta = beta_new
+            break
+        beta = beta_new
+
+    deviance = 2 * np.sum(y * np.log(np.maximum(y, 1e-10) / mu) - (y - mu))
+    return {'params': beta, 'deviance': deviance, 'nit': t}
+```
+
+```{python}
+#| label: irls-verify
+res_ours = irls_poisson(X_sm, y_counts)
+print(f"From-scratch: {res_ours['params'].round(4)}, "
+      f"dev={res_ours['deviance']:.2f}")
+print(f"statsmodels:  {glm_pois.params.round(4)}, "
+      f"dev={glm_pois.deviance:.2f}")
+print(f"Match: {np.allclose(res_ours['params'], glm_pois.params, atol=1e-3)}")
+```
+
+
+# Diagnostics {#sec-ch12-diagnostics}
+
+## Deviance residuals
+
+```{python}
+#| label: fig-deviance-resid
+#| fig-cap: "Deviance residuals from the Poisson GLM. Left: residuals vs. fitted log(μ). A pattern here suggests misspecification. Right: QQ plot of deviance residuals against the normal distribution — for a well-specified GLM with moderate counts, these should be approximately normal."
+
+dev_resid = glm_pois.resid_deviance
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+ax1.scatter(np.log(glm_pois.mu), dev_resid, s=5, alpha=0.3)
+ax1.axhline(0, color="gray", linewidth=0.5)
+ax1.set_xlabel(r"$\log(\hat{\mu})$")
+ax1.set_ylabel("Deviance residual")
+ax1.set_title("Deviance residuals vs. fitted")
+
+stats.probplot(dev_resid, plot=ax2)
+ax2.set_title("QQ plot")
+plt.tight_layout()
+plt.show()
+```
+
+## Overdispersion check
+
+```{python}
+#| label: overdispersion
+# Pearson chi2 / (n-p) should be ≈ 1 for Poisson
+pearson_disp = glm_pois.pearson_chi2 / (n - 3)
+print(f"Pearson dispersion: {pearson_disp:.3f}")
+print(f"(Should be ≈ 1.0 for Poisson. Much > 1 = overdispersion.)")
+
+# If overdispersed, use quasi-Poisson (scale='X2')
+if pearson_disp > 1.5:
+    glm_quasi = sm.GLM(y_counts, X_sm, family=Poisson()).fit(scale='X2')
+    print(f"\nQuasi-Poisson SEs (adjusted for overdispersion):")
+    print(f"  Poisson SE: {glm_pois.bse.round(4)}")
+    print(f"  Quasi SE:   {glm_quasi.bse.round(4)}")
+```
+
+## When to use which M-estimator
+
+| Situation | Method | Why |
+|---|---|---|
+| Clean data, correct model | GLM (MLE) | Most efficient |
+| Outliers in $y$ | Huber or Tukey robust | Bounded influence |
+| Outliers in $X$ (leverage) | High-breakdown MM-estimator | Huber doesn't protect against leverage outliers |
+| Interest in full distribution | Quantile regression | Estimates any quantile, not just the mean |
+| Count data, overdispersed | Negative Binomial or quasi-Poisson | Poisson assumes Var = mean |
+
+
+# Computational Considerations {#sec-ch12-computation}
+
+| Method | Per-iteration cost | Iterations | Notes |
+|---|---|---|---|
+| IRLS (GLM) | $O(np^2)$ (weighted OLS) | 5--20 | Quadratic convergence near solution |
+| RLM (Huber) | $O(np^2)$ (reweighted OLS) | 10--50 | Linear convergence |
+| QuantReg | $O(np)$ (simplex/interior point) | Problem-dependent | Uses `scipy.optimize` internally |
+
+IRLS converges fast because it is Newton's method (quadratic
+convergence). Robust regression converges more slowly because the
+weights change discontinuously near the Huber threshold.
+
+
+# Worked Example {#sec-ch12-example}
+
+Modeling insurance claims: comparing Poisson, Negative Binomial,
+and robust approaches.
+
+```{python}
+#| label: worked-data
+# Simulate insurance claims data
+n = 1000
+age = rng.uniform(18, 70, n)
+income = rng.exponential(50000, n)
+X_ins = np.column_stack([
+    (age - 40) / 10,           # centered, scaled
+    np.log(income / 50000),    # log income ratio
+])
+X_ins_sm = sm.add_constant(X_ins)
+
+# True Poisson rates with some overdispersion
+true_rate = np.exp(-0.5 + 0.3*X_ins[:, 0] - 0.2*X_ins[:, 1])
+# Add overdispersion via negative binomial
+claims = rng.negative_binomial(3, 3/(3 + true_rate))
+
+print(f"Claims summary: mean={claims.mean():.2f}, var={claims.var():.2f}")
+print(f"Var/mean ratio: {claims.var()/claims.mean():.2f} "
+      f"(>1 = overdispersion)")
+```
+
+```{python}
+#| label: worked-comparison
+# Fit Poisson, Negative Binomial, and quasi-Poisson
+glm_p = sm.GLM(claims, X_ins_sm, family=Poisson()).fit()
+glm_nb = sm.GLM(claims, X_ins_sm,
+                 family=NegativeBinomial(alpha=1)).fit()
+glm_qp = sm.GLM(claims, X_ins_sm, family=Poisson()).fit(scale='X2')
+
+print(f"{'Model':<12} {'AIC':>8} {'Disp':>6} {'SE(age)':>8}")
+print(f"{'Poisson':<12} {glm_p.aic:>8.1f} {1.0:>6.2f} "
+      f"{glm_p.bse[1]:>8.4f}")
+print(f"{'NegBin':<12} {glm_nb.aic:>8.1f} "
+      f"{glm_nb.pearson_chi2/(n-3):>6.2f} {glm_nb.bse[1]:>8.4f}")
+print(f"{'Quasi-Pois':<12} {'N/A':>8} "
+      f"{glm_qp.scale:>6.2f} {glm_qp.bse[1]:>8.4f}")
+```
+
+
+# Exercises {#sec-ch12-exercises}
+
+**Exercise 12.1** ($\star\star$, diagnostic failure). Fit a Poisson
+GLM to data that is actually negative binomial (overdispersed). Compare
+the Poisson SEs to quasi-Poisson SEs. By what factor are the Poisson
+SEs too small? Relate this to the overdispersion parameter.
+
+%%
+
+```{python}
+#| label: ex-12-1-solution
+# Generate overdispersed count data
+mu_true = np.exp(1 + 0.5 * rng.standard_normal(300))
+y_od = rng.negative_binomial(2, 2 / (2 + mu_true))
+
+X_od = sm.add_constant(rng.standard_normal((300, 1)))
+glm_pois_od = sm.GLM(y_od, X_od, family=Poisson()).fit()
+glm_quasi_od = sm.GLM(y_od, X_od, family=Poisson()).fit(scale='X2')
+
+disp = glm_quasi_od.scale
+print(f"Overdispersion: {disp:.2f}")
+print(f"Poisson SE:     {glm_pois_od.bse[1]:.4f}")
+print(f"Quasi SE:       {glm_quasi_od.bse[1]:.4f}")
+print(f"Ratio:          {glm_quasi_od.bse[1]/glm_pois_od.bse[1]:.2f}")
+print(f"sqrt(disp):     {np.sqrt(disp):.2f}")
+print(f"\nThe quasi SE is sqrt(dispersion) × Poisson SE.")
+print("Poisson SEs are too small by this factor, leading to")
+print("over-rejection of null hypotheses.")
+```
+
+%%
+
+
+**Exercise 12.2** ($\star\star$, comparison). Fit OLS, Huber RLM, and
+Tukey RLM to the same dataset with 5% gross outliers (observations
+with $y_i$ replaced by $y_i + 50$). Compare coefficients and SEs.
+Which method recovers the true coefficients best? Plot the $\psi$
+functions for all three.
+
+%%
+
+```{python}
+#| label: ex-12-2-solution
+n_ex = 200
+X_ex = rng.standard_normal((n_ex, 2))
+y_ex = X_ex @ [3.0, -2.0] + rng.standard_normal(n_ex)
+# Add 5% outliers
+n_outlier = 10
+y_ex[:n_outlier] += 50
+
+X_ex_sm = sm.add_constant(X_ex)
+ols_ex = sm.OLS(y_ex, X_ex_sm).fit()
+hub_ex = sm.RLM(y_ex, X_ex_sm, M=sm.robust.norms.HuberT()).fit()
+tuk_ex = sm.RLM(y_ex, X_ex_sm, M=sm.robust.norms.TukeyBiweight()).fit()
+
+print(f"{'Method':<10} {'b1':>8} {'b2':>8} {'|error|':>8}")
+for name, res in [('OLS', ols_ex), ('Huber', hub_ex), ('Tukey', tuk_ex)]:
+    err = np.sqrt((res.params[1]-3)**2 + (res.params[2]+2)**2)
+    print(f"{name:<10} {res.params[1]:>8.3f} {res.params[2]:>8.3f} "
+          f"{err:>8.3f}")
+
+# Plot psi functions
+fig, ax = plt.subplots(figsize=(6, 4))
+r = np.linspace(-6, 6, 200)
+ax.plot(r, r, label="OLS (quadratic)", linewidth=1.5)
+ax.plot(r, np.clip(r, -1.345, 1.345), label="Huber (t=1.345)",
+        linewidth=1.5)
+c = 4.685
+ax.plot(r, r * (1 - (r/c)**2)**2 * (np.abs(r) <= c),
+        label="Tukey (c=4.685)", linewidth=1.5)
+ax.set_xlabel("Residual $r$"); ax.set_ylabel(r"$\psi(r)$")
+ax.legend(); ax.axhline(0, color="gray", linewidth=0.3)
+plt.show()
+```
+
+Huber's $\psi$ is linear for small residuals (like OLS) and constant
+for large ones (bounded influence). Tukey's $\psi$ goes to zero for
+large residuals (zero influence — outliers are completely ignored).
+The tradeoff: Tukey is more robust but less efficient when the data
+is actually normal.
+
+%%
+
+
+**Exercise 12.3** ($\star\star$, implementation). Implement one
+iteration of IRLS for logistic regression (Binomial family, logit
+link). Show that the weights are $w_i = \mu_i(1-\mu_i)$ and the
+working response is $z_i = \eta_i + (y_i - \mu_i)/[\mu_i(1-\mu_i)]$.
+Verify against `sm.GLM(..., family=Binomial())`.
+
+%%
+
+```{python}
+#| label: ex-12-3-solution
+# Logistic regression via IRLS
+n_lr = 200
+X_lr = rng.standard_normal((n_lr, 2))
+prob = 1 / (1 + np.exp(-(0.5 + X_lr @ [1.0, -0.5])))
+y_lr = rng.binomial(1, prob)
+X_lr_sm = sm.add_constant(X_lr)
+
+# One IRLS iteration from beta=0
+beta = np.zeros(3)
+eta = X_lr_sm @ beta
+mu = 1 / (1 + np.exp(-eta))       # inverse logit
+w = mu * (1 - mu)                  # Var(Y) for Binomial
+z = eta + (y_lr - mu) / (mu * (1 - mu) + 1e-10)  # working response
+
+W = np.diag(w)
+beta_1 = np.linalg.solve(X_lr_sm.T @ W @ X_lr_sm,
+                          X_lr_sm.T @ W @ z)
+print(f"IRLS iter 1: {beta_1.round(4)}")
+
+# Full IRLS (iterate to convergence)
+for _ in range(20):
+    eta = X_lr_sm @ beta_1
+    mu = 1 / (1 + np.exp(-eta))
+    w = mu * (1 - mu)
+    z = eta + (y_lr - mu) / (w + 1e-10)
+    W = np.diag(w)
+    beta_new = np.linalg.solve(X_lr_sm.T @ W @ X_lr_sm,
+                                X_lr_sm.T @ W @ z)
+    if np.max(np.abs(beta_new - beta_1)) < 1e-8:
+        break
+    beta_1 = beta_new
+
+# Statsmodels
+glm_lr = sm.GLM(y_lr, X_lr_sm, family=Binomial()).fit()
+
+print(f"IRLS final:  {beta_1.round(4)}")
+print(f"statsmodels: {glm_lr.params.round(4)}")
+print(f"Match: {np.allclose(beta_1, glm_lr.params, atol=1e-3)}")
+```
+
+%%
+
+
+**Exercise 12.4** ($\star\star\star$, conceptual). Explain why the
+sandwich covariance (@eq-m-sandwich) reduces to
+$\mathcal{I}(\boldsymbol{\theta})^{-1}$ when the GLM is correctly
+specified, but differs under misspecification. What does "correctly
+specified" mean in terms of the bread and meat?
+
+%%
+
+Under correct specification, the information matrix equality holds
+(@eq-info-equality from Chapter 10):
+$\mathcal{I} = \text{Var}(S) = -\mathbb{E}[\nabla^2 \ell]$.
+
+The bread is $(-\mathbb{E}[\nabla^2 \ell])^{-1} = \mathcal{I}^{-1}$.
+The meat is $\text{Var}(S) = \mathcal{I}$.
+The sandwich becomes $\mathcal{I}^{-1} \mathcal{I} \mathcal{I}^{-1} = \mathcal{I}^{-1}$
+--- the model-based variance.
+
+Under misspecification, the model's expected Hessian (bread) and the
+actual score variance (meat) are not equal. The Hessian reflects the
+curvature of the *model's* likelihood; the score variance reflects the
+variability of the *data's* scores. When the model is wrong, these
+disagree, and the sandwich covariance corrects for the discrepancy.
+
+This is why `cov_type='nonrobust'` (which uses $\mathcal{I}^{-1}$
+alone) gives wrong SEs under misspecification: it uses the bread
+without the meat. The robust `cov_type='HC1'` computes the full
+sandwich.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch12-biblio}
+
+GLMs were introduced by Nelder and Wedderburn (1972). The definitive
+reference is McCullagh and Nelder (1989). IRLS as Fisher scoring for
+GLMs is in the original paper; the connection to Newton's method with
+expected information is made explicit in Agresti (2015).
+
+M-estimation: Huber (1964, 1981) for the general framework and the
+Huber loss. The sandwich covariance: Huber (1967). Tukey's biweight:
+Beaton and Tukey (1974). The breakdown-point theory: Donoho and Huber
+(1983). Statsmodels' `RLM` implements IRLS with M-estimation norms.
+
+Quantile regression: Koenker and Bassett (1978). The asymptotic theory
+(including the sparsity function and its estimation) is in Koenker
+(2005). Statsmodels' `QuantReg` uses an interior-point method for the
+linear program.
+
+The influence function: Hampel (1974). Its connection to the jackknife
+and bootstrap is through the functional delta method (Efron, 1982).
+This connection is reused in Chapters 17 (survival analysis, partial
+likelihood), 21 (AIPW), and 23 (DML).
+
+Quasi-likelihood: Wedderburn (1974). McCullagh (1983) develops the
+quasi-likelihood framework formally. The distinction between
+quasi-likelihood and GEE (Chapter 14) is that GEE also models the
+working correlation structure.
