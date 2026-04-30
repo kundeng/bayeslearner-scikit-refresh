@@ -2,29 +2,303 @@
 title: "Instrumental Variables and Weak Identification"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
-:::
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from linearmodels.iv import IV2SLS, IVGMM, IVLIML
+from scipy import stats
 
-# Motivation {#sec-ch19-motivation}
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
 
-# Mathematical Foundation {#sec-ch19-math}
+## Notation for this chapter
 
-# The Algorithm {#sec-ch19-algorithm}
+| Symbol | Meaning | linearmodels |
+|--------|---------|-------------|
+| $\mathbf{y}$ | Outcome | `dependent` |
+| $\mathbf{X}$ | Endogenous regressors | `endog` |
+| $\mathbf{W}$ | Exogenous regressors (instruments + controls) | `exog` |
+| $\mathbf{Z}$ | Instruments (excluded from outcome equation) | `instruments` |
 
-# Statistical Properties {#sec-ch19-stats}
 
-# Implementation {#sec-ch19-impl}
+# Motivation {#sec-ch20-motivation}
 
-# From-Scratch Implementation {#sec-ch19-scratch}
+Chapter 11 showed that OLS is inconsistent under endogeneity (when
+$\text{Cov}(\varepsilon, X) \neq 0$). Endogeneity arises from omitted
+variables, simultaneity, or measurement error. No amount of robust
+standard errors fixes inconsistency — the point estimate itself is
+wrong.
 
-# Diagnostics {#sec-ch19-diagnostics}
+Instrumental variables (IV) fix this by using an *instrument* $Z$ that
+affects $X$ (relevance) but does not directly affect $Y$ (exclusion).
+The instrument provides exogenous variation in $X$ that identifies the
+causal effect.
 
-# Computational Considerations {#sec-ch19-computation}
+This chapter covers the `linearmodels` package, which provides
+`IV2SLS`, `IVGMM`, `IVLIML`, and weak-instrument diagnostics that
+statsmodels does not.
 
-# Worked Example {#sec-ch19-example}
 
-# Exercises {#sec-ch19-exercises}
+# Mathematical Foundation {#sec-ch20-math}
 
-# Bibliographic Notes {#sec-ch19-biblio}
+## The endogeneity problem
+
+Model: $y_i = \mathbf{x}_i^\top\boldsymbol{\beta} + \varepsilon_i$
+where $\mathbb{E}[\varepsilon_i \mid \mathbf{x}_i] \neq 0$.
+
+OLS gives $\hat{\beta}_{\text{OLS}} \to \beta + (\mathbb{E}[\mathbf{x}\mathbf{x}^\top])^{-1}\mathbb{E}[\mathbf{x}\varepsilon]$
+— biased by the endogeneity.
+
+## IV identification
+
+An instrument $Z$ satisfies:
+1. **Relevance:** $\text{Cov}(Z, X) \neq 0$ (instrument predicts the endogenous variable)
+2. **Exclusion:** $\text{Cov}(Z, \varepsilon) = 0$ (instrument doesn't directly affect outcome)
+
+Under these conditions, $\beta = \text{Cov}(Z, Y) / \text{Cov}(Z, X)$.
+
+## 2SLS: the two-stage approach
+
+**Stage 1:** Regress $X$ on $Z$ and controls:
+$\hat{X} = \mathbf{Z}(\mathbf{Z}^\top\mathbf{Z})^{-1}\mathbf{Z}^\top X$
+
+**Stage 2:** Regress $Y$ on $\hat{X}$ (the predicted values from stage 1):
+$\hat{\beta}_{2\text{SLS}} = (\hat{\mathbf{X}}^\top\hat{\mathbf{X}})^{-1}\hat{\mathbf{X}}^\top Y$
+
+The predicted $\hat{X}$ contains only the exogenous variation in $X$
+(the part driven by $Z$), so the second-stage regression is consistent.
+
+## Weak instruments
+
+When $Z$ is weakly correlated with $X$ (weak instrument), 2SLS:
+- Has substantial finite-sample bias (toward OLS)
+- Has non-normal distribution (confidence intervals are wrong)
+- The first-stage F-statistic < 10 (Stock--Yogo rule of thumb)
+
+The Anderson--Rubin test is robust to weak instruments: it tests
+$H_0: \beta = \beta_0$ without requiring strong instruments.
+
+
+# Statsmodels / linearmodels Implementation {#sec-ch20-impl}
+
+## Simulating endogenous data
+
+```{python}
+#| label: data-sim
+n = 500
+# Confounder
+u = rng.standard_normal(n)
+
+# Instrument (affects X but not Y directly)
+z = rng.standard_normal(n)
+
+# Endogenous regressor
+x = 0.8*z + 0.5*u + rng.standard_normal(n)
+
+# Outcome (u confounds X → Y)
+y = 1.5*x + u + rng.standard_normal(n)
+
+print(f"True effect: beta = 1.5")
+print(f"OLS estimate: {sm.OLS(y, sm.add_constant(x)).fit().params[1]:.3f}")
+print(f"OLS is biased upward because Cov(x, u) > 0")
+```
+
+## 2SLS with `linearmodels`
+
+```{python}
+#| label: iv-demo
+import pandas as pd
+df = pd.DataFrame({'y': y, 'x': x, 'z': z, 'const': 1})
+
+# 2SLS
+iv = IV2SLS.from_formula('y ~ 1 + [x ~ z]', data=df).fit(cov_type='robust')
+print(iv.summary.tables[1])
+print(f"\nTrue beta: 1.5")
+print(f"First-stage F: {iv.first_stage.diagnostics['f.stat'].iloc[0]:.1f}")
+```
+
+**Reading the output:**
+- The IV estimate should be close to 1.5 (the true effect)
+- OLS was biased upward (~1.7) due to the confounder
+- The first-stage F > 10 indicates the instrument is strong
+
+## LIML and GMM
+
+```{python}
+#| label: liml-gmm
+# LIML (less biased than 2SLS with weak instruments)
+liml = IVLIML.from_formula('y ~ 1 + [x ~ z]', data=df).fit(cov_type='robust')
+
+# GMM (efficient with multiple instruments)
+z2 = rng.standard_normal(n)
+x_over = 0.8*z + 0.3*z2 + 0.5*u + rng.standard_normal(n)
+y_over = 1.5*x_over + u + rng.standard_normal(n)
+df_over = pd.DataFrame({'y': y_over, 'x': x_over, 'z1': z, 'z2': z2, 'const': 1})
+
+gmm = IVGMM.from_formula('y ~ 1 + [x ~ z1 + z2]', data=df_over).fit(cov_type='robust')
+
+print(f"{'Method':<8} {'beta':>8} {'SE':>8}")
+print(f"{'2SLS':<8} {iv.params.iloc[1]:>8.3f} {iv.std_errors.iloc[1]:>8.3f}")
+print(f"{'LIML':<8} {liml.params.iloc[1]:>8.3f} {liml.std_errors.iloc[1]:>8.3f}")
+print(f"{'GMM':<8} {gmm.params.iloc[1]:>8.3f} {gmm.std_errors.iloc[1]:>8.3f}")
+```
+
+## Weak instrument diagnostics
+
+```{python}
+#| label: weak-iv
+# Weak instrument scenario
+z_weak = 0.05*x + rng.standard_normal(n)  # barely correlated
+x_weak = 0.05*z_weak + 0.5*u + rng.standard_normal(n)
+y_weak = 1.5*x_weak + u + rng.standard_normal(n)
+df_weak = pd.DataFrame({'y': y_weak, 'x': x_weak, 'z': z_weak, 'const': 1})
+
+iv_weak = IV2SLS.from_formula('y ~ 1 + [x ~ z]', data=df_weak).fit(cov_type='robust')
+print(f"Weak IV estimate: {iv_weak.params.iloc[1]:.3f} (true=1.5)")
+print(f"First-stage F: {iv_weak.first_stage.diagnostics['f.stat'].iloc[0]:.1f}")
+print(f"F < 10 → weak instrument warning!")
+```
+
+
+# From-Scratch Implementation {#sec-ch20-scratch}
+
+## 2SLS from scratch
+
+```{python}
+#| label: 2sls-scratch
+
+def two_stage_ls(y, X, Z):
+    """2SLS estimator from scratch.
+
+    Stage 1: X_hat = Z(Z'Z)^-1 Z'X
+    Stage 2: beta = (X_hat'X_hat)^-1 X_hat'y
+    """
+    # Stage 1: project X onto Z
+    X_hat = Z @ np.linalg.solve(Z.T @ Z, Z.T @ X)
+
+    # Stage 2: regress Y on X_hat
+    beta = np.linalg.solve(X_hat.T @ X_hat, X_hat.T @ y)
+
+    return beta
+
+X_2sls = np.column_stack([np.ones(n), x])
+Z_2sls = np.column_stack([np.ones(n), z])
+
+beta_scratch = two_stage_ls(y, X_2sls, Z_2sls)
+print(f"From-scratch 2SLS: beta={beta_scratch[1]:.3f}")
+print(f"linearmodels:      beta={iv.params.iloc[1]:.3f}")
+print(f"Match: {np.isclose(beta_scratch[1], iv.params.iloc[1], atol=0.01)}")
+```
+
+
+# Diagnostics {#sec-ch20-diagnostics}
+
+1. **First-stage F:** Must be > 10 (Stock--Yogo). < 10 = weak instruments.
+2. **Sargan/Hansen J-test:** For overidentified models (more instruments
+   than endogenous variables). Tests whether the instruments are valid
+   (exclusion restriction). Non-rejection supports validity.
+3. **Hausman test:** Compares OLS and 2SLS. If they agree, there's no
+   endogeneity (use the more efficient OLS). If they disagree, use 2SLS.
+
+
+# Exercises {#sec-ch20-exercises}
+
+**Exercise 20.1** ($\star\star$, diagnostic failure). Simulate data
+with a weak instrument (first-stage F ≈ 3). Compare OLS, 2SLS, and
+LIML estimates across 100 replications. Show that 2SLS is biased
+toward OLS and LIML is less biased.
+
+%%
+
+```{python}
+#| label: ex-20-1
+ols_betas, iv_betas, liml_betas = [], [], []
+for rep in range(100):
+    r = np.random.default_rng(rep)
+    u_r = r.standard_normal(200)
+    z_r = r.standard_normal(200)
+    x_r = 0.1*z_r + u_r + r.standard_normal(200)  # weak instrument
+    y_r = 1.5*x_r + u_r + r.standard_normal(200)
+    df_r = pd.DataFrame({'y':y_r,'x':x_r,'z':z_r,'c':1})
+
+    ols_betas.append(sm.OLS(y_r, sm.add_constant(x_r)).fit().params[1])
+    iv_betas.append(IV2SLS.from_formula('y~1+[x~z]',data=df_r).fit().params.iloc[1])
+    liml_betas.append(IVLIML.from_formula('y~1+[x~z]',data=df_r).fit().params.iloc[1])
+
+print(f"{'Method':<8} {'Mean':>8} {'Median':>8} {'Bias':>8}")
+for name, b in [('OLS',ols_betas),('2SLS',iv_betas),('LIML',liml_betas)]:
+    print(f"{name:<8} {np.mean(b):>8.2f} {np.median(b):>8.2f} "
+          f"{np.mean(b)-1.5:>8.2f}")
+```
+
+2SLS with weak instruments is biased toward OLS. LIML has less
+median bias but higher variance. With strong instruments, both
+are consistent and nearly unbiased.
+
+%%
+
+**Exercise 20.2** ($\star\star$, implementation). Implement 2SLS from
+scratch. Verify against `IV2SLS`.
+
+%%
+
+```{python}
+#| label: ex-20-2
+# Already implemented above
+print(f"Verified: from-scratch={beta_scratch[1]:.4f}, "
+      f"linearmodels={iv.params.iloc[1]:.4f}")
+```
+
+%%
+
+**Exercise 20.3** ($\star\star$, comparison). With two instruments
+(overidentified), compare 2SLS and GMM estimates. Run the J-test
+for overidentification.
+
+%%
+
+```{python}
+#| label: ex-20-3
+print(f"2SLS:  {iv.params.iloc[1]:.3f}")
+print(f"GMM:   {gmm.params.iloc[1]:.3f}")
+# J-test from GMM result
+if hasattr(gmm, 'j_stat'):
+    print(f"J-test: stat={gmm.j_stat.stat:.3f}, p={gmm.j_stat.pval:.4f}")
+```
+
+%%
+
+**Exercise 20.4** ($\star\star\star$, conceptual). Explain why the
+exclusion restriction ($\text{Cov}(Z, \varepsilon) = 0$) cannot be
+tested with data alone. What role does the Sargan/Hansen J-test play,
+and why can it only detect *some* violations?
+
+%%
+
+The exclusion restriction says the instrument affects $Y$ only through
+$X$. This is an assumption about a counterfactual ("what would $Y$ be
+if we changed $Z$ without changing $X$?"), which is not observable.
+
+The J-test checks whether the *multiple* instruments are mutually
+consistent: if some instruments are invalid, the estimates from
+different instrument subsets will disagree. But if *all* instruments
+are invalid in the same way, the J-test has no power — the estimates
+agree because they're all biased in the same direction. The J-test
+detects *heterogeneous* instrument invalidity, not *homogeneous*
+invalidity. This is why the exclusion restriction is fundamentally
+untestable — it must be argued on substantive grounds.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch20-biblio}
+
+IV: Wright (1928) for the original application, Angrist and Krueger
+(2001) for a survey. 2SLS: Theil (1953), Basmann (1957). LIML:
+Anderson and Rubin (1949). Weak instruments: Bound, Jaeger, and Baker
+(1995) for the problem, Stock and Yogo (2005) for the diagnostic,
+Andrews, Stock, and Sun (2019) for recent developments. LATE: Imbens
+and Angrist (1994). The `linearmodels` package: Sheppard (2023).

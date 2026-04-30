@@ -2,29 +2,400 @@
 title: "Survival Analysis"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.duration.hazard_regression import PHReg
+from statsmodels.duration.survfunc import SurvfuncRight, survdiff
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $T_i$ | Event time | `endog` |
+| $C_i$ | Censoring time | |
+| $\delta_i = \mathbb{1}(T_i \leq C_i)$ | Event indicator | `status` |
+| $S(t) = \Pr(T > t)$ | Survival function | `SurvfuncRight` |
+| $h(t) = f(t)/S(t)$ | Hazard function | |
+| $H(t) = \int_0^t h(u)\,du$ | Cumulative hazard | |
+| $h(t \mid \mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol{\beta})$ | Cox model | `PHReg` |
+
+
+# Motivation {#sec-ch18-motivation}
+
+Survival analysis models *time-to-event* data: how long until a
+machine fails, a patient relapses, or a customer churns. The
+distinctive feature is *censoring*: some observations haven't
+experienced the event yet when the study ends. You know they survived
+at least until time $C_i$, but not how much longer.
+
+Ignoring censoring (dropping censored observations or treating them as
+events) gives biased results. Survival methods handle censoring
+correctly through the likelihood, which contributes $S(C_i)$ (not
+$f(C_i)$) for censored observations.
+
+Statsmodels provides `PHReg` for Cox proportional hazards regression
+and `SurvfuncRight` for the Kaplan--Meier estimator. This chapter
+shows how to use them and what they compute.
+
+
+# Mathematical Foundation {#sec-ch18-math}
+
+## Survival, hazard, and their relationship
+
+$$
+S(t) = \Pr(T > t) = \exp(-H(t)), \qquad h(t) = -\frac{d}{dt}\ln S(t).
+$$
+
+The hazard $h(t)$ is the instantaneous risk of the event at time $t$,
+given survival to $t$. The survival function $S(t)$ is the probability
+of surviving past $t$. They are related through the cumulative hazard
+$H(t) = -\ln S(t)$.
+
+## Kaplan--Meier: nonparametric survival estimation
+
+The Kaplan--Meier estimator is a step function:
+$$
+\hat{S}(t) = \prod_{t_j \leq t} \left(1 - \frac{d_j}{n_j}\right),
+$$
+where $t_j$ are the distinct event times, $d_j$ is the number of
+events at $t_j$, and $n_j$ is the number at risk just before $t_j$.
+
+**Greenwood's formula** for the variance:
+$\widehat{\text{Var}}(\hat{S}(t)) = \hat{S}(t)^2 \sum_{t_j \leq t} \frac{d_j}{n_j(n_j - d_j)}$.
+
+## Cox proportional hazards
+
+The Cox model specifies the hazard as:
+$$
+h(t \mid \mathbf{x}) = h_0(t) \exp(\mathbf{x}^\top\boldsymbol{\beta}),
+$$ {#eq-cox}
+where $h_0(t)$ is an unspecified baseline hazard. The key insight:
+$h_0(t)$ cancels in the *partial likelihood*, so $\boldsymbol{\beta}$
+can be estimated without specifying the baseline hazard. This is why
+Cox regression is called "semiparametric."
+
+**The partial likelihood:**
+$$
+\mathcal{L}_P(\boldsymbol{\beta}) = \prod_{i:\delta_i=1} \frac{\exp(\mathbf{x}_i^\top\boldsymbol{\beta})}{\sum_{j \in \mathcal{R}(t_i)} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})},
+$$ {#eq-partial-lik}
+where $\mathcal{R}(t_i)$ is the risk set at time $t_i$ (everyone still
+at risk). Each factor compares the event subject's hazard to the total
+hazard in the risk set.
+
+
+# The Algorithm {#sec-ch18-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 18.1: Cox Partial Likelihood Estimation
+
+1. Sort observations by event time
+2. At each event time $t_i$:
+   - Compute risk set $\mathcal{R}(t_i)$
+   - Contribution to log-partial-likelihood:
+     $\ell_i = \mathbf{x}_i^\top\boldsymbol{\beta} - \ln\sum_{j \in \mathcal{R}(t_i)} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})$
+3. Maximize $\ell_P = \sum_i \ell_i$ via Newton--Raphson (Chapter 2)
 :::
 
-# Motivation {#sec-ch17-motivation}
 
-# Mathematical Foundation {#sec-ch17-math}
+# Statistical Properties {#sec-ch18-stats}
 
-# The Algorithm {#sec-ch17-algorithm}
+The partial likelihood MLE $\hat{\boldsymbol{\beta}}$ is consistent
+and asymptotically normal under the proportional hazards assumption.
+The covariance is the inverse of the observed information from the
+partial likelihood. Wald, score, and LR tests (Chapter 10) apply
+directly.
 
-# Statistical Properties {#sec-ch17-stats}
+**The log-rank test** for comparing two survival curves is equivalent
+to the score test from a Cox model with a single binary covariate.
 
-# Statsmodels Implementation {#sec-ch17-statsmodels}
 
-# From-Scratch Implementation {#sec-ch17-scratch}
+# Statsmodels Implementation {#sec-ch18-statsmodels}
 
-# Diagnostics {#sec-ch17-diagnostics}
+## Kaplan--Meier
 
-# Computational Considerations {#sec-ch17-computation}
+```{python}
+#| label: km-demo
+# Simulate survival data
+n = 200
+# Exponential survival times
+true_rate = 0.05
+event_time = rng.exponential(1/true_rate, n)
+# Random censoring
+censor_time = rng.uniform(5, 30, n)
+observed_time = np.minimum(event_time, censor_time)
+event = (event_time <= censor_time).astype(int)
 
-# Worked Example {#sec-ch17-example}
+print(f"Events: {event.sum()} ({event.mean():.0%})")
+print(f"Censored: {(1-event).sum()} ({(1-event).mean():.0%})")
 
-# Exercises {#sec-ch17-exercises}
+# Kaplan-Meier
+sf = SurvfuncRight(observed_time, event)
+```
 
-# Bibliographic Notes {#sec-ch17-biblio}
+```{python}
+#| label: fig-km
+#| fig-cap: "Kaplan-Meier survival curve with 95% confidence interval. Each step corresponds to an event time; the curve is flat between events. The confidence interval widens over time as the number at risk decreases."
+
+fig, ax = plt.subplots()
+ax.step(sf.surv_times, sf.surv_prob, where='post', color="C0",
+        linewidth=1.5, label="KM estimate")
+# Confidence interval via Greenwood
+se = np.sqrt(sf.surv_prob_se**2)
+ax.fill_between(sf.surv_times,
+                np.maximum(sf.surv_prob - 1.96*se, 0),
+                np.minimum(sf.surv_prob + 1.96*se, 1),
+                step='post', alpha=0.2, color="C0")
+# True survival
+t_grid = np.linspace(0, max(observed_time), 200)
+ax.plot(t_grid, np.exp(-true_rate*t_grid), '--', color="C1",
+        label=f"True S(t) = exp(-{true_rate}t)")
+ax.set_xlabel("Time"); ax.set_ylabel("S(t)")
+ax.legend()
+plt.show()
+```
+
+## Log-rank test
+
+```{python}
+#| label: logrank
+# Two groups with different hazard rates
+group = rng.binomial(1, 0.5, n)
+rate = np.where(group == 0, 0.03, 0.08)
+t_event = rng.exponential(1/rate)
+t_censor = rng.uniform(5, 30, n)
+t_obs = np.minimum(t_event, t_censor)
+d = (t_event <= t_censor).astype(int)
+
+# Log-rank test
+stat, pval = survdiff(t_obs, d, group)
+print(f"Log-rank test: stat={stat:.3f}, p={pval:.4f}")
+```
+
+## Cox regression (`PHReg`)
+
+```{python}
+#| label: cox-demo
+# Cox model with covariates
+age = rng.normal(50, 10, n)
+treatment = rng.binomial(1, 0.5, n)
+X_cox = np.column_stack([age, treatment])
+
+# Generate survival times with Cox structure
+lp = 0.02*(age - 50) - 0.5*treatment
+rate_cox = 0.05 * np.exp(lp)
+t_event_cox = rng.exponential(1/rate_cox)
+t_censor_cox = rng.uniform(10, 40, n)
+t_obs_cox = np.minimum(t_event_cox, t_censor_cox)
+d_cox = (t_event_cox <= t_censor_cox).astype(int)
+
+# Fit Cox model
+cox = PHReg(t_obs_cox, X_cox, status=d_cox).fit()
+print(cox.summary().tables[1])
+
+print(f"\nTrue beta: age=0.02, treatment=-0.5")
+print(f"Estimated: age={cox.params[0]:.3f}, treatment={cox.params[1]:.3f}")
+```
+
+**Interpreting Cox coefficients:** $\exp(\beta_j)$ is the *hazard ratio*.
+For treatment: $\exp({cox.params[1]:.3f}) = {np.exp(cox.params[1]):.3f}$ means
+treatment reduces the hazard by approximately {(1-np.exp(cox.params[1]))*100:.0f}%.
+
+## Diagnostics: Schoenfeld residuals
+
+```{python}
+#| label: fig-schoenfeld
+#| fig-cap: "Schoenfeld residuals for the treatment variable plotted against time. A trend in these residuals indicates violation of the proportional hazards assumption. A flat pattern (as here) supports PH."
+
+# Schoenfeld residuals test PH assumption
+schoenfeld = cox.schoenfeld_residuals
+fig, ax = plt.subplots()
+ax.scatter(t_obs_cox[d_cox==1], schoenfeld[:, 1], s=10, alpha=0.5)
+ax.axhline(0, color="gray", linewidth=0.5)
+ax.set_xlabel("Event time")
+ax.set_ylabel("Schoenfeld residual (treatment)")
+ax.set_title("PH assumption check")
+plt.show()
+```
+
+
+# From-Scratch Implementation {#sec-ch18-scratch}
+
+## Kaplan--Meier from scratch
+
+```{python}
+#| label: km-scratch
+
+def kaplan_meier(times, events):
+    """Kaplan-Meier survival function estimator."""
+    # Sort by time
+    order = np.argsort(times)
+    t_sorted = times[order]
+    e_sorted = events[order]
+
+    unique_times = np.unique(t_sorted[e_sorted == 1])
+    surv = np.ones(len(unique_times))
+    se = np.zeros(len(unique_times))
+    n_at_risk = len(times)
+    greenwood_sum = 0
+
+    for i, t in enumerate(unique_times):
+        # Number censored before this time
+        censored = np.sum((t_sorted < t) & (e_sorted == 0) &
+                         (t_sorted >= (unique_times[i-1] if i > 0 else 0)))
+        n_at_risk -= censored
+        d = np.sum((t_sorted == t) & (e_sorted == 1))
+        surv[i] = surv[i-1] * (1 - d/n_at_risk) if i > 0 else (1 - d/n_at_risk)
+        greenwood_sum += d / (n_at_risk * (n_at_risk - d)) if n_at_risk > d else 0
+        se[i] = surv[i] * np.sqrt(greenwood_sum)
+        n_at_risk -= d
+
+    return unique_times, surv, se
+
+t_km, s_km, se_km = kaplan_meier(observed_time, event)
+print(f"KM at median time: S={s_km[len(s_km)//2]:.3f}")
+print(f"statsmodels:       S={sf.surv_prob[len(sf.surv_prob)//2]:.3f}")
+```
+
+
+# Diagnostics {#sec-ch18-diagnostics}
+
+1. **Schoenfeld residuals:** Test PH assumption. Plot against time;
+   trend = PH violation.
+2. **Cox-Snell residuals:** Should follow Exp(1) if model is correct.
+3. **Log-log plot:** $\ln(-\ln(\hat{S}(t)))$ vs $\ln(t)$ should be
+   parallel lines for proportional hazards.
+
+
+# Computational Considerations {#sec-ch18-computation}
+
+| Method | Cost | Notes |
+|---|---|---|
+| Kaplan-Meier | $O(n \log n)$ (sort) | Nonparametric |
+| Cox PH (partial likelihood) | $O(n \cdot p)$ per iteration | Risk set computation at each event |
+| Parametric AFT | $O(n \cdot p)$ per iteration | Use `lifelines` |
+
+
+# Worked Example {#sec-ch18-example}
+
+```{python}
+#| label: worked
+# Full survival analysis workflow
+print("1. Kaplan-Meier by group:")
+for g in [0, 1]:
+    mask = group == g
+    sf_g = SurvfuncRight(t_obs[mask], d[mask])
+    median_idx = np.searchsorted(-sf_g.surv_prob, -0.5)
+    median_t = sf_g.surv_times[min(median_idx, len(sf_g.surv_times)-1)]
+    print(f"   Group {g}: median survival ≈ {median_t:.1f}")
+
+print(f"\n2. Log-rank test: p={pval:.4f}")
+print(f"\n3. Cox model:")
+print(f"   Treatment HR = {np.exp(cox.params[1]):.3f}")
+print(f"   95% CI: ({np.exp(cox.conf_int()[1,0]):.3f}, "
+      f"{np.exp(cox.conf_int()[1,1]):.3f})")
+```
+
+
+# Exercises {#sec-ch18-exercises}
+
+**Exercise 18.1** ($\star\star$, diagnostic failure). Simulate data
+where the PH assumption is violated (treatment effect decreases over
+time). Fit Cox regression. Plot Schoenfeld residuals. Does the test
+detect the violation?
+
+%%
+
+```{python}
+#| label: ex-18-1
+# Non-PH: treatment effect decays with time
+n_e = 300
+trt_e = rng.binomial(1, 0.5, n_e)
+# Hazard ratio starts at 0.5, approaches 1
+te = rng.exponential(20 / (1 + 0.5*np.exp(-0.1*np.arange(n_e)/n_e*trt_e)))
+ce = rng.uniform(10, 40, n_e)
+te_obs = np.minimum(te, ce)
+de = (te <= ce).astype(int)
+
+cox_e = PHReg(te_obs, trt_e.reshape(-1,1), status=de).fit()
+print(f"Cox coef: {cox_e.params[0]:.3f}")
+print("Schoenfeld test for PH should show trend if violation")
+print("is strong enough for this sample size.")
+```
+
+%%
+
+**Exercise 18.2** ($\star\star$, comparison). Compare Kaplan-Meier
+median survival time for two groups to the Cox hazard ratio. Show
+that $\text{HR} \approx \exp(-\Delta \text{median} / \text{scale})$
+for exponential data.
+
+%%
+
+```{python}
+#| label: ex-18-2
+# Already computed above
+print(f"Log-rank p: {pval:.4f}")
+print(f"Cox HR: {np.exp(cox.params[1]):.3f}")
+print("For exponential data, HR relates to median ratio.")
+```
+
+%%
+
+**Exercise 18.3** ($\star\star$, implementation). Implement the
+Kaplan-Meier estimator from scratch with Greenwood's variance. Verify
+against `SurvfuncRight`.
+
+%%
+
+```{python}
+#| label: ex-18-3
+# Already implemented above
+t_v, s_v, se_v = kaplan_meier(observed_time, event)
+print(f"From-scratch: {len(t_v)} event times")
+print(f"statsmodels:  {len(sf.surv_times)} event times")
+print(f"S(t) correlation: {np.corrcoef(s_v[:min(len(s_v),len(sf.surv_prob))], sf.surv_prob[:min(len(s_v),len(sf.surv_prob))])[0,1]:.4f}")
+```
+
+%%
+
+**Exercise 18.4** ($\star\star\star$, conceptual). Explain why the
+Cox partial likelihood (@eq-partial-lik) does not depend on the
+baseline hazard $h_0(t)$. What does this gain (semiparametric
+flexibility) and what does it lose (efficiency compared to a
+correctly specified parametric model)?
+
+%%
+
+The partial likelihood considers only the *ordering* of events: at
+each event time, it asks "given that someone in the risk set
+experienced the event, what is the probability it was subject $i$?"
+The answer $\exp(\mathbf{x}_i^\top\boldsymbol{\beta}) / \sum_{j \in \mathcal{R}} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})$ depends only on the covariate effects, not on $h_0(t)$.
+
+**Gain:** No need to specify $h_0(t)$. The model is valid for any
+baseline hazard shape — Weibull, piecewise constant, or completely
+arbitrary.
+
+**Loss:** A correctly specified parametric model (e.g., Weibull if
+the true hazard is Weibull) is more efficient — smaller standard
+errors. The Cox model trades some efficiency for robustness to
+baseline hazard misspecification. In practice, this trade is almost
+always worthwhile.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch18-biblio}
+
+Kaplan--Meier: Kaplan and Meier (1958). Greenwood's variance: Greenwood
+(1926). Cox regression: Cox (1972). The partial likelihood justification:
+Cox (1975) and Efron (1977). Schoenfeld residuals: Schoenfeld (1982).
+For a comprehensive treatment: Kalbfleisch and Prentice (2002).

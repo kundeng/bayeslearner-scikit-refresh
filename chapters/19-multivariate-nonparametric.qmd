@@ -2,29 +2,248 @@
 title: "Multivariate Methods and Nonparametric Smoothing"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
-:::
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from statsmodels.multivariate.pca import PCA as smPCA
+from statsmodels.nonparametric.kernel_regression import KernelReg
+from statsmodels.nonparametric.kde import KDEUnivariate
+from scipy import stats
 
-# Motivation {#sec-ch18-motivation}
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
 
-# Mathematical Foundation {#sec-ch18-math}
+# Motivation {#sec-ch19-motivation}
 
-# The Algorithm {#sec-ch18-algorithm}
+Two related problems: (1) reducing the dimensionality of multivariate
+data (PCA, factor analysis, CCA), and (2) estimating relationships
+without assuming a parametric form (kernel regression, LOWESS, KDE).
+Both are about *what the estimator converges to and at what rate*.
 
-# Statistical Properties {#sec-ch18-stats}
+Statsmodels provides tools for both: `statsmodels.multivariate` for
+PCA, factor analysis, CCA, and MANOVA; `statsmodels.nonparametric`
+for LOWESS, kernel regression, and kernel density estimation.
 
-# Statsmodels Implementation {#sec-ch18-statsmodels}
 
-# From-Scratch Implementation {#sec-ch18-scratch}
+# Mathematical Foundation {#sec-ch19-math}
 
-# Diagnostics {#sec-ch18-diagnostics}
+## PCA via SVD
 
-# Computational Considerations {#sec-ch18-computation}
+PCA finds the directions of maximum variance in the data. If
+$\mathbf{X}$ is centered, the PCA decomposition is the SVD:
+$\mathbf{X} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^\top$.
+The columns of $\mathbf{V}$ are the principal component directions;
+the diagonal of $\boldsymbol{\Sigma}^2/(n-1)$ gives the variance
+explained by each component.
 
-# Worked Example {#sec-ch18-example}
+## Kernel density estimation
 
-# Exercises {#sec-ch18-exercises}
+The KDE estimates the density at point $x$:
+$$
+\hat{f}(x) = \frac{1}{nh}\sum_{i=1}^n K\!\left(\frac{x - X_i}{h}\right),
+$$
+where $K$ is a kernel (typically Gaussian) and $h$ is the bandwidth.
 
-# Bibliographic Notes {#sec-ch18-biblio}
+**The bandwidth controls the bias-variance tradeoff:** small $h$ =
+low bias, high variance (wiggly); large $h$ = high bias, low variance
+(smooth). The optimal bandwidth minimizes AMISE at rate
+$h^* \propto n^{-1/5}$, giving the convergence rate
+$\hat{f}(x) - f(x) = O_p(n^{-2/5})$ — slower than the parametric
+$n^{-1/2}$ rate.
+
+## Kernel regression and the curse of dimensionality
+
+For $d$-dimensional $\mathbf{x}$, the kernel regression rate is
+$O_p(n^{-2/(d+4)})$. As $d$ increases, you need exponentially more
+data. This is the *curse of dimensionality*: for $d = 10$, you need
+$n \sim 10^{10}$ observations for the same accuracy as $d = 1$.
+
+
+# Statsmodels Implementation {#sec-ch19-statsmodels}
+
+## PCA
+
+```{python}
+#| label: pca-demo
+# High-dimensional data with low-rank structure
+n, p = 200, 10
+# 3 true factors
+factors = rng.standard_normal((n, 3))
+loadings = rng.standard_normal((3, p))
+X_pca = factors @ loadings + 0.5*rng.standard_normal((n, p))
+
+pca = smPCA(X_pca, ncomp=5, standardize=True)
+print("Variance explained:")
+for i in range(5):
+    print(f"  PC{i+1}: {pca.eigenvals[i]/pca.eigenvals.sum():.1%}")
+```
+
+```{python}
+#| label: fig-scree
+#| fig-cap: "Scree plot: variance explained by each principal component. The elbow at PC 3 suggests 3 underlying factors, matching the data generating process."
+
+fig, ax = plt.subplots()
+ax.bar(range(1, 6), pca.eigenvals[:5]/pca.eigenvals.sum(),
+       color="C0", alpha=0.7)
+ax.plot(range(1, 6), np.cumsum(pca.eigenvals[:5])/pca.eigenvals.sum(),
+        'o-', color="C1", label="Cumulative")
+ax.set_xlabel("Component"); ax.set_ylabel("Variance explained")
+ax.legend()
+plt.show()
+```
+
+## Kernel density estimation
+
+```{python}
+#| label: kde-demo
+# Bimodal distribution
+x_kde = np.concatenate([rng.normal(-2, 0.8, 300),
+                         rng.normal(2, 1.2, 200)])
+
+kde = KDEUnivariate(x_kde)
+kde.fit(kernel='gau', bw='silverman')
+
+fig, ax = plt.subplots()
+ax.hist(x_kde, bins=40, density=True, alpha=0.3, color="C0",
+        label="Histogram")
+ax.plot(kde.support, kde.density, color="C1", linewidth=1.5,
+        label=f"KDE (bw={kde.bw:.3f})")
+ax.set_xlabel("x"); ax.legend()
+plt.show()
+```
+
+## LOWESS (locally weighted scatterplot smoothing)
+
+```{python}
+#| label: lowess-demo
+# Nonlinear relationship
+x_lo = np.sort(rng.uniform(0, 4*np.pi, 200))
+y_lo = np.sin(x_lo) + 0.3*rng.standard_normal(200)
+
+lowess = sm.nonparametric.lowess(y_lo, x_lo, frac=0.2)
+
+fig, ax = plt.subplots()
+ax.scatter(x_lo, y_lo, s=10, alpha=0.5, label="Data")
+ax.plot(lowess[:, 0], lowess[:, 1], color="C1", linewidth=2,
+        label="LOWESS (frac=0.2)")
+ax.plot(x_lo, np.sin(x_lo), '--', color="C2", label="True")
+ax.legend()
+plt.show()
+```
+
+## Kernel regression
+
+```{python}
+#| label: kernreg-demo
+kr = KernelReg(y_lo, x_lo, var_type='c', reg_type='ll')
+y_pred, y_mfx = kr.fit()
+print(f"KernelReg R²: {1 - np.var(y_lo - y_pred)/np.var(y_lo):.3f}")
+```
+
+
+# From-Scratch Implementation {#sec-ch19-scratch}
+
+## PCA via numpy SVD
+
+```{python}
+#| label: pca-scratch
+X_centered = X_pca - X_pca.mean(axis=0)
+X_std = X_centered / X_centered.std(axis=0)
+U, S, Vt = np.linalg.svd(X_std, full_matrices=False)
+var_explained = S**2 / (n - 1)
+print(f"Top 3 variance: {var_explained[:3].round(2)}")
+print(f"statsmodels:    {pca.eigenvals[:3].round(2)}")
+```
+
+
+# Exercises {#sec-ch19-exercises}
+
+**Exercise 19.1** ($\star\star$, diagnostic failure). Apply KDE with
+a very small bandwidth (bw=0.05) and a very large bandwidth (bw=2.0)
+to the bimodal data. Show that small bw overfits (every point is a
+spike) and large bw oversmooths (misses the two modes).
+
+%%
+
+```{python}
+#| label: ex-19-1
+fig, axes = plt.subplots(1, 3, figsize=(12, 3))
+for ax, bw, title in zip(axes, [0.05, 'silverman', 2.0],
+                          ['Undersmooth', 'Silverman', 'Oversmooth']):
+    kde_ex = KDEUnivariate(x_kde)
+    kde_ex.fit(kernel='gau', bw=float(bw) if isinstance(bw, (int,float)) else bw)
+    ax.hist(x_kde, bins=40, density=True, alpha=0.3)
+    ax.plot(kde_ex.support, kde_ex.density, linewidth=1.5)
+    ax.set_title(f"{title} (bw={kde_ex.bw:.3f})")
+plt.tight_layout()
+plt.show()
+```
+
+%%
+
+**Exercise 19.2** ($\star\star$, comparison). Compare LOWESS with
+frac=0.1, 0.3, 0.5 on the sinusoidal data. Which fraction best
+captures the true curve? Relate frac to bandwidth.
+
+%%
+
+```{python}
+#| label: ex-19-2
+fig, ax = plt.subplots()
+ax.scatter(x_lo, y_lo, s=5, alpha=0.3)
+for frac in [0.1, 0.3, 0.5]:
+    lo = sm.nonparametric.lowess(y_lo, x_lo, frac=frac)
+    ax.plot(lo[:,0], lo[:,1], linewidth=1.5, label=f"frac={frac}")
+ax.plot(x_lo, np.sin(x_lo), '--', color="gray", label="True")
+ax.legend()
+plt.show()
+```
+
+%%
+
+**Exercise 19.3** ($\star\star$, implementation). Implement PCA via
+the eigendecomposition of the covariance matrix (not SVD). Verify
+against statsmodels PCA.
+
+%%
+
+```{python}
+#| label: ex-19-3
+cov_mat = np.cov(X_std.T)
+eigvals, eigvecs = np.linalg.eigh(cov_mat)
+# Sort descending
+idx = np.argsort(eigvals)[::-1]
+print(f"Eigenvalues: {eigvals[idx][:3].round(2)}")
+print(f"SVD:         {var_explained[:3].round(2)}")
+```
+
+%%
+
+**Exercise 19.4** ($\star\star\star$, conceptual). The KDE convergence
+rate $n^{-2/5}$ is slower than the parametric rate $n^{-1/2}$. Show
+numerically that for $n = 100$, KDE needs ~10x more data than a
+correctly specified normal model to achieve the same accuracy. What
+does this mean for the cost of not assuming a parametric form?
+
+%%
+
+The parametric rate $n^{-1/2}$ means error $\approx 1/\sqrt{n}$.
+The KDE rate $n^{-2/5}$ means error $\approx n^{-0.4}$.
+For equal accuracy: $n_{\text{KDE}}^{-0.4} = n_{\text{param}}^{-0.5}$,
+so $n_{\text{KDE}} = n_{\text{param}}^{1.25}$. At $n = 100$:
+$n_{\text{KDE}} = 100^{1.25} \approx 316$. The nonparametric approach
+needs ~3x more data for 1D. In $d$ dimensions, the ratio grows
+exponentially — this is the curse of dimensionality.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch19-biblio}
+
+PCA: Pearson (1901), Hotelling (1933). Factor analysis: Spearman (1904).
+KDE: Rosenblatt (1956), Parzen (1962). Bandwidth selection: Silverman
+(1986). LOWESS: Cleveland (1979). Kernel regression: Nadaraya (1964),
+Watson (1964). Local linear regression: Fan (1993).
