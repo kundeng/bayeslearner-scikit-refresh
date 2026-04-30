@@ -62,20 +62,31 @@ you need.
 # Your First Optimization {#sec-ch01-first-opt}
 
 The most important function in this book is
-`scipy.optimize.minimize`. It finds the minimum of a function.
+`scipy.optimize.minimize`. It takes a Python function and finds the
+input value that makes the function as small as possible.
+
+Let's start with the simplest case: minimizing a function of one
+variable.
 
 ```{python}
 #| label: first-minimize
 from scipy.optimize import minimize
 
-# Define a function to minimize
+# Step 1: Define the function we want to minimize.
+# It must take a numpy array as input and return a single number.
 def quadratic(x):
     """f(x) = (x - 3)^2 + 1. Minimum at x = 3, f(3) = 1."""
     return (x - 3)**2 + 1
 
-# Minimize it
-result = minimize(quadratic, x0=0.0)  # start from x = 0
+# Step 2: Call minimize.
+# x0 is the starting point — where the optimizer begins searching.
+# minimize does NOT try every possible x; it starts at x0 and takes
+# steps in the direction that decreases f.
+result = minimize(quadratic, x0=0.0)
 
+# Step 3: Read the result.
+# result.x is the solution (a numpy array, even for 1D problems).
+# result.fun is the function value at the solution.
 print(f"Minimum found at x = {result.x[0]:.6f}")
 print(f"Function value:  f(x) = {result.fun:.6f}")
 print(f"Converged:       {result.success}")
@@ -84,46 +95,69 @@ print(f"Iterations:      {result.nit}")
 
 **What just happened:**
 
-1. We gave `minimize` a function `quadratic` and a starting point `x0=0`
-2. It ran an optimization algorithm (BFGS by default) that evaluates
-   the function, estimates the gradient, takes steps downhill
-3. It returned a `result` object with the answer
+1. We defined a Python function `quadratic` that takes an input `x`
+   and returns $(x - 3)^2 + 1$. The minimum is at $x = 3$ where
+   $f(3) = 1$.
+2. We called `minimize(quadratic, x0=0.0)`. The optimizer started at
+   $x = 0$ and took steps toward smaller values of $f$.
+3. By default, `minimize` uses the BFGS algorithm (Chapter 2), which
+   estimates the gradient numerically and uses it to decide which
+   direction to step.
+4. After a few iterations, the optimizer found $x \approx 3$ and
+   stopped because the gradient was close to zero.
 
-The `result` object is your interface to the optimizer's output.
-Every `minimize` call returns one:
+The `result` object contains everything the optimizer computed. You
+will use these attributes constantly:
 
 ```{python}
 #| label: result-object
-# The result object has many useful attributes
-print(f"x (solution):     {result.x}")
-print(f"fun (value):      {result.fun}")
-print(f"success:          {result.success}")
-print(f"message:          {result.message}")
-print(f"nit (iterations): {result.nit}")
-print(f"nfev (f evals):   {result.nfev}")
+# The result object — your interface to the optimizer
+print(f"result.x:       {result.x}")       # solution (numpy array)
+print(f"result.fun:     {result.fun}")     # f(x) at the solution
+print(f"result.success: {result.success}") # did the optimizer converge?
+print(f"result.message: {result.message}") # human-readable status
+print(f"result.nit:     {result.nit}")     # number of iterations taken
+print(f"result.nfev:    {result.nfev}")    # number of times f was evaluated
 ```
+
+**Always check `result.success`.** If it is `False`, the optimizer did
+not converge and `result.x` may not be a minimum. Common reasons:
+too few iterations allowed, a bad starting point, or a function that
+has no minimum (e.g., $f(x) = -x$).
 
 
 # Multivariate Optimization {#sec-ch01-multivar}
 
-Real problems have multiple parameters. Here is a 2D optimization:
+Real problems have multiple parameters. Instead of minimizing over a
+single number $x$, we minimize over a *vector*
+$\mathbf{x} = (x_1, x_2, \ldots, x_p)$. The function still returns a
+single number; the input is now a numpy array.
+
+SciPy includes the *Rosenbrock function* as a built-in test problem.
+It is a 2D function with a narrow curved valley --- hard for
+optimizers because the valley curves, so the direction of steepest
+descent does not point toward the minimum.
 
 ```{python}
 #| label: rosenbrock
 from scipy.optimize import rosen, rosen_der
 
-# Rosenbrock function: a classic test problem
-# f(x, y) = (1-x)^2 + 100(y - x^2)^2
-# Minimum at (1, 1), f = 0
-# The curved valley makes it challenging for optimizers
+# rosen: the Rosenbrock function f(x) = (1-x1)^2 + 100*(x2 - x1^2)^2
+# rosen_der: its gradient (a function that returns a 2D array)
+# The minimum is at (1, 1) with f = 0.
 
-x0 = np.array([-1.0, 1.0])  # starting point
+# x0 must be a numpy array with the right number of dimensions
+x0 = np.array([-1.0, 1.0])
+
+# jac=rosen_der supplies the gradient analytically.
+# Without it, minimize would estimate the gradient by evaluating f
+# at nearby points (finite differences) --- slower and less accurate.
 result = minimize(rosen, x0, jac=rosen_der, method='BFGS')
 
-print(f"Solution:   {result.x.round(6)}")
-print(f"f(solution): {result.fun:.2e}")
-print(f"Iterations:  {result.nit}")
-print(f"Gradient evals: {result.njev}")
+print(f"Solution:    x = {result.x.round(6)}")
+print(f"f(solution):     {result.fun:.2e}")
+print(f"Iterations:      {result.nit}")
+print(f"Gradient evals:  {result.njev}")
 ```
 
 **Key parameters of `minimize`:**
@@ -211,24 +245,39 @@ Each of these algorithms is developed in depth in Chapters 2--5.
 
 # Fitting Models to Data: `curve_fit` {#sec-ch01-curvefit}
 
-The most common use of optimization in science: fitting a
-parameterized model to data.
+The most common use of optimization in science: you have data points
+$(x_i, y_i)$ and a model $y = f(x; a, b, c)$ with unknown parameters.
+You want to find the parameters that make the model fit the data best
+(in the least-squares sense).
+
+`scipy.optimize.curve_fit` does this. It wraps `minimize` internally
+--- you don't need to set up the objective function yourself.
 
 ```{python}
 #| label: curve-fit
-# Generate noisy data from an exponential decay
-x_data = np.linspace(0, 4, 50)
-y_true = 2.5 * np.exp(-1.3 * x_data) + 0.5
-y_data = y_true + 0.2 * rng.standard_normal(50)
+# Step 1: Generate some noisy data to fit.
+# In real life, this would be your experimental measurements.
+x_data = np.linspace(0, 4, 50)          # 50 evenly-spaced x values
+y_true = 2.5 * np.exp(-1.3 * x_data) + 0.5  # true model (unknown to us)
+y_data = y_true + 0.2 * rng.standard_normal(50)  # add measurement noise
 
-# Define the model
+# Step 2: Define the model function.
+# The FIRST argument must be x (the independent variable).
+# The REMAINING arguments are the parameters to estimate.
 def exp_decay(x, a, b, c):
     """Model: y = a * exp(-b * x) + c"""
     return a * np.exp(-b * x) + c
 
-# Fit
+# Step 3: Fit the model to data.
+# p0 is the initial guess for [a, b, c]. curve_fit needs a reasonable
+# starting point — if p0 is too far off, it may converge to a wrong
+# local minimum or fail entirely.
 popt, pcov = curve_fit(exp_decay, x_data, y_data, p0=[1, 1, 0])
-perr = np.sqrt(np.diag(pcov))  # standard errors
+
+# popt: optimal parameters (numpy array of length 3)
+# pcov: covariance matrix of the parameters (3x3 numpy array)
+# The diagonal of pcov gives the variance of each parameter estimate.
+perr = np.sqrt(np.diag(pcov))  # standard errors = sqrt(variance)
 
 print(f"{'Param':<6} {'True':>8} {'Estimate':>10} {'SE':>8}")
 for name, true, est, se in zip(
@@ -261,22 +310,35 @@ Hessian. Chapter 6 develops this in detail.
 
 # Probability Distributions: `scipy.stats` {#sec-ch01-stats}
 
-SciPy provides every standard distribution through a unified API.
+SciPy provides every standard probability distribution through a
+unified API. Once you learn the interface for one distribution, you
+know it for all of them.
+
+The pattern: create a *frozen* distribution object (with fixed
+parameters), then call methods on it.
 
 ```{python}
 #| label: stats-intro
 from scipy.stats import norm, t, chi2, poisson
 
-# Create a normal distribution
-normal = norm(loc=0, scale=1)  # mean=0, std=1
+# Create a "frozen" normal distribution with mean=0, std=1.
+# "Frozen" means the parameters (loc, scale) are fixed.
+# loc = mean, scale = standard deviation (not variance!).
+normal = norm(loc=0, scale=1)
 
-# Every distribution has the same methods
-print(f"PDF at x=0:   {normal.pdf(0):.4f}")
-print(f"CDF at x=1.96: {normal.cdf(1.96):.4f}")
-print(f"Quantile 0.975: {normal.ppf(0.975):.4f}")
-print(f"Random sample: {normal.rvs(size=3, random_state=42).round(3)}")
-print(f"Mean, Var:     {normal.mean():.1f}, {normal.var():.1f}")
+# Now call methods on this object:
+print(f"PDF at x=0:     {normal.pdf(0):.4f}")      # density f(0)
+print(f"CDF at x=1.96:  {normal.cdf(1.96):.4f}")   # P(X ≤ 1.96)
+print(f"Quantile 0.975:  {normal.ppf(0.975):.4f}")  # x such that P(X ≤ x) = 0.975
+print(f"Random samples: {normal.rvs(size=3, random_state=42).round(3)}")
+print(f"Mean, Var:      {normal.mean():.1f}, {normal.var():.1f}")
 ```
+
+**The key insight:** `norm(loc=0, scale=1)` creates an *object* with
+the parameters baked in. You can then call `.pdf()`, `.cdf()`,
+`.rvs()` without re-specifying the parameters each time. This is
+different from R (where you call `dnorm(x, mean=0, sd=1)` every time)
+and makes code cleaner when you reuse a distribution.
 
 The API is identical for every distribution --- only the parameters
 change:
@@ -364,38 +426,67 @@ more options. This book uses `scipy.linalg` throughout.
 
 # From SciPy to Statsmodels {#sec-ch01-statsmodels}
 
-SciPy gives you the building blocks. Statsmodels assembles them into
-statistical models with inference.
+SciPy gives you optimization and distributions. But when you fit a
+regression, you usually want more than just the coefficients --- you
+want to know *how confident* you should be in them. That is what
+statsmodels provides.
+
+Statsmodels wraps scipy's optimization and distribution tools into
+*statistical model* objects that report standard errors, $p$-values,
+confidence intervals, and diagnostic tests.
 
 ```{python}
 #| label: statsmodels-intro
-# Generate regression data
+# Generate some regression data: y = 2 + 3*x1 - 1.5*x2 + noise
 n = 100
 x1 = rng.standard_normal(n)
 x2 = rng.standard_normal(n)
 y = 2 + 3*x1 - 1.5*x2 + rng.standard_normal(n)
 
-# Fit with statsmodels
+# Statsmodels requires you to add a constant (intercept) column
+# manually. This is a deliberate design choice — it makes explicit
+# what sklearn hides.
 X = sm.add_constant(np.column_stack([x1, x2]))
+# X is now a (100, 3) array: column 0 is all 1s (intercept),
+# columns 1-2 are x1 and x2.
+
+# Fit OLS (Ordinary Least Squares) regression
 ols = sm.OLS(y, X).fit()
+
+# The summary table shows everything:
+# coef = estimated coefficients
+# std err = standard error (uncertainty in the estimate)
+# t = coef / std err (Wald test statistic)
+# P>|t| = p-value (probability of seeing this t under H0: coef=0)
+# [0.025, 0.975] = 95% confidence interval
 print(ols.summary().tables[1])
 ```
 
-**What statsmodels adds over scipy:**
+**What statsmodels adds over plain scipy:**
 
-- Coefficient standard errors, $t$-statistics, $p$-values
-- $R^2$, AIC, BIC
-- Diagnostic tests (heteroscedasticity, normality, etc.)
-- Multiple model families (OLS, GLM, mixed models, time series)
+- **Standard errors** for every coefficient (how precise is the estimate?)
+- **$p$-values** (is the coefficient statistically significant?)
+- **Confidence intervals** (what range of values is plausible?)
+- **$R^2$** (how much variance does the model explain?)
+- **AIC, BIC** (for comparing models --- Chapter 10)
+- **Diagnostic tests** (is the model correctly specified? --- Chapter 11)
 
-Under the hood, statsmodels uses `scipy.optimize` for fitting and
-`scipy.stats` for inference. This book teaches you both layers.
+Under the hood, statsmodels uses `scipy.linalg` for the matrix solve
+and `scipy.stats` for the $t$-distribution $p$-values. This book
+teaches you both layers: what statsmodels computes, and how scipy
+does the computation.
 
 
 # From SciPy to scikit-learn {#sec-ch01-sklearn}
 
-Scikit-learn is a *prediction* library built on scipy. When you call
-`.fit()`, it dispatches to scipy's optimizers.
+Scikit-learn is a *prediction* library built on top of scipy and
+numpy. Its API is designed around two operations: `.fit()` (learn
+from data) and `.predict()` (make predictions on new data).
+
+The key concept in sklearn is the *pipeline*: a sequence of
+preprocessing steps followed by a model. This ensures that
+preprocessing (e.g., centering and scaling) is applied consistently
+to both training and test data.
 
 ```{python}
 #| label: sklearn-intro
@@ -405,20 +496,30 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-# Load data
+# Load a built-in dataset: California housing prices
 housing = fetch_california_housing(as_frame=True)
-X_housing, y_housing = housing.data, housing.target
+X_housing = housing.data    # features (pandas DataFrame)
+y_housing = housing.target  # target: median house value
 
-# Build a pipeline
+print(f"Dataset: {X_housing.shape[0]} observations, "
+      f"{X_housing.shape[1]} features")
+print(f"Features: {list(X_housing.columns)}")
+
+# Build a pipeline:
+# Step 1: StandardScaler centers each feature (mean=0, std=1)
+# Step 2: Ridge regression fits the model with L2 regularization
 pipe = Pipeline([
-    ('scaler', StandardScaler()),
-    ('ridge', Ridge(alpha=1.0)),
+    ('scaler', StandardScaler()),  # subtract mean, divide by std
+    ('ridge', Ridge(alpha=1.0)),   # alpha controls regularization strength
 ])
 
-# Cross-validate
+# Cross-validate: split data into 5 folds, fit on 4, score on 1, repeat
+# scoring='neg_mean_squared_error' because sklearn maximizes scores
+# (so it negates the error — a convention, not statistics)
 scores = cross_val_score(pipe, X_housing, y_housing, cv=5,
                          scoring='neg_mean_squared_error')
-print(f"CV MSE: {-scores.mean():.4f} (+/- {scores.std():.4f})")
+print(f"\nCV MSE: {-scores.mean():.4f} (+/- {scores.std():.4f})")
+print(f"(5-fold cross-validation, negated because sklearn maximizes)")
 ```
 
 **The key difference:**
