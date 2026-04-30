@@ -2,29 +2,672 @@
 title: "Monte Carlo Integration and Variance Reduction"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.stats import qmc
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning |
+|--------|---------|
+| $\mu = \mathbb{E}[h(X)]$ | Quantity to estimate |
+| $\hat{\mu}_n$ | Monte Carlo estimator (sample mean of $h(X_i)$) |
+| $X_i \sim p$ | Samples from target distribution |
+| $q(x)$ | Proposal / importance sampling distribution |
+| $w(x) = p(x)/q(x)$ | Importance weight |
+| $c(X)$ | Control variate (known expectation) |
+
+
+# Motivation {#sec-ch07-motivation}
+
+Monte Carlo integration is the workhorse of computational statistics.
+Every time you compute a bootstrap confidence interval, every time you
+sample from a posterior, every time you estimate a $p$-value by
+simulation --- you are doing Monte Carlo.
+
+The idea is simple: to estimate $\mu = \mathbb{E}[h(X)]$, draw samples
+$X_1, \ldots, X_n \sim p$ and compute $\hat{\mu}_n = \frac{1}{n}\sum_i h(X_i)$.
+By the law of large numbers, $\hat{\mu}_n \to \mu$. By the CLT, the
+error is $O(1/\sqrt{n})$ --- regardless of dimension.
+
+That dimension-free rate is Monte Carlo's superpower. Numerical
+quadrature in $d$ dimensions requires $O(\epsilon^{-d})$ function
+evaluations for accuracy $\epsilon$; Monte Carlo requires
+$O(\epsilon^{-2})$ regardless of $d$. In the integrals that arise in
+Bayesian computation, likelihood inference, and causal estimation,
+$d$ can be hundreds or thousands. Monte Carlo is often the only
+feasible approach.
+
+But $O(1/\sqrt{n})$ is slow: halving the error requires quadrupling
+the samples. This chapter covers the variance-reduction toolkit that
+makes Monte Carlo practical: importance sampling, control variates,
+antithetic variates, stratification, and quasi-Monte Carlo. Each
+technique reduces the constant in the $O(1/\sqrt{n})$ rate --- sometimes
+dramatically.
+
+
+# Mathematical Foundation {#sec-ch07-math}
+
+## The plain MC estimator
+
+For $X \sim p$ and $h: \mathbb{R}^d \to \mathbb{R}$:
+$$
+\hat{\mu}_n = \frac{1}{n}\sum_{i=1}^n h(X_i), \qquad
+\text{Var}(\hat{\mu}_n) = \frac{\sigma^2_h}{n},
+$$ {#eq-mc-variance}
+where $\sigma^2_h = \text{Var}(h(X))$. The error scales as
+$\sigma_h / \sqrt{n}$ --- dimension-free, but dependent on the variance
+of $h$. All variance reduction methods attack $\sigma^2_h$.
+
+## Importance sampling
+
+To estimate $\mu = \mathbb{E}_p[h(X)] = \int h(x) p(x)\, dx$, sample
+from a different distribution $q$ and reweight:
+$$
+\hat{\mu}_{\text{IS}} = \frac{1}{n}\sum_{i=1}^n h(X_i)\frac{p(X_i)}{q(X_i)}, \qquad X_i \sim q.
+$$ {#eq-is}
+
+The optimal proposal (minimizing variance) is
+$q^*(x) \propto |h(x)| p(x)$. In practice, $q^*$ is intractable --- if
+you could normalize it, you could compute $\mu$ analytically. The art
+of importance sampling is choosing $q$ that approximates $q^*$ well
+enough to reduce variance without being expensive to sample from.
+
+**The danger of importance sampling:** if $q$ has lighter tails than
+$p \cdot |h|$, the weights $w(x) = p(x)/q(x)$ become huge for rare
+but important events, and the variance can be *larger* than plain MC.
+The effective sample size $\text{ESS} = n / (1 + \text{Var}_q(w))$
+measures how many of your $n$ samples are actually contributing.
+
+## Control variates
+
+If $c(X)$ is a function with known mean $\mathbb{E}[c(X)] = \mu_c$, then
+$$
+\hat{\mu}_{\text{CV}} = \hat{\mu}_n - \beta(\bar{c}_n - \mu_c)
+$$ {#eq-cv}
+has variance $\text{Var}(\hat{\mu}_n)(1 - \rho^2_{h,c})$, where
+$\rho_{h,c}$ is the correlation between $h(X)$ and $c(X)$. The optimal
+coefficient is $\beta^* = \text{Cov}(h, c) / \text{Var}(c)$ --- the
+regression coefficient of $h$ on $c$. This is why control variates are
+sometimes called "regression-adjusted Monte Carlo."
+
+## Antithetic variates
+
+If $X$ and $X'$ are identically distributed but negatively correlated
+(e.g., $X \sim U(0,1)$ and $X' = 1 - X$), then
+$\frac{1}{2}[h(X) + h(X')]$ has lower variance than $h(X)$ alone
+whenever $h$ is monotone.
+
+## Quasi-Monte Carlo
+
+Quasi-random sequences (Sobol, Halton) replace random samples with
+deterministic low-discrepancy points that fill the unit cube more
+evenly. The Koksma--Hlawka inequality bounds the integration error by
+the product of the sequence's *discrepancy* (a measure of how unevenly
+it fills space) and the function's *variation* (a measure of its
+roughness). For smooth functions, QMC achieves $O((\log n)^d / n)$ ---
+nearly $O(1/n)$ in low dimensions, much better than MC's $O(1/\sqrt{n})$.
+
+Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
+
+
+# The Algorithm {#sec-ch07-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 7.1: Plain Monte Carlo
+
+**Input:** $h$, distribution $p$, sample size $n$
+
+**Output:** Estimate $\hat{\mu}_n$ and standard error
+
+1. Draw $X_1, \ldots, X_n \sim p$
+2. $\hat{\mu}_n \leftarrow \frac{1}{n}\sum_{i=1}^n h(X_i)$
+3. $\hat{\sigma}^2 \leftarrow \frac{1}{n-1}\sum_{i=1}^n (h(X_i) - \hat{\mu}_n)^2$
+4. **return** $\hat{\mu}_n$, $\hat{\sigma}/\sqrt{n}$
 :::
 
-# Motivation {#sec-ch06-motivation}
+::: {.callout-note appearance="minimal"}
+## Algorithm 7.2: Importance Sampling
 
-# Mathematical Foundation {#sec-ch06-math}
+**Input:** $h$, target $p$, proposal $q$, sample size $n$
 
-# The Algorithm {#sec-ch06-algorithm}
+**Output:** IS estimate and effective sample size
 
-# Statistical Properties {#sec-ch06-stats}
+1. Draw $X_1, \ldots, X_n \sim q$
+2. $w_i \leftarrow p(X_i) / q(X_i)$ for all $i$
+3. $\hat{\mu}_{\text{IS}} \leftarrow \frac{1}{n}\sum_i w_i h(X_i)$
+4. $\text{ESS} \leftarrow (\sum_i w_i)^2 / \sum_i w_i^2$ $\triangleright$ effective sample size
+5. **return** $\hat{\mu}_{\text{IS}}$, ESS
+:::
 
-# SciPy Implementation {#sec-ch06-scipy}
 
-# From-Scratch Implementation {#sec-ch06-scratch}
+# Statistical Properties {#sec-ch07-stats}
 
-# Diagnostics {#sec-ch06-diagnostics}
+The $O(1/\sqrt{n})$ rate is both Monte Carlo's greatest strength
+(dimension-free) and its greatest weakness (slow). For context:
 
-# Computational Considerations {#sec-ch06-computation}
+| Accuracy | Samples needed |
+|---|---|
+| 1 digit ($\epsilon = 0.1$) | 100 |
+| 2 digits ($\epsilon = 0.01$) | 10,000 |
+| 3 digits ($\epsilon = 0.001$) | 1,000,000 |
 
-# Worked Example {#sec-ch06-example}
+Variance reduction changes the *constant*, not the rate. If importance
+sampling reduces $\sigma^2_h$ by a factor of 100, you need 100x fewer
+samples --- equivalent to two extra digits for free.
 
-# Exercises {#sec-ch06-exercises}
 
-# Bibliographic Notes {#sec-ch06-biblio}
+# SciPy Implementation {#sec-ch07-scipy}
+
+## `scipy.stats.qmc`: quasi-random sequences
+
+```{python}
+#| label: qmc-demo
+# Sobol sequence in 2D
+sobol = qmc.Sobol(d=2, scramble=True, seed=42)
+sobol_pts = sobol.random(256)
+
+# Halton sequence
+halton = qmc.Halton(d=2, scramble=True, seed=42)
+halton_pts = halton.random(256)
+
+# Latin Hypercube
+lhs = qmc.LatinHypercube(d=2, seed=42)
+lhs_pts = lhs.random(256)
+
+# Random for comparison
+random_pts = rng.random((256, 2))
+```
+
+```{python}
+#| label: fig-qmc-comparison
+#| fig-cap: "Four sampling strategies for the unit square, each with 256 points. Sobol and Halton (quasi-random) fill the space more uniformly than pseudorandom; Latin Hypercube ensures uniform marginals. The visual difference translates directly to integration accuracy."
+
+fig, axes = plt.subplots(1, 4, figsize=(14, 3.2))
+for ax, pts, title in zip(
+    axes,
+    [random_pts, sobol_pts, halton_pts, lhs_pts],
+    ['Pseudorandom', 'Sobol', 'Halton', 'Latin Hypercube'],
+):
+    ax.scatter(pts[:, 0], pts[:, 1], s=4, alpha=0.7)
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    ax.set_aspect('equal')
+    ax.set_title(title)
+plt.tight_layout()
+plt.show()
+```
+
+## MC vs QMC: integration accuracy
+
+```{python}
+#| label: fig-mc-vs-qmc
+#| fig-cap: "Integration error vs. sample size for estimating E[exp(X₁ + X₂)] over the unit square (true value ≈ 2.952). MC achieves O(1/√n); Sobol QMC achieves nearly O(1/n) — visible as a steeper slope on the log-log plot."
+
+def integrand(pts):
+    """exp(x1 + x2) over [0,1]^2. True integral = (e-1)^2 ≈ 2.952."""
+    return np.exp(pts[:, 0] + pts[:, 1])
+
+true_val = (np.e - 1)**2
+ns = [2**k for k in range(4, 15)]
+mc_errors, qmc_errors = [], []
+
+for n in ns:
+    # MC
+    pts_mc = rng.random((n, 2))
+    mc_errors.append(abs(np.mean(integrand(pts_mc)) - true_val))
+
+    # QMC (Sobol)
+    sob = qmc.Sobol(d=2, scramble=True, seed=42)
+    pts_qmc = sob.random(n)
+    qmc_errors.append(abs(np.mean(integrand(pts_qmc)) - true_val))
+
+fig, ax = plt.subplots()
+ax.loglog(ns, mc_errors, 'o-', color="C0", label="MC", markersize=4)
+ax.loglog(ns, qmc_errors, 's-', color="C1", label="Sobol QMC", markersize=4)
+# Reference slopes
+ax.loglog(ns, [mc_errors[0] * (ns[0]/n)**0.5 for n in ns],
+          '--', color="C0", alpha=0.4, label=r"$O(1/\sqrt{n})$")
+ax.loglog(ns, [qmc_errors[0] * (ns[0]/n)**1.0 for n in ns],
+          '--', color="C1", alpha=0.4, label=r"$O(1/n)$")
+ax.set_xlabel("Sample size n")
+ax.set_ylabel("Integration error")
+ax.legend()
+plt.show()
+```
+
+
+# From-Scratch Implementation {#sec-ch07-scratch}
+
+## Plain MC with standard error
+
+```{python}
+#| label: mc-scratch
+
+def mc_integrate(h, sampler, n, seed=42):
+    """Plain Monte Carlo integration.
+
+    Implements Algorithm 7.1.
+
+    Parameters
+    ----------
+    h : callable
+        Function to integrate: h(samples) -> (n,) array.
+    sampler : callable
+        Draws n samples: sampler(n, rng) -> (n, d) array.
+    n : int
+        Number of samples.
+
+    Returns
+    -------
+    estimate, standard_error
+    """
+    local_rng = np.random.default_rng(seed)
+    samples = sampler(n, local_rng)
+    values = h(samples)
+    return values.mean(), values.std(ddof=1) / np.sqrt(n)
+```
+
+## Importance sampling
+
+```{python}
+#| label: is-scratch
+
+def importance_sampling(h, p_logpdf, q_logpdf, q_sampler, n, seed=42):
+    """Importance sampling estimator.
+
+    Implements Algorithm 7.2.
+
+    Parameters
+    ----------
+    h : callable
+        Function to integrate.
+    p_logpdf : callable
+        Log-density of target distribution.
+    q_logpdf : callable
+        Log-density of proposal distribution.
+    q_sampler : callable
+        Sampler from proposal: q_sampler(n, rng) -> (n,) or (n,d).
+
+    Returns
+    -------
+    estimate, effective_sample_size
+    """
+    local_rng = np.random.default_rng(seed)
+    x = q_sampler(n, local_rng)
+    log_w = p_logpdf(x) - q_logpdf(x)  # log importance weights
+    w = np.exp(log_w - log_w.max())     # numerical stability
+    w = w / w.sum() * n                 # normalize to sum to n
+    estimate = np.mean(w * h(x))
+    ess = np.sum(w)**2 / np.sum(w**2)
+    return estimate, ess
+```
+
+## Control variates
+
+```{python}
+#| label: cv-scratch
+
+def control_variate(h_samples, c_samples, c_mean):
+    """Control variate estimator.
+
+    Implements Eq. (7.3) with optimal beta.
+
+    Parameters
+    ----------
+    h_samples : array
+        Values h(X_i).
+    c_samples : array
+        Values c(X_i) of the control variate.
+    c_mean : float
+        Known E[c(X)].
+
+    Returns
+    -------
+    estimate, variance_reduction_factor
+    """
+    # Optimal beta = Cov(h,c) / Var(c)
+    beta = np.cov(h_samples, c_samples)[0, 1] / np.var(c_samples)
+    adjusted = h_samples - beta * (c_samples - c_mean)
+    plain_var = np.var(h_samples)
+    cv_var = np.var(adjusted)
+    return adjusted.mean(), plain_var / cv_var
+```
+
+## Demonstration: all techniques on one problem
+
+```{python}
+#| label: variance-reduction-demo
+# Estimate E[exp(X)] where X ~ N(0, 1)
+# True value = exp(1/2) ≈ 1.6487
+true_val = np.exp(0.5)
+n = 10_000
+
+# 1. Plain MC
+x = rng.standard_normal(n)
+h = np.exp(x)
+plain = h.mean()
+plain_se = h.std() / np.sqrt(n)
+
+# 2. Antithetic variates
+x_half = rng.standard_normal(n // 2)
+h_anti = 0.5 * (np.exp(x_half) + np.exp(-x_half))
+anti = h_anti.mean()
+anti_se = h_anti.std() / np.sqrt(n // 2)
+
+# 3. Control variates (use X as control, E[X] = 0)
+cv_est, cv_vrf = control_variate(h, x, 0.0)
+
+# 4. Importance sampling (shift the normal)
+# Proposal: N(1, 1) concentrates where exp(x) is large
+x_is = rng.standard_normal(n) + 1  # samples from N(1, 1)
+log_w = stats.norm.logpdf(x_is) - stats.norm.logpdf(x_is, loc=1)
+w = np.exp(log_w)
+is_est = np.mean(w * np.exp(x_is))
+is_se = np.std(w * np.exp(x_is)) / np.sqrt(n)
+
+print(f"{'Method':<20} {'Estimate':>10} {'SE':>10} {'VR factor':>10}")
+print("-" * 55)
+print(f"{'Plain MC':<20} {plain:>10.4f} {plain_se:>10.4f} {'1.0':>10}")
+print(f"{'Antithetic':<20} {anti:>10.4f} {anti_se:>10.4f} "
+      f"{(plain_se/anti_se)**2:>10.1f}")
+print(f"{'Control variate':<20} {cv_est:>10.4f} "
+      f"{'':>10} {cv_vrf:>10.1f}")
+print(f"{'Importance sampling':<20} {is_est:>10.4f} {is_se:>10.4f} "
+      f"{(plain_se/is_se)**2:>10.1f}")
+print(f"\nTrue value: {true_val:.4f}")
+```
+
+
+# Diagnostics {#sec-ch07-diagnostics}
+
+## Checking MC convergence
+
+```{python}
+#| label: fig-mc-convergence
+#| fig-cap: "Running MC estimate and 95% confidence band for E[exp(X)]. The estimate stabilizes as n grows, and the band narrows at rate 1/√n. If the estimate has not stabilized by your budget n, either increase n or use variance reduction."
+
+cumsum = np.cumsum(np.exp(rng.standard_normal(5000)))
+ns = np.arange(1, 5001)
+running_mean = cumsum / ns
+running_se = np.sqrt(np.cumsum((np.exp(rng.standard_normal(5000)) - running_mean)**2) / (ns * (ns - 1) + 1))
+
+fig, ax = plt.subplots()
+ax.plot(ns, running_mean, color="C0", linewidth=0.8)
+ax.axhline(true_val, color="gray", linestyle="--", linewidth=0.5)
+ax.fill_between(ns, running_mean - 1.96*running_se,
+                running_mean + 1.96*running_se, alpha=0.2, color="C0")
+ax.set_xlabel("Sample size n")
+ax.set_ylabel(r"$\hat{\mu}_n$")
+ax.set_xlim(1, 5000)
+plt.show()
+```
+
+## Diagnosing importance sampling
+
+The effective sample size (ESS) tells you how many of your $n$ samples
+are actually contributing. If $\text{ESS} \ll n$, your proposal $q$ is
+a poor match and the estimate is dominated by a few large weights.
+Rule of thumb: $\text{ESS} < n/5$ is a warning sign.
+
+
+# Computational Considerations {#sec-ch07-computation}
+
+| Method | Variance reduction | Extra cost per sample | Best when |
+|---|---|---|---|
+| Plain MC | 1x (baseline) | 0 | First pass, any dimension |
+| Antithetic | Up to 2x | ~0 (just negate) | $h$ is monotone |
+| Control variates | Up to $1/(1-\rho^2)$ | 1 extra function eval | Correlated auxiliary available |
+| Importance sampling | Unbounded (can be huge) | Density evaluation | Tail probabilities, rare events |
+| QMC (Sobol/Halton) | $O(\sqrt{n}/\log^d n)$ | Sequence generation | Low-to-moderate dimension ($d \leq 20$) |
+
+QMC's advantage degrades rapidly with dimension ($d$) because the
+$(\log n)^d$ factor grows. Above $d \approx 20$, plain MC with variance
+reduction typically outperforms QMC.
+
+
+# Worked Example {#sec-ch07-example}
+
+Estimating the probability that a portfolio loses more than 10% in one
+day (Value at Risk).
+
+```{python}
+#| label: worked-var
+# Simple 3-asset portfolio with correlated returns
+n_assets = 3
+mu_daily = np.array([0.0005, 0.0003, 0.0008])
+cov_daily = np.array([
+    [0.0004, 0.0001, 0.0002],
+    [0.0001, 0.0003, 0.00005],
+    [0.0002, 0.00005, 0.0006],
+])
+weights = np.array([0.4, 0.35, 0.25])
+L = np.linalg.cholesky(cov_daily)
+
+# Plain MC
+n_sim = 100_000
+Z = rng.standard_normal((n_sim, n_assets))
+returns = mu_daily + Z @ L.T
+portfolio_returns = returns @ weights
+threshold = -0.10  # 10% loss
+
+# P(loss > 10%)
+plain_est = np.mean(portfolio_returns < threshold)
+plain_se = np.sqrt(plain_est * (1 - plain_est) / n_sim)
+print(f"Plain MC: P(loss > 10%) = {plain_est:.6f} +/- {plain_se:.6f}")
+
+# Importance sampling: shift the mean toward the loss region
+shift = np.array([-0.05, -0.05, -0.05])  # bias toward losses
+Z_is = rng.standard_normal((n_sim, n_assets))
+returns_is = (mu_daily + shift) + Z_is @ L.T
+portfolio_is = returns_is @ weights
+
+# Importance weights (ratio of densities)
+log_w = (-0.5 * np.sum(Z_is**2, axis=1)  # log q (shifted normal)
+         + 0.5 * np.sum((Z_is + np.linalg.solve(L, shift))**2, axis=1))
+w = np.exp(log_w)
+indicator = (portfolio_is < threshold).astype(float)
+is_est = np.mean(w * indicator)
+is_se = np.std(w * indicator) / np.sqrt(n_sim)
+ess = np.sum(w)**2 / np.sum(w**2)
+
+print(f"IS:       P(loss > 10%) = {is_est:.6f} +/- {is_se:.6f}")
+print(f"ESS: {ess:.0f} / {n_sim} ({ess/n_sim*100:.1f}%)")
+```
+
+
+# Exercises {#sec-ch07-exercises}
+
+**Exercise 7.1** ($\star\star$, diagnostic failure). Estimate
+$\mathbb{E}[X^4]$ where $X \sim \text{Cauchy}(0,1)$ using plain MC
+with $n = 10{,}000$. Repeat 20 times with different seeds. What
+happens? Does the estimate stabilize? Explain why, relating to the
+nonexistence of $\mathbb{E}[X^4]$ for the Cauchy distribution.
+
+%%
+
+```{python}
+#| label: ex-7-1-solution
+estimates = []
+for seed in range(20):
+    x = stats.cauchy.rvs(size=10_000, random_state=seed)
+    estimates.append(np.mean(x**4))
+
+print(f"Estimates across 20 seeds:")
+print(f"  Mean:   {np.mean(estimates):.1f}")
+print(f"  Std:    {np.std(estimates):.1f}")
+print(f"  Min:    {np.min(estimates):.1f}")
+print(f"  Max:    {np.max(estimates):.1f}")
+print(f"  Range:  {np.ptp(estimates):.1f}")
+```
+
+The estimates do not stabilize. $\mathbb{E}[X^4]$ does not exist for
+the Cauchy distribution (the fourth moment is infinite). The LLN does
+not apply, and the MC estimator has infinite variance. Each run is
+dominated by a few extreme values. This is the fundamental limitation
+of MC: it requires $\text{Var}(h(X)) < \infty$. When estimating tail
+quantities with heavy-tailed distributions, variance reduction
+(especially importance sampling with a heavier-tailed proposal) is
+essential.
+
+%%
+
+
+**Exercise 7.2** ($\star\star$, implementation). Implement antithetic
+variates for estimating $\mathbb{E}[\exp(X)]$ where $X \sim N(0, 1)$.
+Compute the variance reduction factor compared to plain MC. Explain
+why antithetic variates work well here (hint: $\exp$ is monotone).
+
+%%
+
+```{python}
+#| label: ex-7-2-solution
+n = 50_000
+
+# Plain MC
+x = rng.standard_normal(n)
+plain = np.exp(x)
+
+# Antithetic
+x_half = rng.standard_normal(n // 2)
+anti = 0.5 * (np.exp(x_half) + np.exp(-x_half))
+
+vr = np.var(plain) / np.var(anti)
+print(f"Plain MC:   mean={plain.mean():.4f}, var={np.var(plain):.4f}")
+print(f"Antithetic: mean={anti.mean():.4f}, var={np.var(anti):.4f}")
+print(f"Variance reduction: {vr:.1f}x")
+print(f"True value: {np.exp(0.5):.4f}")
+```
+
+Antithetic variates pair $X$ with $-X$ (both $\sim N(0,1)$). Since
+$\exp$ is convex and monotonically increasing,
+$\text{Cov}(\exp(X), \exp(-X)) < 0$, and the average
+$\frac{1}{2}[\exp(X) + \exp(-X)]$ has lower variance than $\exp(X)$
+alone. The reduction is particularly effective because $\exp$ is
+strongly monotone: large $X$ gives large $\exp(X)$ and small
+$\exp(-X)$, creating strong negative correlation.
+
+%%
+
+
+**Exercise 7.3** ($\star\star$, comparison). Compare plain MC, Sobol
+QMC, and Halton QMC for estimating $\int_0^1 \int_0^1 \sin(\pi x_1) \cos(\pi x_2)\, dx_1\, dx_2$
+(true value = $4/\pi^2 \approx 0.4053$). Plot the error vs. sample
+size on a log-log scale. Estimate the convergence rate for each method.
+
+%%
+
+```{python}
+#| label: ex-7-3-solution
+def f_2d(pts):
+    return np.sin(np.pi * pts[:, 0]) * np.cos(np.pi * pts[:, 1])
+
+true_2d = 4 / np.pi**2
+ns = [2**k for k in range(4, 14)]
+errs = {'MC': [], 'Sobol': [], 'Halton': []}
+
+for n in ns:
+    errs['MC'].append(abs(np.mean(f_2d(rng.random((n, 2)))) - true_2d))
+    s = qmc.Sobol(d=2, scramble=True, seed=42); errs['Sobol'].append(abs(np.mean(f_2d(s.random(n))) - true_2d))
+    h = qmc.Halton(d=2, scramble=True, seed=42); errs['Halton'].append(abs(np.mean(f_2d(h.random(n))) - true_2d))
+
+fig, ax = plt.subplots()
+for name, color in [('MC', 'C0'), ('Sobol', 'C1'), ('Halton', 'C2')]:
+    ax.loglog(ns, errs[name], 'o-', color=color, label=name, markersize=4)
+ax.set_xlabel("n"); ax.set_ylabel("Error"); ax.legend()
+plt.show()
+
+# Estimate rates via log-log regression
+for name in errs:
+    e = np.array(errs[name])
+    valid = e > 0  # avoid log(0)
+    rate = -np.polyfit(np.log(np.array(ns)[valid]), np.log(e[valid]), 1)[0]
+    print(f"{name:>6}: rate ≈ n^{-rate:.2f}")
+```
+
+MC achieves approximately $n^{-0.5}$. Sobol and Halton achieve faster
+rates (closer to $n^{-1}$ for smooth integrands in low dimensions).
+The advantage is dramatic for this smooth 2D function but would
+diminish in higher dimensions.
+
+%%
+
+
+**Exercise 7.4** ($\star\star\star$, implementation). Implement control
+variates for estimating the price of a European call option under
+geometric Brownian motion. Use the underlying stock price $S_T$ as the
+control variate (its expectation is known: $S_0 e^{rT}$). Compare the
+variance reduction with plain MC.
+
+%%
+
+```{python}
+#| label: ex-7-4-solution
+# Black-Scholes parameters
+S0, K, r, sigma, T = 100, 105, 0.05, 0.2, 1.0
+n = 100_000
+
+# Simulate paths
+Z = rng.standard_normal(n)
+S_T = S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * Z)
+payoff = np.maximum(S_T - K, 0) * np.exp(-r * T)
+
+# Plain MC
+plain_price = payoff.mean()
+plain_se = payoff.std() / np.sqrt(n)
+
+# Control variate: E[S_T] = S0 * exp(rT)
+E_ST = S0 * np.exp(r * T)
+cv_price, vrf = control_variate(payoff, S_T, E_ST)
+cv_se = payoff.std() / np.sqrt(n) / np.sqrt(vrf)
+
+# Black-Scholes closed form for comparison
+from scipy.stats import norm as normal
+d1 = (np.log(S0/K) + (r + sigma**2/2)*T) / (sigma*np.sqrt(T))
+d2 = d1 - sigma*np.sqrt(T)
+bs_price = S0*normal.cdf(d1) - K*np.exp(-r*T)*normal.cdf(d2)
+
+print(f"Black-Scholes:  {bs_price:.4f}")
+print(f"Plain MC:       {plain_price:.4f} +/- {plain_se:.4f}")
+print(f"Control variate: {cv_price:.4f} +/- {cv_se:.4f}")
+print(f"Variance reduction: {vrf:.1f}x")
+```
+
+The control variate $S_T$ is highly correlated with the call payoff
+$\max(S_T - K, 0)$: when $S_T$ is large, the payoff is large. The
+regression adjustment removes much of this shared variation. The
+variance reduction factor is typically 3--10x for at-the-money options,
+higher for deep in-the-money.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch07-biblio}
+
+Monte Carlo integration dates to the Manhattan Project (Metropolis and
+Ulam, 1949). The $1/\sqrt{n}$ rate was already understood; the
+variance-reduction toolkit developed over the following decades.
+
+Importance sampling: Kahn and Marshall (1953). The danger of
+high-variance weights was recognized early but continues to bite
+practitioners who choose proposals carelessly. The effective sample
+size diagnostic is from Kong, Liu, and Wong (1994).
+
+Control variates: the regression interpretation is from Lavenberg and
+Welch (1981). Multiple control variates use multivariate regression;
+see Glasserman (2003), Chapter 4.
+
+Quasi-Monte Carlo: Sobol sequences (Sobol, 1967), Halton sequences
+(Halton, 1960). The Koksma--Hlawka inequality is from Niederreiter
+(1992). Scipy's implementation follows Joe and Kuo (2008) for the
+Sobol direction numbers.
+
+For a comprehensive treatment of Monte Carlo methods in computational
+finance (where variance reduction is most developed), see Glasserman
+(2003). For the statistical perspective, see Robert and Casella (2004).
