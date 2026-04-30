@@ -91,7 +91,7 @@ is Fisher scoring (Newton's method with expected information):
 
 At each iteration:
 $$
-\boldsymbol{\beta}^{(t+1)} = (\mathbf{X}^\top\mathbf{W}^{(t)}\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{W}^{(t)}\mathbf{z}^{(t)},
+\boldsymbol{\beta}^{(k+1)} = (\mathbf{X}^\top\mathbf{W}^{(k)}\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{W}^{(k)}\mathbf{z}^{(k)},
 $$
 where $\mathbf{W} = \text{diag}(w_i)$ with
 $w_i = 1/[\text{Var}(\mu_i) \cdot g'(\mu_i)^2]$ and the working
@@ -173,13 +173,13 @@ not just its center.
 **Output:** $\hat{\boldsymbol{\beta}}$
 
 1. $\boldsymbol{\beta}^{(0)} \leftarrow$ initial guess (e.g., from OLS on $g(y)$)
-2. **for** $t = 0, 1, 2, \ldots$ **do**
-3. $\quad$ $\boldsymbol{\eta} \leftarrow \mathbf{X}\boldsymbol{\beta}^{(t)}$
+2. **for** $k = 0, 1, 2, \ldots$ **do**
+3. $\quad$ $\boldsymbol{\eta} \leftarrow \mathbf{X}\boldsymbol{\beta}^{(k)}$
 4. $\quad$ $\boldsymbol{\mu} \leftarrow g^{-1}(\boldsymbol{\eta})$
 5. $\quad$ $w_i \leftarrow 1/[\text{Var}(\mu_i) \cdot g'(\mu_i)^2]$ $\triangleright$ weights
 6. $\quad$ $z_i \leftarrow \eta_i + (y_i - \mu_i)g'(\mu_i)$ $\triangleright$ working response
-7. $\quad$ $\boldsymbol{\beta}^{(t+1)} \leftarrow (\mathbf{X}^\top\mathbf{W}\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{W}\mathbf{z}$ $\triangleright$ weighted OLS
-8. $\quad$ **if** $\|\boldsymbol{\beta}^{(t+1)} - \boldsymbol{\beta}^{(t)}\| < \epsilon$ **then return** $\boldsymbol{\beta}^{(t+1)}$
+7. $\quad$ $\boldsymbol{\beta}^{(k+1)} \leftarrow (\mathbf{X}^\top\mathbf{W}\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{W}\mathbf{z}$ $\triangleright$ weighted OLS
+8. $\quad$ **if** $\|\boldsymbol{\beta}^{(k+1)} - \boldsymbol{\beta}^{(k)}\| < \epsilon$ **then return** $\boldsymbol{\beta}^{(k+1)}$
 9. **end for**
 :::
 
@@ -305,7 +305,7 @@ def irls_poisson(X, y, tol=1e-8, maxiter=25):
     n, p = X.shape
     beta = np.zeros(p)  # initialize at zero
 
-    for t in range(maxiter):
+    for k in range(maxiter):
         eta = X @ beta
         mu = np.exp(eta)             # inverse link: exp
         w = mu                       # Var(Y) = mu, g'(mu) = 1/mu
@@ -321,7 +321,7 @@ def irls_poisson(X, y, tol=1e-8, maxiter=25):
         beta = beta_new
 
     deviance = 2 * np.sum(y * np.log(np.maximum(y, 1e-10) / mu) - (y - mu))
-    return {'params': beta, 'deviance': deviance, 'nit': t}
+    return {'params': beta, 'deviance': deviance, 'nit': k}
 ```
 
 ```{python}
@@ -631,7 +631,7 @@ linear program.
 
 The influence function: Hampel (1974). Its connection to the jackknife
 and bootstrap is through the functional delta method (Efron, 1982).
-This connection is reused in Chapters 17 (survival analysis, partial
+This connection is reused in Chapters 18 (survival analysis, partial
 likelihood), 21 (AIPW), and 23 (DML).
 
 Quasi-likelihood: Wedderburn (1974). McCullagh (1983) develops the
