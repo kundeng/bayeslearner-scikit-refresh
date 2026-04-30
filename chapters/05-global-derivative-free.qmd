@@ -121,35 +121,19 @@ $$
 where $\Omega^*_\epsilon = \{\mathbf{x} \in \Omega : f(\mathbf{x}) \leq f^* + \epsilon\}$.
 :::
 
-*Proof.* The proof uses the theory of inhomogeneous Markov chains.
-At fixed temperature $T$, the Metropolis acceptance rule defines a
-Markov chain on $\Omega$ (discretized to a finite state space for the
-formal argument). The stationary distribution of this chain is the
-Boltzmann distribution $\pi_T(\mathbf{x}) \propto \exp(-f(\mathbf{x})/T)$.
-As $T \to 0$, $\pi_T$ concentrates on the global minimizers of $f$.
-
-The question is how fast $T_k$ can decrease while maintaining
-convergence. The key result (Hajek, 1988) shows that convergence
-in probability to $\Omega^*_\epsilon$ holds if and only if:
-$$
-\sum_{k=1}^{\infty} \exp(-d^* / T_k) = \infty,
-$$ {#eq-hajek}
-where $d^*$ is the *depth* of the deepest local minimum---the maximum
-energy barrier the chain must cross to reach the global minimum from
-any local minimum.
-
-With $T_k = C/\ln(k+2)$ and $C \geq d^*$:
-$$
-\exp(-d^*/T_k) = \exp(-d^* \ln(k+2)/C) = (k+2)^{-d^*/C} \geq (k+2)^{-1}.
-$$
-The series $\sum (k+2)^{-1}$ diverges (harmonic series), so @eq-hajek
-is satisfied. The Markov chain theory (Hajek, 1988, Theorem 1) then
-gives convergence in probability.
-
-Conversely, if $T_k$ decreases faster than $C/\ln k$---for example,
-$T_k = C/k$ (geometric cooling)---then the series in @eq-hajek
-converges, and the chain can get trapped in a local minimum with
-positive probability. $\square$
+*Why logarithmic cooling works (and nothing faster does).* The
+acceptance probability for an uphill move of height $d^*$ (the
+deepest energy barrier) at temperature $T_k$ is
+$\exp(-d^*/T_k)$. For the chain to escape every local trap
+infinitely often, these probabilities must sum to infinity---the
+chain needs infinitely many "lucky" uphill moves. With
+$T_k = C/\ln(k+2)$ and $C \geq d^*$, each term is at least
+$(k+2)^{-1}$, and the harmonic series diverges: the chain gets
+infinitely many chances to escape. Any faster cooling (e.g.,
+$T_k = C/k$) makes the sum converge, meaning the chain can get
+permanently trapped. This is Hajek's (1988) characterization: the
+necessary and sufficient condition for convergence is precisely that
+the escape probabilities form a divergent series.
 
 ::: {.callout-warning}
 ## The logarithmic cooling schedule is useless in practice

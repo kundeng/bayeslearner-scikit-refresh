@@ -212,28 +212,7 @@ $$
 $$ {#eq-zoutendijk}
 :::
 
-*Proof.* From the curvature condition (@eq-curvature):
-$$
-(\nabla f_{k+1} - \nabla f_k)^\top \mathbf{p}_k \geq (c_2 - 1) \nabla f_k^\top \mathbf{p}_k.
-$$
-By the Lipschitz condition (Assumption 2.1):
-$$
-(\nabla f_{k+1} - \nabla f_k)^\top \mathbf{p}_k \leq \|\nabla f_{k+1} - \nabla f_k\| \|\mathbf{p}_k\| \leq L \alpha_k \|\mathbf{p}_k\|^2.
-$$
-Combining:
-$$
-\alpha_k \geq \frac{(c_2 - 1) \nabla f_k^\top \mathbf{p}_k}{L \|\mathbf{p}_k\|^2} = \frac{(1 - c_2) \cos\theta_k \|\nabla f_k\|}{L \|\mathbf{p}_k\|}.
-$$
-Substituting into the Armijo condition:
-\begin{align}
-f_{k+1} &\leq f_k + c_1 \alpha_k \nabla f_k^\top \mathbf{p}_k \\
-&\leq f_k - c_1 \frac{(1 - c_2)}{L} \cos^2\theta_k \|\nabla f_k\|^2.
-\end{align}
-Summing from $k = 0$ to $N$ and using Assumption 2.2:
-$$
-\sum_{k=0}^{N} \cos^2\theta_k \|\nabla f_k\|^2 \leq \frac{L}{c_1(1 - c_2)} (f_0 - f^*) < \infty.
-$$
-Since the partial sums are bounded, the series converges. $\square$
+*Why it holds.* The Wolfe conditions force each step to achieve sufficient decrease proportional to $\cos^2\theta_k \|\nabla f_k\|^2$. Summing over iterations, the total decrease is bounded by $f_0 - f^* < \infty$ (Assumption 2.2), so the series must converge. The Lipschitz condition (Assumption 2.1) is what ties the curvature condition to a lower bound on the step size, closing the argument. See @nocedal2006numerical, Theorem 3.2 for the full proof.
 
 ::: {.callout-warning}
 ## What Zoutendijk does and does not say
@@ -422,52 +401,16 @@ $$
 $$ {#eq-dennis-more}
 :::
 
-*Proof.* Write $\mathbf{e}_k = \mathbf{x}_k - \mathbf{x}^*$.
-
-**($\Rightarrow$)** Assume superlinear convergence:
-$\|\mathbf{e}_{k+1}\|/\|\mathbf{e}_k\| \to 0$. The quasi-Newton step
-gives:
-$$
-\mathbf{e}_{k+1} = \mathbf{e}_k + \mathbf{p}_k = \mathbf{e}_k - \mathbf{B}_k^{-1}\nabla f_k.
-$$
-Using the integral form
-$\nabla f_k = \nabla^2 f(\mathbf{x}^*)\mathbf{e}_k + O(\|\mathbf{e}_k\|^2)$
-(since $\nabla f(\mathbf{x}^*) = \mathbf{0}$):
-\begin{align}
-\mathbf{e}_{k+1} &= \mathbf{e}_k - \mathbf{B}_k^{-1}[\nabla^2 f(\mathbf{x}^*)\mathbf{e}_k + O(\|\mathbf{e}_k\|^2)] \\
-&= [\mathbf{I} - \mathbf{B}_k^{-1}\nabla^2 f(\mathbf{x}^*)]\mathbf{e}_k + O(\|\mathbf{e}_k\|^2).
-\end{align}
-Since $\mathbf{p}_k = -\mathbf{B}_k^{-1}\nabla f_k = -\mathbf{B}_k^{-1}\nabla^2 f(\mathbf{x}^*)\mathbf{e}_k + O(\|\mathbf{e}_k\|^2)$,
-and near $\mathbf{x}^*$ we have
-$\mathbf{e}_k \approx -[\nabla^2 f(\mathbf{x}^*)]^{-1}\nabla f_k$
-(the Newton step), so $\mathbf{p}_k \sim -\mathbf{e}_k$ and
-$\|\mathbf{p}_k\| \sim \|\mathbf{e}_k\|$. Therefore:
-$$
-\frac{\|(\mathbf{B}_k - \nabla^2 f(\mathbf{x}^*))\mathbf{p}_k\|}{\|\mathbf{p}_k\|}
-= \frac{\|\mathbf{B}_k\mathbf{p}_k - \nabla^2 f(\mathbf{x}^*)\mathbf{p}_k\|}{\|\mathbf{p}_k\|}
-= \frac{\|\mathbf{B}_k(\mathbf{e}_{k+1} - \mathbf{e}_k) + \nabla f_k + O(\|\mathbf{e}_k\|^2)\|}{\|\mathbf{p}_k\|}.
-$$
-By rearranging and using the superlinear convergence assumption
-($\|\mathbf{e}_{k+1}\|/\|\mathbf{e}_k\| \to 0$), this ratio tends
-to zero.
-
-**($\Leftarrow$)** Assume @eq-dennis-more holds. Then:
-\begin{align}
-\|\mathbf{e}_{k+1}\| &= \|[\mathbf{I} - \mathbf{B}_k^{-1}\nabla^2 f(\mathbf{x}^*)]\mathbf{e}_k\| + O(\|\mathbf{e}_k\|^2) \\
-&= \|\mathbf{B}_k^{-1}[\mathbf{B}_k - \nabla^2 f(\mathbf{x}^*)]\mathbf{e}_k\| + O(\|\mathbf{e}_k\|^2).
-\end{align}
-Since $\mathbf{e}_k \sim -\mathbf{p}_k$ near $\mathbf{x}^*$ and
-$\|\mathbf{B}_k^{-1}\|$ is bounded (because $\mathbf{B}_k$ stays
-positive definite and bounded), we get
-$\|\mathbf{e}_{k+1}\|/\|\mathbf{e}_k\| \to 0$. $\square$
-
 The condition @eq-dennis-more does *not* require
 $\mathbf{B}_k \to \nabla^2 f(\mathbf{x}^*)$ in any matrix norm. It
-requires only that the approximation error, projected onto the search
-direction, vanishes relative to the step length. This is a much weaker
-condition, and it is why BFGS works: the update formula @eq-bfgs-update
-accumulates curvature information along the directions that matter,
-without necessarily recovering the full Hessian.
+requires only that the approximation error, *projected onto the search
+direction*, vanishes relative to the step length. This is a much weaker
+condition than full Hessian recovery, and it is why BFGS works: the
+rank-two update @eq-bfgs-update accumulates curvature information along
+the directions the optimizer actually travels, without needing to
+reconstruct the full $p \times p$ Hessian. Convergence is superlinear
+because the directions that matter most are sampled most often. See
+@dennis1974characterization and @nocedal2006numerical, Theorem 3.6 for the full proof.
 
 
 ## Trust-region methods

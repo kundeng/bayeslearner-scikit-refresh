@@ -182,74 +182,20 @@ f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{2L\|\mathbf{x}_0 - \mathbf{x}^*\|^2
 $$ {#eq-nesterov-rate}
 :::
 
-*Proof (via estimating sequences).* We follow Nesterov's original
-estimating-sequence argument, which constructs a sequence of quadratic
-lower bounds on $f$ that improve at the $O(1/k^2)$ rate.
-
-Define the sequence of quadratic functions:
-$$
-\phi_k(\mathbf{x}) = \phi_0(\mathbf{x}) + \sum_{i=0}^{k-1} \alpha_i \left[f(\mathbf{v}_i) + \nabla f(\mathbf{v}_i)^\top(\mathbf{x} - \mathbf{v}_i)\right],
-$$
-where $\phi_0(\mathbf{x}) = f(\mathbf{x}_0) + \frac{L}{2}\|\mathbf{x} - \mathbf{x}_0\|^2$
-and $\alpha_i > 0$ are weights to be determined with $A_k = \sum_{i=0}^{k-1} \alpha_i$.
-
-The key property we maintain is the *estimating-sequence condition*:
-$$
-A_k f(\mathbf{x}_k) + (1 - A_k) f(\mathbf{x}_0) \leq \min_\mathbf{x} \phi_k(\mathbf{x}).
-$$ {#eq-est-seq}
-
-Since $f$ is convex, the left side of @eq-est-seq satisfies
-$A_k f(\mathbf{x}_k) + (1-A_k)f(\mathbf{x}_0) \geq A_k f(\mathbf{x}_k) + (1-A_k)f(\mathbf{x}^*)$
-when $A_k \leq 1$. And $\min_\mathbf{x} \phi_k(\mathbf{x})$ is a
-quadratic in $\mathbf{x}$ with minimum value $\phi_k^*$. The estimating
-sequence gives $f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq (\phi_k^* - f(\mathbf{x}^*)) / A_k$.
-
-We choose $\alpha_k = (k+1)/2$, giving
-$A_k = \sum_{i=0}^{k-1} \alpha_i = k(k+1)/4$.
-
-**Induction step.** Suppose @eq-est-seq holds at step $k$. We must
-show it holds at step $k+1$ after the gradient step at
-$\mathbf{v}_k$ with momentum $\beta_k = (k-1)/(k+2)$.
-
-Since $\phi_k$ is quadratic, write
-$\phi_k(\mathbf{x}) = \phi_k^* + \frac{L(1 + A_k)}{2}\|\mathbf{x} - \mathbf{w}_k\|^2$
-where $\mathbf{w}_k = \arg\min \phi_k$. Adding the new linear lower
-bound at the gradient evaluation point $\mathbf{v}_k$:
-\begin{align}
-\phi_{k+1}(\mathbf{x}) &= \phi_k(\mathbf{x}) + \alpha_k[f(\mathbf{v}_k) + \nabla f(\mathbf{v}_k)^\top(\mathbf{x} - \mathbf{v}_k)].
-\end{align}
-Completing the square, the new minimizer is
-$\mathbf{w}_{k+1} = \frac{(1+A_k)\mathbf{w}_k + \alpha_k(\mathbf{v}_k - \frac{1}{L}\nabla f(\mathbf{v}_k))}{1 + A_{k+1}}$,
-and the new minimum value is:
-$$
-\phi_{k+1}^* = \phi_k^* + \alpha_k f(\mathbf{v}_k) - \frac{\alpha_k^2}{2L(1 + A_{k+1})}\|\nabla f(\mathbf{v}_k)\|^2.
-$$
-
-By the descent lemma, $f(\mathbf{x}_{k+1}) \leq f(\mathbf{v}_k) - \frac{1}{2L}\|\nabla f(\mathbf{v}_k)\|^2$.
-The estimating-sequence condition at step $k+1$ requires:
-$A_{k+1} f(\mathbf{x}_{k+1}) + (1 - A_{k+1})f(\mathbf{x}_0) \leq \phi_{k+1}^*$.
-
-Using the induction hypothesis and the descent lemma bound:
-\begin{align}
-A_{k+1} f(\mathbf{x}_{k+1}) &\leq A_k f(\mathbf{x}_k) + \alpha_k f(\mathbf{v}_k) - \frac{\alpha_k}{2L}\|\nabla f(\mathbf{v}_k)\|^2 \\
-&\leq \phi_k^* - (1-A_k)f(\mathbf{x}_0) + \alpha_k f(\mathbf{v}_k) - \frac{\alpha_k}{2L}\|\nabla f(\mathbf{v}_k)\|^2.
-\end{align}
-
-This matches $\phi_{k+1}^* - (1-A_{k+1})f(\mathbf{x}_0)$ provided
-$\frac{\alpha_k}{2L} \geq \frac{\alpha_k^2}{2L(1+A_{k+1})}$, i.e.,
-$\alpha_k \leq 1 + A_{k+1}$. With $\alpha_k = (k+1)/2$ and
-$A_{k+1} = (k+1)(k+2)/4$, this holds for all $k \geq 0$.
-
-The $O(1/k^2)$ rate follows:
-$f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \phi_k^*/A_k \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2/2}{k(k+1)/4} = \frac{2L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{k(k+1)}$,
-since $\phi_k^* \leq \phi_0^* + 0 = \frac{L}{2}\|\mathbf{x}_0 - \mathbf{x}^*\|^2$
-(the linear lower bounds only tighten the minimum). $\square$
-
-The momentum coefficient $\beta_k = (k-1)/(k+2)$ starts near 0 and
-approaches 1. Early iterations are close to gradient descent; later
-iterations carry substantial momentum. This is *not* the heavy-ball
-momentum of Polyak (which uses a fixed $\beta$)---Nesterov's momentum
-is carefully scheduled to achieve the optimal rate.
+*Why momentum gives $O(1/k^2)$.* Gradient descent evaluates
+$\nabla f$ at the current iterate $\mathbf{x}_k$ and steps downhill.
+Nesterov's method instead evaluates the gradient at the *extrapolated*
+point $\mathbf{v}_k = \mathbf{x}_k + \beta_k(\mathbf{x}_k - \mathbf{x}_{k-1})$---a
+"look-ahead" that anticipates where the iterates are heading. This
+look-ahead lets the method accumulate information about the curvature
+of $f$ across iterations, rather than using only the local gradient.
+The formal argument, due to Nesterov (2004), constructs a sequence of
+quadratic lower bounds (*estimating sequences*) on $f$ whose minimum
+values improve at the rate $O(1/k^2)$. The momentum schedule
+$\beta_k = (k-1)/(k+2)$ is precisely what keeps this induction
+going---any fixed momentum (as in Polyak's heavy-ball method) does
+not achieve the optimal rate on the full class of smooth convex
+functions. See @nesterov2004, §2.2 for the complete proof.
 
 
 ## The proximal operator
@@ -411,53 +357,20 @@ converge: $f(\mathbf{x}_k) + g(\mathbf{z}_k) \to f(\mathbf{x}^*) + g(\mathbf{z}^
 and $\mathbf{A}\mathbf{x}_k + \mathbf{B}\mathbf{z}_k - \mathbf{c} \to \mathbf{0}$.
 :::
 
-*Proof (Boyd et al., 2011 style).* The proof constructs a Lyapunov
-function $V_k = \frac{1}{\rho}\|\boldsymbol{\lambda}^* - \rho\mathbf{u}_k\|^2 + \rho\|\mathbf{B}(\mathbf{z}^* - \mathbf{z}_k)\|^2$,
-where $(\mathbf{x}^*, \mathbf{z}^*, \boldsymbol{\lambda}^*)$ is a
-primal-dual solution and $\boldsymbol{\lambda} = \rho\mathbf{u}$ is
-the (scaled) dual variable.
-
-The $\mathbf{x}$-update minimizes $L_\rho$ over $\mathbf{x}$, so
-$\nabla_\mathbf{x} L_\rho(\mathbf{x}_{k+1}, \mathbf{z}_k, \mathbf{u}_k) = \mathbf{0}$,
-giving the optimality condition:
-$\nabla f(\mathbf{x}_{k+1}) + \rho\mathbf{A}^\top(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_k - \mathbf{c} + \mathbf{u}_k) = \mathbf{0}$.
-
-Similarly, the $\mathbf{z}$-update gives
-$\partial g(\mathbf{z}_{k+1}) \ni -\rho\mathbf{B}^\top(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c} + \mathbf{u}_k)$.
-The dual update gives
-$\mathbf{u}_{k+1} = \mathbf{u}_k + \mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c}$,
-so $\rho\mathbf{u}_{k+1} = \rho\mathbf{u}_k + \rho(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c})$.
-
-At the primal-dual solution $(\mathbf{x}^*, \mathbf{z}^*, \boldsymbol{\lambda}^*)$
-with $\boldsymbol{\lambda}^* = \rho\mathbf{u}^*$, KKT gives
-$\nabla f(\mathbf{x}^*) + \mathbf{A}^\top\boldsymbol{\lambda}^* = \mathbf{0}$
-and $\partial g(\mathbf{z}^*) \ni -\mathbf{B}^\top\boldsymbol{\lambda}^*$.
-
-Now compute $V_{k+1} - V_k$. The dual term:
-\begin{align}
-\|\boldsymbol{\lambda}^* - \rho\mathbf{u}_{k+1}\|^2 &= \|\boldsymbol{\lambda}^* - \rho\mathbf{u}_k - \rho(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c})\|^2 \\
-&= \|\boldsymbol{\lambda}^* - \rho\mathbf{u}_k\|^2 - 2\rho(\boldsymbol{\lambda}^* - \rho\mathbf{u}_k)^\top \mathbf{r}_{k+1} + \rho^2\|\mathbf{r}_{k+1}\|^2,
-\end{align}
-where $\mathbf{r}_{k+1} = \mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c}$
-is the primal residual. The primal term:
-$\|\mathbf{B}(\mathbf{z}^* - \mathbf{z}_{k+1})\|^2 - \|\mathbf{B}(\mathbf{z}^* - \mathbf{z}_k)\|^2 = -2\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)^\top \mathbf{B}(\mathbf{z}^* - \mathbf{z}_{k+1}) - \|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2$.
-
-Combining, using the optimality conditions to relate
-$(\boldsymbol{\lambda}^* - \rho\mathbf{u}_k)^\top\mathbf{r}_{k+1}$
-to convexity inequalities for $f$ and $g$, and using
-$\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_k - \mathbf{c} = \mathbf{r}_{k+1} - \mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)$:
-
-$$
-V_{k+1} - V_k \leq -\rho\|\mathbf{r}_{k+1}\|^2 - \rho\|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2.
-$$
-
-Both terms are nonpositive, so $V_k$ is nonincreasing. Since
-$V_k \geq 0$, it converges. The decrements
-$\rho\|\mathbf{r}_{k+1}\|^2 \to 0$ (primal residual vanishes) and
-$\rho\|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2 \to 0$
-(dual variable stabilizes). Primal feasibility follows from
-$\mathbf{r}_k \to \mathbf{0}$, and objective convergence from the
-bounded $V_k$ and the convexity of $f + g$. $\square$
+*Why ADMM converges.* The key insight is that each ADMM iteration
+decreases a primal-dual gap. Specifically, one can construct a
+Lyapunov function $V_k$ that measures the distance of the current
+dual variable $\mathbf{u}_k$ from its optimal value plus the distance
+of $\mathbf{z}_k$ from $\mathbf{z}^*$. Each iteration's
+$\mathbf{x}$-update, $\mathbf{z}$-update, and dual update combine to
+guarantee $V_{k+1} \leq V_k - \rho\|\mathbf{r}_{k+1}\|^2$, where
+$\mathbf{r}_{k+1}$ is the primal residual
+(constraint violation $\mathbf{Ax} + \mathbf{Bz} - \mathbf{c}$).
+Since $V_k \geq 0$ and nonincreasing, both the primal residual and
+the dual update stabilize. The penalty parameter $\rho$ controls the
+trade-off: large $\rho$ drives primal feasibility faster but slows
+dual convergence, and vice versa. See Boyd et al. (2011), §3.2 for
+the full Lyapunov argument.
 
 
 ## Coordinate descent

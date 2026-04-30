@@ -321,44 +321,16 @@ for all nonzero $\mathbf{d} \in \mathcal{C}(\mathbf{x}^*)$, then
 $\mathbf{x}^*$ is a strict local minimizer.
 :::
 
-*Proof.* Suppose for contradiction that there exists a sequence
-$\{\mathbf{x}_k\} \to \mathbf{x}^*$ of feasible points with
-$f(\mathbf{x}_k) \leq f(\mathbf{x}^*)$. Define
-$\mathbf{d}_k = (\mathbf{x}_k - \mathbf{x}^*)/\|\mathbf{x}_k - \mathbf{x}^*\|$.
-By compactness, a subsequence converges: $\mathbf{d}_k \to \mathbf{d}$
-with $\|\mathbf{d}\| = 1$.
-
-By feasibility and Taylor expansion of the active constraints:
-$0 = c_i(\mathbf{x}_k) = \nabla c_i(\mathbf{x}^*)^\top (\mathbf{x}_k - \mathbf{x}^*) + O(\|\mathbf{x}_k - \mathbf{x}^*\|^2)$,
-so $\nabla c_i(\mathbf{x}^*)^\top \mathbf{d} = 0$ for $i \in \mathcal{E}$.
-Similarly for active inequalities with $\mu_j^* > 0$ (the strictly
-complementary constraints). So $\mathbf{d} \in \mathcal{C}(\mathbf{x}^*)$.
-
-Now expand the Lagrangian directly. Since
-$\nabla_\mathbf{x} \mathcal{L}(\mathbf{x}^*, \boldsymbol{\lambda}^*, \boldsymbol{\mu}^*) = \mathbf{0}$
-by KKT stationarity:
-$$
-\mathcal{L}(\mathbf{x}_k, \boldsymbol{\lambda}^*, \boldsymbol{\mu}^*)
-- \mathcal{L}(\mathbf{x}^*, \boldsymbol{\lambda}^*, \boldsymbol{\mu}^*)
-= \tfrac{1}{2}(\mathbf{x}_k - \mathbf{x}^*)^\top \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}(\mathbf{x}^*)\, (\mathbf{x}_k - \mathbf{x}^*) + o(\|\mathbf{x}_k - \mathbf{x}^*\|^2).
-$$
-Expanding the Lagrangian:
-$\mathcal{L}(\mathbf{x}_k) - \mathcal{L}(\mathbf{x}^*) = [f(\mathbf{x}_k) - f(\mathbf{x}^*)] - \sum_i \lambda_i^*[c_i(\mathbf{x}_k) - c_i(\mathbf{x}^*)] - \sum_j \mu_j^*[c_j(\mathbf{x}_k) - c_j(\mathbf{x}^*)]$.
-By feasibility: $c_i(\mathbf{x}_k) = c_i(\mathbf{x}^*) = 0$, so the
-equality constraint terms vanish. For the inequality terms:
-$c_j(\mathbf{x}^*) = 0$ for $j \in \mathcal{A}$, so
-$-\mu_j^* c_j(\mathbf{x}_k) \leq 0$ (since $\mu_j^* \geq 0$ and
-$c_j(\mathbf{x}_k) \geq 0$). Therefore:
-$$
-\mathcal{L}(\mathbf{x}_k) - \mathcal{L}(\mathbf{x}^*) \leq f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq 0.
-$$
-Combining with the Taylor expansion:
-$$
-0 \geq \tfrac{1}{2}\|\mathbf{x}_k - \mathbf{x}^*\|^2 \cdot \mathbf{d}_k^\top \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}(\mathbf{x}^*)\, \mathbf{d}_k + o(\|\mathbf{x}_k - \mathbf{x}^*\|^2).
-$$
-Dividing by $\|\mathbf{x}_k - \mathbf{x}^*\|^2$ and taking the limit:
-$\mathbf{d}^\top \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}(\mathbf{x}^*)\, \mathbf{d} \leq 0$,
-contradicting the positive-definiteness hypothesis on $\mathcal{C}(\mathbf{x}^*)$. $\square$
+*Why it works.* The critical cone captures the directions that keep
+the binding constraints tight to first order and are not ruled out by
+strictly complementary multipliers. On these directions, the curvature
+of the objective alone does not determine sufficiency---you need the
+curvature of the *Lagrangian*, because the constraint terms contribute
+second-order effects that the objective misses. If the Lagrangian
+Hessian is positive definite on the critical cone, any feasible
+perturbation incurs a net increase in the Lagrangian, which bounds the
+objective from below. See @nocedal2006numerical, Theorem 12.6 for the
+full proof.
 
 
 ## SQP as Newton's method on the KKT system
