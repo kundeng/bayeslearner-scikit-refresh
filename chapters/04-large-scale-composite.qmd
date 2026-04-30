@@ -72,7 +72,7 @@ $O(1/k^2)$ is optimal among first-order methods.
 
 ## Standing assumptions
 
-::: {#asm-lipschitz-grad .callout-important}
+::: {.callout-important}
 ## Assumption 4.1 (Lipschitz gradient)
 $f: \mathbb{R}^p \to \mathbb{R}$ is convex and differentiable, with
 $L$-Lipschitz continuous gradient:
@@ -90,7 +90,7 @@ touches it at $\mathbf{x}$ with the same gradient. This quadratic is
 the key to everything in this chapter---gradient descent minimizes it,
 and the $O(1/k)$ rate follows from telescoping.
 
-::: {#asm-strong-convex .callout-important}
+::: {.callout-important}
 ## Assumption 4.2 (Strong convexity, optional)
 $f$ is $\mu$-strongly convex with $\mu > 0$:
 $$
@@ -103,7 +103,7 @@ function is merely convex.
 
 ## Gradient descent: the $O(1/k)$ rate
 
-::: {#thm-gd-rate .callout-note}
+::: {.callout-note}
 ## Theorem 4.1 (Convergence of gradient descent)
 Under Assumption 4.1, gradient descent with step size $\eta = 1/L$
 produces iterates satisfying
@@ -169,7 +169,7 @@ convergence---a quadratic improvement over gradient descent---by
 evaluating the gradient at an *extrapolated* point rather than the
 current iterate.
 
-::: {#thm-nesterov .callout-note}
+::: {.callout-note}
 ## Theorem 4.2 (Nesterov's accelerated gradient method)
 Under Assumption 4.1, the iterates of Nesterov's method:
 \begin{align}
@@ -205,7 +205,7 @@ with $f$ smooth and $g$ nonsmooth, gradient descent cannot be applied
 directly. The *proximal gradient* method replaces the gradient step
 with a proximal step that handles $g$ exactly.
 
-::: {#def-prox .callout-tip}
+::: {.callout-tip}
 ## Definition 4.1 (Proximal operator)
 The proximal operator of a convex function $g$ with step size $\eta > 0$
 is
@@ -229,7 +229,7 @@ The soft-thresholding operator is the computational engine of the
 Lasso: it sets small coefficients to exactly zero, producing the
 sparsity that $\ell_1$ regularization is famous for.
 
-::: {#thm-prox-resolvent .callout-note}
+::: {.callout-note}
 ## Theorem 4.3 (Proximal operator as resolvent)
 The proximal operator satisfies $\operatorname{prox}_{\eta g} = (\mathbf{I} + \eta \partial g)^{-1}$,
 where $\partial g$ is the subdifferential of $g$. That is,
@@ -253,7 +253,7 @@ methods like ADMM.
 
 ## The Moreau envelope
 
-::: {#def-moreau .callout-tip}
+::: {.callout-tip}
 ## Definition 4.2 (Moreau envelope)
 The Moreau envelope of $g$ with parameter $\eta > 0$ is
 $$
@@ -273,7 +273,7 @@ understanding convergence.
 
 ## Proximal gradient convergence
 
-::: {#thm-prox-grad .callout-note}
+::: {.callout-note}
 ## Theorem 4.4 (Convergence of proximal gradient)
 Under Assumption 4.1 on $f$, and with $g$ convex, lower semicontinuous,
 and proper, the proximal gradient iterates
@@ -343,7 +343,7 @@ $\mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{z} = \mathbf{c}$ by
 alternating between optimizing over $\mathbf{x}$ and $\mathbf{z}$,
 then updating a dual variable.
 
-::: {#thm-admm .callout-note}
+::: {.callout-note}
 ## Theorem 4.5 (ADMM convergence)
 Under convexity of $f$ and $g$, and with the augmented Lagrangian
 $L_\rho(\mathbf{x}, \mathbf{z}, \mathbf{u}) = f(\mathbf{x}) + g(\mathbf{z}) + \frac{\rho}{2}\|\mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{z} - \mathbf{c} + \mathbf{u}\|^2$,
@@ -375,7 +375,7 @@ the full Lyapunov argument.
 
 ## Coordinate descent
 
-::: {#thm-coord-descent .callout-note}
+::: {.callout-note}
 ## Theorem 4.6 (Coordinate descent for separable regularizers)
 If $g(\mathbf{x}) = \sum_j g_j(x_j)$ is separable and each $g_j$ is
 convex, then coordinate descent---updating one coordinate at a time by

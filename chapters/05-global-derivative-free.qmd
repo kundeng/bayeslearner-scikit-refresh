@@ -73,7 +73,7 @@ knowledge)?
 
 ## The hardness of global optimization
 
-::: {#asm-global .callout-important}
+::: {.callout-important}
 ## Assumption 5.1 (Lipschitz continuity)
 $f: \Omega \to \mathbb{R}$ is Lipschitz continuous on a bounded domain
 $\Omega \subset \mathbb{R}^p$:
@@ -108,7 +108,7 @@ $\exp(-(f(\mathbf{x}') - f(\mathbf{x}_k))/T_k)$, where $T_k$ is the
 *temperature*. High temperature makes uphill moves likely (exploration);
 low temperature makes them unlikely (exploitation).
 
-::: {#thm-sa .callout-note}
+::: {.callout-note}
 ## Theorem 5.1 (Simulated annealing convergence under logarithmic cooling)
 Let $f: \Omega \to \mathbb{R}$ be continuous on a compact set $\Omega$,
 and let $\{T_k\}$ be a temperature schedule satisfying
@@ -159,7 +159,7 @@ at the center of each, and identifies which rectangles are
 "potentially optimal"---meaning they could contain the global minimum
 for some Lipschitz constant $K_f$.
 
-::: {#thm-direct .callout-note}
+::: {.callout-note}
 ## Theorem 5.2 (DIRECT correctness on Lipschitz functions)
 Under Assumption 5.1, the DIRECT algorithm samples a dense subset of
 $\Omega$: the set of evaluated points $\{\mathbf{x}_1, \mathbf{x}_2, \ldots\}$

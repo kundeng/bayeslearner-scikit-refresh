@@ -107,7 +107,7 @@ We develop three CQs in decreasing strength: LICQ (strongest), MFCQ,
 and CRCQ (weakest of the three). Each is illustrated with a
 counterexample showing what breaks when it fails.
 
-::: {#def-licq .callout-tip}
+::: {.callout-tip}
 ## Definition 3.1 (LICQ — Linear Independence Constraint Qualification)
 LICQ holds at a feasible point $\mathbf{x}^*$ if the gradients of the
 active constraints $\{\nabla c_i(\mathbf{x}^*) : i \in \mathcal{A}(\mathbf{x}^*)\}$
@@ -138,7 +138,7 @@ constrained minimizer. MFCQ holds (see below), and KKT conditions
 are necessary---just with non-unique multipliers.
 :::
 
-::: {#def-mfcq .callout-tip}
+::: {.callout-tip}
 ## Definition 3.2 (MFCQ — Mangasarian--Fromovitz CQ)
 MFCQ holds at a feasible point $\mathbf{x}^*$ if:
 
@@ -227,7 +227,7 @@ ax.set_ylabel(r"$x_2$")
 plt.show()
 ```
 
-::: {#def-crcq .callout-tip}
+::: {.callout-tip}
 ## Definition 3.3 (CRCQ — Constant Rank Constraint Qualification)
 CRCQ holds at a feasible point $\mathbf{x}^*$ if, for every subset
 $S \subseteq \mathcal{A}(\mathbf{x}^*)$, the rank of
@@ -257,7 +257,7 @@ multiplier $\mu$ can take any value.
 
 ## First-order necessary conditions: KKT
 
-::: {#thm-kkt .callout-note}
+::: {.callout-note}
 ## Theorem 3.1 (KKT necessary conditions under LICQ)
 Let $\mathbf{x}^*$ be a local minimizer of @eq-constrained, and suppose
 LICQ holds at $\mathbf{x}^*$. Then there exist unique multipliers
@@ -306,7 +306,7 @@ $\square$
 
 ## Second-order sufficient conditions
 
-::: {#thm-sosc .callout-note}
+::: {.callout-note}
 ## Theorem 3.2 (Second-order sufficient conditions)
 Let $(\mathbf{x}^*, \boldsymbol{\lambda}^*, \boldsymbol{\mu}^*)$
 satisfy the KKT conditions. Define the *critical cone*:
@@ -335,7 +335,7 @@ full proof.
 
 ## SQP as Newton's method on the KKT system
 
-::: {#thm-sqp .callout-note}
+::: {.callout-note}
 ## Theorem 3.3 (SQP subproblem = Newton step on KKT)
 Consider the equality-constrained problem $\min f(\mathbf{x})$ subject
 to $\mathbf{c}(\mathbf{x}) = \mathbf{0}$. The SQP subproblem at
@@ -405,7 +405,7 @@ where $\mu > 0$ is the *barrier parameter*. The $\ln c_j$ term forces
 the iterates to stay in the interior of the feasible set ($c_j > 0$),
 and blows up as any constraint approaches zero.
 
-::: {#thm-barrier .callout-note}
+::: {.callout-note}
 ## Theorem 3.4 (Barrier convergence)
 Under LICQ, if $f$ is convex, the inequality constraints $c_j$ are
 concave (so that $\{c_j \geq 0\}$ is convex), and the feasible set

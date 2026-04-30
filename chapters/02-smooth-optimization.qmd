@@ -82,7 +82,7 @@ you need when the optimizer fails and you have to diagnose why.
 
 We work under two standing assumptions throughout the chapter.
 
-::: {#asm-smooth .callout-important}
+::: {.callout-important}
 ## Assumption 2.1 (Smoothness)
 $f: \mathbb{R}^p \to \mathbb{R}$ is twice continuously differentiable
 ($f \in C^2$), and $\nabla f$ is Lipschitz continuous with constant
@@ -93,7 +93,7 @@ $$
 $$
 :::
 
-::: {#asm-bounded .callout-important}
+::: {.callout-important}
 ## Assumption 2.2 (Bounded below)
 $f$ is bounded below: $\inf_{\mathbf{x}} f(\mathbf{x}) > -\infty$.
 :::
@@ -121,7 +121,7 @@ the function value did not decrease enough, shrink $\alpha$ by a factor
 and try again. "Enough" is formalized by the *Armijo condition*
 (sufficient decrease):
 
-::: {#def-armijo .callout-tip}
+::: {.callout-tip}
 ## Definition 2.1 (Armijo condition)
 A step size $\alpha_k > 0$ satisfies the Armijo condition along
 direction $\mathbf{p}_k$ if
@@ -136,7 +136,7 @@ quasi-Newton methods: it permits step sizes that are too short,
 causing the BFGS update to degenerate. The *curvature condition*
 prevents this:
 
-::: {#def-curvature .callout-tip}
+::: {.callout-tip}
 ## Definition 2.2 (Curvature condition)
 A step size $\alpha_k > 0$ satisfies the curvature condition if
 $$
@@ -160,7 +160,7 @@ ruling out points where the directional derivative is large and
 negative. The strong form is harder to satisfy but produces better
 step sizes in practice.
 
-::: {#thm-wolfe-exist .callout-note}
+::: {.callout-note}
 ## Theorem 2.1 (Existence of Wolfe step sizes)
 Under Assumptions 2.1 and 2.2, if $\mathbf{p}_k$ is a descent
 direction ($\nabla f_k^\top \mathbf{p}_k < 0$), then there exist step
@@ -198,7 +198,7 @@ search methods. It says: if the search directions are not too far from
 the gradient direction, and the step sizes satisfy the Wolfe conditions,
 then the gradients must eventually become small.
 
-::: {#thm-zoutendijk .callout-note}
+::: {.callout-note}
 ## Theorem 2.2 (Zoutendijk, 1970)
 Under Assumptions 2.1 and 2.2, suppose that at each iteration $k$,
 the step size $\alpha_k$ satisfies the Wolfe conditions, and the
@@ -242,7 +242,7 @@ $$ {#eq-newton-dir}
 This is the unique direction that minimizes the second-order Taylor
 approximation of $f$ at $\mathbf{x}_k$.
 
-::: {#thm-newton .callout-note}
+::: {.callout-note}
 ## Theorem 2.3 (Local quadratic convergence of Newton's method)
 Suppose $f \in C^2$, $\mathbf{x}^*$ is a local minimizer with
 $\nabla^2 f(\mathbf{x}^*)$ positive definite, and $\nabla^2 f$ is
@@ -303,7 +303,7 @@ from two requirements:
    $\|\mathbf{A}\|_W = \|W^{1/2} \mathbf{A} W^{1/2}\|_F$ where
    $W$ is any matrix satisfying $W \mathbf{y}_k = \mathbf{s}_k$.
 
-::: {#thm-secant .callout-note}
+::: {.callout-note}
 ## Theorem 2.4 (Secant equation)
 If $f \in C^2$ and $\nabla^2 f$ is continuous, then for small
 $\|\mathbf{s}_k\|$:
@@ -319,7 +319,7 @@ relationship exactly.
 $\nabla f(\mathbf{x}_{k+1}) = \nabla f(\mathbf{x}_k) + \nabla^2 f(\mathbf{x}_k)(\mathbf{x}_{k+1} - \mathbf{x}_k) + O(\|\mathbf{s}_k\|^2)$.
 Therefore $\mathbf{y}_k = \nabla^2 f(\mathbf{x}_k)\mathbf{s}_k + O(\|\mathbf{s}_k\|^2)$. $\square$
 
-::: {#thm-bfgs .callout-note}
+::: {.callout-note}
 ## Theorem 2.5 (BFGS update formula)
 The unique solution to the closest-update problem is:
 $$
@@ -388,7 +388,7 @@ something almost as good: *superlinear* convergence, meaning
 $\|\mathbf{x}_{k+1} - \mathbf{x}^*\| / \|\mathbf{x}_k - \mathbf{x}^*\| \to 0$.
 The Dennis--Moré theorem characterizes exactly when this happens.
 
-::: {#thm-dennis-more .callout-note}
+::: {.callout-note}
 ## Theorem 2.6 (Dennis and Moré, 1974)
 Suppose $\mathbf{x}^*$ is a local minimizer with
 $\nabla^2 f(\mathbf{x}^*)$ positive definite, $\nabla^2 f$ is
@@ -427,7 +427,7 @@ $$
 \rho_k = \frac{f(\mathbf{x}_k) - f(\mathbf{x}_k + \mathbf{p}_k)}{m_k(\mathbf{0}) - m_k(\mathbf{p}_k)}.
 $$ {#eq-tr-ratio}
 
-::: {#thm-cauchy .callout-note}
+::: {.callout-note}
 ## Theorem 2.7 (Cauchy point and sufficient decrease)
 The *Cauchy point* is the minimizer of $m_k$ along the steepest
 descent direction, clipped to the trust region:
