@@ -10,11 +10,10 @@ Each entry specifies: scope, primary APIs, theoretical core, depth signals (what
 
 ## Part I — Motivation and Overview
 
-### Chapter 1. The ML Pipeline as a Window into SciPy
-**Scope.** A quick ML refresher that doubles as the book's roadmap. Build a complete scikit-learn pipeline — preprocessing, model fitting, cross-validation, hyperparameter search — then systematically unpack what each stage does under the hood. When `LogisticRegression.fit()` runs, it calls an optimizer (→ Ch. 2–6). When `cross_val_score` splits and scores, it makes statistical assumptions about the loss surface (→ Ch. 10) and about what the score estimates (→ Ch. 9). When `GridSearchCV` searches, it solves a global optimization problem with noisy evaluations (→ Ch. 5). AutoML frameworks (FLAML, auto-sklearn) compose these pieces and add their own assumptions. This chapter names the questions; the rest of the book answers them.
-**Library.** `scikit-learn` (`Pipeline`, `ColumnTransformer`, `cross_val_score`, `GridSearchCV`, `RandomizedSearchCV`); `scipy.optimize.minimize` shown briefly as the engine beneath `.fit()`; `statsmodels.api.OLS` shown briefly for coefficient-level inference that scikit-learn deliberately omits.
-**Theory — light.** This is a survey chapter. It introduces the bias-variance decomposition informally, defines the train/validation/test split as a statistical protocol, and states (without proof) that cross-validation estimates expected loss. Every claim made here is proved rigorously in a later chapter; forward references are specific.
-**AutoML.** The CASH (Combined Algorithm Selection and Hyperparameter optimization) problem stated as a mathematical optimization problem. Connection to Ch. 5 (derivative-free/global optimization) made explicit. Honest treatment of what AutoML does and does not automate — feature engineering, problem formulation, and model diagnostics remain human work.
+### Chapter 1. Getting Started with SciPy
+**Scope.** A hands-on introduction to scipy for readers who don't know it yet. Builds gradually from a simple `minimize` call to multivariate optimization, curve fitting, probability distributions, linear algebra, statsmodels regression, and finally sklearn pipelines. Traces `LogisticRegression.fit()` → `scipy.optimize.minimize` to show how sklearn is built on scipy. Ends with a roadmap mapping every chapter to a scipy function.
+**Library.** `scipy.optimize.minimize`, `curve_fit`, `rosen`; `scipy.stats` distributions (norm, t, chi2, poisson); `scipy.linalg` (solve, cholesky, svd); `statsmodels.api.OLS`; `sklearn.linear_model.Ridge`, `LogisticRegression`.
+**Theory — none.** This is a coding introduction. No theorems, no proofs. Every concept is introduced through a code example.
 **Depends on.** Prerequisites Appendix only.
 
 ---
