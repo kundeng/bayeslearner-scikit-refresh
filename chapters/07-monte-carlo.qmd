@@ -365,9 +365,9 @@ anti_se = h_anti.std() / np.sqrt(n // 2)
 cv_est, cv_vrf = control_variate(h, x, 0.0)
 
 # 4. Importance sampling (shift the normal)
-# Proposal: N(1, 1) concentrates where exp(x) is large
-x_is = rng.standard_normal(n) + 1  # samples from N(1, 1)
-log_w = stats.norm.logpdf(x_is) - stats.norm.logpdf(x_is, loc=1)
+# Proposal: N(0.5, 1) tilts toward where exp(x) is large
+x_is = rng.standard_normal(n) + 0.5  # samples from N(0.5, 1)
+log_w = stats.norm.logpdf(x_is) - stats.norm.logpdf(x_is, loc=0.5)
 w = np.exp(log_w)
 is_est = np.mean(w * np.exp(x_is))
 is_se = np.std(w * np.exp(x_is)) / np.sqrt(n)
@@ -393,10 +393,13 @@ print(f"\nTrue value: {true_val:.4f}")
 #| label: fig-mc-convergence
 #| fig-cap: "Running MC estimate and 95% confidence band for E[exp(X)]. The estimate stabilizes as n grows, and the band narrows at rate 1/√n. If the estimate has not stabilized by your budget n, either increase n or use variance reduction."
 
-cumsum = np.cumsum(np.exp(rng.standard_normal(5000)))
+samples = np.exp(rng.standard_normal(5000))
+cumsum = np.cumsum(samples)
 ns = np.arange(1, 5001)
 running_mean = cumsum / ns
-running_se = np.sqrt(np.cumsum((np.exp(rng.standard_normal(5000)) - running_mean)**2) / (ns * (ns - 1) + 1))
+# Welford-style running variance (using the same samples)
+running_var = np.cumsum((samples - running_mean)**2) / np.maximum(ns - 1, 1)
+running_se = np.sqrt(running_var / ns)
 
 fig, ax = plt.subplots()
 ax.plot(ns, running_mean, color="C0", linewidth=0.8)
@@ -455,29 +458,31 @@ n_sim = 100_000
 Z = rng.standard_normal((n_sim, n_assets))
 returns = mu_daily + Z @ L.T
 portfolio_returns = returns @ weights
-threshold = -0.10  # 10% loss
+threshold = -0.02  # 2% daily loss
 
-# P(loss > 10%)
+# P(loss > 2%)
 plain_est = np.mean(portfolio_returns < threshold)
-plain_se = np.sqrt(plain_est * (1 - plain_est) / n_sim)
-print(f"Plain MC: P(loss > 10%) = {plain_est:.6f} +/- {plain_se:.6f}")
+plain_se = np.sqrt(max(plain_est * (1 - plain_est), 1e-10) / n_sim)
+print(f"Plain MC: P(loss > 2%) = {plain_est:.6f} +/- {plain_se:.6f}")
 
 # Importance sampling: shift the mean toward the loss region
-shift = np.array([-0.05, -0.05, -0.05])  # bias toward losses
+shift = np.array([-0.02, -0.02, -0.02])  # bias toward losses
 Z_is = rng.standard_normal((n_sim, n_assets))
 returns_is = (mu_daily + shift) + Z_is @ L.T
 portfolio_is = returns_is @ weights
 
-# Importance weights (ratio of densities)
-log_w = (-0.5 * np.sum(Z_is**2, axis=1)  # log q (shifted normal)
-         + 0.5 * np.sum((Z_is + np.linalg.solve(L, shift))**2, axis=1))
+# Importance weights: p(Z) / q(Z) where q shifts the mean
+# Z_is ~ N(0, I), but generates returns with shifted mean.
+# Equivalent to Z_orig = Z_is + L^{-1} shift, so log p/q = shift terms.
+L_inv_shift = np.linalg.solve(L, shift)
+log_w = -0.5 * np.sum(L_inv_shift**2) - Z_is @ L_inv_shift
 w = np.exp(log_w)
 indicator = (portfolio_is < threshold).astype(float)
 is_est = np.mean(w * indicator)
 is_se = np.std(w * indicator) / np.sqrt(n_sim)
 ess = np.sum(w)**2 / np.sum(w**2)
 
-print(f"IS:       P(loss > 10%) = {is_est:.6f} +/- {is_se:.6f}")
+print(f"IS:       P(loss > 2%) = {is_est:.6f} +/- {is_se:.6f}")
 print(f"ESS: {ess:.0f} / {n_sim} ({ess/n_sim*100:.1f}%)")
 ```
 
@@ -557,7 +562,7 @@ $\exp(-X)$, creating strong negative correlation.
 
 
 **Exercise 7.3** ($\star\star$, comparison). Compare plain MC, Sobol
-QMC, and Halton QMC for estimating $\int_0^1 \int_0^1 \sin(\pi x_1) \cos(\pi x_2)\, dx_1\, dx_2$
+QMC, and Halton QMC for estimating $\int_0^1 \int_0^1 \sin(\pi x_1 / 2) \cos(\pi x_2 / 2)\, dx_1\, dx_2$
 (true value = $4/\pi^2 \approx 0.4053$). Plot the error vs. sample
 size on a log-log scale. Estimate the convergence rate for each method.
 
@@ -566,14 +571,18 @@ size on a log-log scale. Estimate the convergence rate for each method.
 ```{python}
 #| label: ex-7-3-solution
 def f_2d(pts):
-    return np.sin(np.pi * pts[:, 0]) * np.cos(np.pi * pts[:, 1])
+    return np.sin(np.pi * pts[:, 0] / 2) * np.cos(np.pi * pts[:, 1] / 2)
 
 true_2d = 4 / np.pi**2
 ns = [2**k for k in range(4, 14)]
 errs = {'MC': [], 'Sobol': [], 'Halton': []}
+n_rep = 50  # average MC error over replications for stable rate
 
 for n in ns:
-    errs['MC'].append(abs(np.mean(f_2d(rng.random((n, 2)))) - true_2d))
+    # MC: average absolute error over replications
+    mc_errs = [abs(np.mean(f_2d(np.random.default_rng(s).random((n, 2)))) - true_2d)
+               for s in range(n_rep)]
+    errs['MC'].append(np.mean(mc_errs))
     s = qmc.Sobol(d=2, scramble=True, seed=42); errs['Sobol'].append(abs(np.mean(f_2d(s.random(n))) - true_2d))
     h = qmc.Halton(d=2, scramble=True, seed=42); errs['Halton'].append(abs(np.mean(f_2d(h.random(n))) - true_2d))
 
