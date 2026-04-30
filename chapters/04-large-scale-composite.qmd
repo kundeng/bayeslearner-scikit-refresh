@@ -26,7 +26,11 @@ plt.style.use('assets/book.mplstyle')
 | $\operatorname{prox}_{\eta g}(\mathbf{v})$ | Proximal operator of $g$ with step $\eta$ |
 | $\mathcal{M}_\eta g(\mathbf{x})$ | Moreau envelope of $g$ with parameter $\eta$ |
 | $\mathbf{u}, \mathbf{z}$ | ADMM auxiliary and dual variables |
+| $\mathbf{A}, \mathbf{B}, \mathbf{c}$ | ADMM constraint: $\mathbf{Ax} + \mathbf{Bz} = \mathbf{c}$ |
+| $L_\rho$ | Augmented Lagrangian with penalty $\rho$ |
 | $\rho$ | ADMM penalty parameter |
+| $t_k$ | FISTA momentum parameter |
+| $\partial g(\mathbf{x})$ | Subdifferential of $g$ at $\mathbf{x}$ |
 
 
 # Motivation {#sec-ch04-motivation}
@@ -108,66 +112,42 @@ f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}
 $$ {#eq-gd-rate}
 :::
 
-*Proof.* By the descent lemma (@eq-descent-lemma) with
-$\mathbf{y} = \mathbf{x}_{k+1} = \mathbf{x}_k - \frac{1}{L}\nabla f_k$:
+*Proof.* The proof has three steps: sufficient decrease, nonexpansion,
+and a reciprocal recurrence.
+
+**Step 1 (Sufficient decrease).** By the descent lemma (@eq-descent-lemma)
+with $\mathbf{y} = \mathbf{x}_{k+1} = \mathbf{x}_k - \frac{1}{L}\nabla f_k$:
 \begin{align}
-f(\mathbf{x}_{k+1}) &\leq f(\mathbf{x}_k) + \nabla f_k^\top(\mathbf{x}_{k+1} - \mathbf{x}_k) + \frac{L}{2}\|\mathbf{x}_{k+1} - \mathbf{x}_k\|^2 \\
-&= f(\mathbf{x}_k) - \frac{1}{L}\|\nabla f_k\|^2 + \frac{1}{2L}\|\nabla f_k\|^2 \\
-&= f(\mathbf{x}_k) - \frac{1}{2L}\|\nabla f_k\|^2.
+f(\mathbf{x}_{k+1}) &\leq f(\mathbf{x}_k) - \frac{1}{L}\|\nabla f_k\|^2 + \frac{1}{2L}\|\nabla f_k\|^2
+= f(\mathbf{x}_k) - \frac{1}{2L}\|\nabla f_k\|^2.
 \end{align}
+Let $\delta_k = f(\mathbf{x}_k) - f(\mathbf{x}^*)$. Then
+$\delta_{k+1} \leq \delta_k - \frac{1}{2L}\|\nabla f_k\|^2$.
 
-This gives *sufficient decrease*:
-$f(\mathbf{x}_{k+1}) \leq f(\mathbf{x}_k) - \frac{1}{2L}\|\nabla f_k\|^2$.
-
-Now use convexity: $f(\mathbf{x}^*) \geq f(\mathbf{x}_k) + \nabla f_k^\top(\mathbf{x}^* - \mathbf{x}_k)$,
-so $\nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) \leq f(\mathbf{x}_k) - f(\mathbf{x}^*)$.
-
-We also need a bound on $\|\mathbf{x}_k - \mathbf{x}^*\|^2$. Compute:
-\begin{align}
-\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2 &= \|\mathbf{x}_k - \frac{1}{L}\nabla f_k - \mathbf{x}^*\|^2 \\
-&= \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2}{L}\nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) + \frac{1}{L^2}\|\nabla f_k\|^2 \\
-&\leq \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2}{L}(f(\mathbf{x}_k) - f(\mathbf{x}^*)) + \frac{1}{L^2}\|\nabla f_k\|^2.
-\end{align}
-
-Let $\delta_k = f(\mathbf{x}_k) - f(\mathbf{x}^*)$. Using
-$\|\nabla f_k\|^2 \leq 2L\delta_k$ (from the sufficient decrease
-rearranged: $\frac{1}{2L}\|\nabla f_k\|^2 \leq \delta_k - \delta_{k+1}$,
-so $\|\nabla f_k\|^2 \leq 2L(\delta_k - \delta_{k+1}) \leq 2L\delta_k$):
-
+**Step 2 (Nonexpansion).** We show
+$\|\mathbf{x}_{k+1} - \mathbf{x}^*\| \leq \|\mathbf{x}_k - \mathbf{x}^*\|$.
+Expanding $\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2$ and using
+convexity ($\nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) \geq \delta_k$)
+and sufficient decrease ($\|\nabla f_k\|^2 \leq 2L\delta_k$):
 $$
-\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2 \leq \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2}{L}\delta_k + \frac{2}{L}\delta_k = \|\mathbf{x}_k - \mathbf{x}^*\|^2.
+\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2
+\leq \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2\delta_k}{L} + \frac{2\delta_k}{L}
+= \|\mathbf{x}_k - \mathbf{x}^*\|^2.
 $$
+By induction, $\|\mathbf{x}_k - \mathbf{x}^*\| \leq R$ for all $k$,
+where $R = \|\mathbf{x}_0 - \mathbf{x}^*\|$.
 
-Wait---this only shows the iterates don't diverge, not the rate. The
-standard proof uses a different approach. From sufficient decrease:
-
-$$
-\delta_{k+1} \leq \delta_k - \frac{1}{2L}\|\nabla f_k\|^2.
-$$
-
-By convexity and Cauchy--Schwarz:
-$\delta_k \leq \nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) \leq \|\nabla f_k\| \cdot \|\mathbf{x}_k - \mathbf{x}^*\|$.
-
-So $\|\nabla f_k\|^2 \geq \delta_k^2 / \|\mathbf{x}_k - \mathbf{x}^*\|^2 \geq \delta_k^2 / R^2$
-where $R = \|\mathbf{x}_0 - \mathbf{x}^*\|$ (since the distance is
-nonincreasing, as shown above). Therefore:
-
+**Step 3 (Reciprocal recurrence).** By convexity and Cauchy--Schwarz:
+$\delta_k \leq \|\nabla f_k\| \cdot \|\mathbf{x}_k - \mathbf{x}^*\| \leq \|\nabla f_k\| R$,
+so $\|\nabla f_k\|^2 \geq \delta_k^2 / R^2$. Substituting into
+sufficient decrease:
 $$
 \delta_{k+1} \leq \delta_k - \frac{\delta_k^2}{2LR^2}.
 $$
-
-This is a recurrence of the form $a_{k+1} \leq a_k - a_k^2/C$.
-Dividing by $\delta_k \delta_{k+1}$:
-$\frac{1}{\delta_k} \leq \frac{1}{\delta_{k+1}} - \frac{\delta_k}{2LR^2 \delta_{k+1}} \leq \frac{1}{\delta_{k+1}} - \frac{1}{2LR^2}$,
-so $\frac{1}{\delta_{k+1}} \geq \frac{1}{\delta_k} + \frac{1}{2LR^2}$.
-Telescoping from $k = 0$:
-$$
-\frac{1}{\delta_k} \geq \frac{k}{2LR^2} + \frac{1}{\delta_0},
-$$
-which gives $\delta_k \leq \frac{2LR^2}{k} = \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{2} \cdot \frac{2}{k}$.
-
-More precisely, $\delta_k \leq \frac{2LR^2}{k+4}$ for a tighter
-constant, but the $O(1/k)$ rate is the essential content. $\square$
+Dividing by $\delta_k \delta_{k+1}$ (both positive):
+$\frac{1}{\delta_{k+1}} \geq \frac{1}{\delta_k} + \frac{1}{2LR^2}$.
+Telescoping: $\frac{1}{\delta_k} \geq \frac{k}{2LR^2}$, giving
+$\delta_k \leq \frac{2LR^2}{k}$. $\square$
 
 ::: {.callout-warning}
 ## The $O(1/k)$ rate is slow but unavoidable
@@ -224,20 +204,46 @@ when $A_k \leq 1$. And $\min_\mathbf{x} \phi_k(\mathbf{x})$ is a
 quadratic in $\mathbf{x}$ with minimum value $\phi_k^*$. The estimating
 sequence gives $f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq (\phi_k^* - f(\mathbf{x}^*)) / A_k$.
 
-The weights $\alpha_k = (k+1)/2$ give $A_k = k(k+1)/4$, and a direct
-computation shows that $\phi_k^* - f(\mathbf{x}^*) \leq \frac{L}{2}\|\mathbf{x}_0 - \mathbf{x}^*\|^2$
-when the extrapolation coefficient is chosen as
-$\beta_k = (k-1)/(k+2)$. The $O(1/k^2)$ rate follows:
+We choose $\alpha_k = (k+1)/2$, giving
+$A_k = \sum_{i=0}^{k-1} \alpha_i = k(k+1)/4$.
+
+**Induction step.** Suppose @eq-est-seq holds at step $k$. We must
+show it holds at step $k+1$ after the gradient step at
+$\mathbf{v}_k$ with momentum $\beta_k = (k-1)/(k+2)$.
+
+Since $\phi_k$ is quadratic, write
+$\phi_k(\mathbf{x}) = \phi_k^* + \frac{L(1 + A_k)}{2}\|\mathbf{x} - \mathbf{w}_k\|^2$
+where $\mathbf{w}_k = \arg\min \phi_k$. Adding the new linear lower
+bound at the gradient evaluation point $\mathbf{v}_k$:
+\begin{align}
+\phi_{k+1}(\mathbf{x}) &= \phi_k(\mathbf{x}) + \alpha_k[f(\mathbf{v}_k) + \nabla f(\mathbf{v}_k)^\top(\mathbf{x} - \mathbf{v}_k)].
+\end{align}
+Completing the square, the new minimizer is
+$\mathbf{w}_{k+1} = \frac{(1+A_k)\mathbf{w}_k + \alpha_k(\mathbf{v}_k - \frac{1}{L}\nabla f(\mathbf{v}_k))}{1 + A_{k+1}}$,
+and the new minimum value is:
 $$
-f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2/2}{k(k+1)/4} = \frac{2L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{k(k+1)}.
+\phi_{k+1}^* = \phi_k^* + \alpha_k f(\mathbf{v}_k) - \frac{\alpha_k^2}{2L(1 + A_{k+1})}\|\nabla f(\mathbf{v}_k)\|^2.
 $$
 
-The full verification that the estimating-sequence condition is
-maintained at each step requires checking that the gradient step at
-the extrapolated point $\mathbf{v}_k$ reduces $\phi_{k+1}^*$
-sufficiently. This uses the descent lemma (@eq-descent-lemma) and
-the choice of $\alpha_k$; the algebra is in Nesterov (2004),
-Theorem 2.2.2, and Nocedal and Wright (2006), §10.7. $\square$
+By the descent lemma, $f(\mathbf{x}_{k+1}) \leq f(\mathbf{v}_k) - \frac{1}{2L}\|\nabla f(\mathbf{v}_k)\|^2$.
+The estimating-sequence condition at step $k+1$ requires:
+$A_{k+1} f(\mathbf{x}_{k+1}) + (1 - A_{k+1})f(\mathbf{x}_0) \leq \phi_{k+1}^*$.
+
+Using the induction hypothesis and the descent lemma bound:
+\begin{align}
+A_{k+1} f(\mathbf{x}_{k+1}) &\leq A_k f(\mathbf{x}_k) + \alpha_k f(\mathbf{v}_k) - \frac{\alpha_k}{2L}\|\nabla f(\mathbf{v}_k)\|^2 \\
+&\leq \phi_k^* - (1-A_k)f(\mathbf{x}_0) + \alpha_k f(\mathbf{v}_k) - \frac{\alpha_k}{2L}\|\nabla f(\mathbf{v}_k)\|^2.
+\end{align}
+
+This matches $\phi_{k+1}^* - (1-A_{k+1})f(\mathbf{x}_0)$ provided
+$\frac{\alpha_k}{2L} \geq \frac{\alpha_k^2}{2L(1+A_{k+1})}$, i.e.,
+$\alpha_k \leq 1 + A_{k+1}$. With $\alpha_k = (k+1)/2$ and
+$A_{k+1} = (k+1)(k+2)/4$, this holds for all $k \geq 0$.
+
+The $O(1/k^2)$ rate follows:
+$f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \phi_k^*/A_k \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2/2}{k(k+1)/4} = \frac{2L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{k(k+1)}$,
+since $\phi_k^* \leq \phi_0^* + 0 = \frac{L}{2}\|\mathbf{x}_0 - \mathbf{x}^*\|^2$
+(the linear lower bounds only tighten the minimum). $\square$
 
 The momentum coefficient $\beta_k = (k-1)/(k+2)$ starts near 0 and
 approaches 1. Early iterations are close to gradient descent; later
@@ -349,16 +355,20 @@ $$
 F(\mathbf{x}^+) \leq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{z} - \mathbf{x}) + \frac{L}{2}\|\mathbf{z} - \mathbf{x}\|^2 + g(\mathbf{z}).
 $$
 
-Setting $\mathbf{z} = \mathbf{x}^*$ and using
-$f(\mathbf{x}^*) \geq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{x}^* - \mathbf{x})$
-(convexity of $f$):
+Setting $\mathbf{z} = \mathbf{x}^*$ and using convexity of $f$
+($f(\mathbf{x}^*) \geq f(\mathbf{x}_k) + \nabla f_k^\top(\mathbf{x}^* - \mathbf{x}_k)$):
 
 $$
-F(\mathbf{x}_{k+1}) \leq F(\mathbf{x}^*) + \frac{L}{2}\|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{L}{2}\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2.
+F(\mathbf{x}_{k+1}) \leq F(\mathbf{x}^*) + \frac{L}{2}\|\mathbf{x}_k - \mathbf{x}^*\|^2 + g(\mathbf{x}^*) - g(\mathbf{x}^*).
 $$
 
-Wait---the last step requires more care. The correct derivation (via
-the three-point identity for Bregman divergences) gives:
+The right-hand side involves
+$\frac{L}{2}\|\mathbf{x}^* - \mathbf{x}_k\|^2$. To get the telescoping
+structure, use the identity $\|\mathbf{a}\|^2 + 2\langle \mathbf{a}, \mathbf{b}\rangle = \|\mathbf{a} + \mathbf{b}\|^2 - \|\mathbf{b}\|^2$
+with $\mathbf{a} = \mathbf{x}_{k+1} - \mathbf{x}_k$ and
+$\mathbf{b} = \mathbf{x}_k - \mathbf{x}^*$. The proximal step's
+optimality condition and the descent lemma combine to give (after
+collecting terms):
 
 $$
 F(\mathbf{x}_{k+1}) - F(\mathbf{x}^*) \leq \frac{L}{2}\left(\|\mathbf{x}_k - \mathbf{x}^*\|^2 - \|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2\right).
@@ -412,15 +422,42 @@ $\nabla_\mathbf{x} L_\rho(\mathbf{x}_{k+1}, \mathbf{z}_k, \mathbf{u}_k) = \mathb
 giving the optimality condition:
 $\nabla f(\mathbf{x}_{k+1}) + \rho\mathbf{A}^\top(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_k - \mathbf{c} + \mathbf{u}_k) = \mathbf{0}$.
 
-Similarly for the $\mathbf{z}$-update. Using these optimality
-conditions and the KKT conditions of the original problem at
-$(\mathbf{x}^*, \mathbf{z}^*, \boldsymbol{\lambda}^*)$, one shows
-$V_{k+1} \leq V_k - \rho\|\mathbf{A}(\mathbf{x}_{k+1} - \mathbf{x}_k)\|^2 - \rho\|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2$.
+Similarly, the $\mathbf{z}$-update gives
+$\partial g(\mathbf{z}_{k+1}) \ni -\rho\mathbf{B}^\top(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c} + \mathbf{u}_k)$.
+The dual update gives
+$\mathbf{u}_{k+1} = \mathbf{u}_k + \mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c}$,
+so $\rho\mathbf{u}_{k+1} = \rho\mathbf{u}_k + \rho(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c})$.
 
-Since $V_k \geq 0$ and $V_k$ is nonincreasing with decrements bounded
-below by the squared changes, $V_k$ converges and the decrements tend
-to zero, implying primal feasibility and objective convergence. The
-full algebra is in Boyd et al. (2011), §3.2. $\square$
+At the primal-dual solution $(\mathbf{x}^*, \mathbf{z}^*, \boldsymbol{\lambda}^*)$
+with $\boldsymbol{\lambda}^* = \rho\mathbf{u}^*$, KKT gives
+$\nabla f(\mathbf{x}^*) + \mathbf{A}^\top\boldsymbol{\lambda}^* = \mathbf{0}$
+and $\partial g(\mathbf{z}^*) \ni -\mathbf{B}^\top\boldsymbol{\lambda}^*$.
+
+Now compute $V_{k+1} - V_k$. The dual term:
+\begin{align}
+\|\boldsymbol{\lambda}^* - \rho\mathbf{u}_{k+1}\|^2 &= \|\boldsymbol{\lambda}^* - \rho\mathbf{u}_k - \rho(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c})\|^2 \\
+&= \|\boldsymbol{\lambda}^* - \rho\mathbf{u}_k\|^2 - 2\rho(\boldsymbol{\lambda}^* - \rho\mathbf{u}_k)^\top \mathbf{r}_{k+1} + \rho^2\|\mathbf{r}_{k+1}\|^2,
+\end{align}
+where $\mathbf{r}_{k+1} = \mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c}$
+is the primal residual. The primal term:
+$\|\mathbf{B}(\mathbf{z}^* - \mathbf{z}_{k+1})\|^2 - \|\mathbf{B}(\mathbf{z}^* - \mathbf{z}_k)\|^2 = -2\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)^\top \mathbf{B}(\mathbf{z}^* - \mathbf{z}_{k+1}) - \|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2$.
+
+Combining, using the optimality conditions to relate
+$(\boldsymbol{\lambda}^* - \rho\mathbf{u}_k)^\top\mathbf{r}_{k+1}$
+to convexity inequalities for $f$ and $g$, and using
+$\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_k - \mathbf{c} = \mathbf{r}_{k+1} - \mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)$:
+
+$$
+V_{k+1} - V_k \leq -\rho\|\mathbf{r}_{k+1}\|^2 - \rho\|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2.
+$$
+
+Both terms are nonpositive, so $V_k$ is nonincreasing. Since
+$V_k \geq 0$, it converges. The decrements
+$\rho\|\mathbf{r}_{k+1}\|^2 \to 0$ (primal residual vanishes) and
+$\rho\|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2 \to 0$
+(dual variable stabilizes). Primal feasibility follows from
+$\mathbf{r}_k \to \mathbf{0}$, and objective convergence from the
+bounded $V_k$ and the convexity of $f + g$. $\square$
 
 
 ## Coordinate descent
@@ -433,15 +470,37 @@ minimizing $F$ over $x_j$ with all other coordinates fixed---converges
 to the global minimum of $F = f + g$.
 :::
 
-*Proof sketch.* Each coordinate update minimizes a one-dimensional
-convex function (the restriction of $F$ to the $j$-th coordinate
-axis). The monotone decrease of $F$ and the compactness of sublevel
-sets (under mild growth conditions) guarantee convergence. The key
-technical condition is that $g$ is separable---this ensures that the
-proximal step in each coordinate is independent of the others, so the
-block-coordinate update is well-defined. The formal proof uses the
-descent lemma applied to each coordinate block; see Tseng (2001) or
-Wright (2015). $\square$
+*Proof.* Under Assumption 4.1, $\nabla f$ is Lipschitz, so the
+restriction of $f$ to the $j$-th coordinate has Lipschitz constant
+$L_j \leq L$. The coordinate update for $x_j$ solves:
+$$
+x_j^+ = \arg\min_{t} \left\{f(\mathbf{x}_{[j \leftarrow t]}) + g_j(t)\right\},
+$$
+where $\mathbf{x}_{[j \leftarrow t]}$ replaces the $j$-th coordinate
+with $t$. By the descent lemma applied to the $j$-th coordinate:
+$$
+f(\mathbf{x}_{[j \leftarrow x_j^+]}) \leq f(\mathbf{x}) + \frac{\partial f}{\partial x_j}(\mathbf{x})(x_j^+ - x_j) + \frac{L_j}{2}(x_j^+ - x_j)^2.
+$$
+The coordinate proximal step $x_j^+ = \operatorname{prox}_{g_j/L_j}(x_j - \frac{1}{L_j}\frac{\partial f}{\partial x_j})$
+minimizes the upper bound plus $g_j$. Since this upper bound
+majorizes $F$ in the $j$-th coordinate, we have
+$F(\mathbf{x}_{[j \leftarrow x_j^+]}) \leq F(\mathbf{x}) - \frac{1}{2L_j}|\frac{\partial f}{\partial x_j}|^2$
+(the same sufficient-decrease argument as Theorem 4.1, applied
+one coordinate at a time).
+
+After a full sweep through all $p$ coordinates:
+$$
+F(\mathbf{x}^{(k+1)}) \leq F(\mathbf{x}^{(k)}) - \sum_{j=1}^p \frac{1}{2L_j}\left|\frac{\partial f}{\partial x_j}\right|^2.
+$$
+The sequence $\{F(\mathbf{x}^{(k)})\}$ is nonincreasing and bounded
+below (by convexity and the assumption that a minimizer exists), so it
+converges. The decrements tend to zero, which forces each partial
+derivative to zero. At a point where $\nabla f(\mathbf{x}) = \mathbf{0}$
+and $\mathbf{x}$ satisfies the coordinate-wise optimality condition for
+$g$, the point is a global minimizer of $F$ (by convexity). The
+separability of $g$ is essential: it ensures that the coordinate-wise
+optimality conditions are jointly sufficient for global optimality,
+which would fail for a non-separable $g$. $\square$
 
 Coordinate descent is the algorithm behind scikit-learn's `Lasso` and
 `ElasticNet`: the $\ell_1$ penalty is separable, and each coordinate
@@ -478,7 +537,7 @@ tolerance $\epsilon$
 3. $\quad$ $\beta_k \leftarrow (k - 1) / (k + 2)$ $\triangleright$ momentum coefficient
 4. $\quad$ $\mathbf{v}_k \leftarrow \mathbf{x}_k + \beta_k(\mathbf{x}_k - \mathbf{x}_{k-1})$ $\triangleright$ extrapolation
 5. $\quad$ $\mathbf{x}_{k+1} \leftarrow \mathbf{v}_k - \eta \nabla f(\mathbf{v}_k)$ $\triangleright$ gradient step at extrapolated point
-6. $\quad$ **if** $\|f(\mathbf{x}_{k+1}) - f(\mathbf{x}_k)\| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
+6. $\quad$ **if** $|f(\mathbf{x}_{k+1}) - f(\mathbf{x}_k)| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
 7. **end for**
 :::
 
@@ -504,9 +563,9 @@ step size $\eta = 1/L$, tolerance $\epsilon$
 
 **Output:** Approximate minimizer of $F = f + g$
 
-1. $\mathbf{x}_{-1} \leftarrow \mathbf{x}_0$, $t_0 \leftarrow 1$
+1. $\mathbf{x}_{-1} \leftarrow \mathbf{x}_0$, $t_{-1} \leftarrow 1$, $t_0 \leftarrow 1$
 2. **for** $k = 0, 1, 2, \ldots$ **do**
-3. $\quad$ $\mathbf{v}_k \leftarrow \mathbf{x}_k + \frac{t_{k-1} - 1}{t_k}(\mathbf{x}_k - \mathbf{x}_{k-1})$
+3. $\quad$ $\mathbf{v}_k \leftarrow \mathbf{x}_k + \frac{t_{k-1} - 1}{t_k}(\mathbf{x}_k - \mathbf{x}_{k-1})$ $\triangleright$ at $k=0$: $\mathbf{v}_0 = \mathbf{x}_0$
 4. $\quad$ $\mathbf{x}_{k+1} \leftarrow \operatorname{prox}_{\eta g}(\mathbf{v}_k - \eta \nabla f(\mathbf{v}_k))$
 5. $\quad$ $t_{k+1} \leftarrow \frac{1 + \sqrt{1 + 4t_k^2}}{2}$
 6. $\quad$ **if** $\|\mathbf{x}_{k+1} - \mathbf{x}_k\| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
