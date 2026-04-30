@@ -135,7 +135,8 @@ def double_ml(X, D, Y, n_folds=5, seed=42):
         # Propensity model: E[D | X]
         if len(np.unique(D)) == 2:
             m_model = LogisticRegressionCV(cv=3, random_state=seed,
-                                           max_iter=5000)
+                                           max_iter=5000, l1_ratios=(0,),
+                                           use_legacy_attributes=False)
             m_model.fit(X[train_idx], D[train_idx])
             D_tilde[test_idx] = D[test_idx] - m_model.predict_proba(
                 X[test_idx])[:, 1]
@@ -199,7 +200,9 @@ print(f"{'DML':<15} {dml_result['tau']:>8.3f} "
 #| label: crossfit-comparison
 # DML without cross-fitting (train and predict on same data)
 g_full = LassoCV(cv=3, random_state=42, max_iter=5000).fit(X, Y)
-m_full = LogisticRegressionCV(cv=3, random_state=42, max_iter=5000).fit(X, D)
+m_full = LogisticRegressionCV(cv=3, random_state=42, max_iter=5000,
+                              l1_ratios=(0,),
+                              use_legacy_attributes=False).fit(X, D)
 Y_tilde_nc = Y - g_full.predict(X)
 D_tilde_nc = D - m_full.predict_proba(X)[:, 1]
 tau_nocf = np.sum(D_tilde_nc * Y_tilde_nc) / np.sum(D_tilde_nc**2)
@@ -348,7 +351,8 @@ def dml_interactive(X, D, Y, n_folds=5, seed=42):
         g0.fit(X[train_idx][D[train_idx]==0], Y[train_idx][D[train_idx]==0])
 
         # Propensity
-        m = LogisticRegressionCV(cv=3, random_state=seed, max_iter=5000)
+        m = LogisticRegressionCV(cv=3, random_state=seed, max_iter=5000,
+                                    l1_ratios=(0,))
         m.fit(X[train_idx], D[train_idx])
 
         # Predict on test fold

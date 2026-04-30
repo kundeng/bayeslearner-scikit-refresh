@@ -36,8 +36,8 @@ PCA finds the directions of maximum variance in the data. If
 $\mathbf{X}$ is centered, the PCA decomposition is the SVD:
 $\mathbf{X} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^\top$.
 The columns of $\mathbf{V}$ are the principal component directions;
-the diagonal of $\boldsymbol{\Sigma}^2/(n-1)$ gives the variance
-explained by each component.
+the diagonal entries of $\boldsymbol{\Sigma}^2$ measure the variance
+captured by each component.
 
 ## Kernel density estimation
 
@@ -153,7 +153,7 @@ print(f"KernelReg R²: {1 - np.var(y_lo - y_pred)/np.var(y_lo):.3f}")
 X_centered = X_pca - X_pca.mean(axis=0)
 X_std = X_centered / X_centered.std(axis=0)
 U, S, Vt = np.linalg.svd(X_std, full_matrices=False)
-var_explained = S**2 / (n - 1)
+var_explained = S**2
 print(f"Top 3 variance: {var_explained[:3].round(2)}")
 print(f"statsmodels:    {pca.eigenvals[:3].round(2)}")
 ```
@@ -216,8 +216,8 @@ cov_mat = np.cov(X_std.T)
 eigvals, eigvecs = np.linalg.eigh(cov_mat)
 # Sort descending
 idx = np.argsort(eigvals)[::-1]
-print(f"Eigenvalues: {eigvals[idx][:3].round(2)}")
-print(f"SVD:         {var_explained[:3].round(2)}")
+print(f"Cov eigenvalues:       {eigvals[idx][:3].round(2)}")
+print(f"statsmodels/(n-1):     {(pca.eigenvals[:3]/(n-1)).round(2)}")
 ```
 
 %%

@@ -205,9 +205,9 @@ print(f"\nTrue beta: age=0.02, treatment=-0.5")
 print(f"Estimated: age={cox.params[0]:.3f}, treatment={cox.params[1]:.3f}")
 ```
 
-**Interpreting Cox coefficients:** $\exp(\beta_j)$ is the *hazard ratio*.
-For treatment: $\exp({cox.params[1]:.3f}) = {np.exp(cox.params[1]):.3f}$ means
-treatment reduces the hazard by approximately {(1-np.exp(cox.params[1]))*100:.0f}%.
+**Interpreting Cox coefficients:** $\exp(\hat\beta_j)$ is the *hazard ratio*.
+A negative $\hat\beta$ means reduced hazard; $\exp(\hat\beta) < 1$ means
+treatment is protective. The code above prints the estimated coefficients.
 
 ## Diagnostics: Schoenfeld residuals
 
@@ -218,7 +218,7 @@ treatment reduces the hazard by approximately {(1-np.exp(cox.params[1]))*100:.0f
 # Schoenfeld residuals test PH assumption
 schoenfeld = cox.schoenfeld_residuals
 fig, ax = plt.subplots()
-ax.scatter(t_obs_cox[d_cox==1], schoenfeld[:, 1], s=10, alpha=0.5)
+ax.scatter(t_obs_cox[d_cox==1], schoenfeld[d_cox==1, 1], s=10, alpha=0.5)
 ax.axhline(0, color="gray", linewidth=0.5)
 ax.set_xlabel("Event time")
 ax.set_ylabel("Schoenfeld residual (treatment)")
