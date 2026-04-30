@@ -6,7 +6,7 @@
 
 | Ch. | Title | Status |
 |-----|-------|--------|
-| 1 | The ML Pipeline as a Window into SciPy | **drafted** |
+| 1 | Getting Started with SciPy | **drafted** |
 
 ## Part II — Optimization for Statistical Estimation
 
