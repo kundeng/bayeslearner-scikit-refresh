@@ -96,6 +96,15 @@ format:
           padding: 0.1rem 0 !important;
           margin: 0 !important;
         }
+        /* Fix main content chapter title underlines too */
+        .chapter-title {
+          border-bottom: none !important;
+          text-decoration: none !important;
+        }
+        h1.title .chapter-title,
+        h1.title .chapter-number {
+          border-bottom: none !important;
+        }
         </style>
 
   pdf:
