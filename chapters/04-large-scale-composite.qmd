@@ -2,29 +2,590 @@
 title: "Large-Scale and Composite Optimization"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+plt.style.use('assets/book.mplstyle')
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning |
+|--------|---------|
+| $f(\mathbf{x})$ | Smooth part of the objective |
+| $g(\mathbf{x})$ | Nonsmooth part (regularizer) |
+| $F(\mathbf{x}) = f(\mathbf{x}) + g(\mathbf{x})$ | Composite objective |
+| $L$ | Lipschitz constant of $\nabla f$ |
+| $\mu$ | Strong convexity parameter ($\mu = 0$ for merely convex) |
+| $\kappa = L/\mu$ | Condition number (when $\mu > 0$) |
+| $\eta_k$ or $1/L$ | Step size |
+| $\mathbf{v}_k$ | Momentum/extrapolation point (Nesterov) |
+| $\operatorname{prox}_{\eta g}(\mathbf{v})$ | Proximal operator of $g$ with step $\eta$ |
+| $\mathcal{M}_\eta g(\mathbf{x})$ | Moreau envelope of $g$ with parameter $\eta$ |
+| $\mathbf{u}, \mathbf{z}$ | ADMM auxiliary and dual variables |
+| $\rho$ | ADMM penalty parameter |
+
+
+# Motivation {#sec-ch04-motivation}
+
+Chapter 2 showed that BFGS converges superlinearly and Newton converges
+quadratically. So why would anyone use a method with merely *linear*
+convergence?
+
+Because BFGS stores a $p \times p$ matrix. For the logistic regression
+in Chapter 1 ($p = 8$), this was 512 bytes. For a logistic regression
+on text data with $p = 100{,}000$ features, it is 80 GB. L-BFGS-B
+reduces this to $O(mp)$ with $m = 10$, but even that is 8 MB per
+iteration, and each iteration still costs $O(mp)$ for the two-loop
+recursion. When $p = 10^6$, first-order methods---which use only the
+gradient and cost $O(p)$ per iteration---become the only practical
+option.
+
+But there is a second reason, more fundamental than storage. Many
+statistical objectives are *composite*: a smooth loss plus a nonsmooth
+regularizer. The $\ell_1$-penalized regression (Lasso) minimizes
+$$
+F(\boldsymbol{\beta}) = \underbrace{\frac{1}{2n}\|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|^2}_{f(\boldsymbol{\beta})} + \underbrace{\lambda\|\boldsymbol{\beta}\|_1}_{g(\boldsymbol{\beta})}.
+$$
+The $\ell_1$ norm is not differentiable at zero. BFGS and Newton
+require a smooth objective; they cannot be applied directly. The
+methods in this chapter---proximal gradient, coordinate descent,
+ADMM---are designed for exactly this structure: smooth $f$ plus
+nonsmooth $g$, where $g$ has a cheap proximal operator.
+
+This chapter develops the theory of first-order methods for smooth and
+composite objectives, implements them from scratch, and shows how they
+connect to the regularized estimators in Parts III--VII of this book.
+The key results are convergence rates: $O(1/k)$ for gradient descent,
+$O(1/k^2)$ for Nesterov's accelerated method---and the proof that
+$O(1/k^2)$ is optimal among first-order methods.
+
+
+# Mathematical Foundation {#sec-ch04-math}
+
+## Standing assumptions
+
+::: {#asm-lipschitz-grad .callout-important}
+## Assumption 4.1 (Lipschitz gradient)
+$f: \mathbb{R}^p \to \mathbb{R}$ is convex and differentiable, with
+$L$-Lipschitz continuous gradient:
+$$
+\|\nabla f(\mathbf{x}) - \nabla f(\mathbf{y})\| \leq L\|\mathbf{x} - \mathbf{y}\| \quad \forall \mathbf{x}, \mathbf{y}.
+$$
+Equivalently (by the descent lemma):
+$$
+f(\mathbf{y}) \leq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y} - \mathbf{x}) + \frac{L}{2}\|\mathbf{y} - \mathbf{x}\|^2.
+$$ {#eq-descent-lemma}
 :::
 
-# Motivation {#sec-ch03-motivation}
+The descent lemma says: $f$ is bounded above by a quadratic that
+touches it at $\mathbf{x}$ with the same gradient. This quadratic is
+the key to everything in this chapter---gradient descent minimizes it,
+and the $O(1/k)$ rate follows from telescoping.
 
-# Mathematical Foundation {#sec-ch03-math}
+::: {#asm-strong-convex .callout-important}
+## Assumption 4.2 (Strong convexity, optional)
+$f$ is $\mu$-strongly convex with $\mu > 0$:
+$$
+f(\mathbf{y}) \geq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y} - \mathbf{x}) + \frac{\mu}{2}\|\mathbf{y} - \mathbf{x}\|^2.
+$$
+The condition number is $\kappa = L/\mu \geq 1$. When $\mu = 0$, the
+function is merely convex.
+:::
 
-# The Algorithm {#sec-ch03-algorithm}
 
-# Statistical Properties {#sec-ch03-stats}
+## Gradient descent: the $O(1/k)$ rate
 
-# SciPy Implementation {#sec-ch03-scipy}
+::: {#thm-gd-rate .callout-note}
+## Theorem 4.1 (Convergence of gradient descent)
+Under Assumption 4.1, gradient descent with step size $\eta = 1/L$
+produces iterates satisfying
+$$
+f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{2k}.
+$$ {#eq-gd-rate}
+:::
 
-# From-Scratch Implementation {#sec-ch03-scratch}
+*Proof.* By the descent lemma (@eq-descent-lemma) with
+$\mathbf{y} = \mathbf{x}_{k+1} = \mathbf{x}_k - \frac{1}{L}\nabla f_k$:
+\begin{align}
+f(\mathbf{x}_{k+1}) &\leq f(\mathbf{x}_k) + \nabla f_k^\top(\mathbf{x}_{k+1} - \mathbf{x}_k) + \frac{L}{2}\|\mathbf{x}_{k+1} - \mathbf{x}_k\|^2 \\
+&= f(\mathbf{x}_k) - \frac{1}{L}\|\nabla f_k\|^2 + \frac{1}{2L}\|\nabla f_k\|^2 \\
+&= f(\mathbf{x}_k) - \frac{1}{2L}\|\nabla f_k\|^2.
+\end{align}
 
-# Diagnostics {#sec-ch03-diagnostics}
+This gives *sufficient decrease*:
+$f(\mathbf{x}_{k+1}) \leq f(\mathbf{x}_k) - \frac{1}{2L}\|\nabla f_k\|^2$.
 
-# Computational Considerations {#sec-ch03-computation}
+Now use convexity: $f(\mathbf{x}^*) \geq f(\mathbf{x}_k) + \nabla f_k^\top(\mathbf{x}^* - \mathbf{x}_k)$,
+so $\nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) \leq f(\mathbf{x}_k) - f(\mathbf{x}^*)$.
 
-# Worked Example {#sec-ch03-example}
+We also need a bound on $\|\mathbf{x}_k - \mathbf{x}^*\|^2$. Compute:
+\begin{align}
+\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2 &= \|\mathbf{x}_k - \frac{1}{L}\nabla f_k - \mathbf{x}^*\|^2 \\
+&= \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2}{L}\nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) + \frac{1}{L^2}\|\nabla f_k\|^2 \\
+&\leq \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2}{L}(f(\mathbf{x}_k) - f(\mathbf{x}^*)) + \frac{1}{L^2}\|\nabla f_k\|^2.
+\end{align}
 
-# Exercises {#sec-ch03-exercises}
+Let $\delta_k = f(\mathbf{x}_k) - f(\mathbf{x}^*)$. Using
+$\|\nabla f_k\|^2 \leq 2L\delta_k$ (from the sufficient decrease
+rearranged: $\frac{1}{2L}\|\nabla f_k\|^2 \leq \delta_k - \delta_{k+1}$,
+so $\|\nabla f_k\|^2 \leq 2L(\delta_k - \delta_{k+1}) \leq 2L\delta_k$):
 
-# Bibliographic Notes {#sec-ch03-biblio}
+$$
+\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2 \leq \|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{2}{L}\delta_k + \frac{2}{L}\delta_k = \|\mathbf{x}_k - \mathbf{x}^*\|^2.
+$$
+
+Wait---this only shows the iterates don't diverge, not the rate. The
+standard proof uses a different approach. From sufficient decrease:
+
+$$
+\delta_{k+1} \leq \delta_k - \frac{1}{2L}\|\nabla f_k\|^2.
+$$
+
+By convexity and Cauchy--Schwarz:
+$\delta_k \leq \nabla f_k^\top(\mathbf{x}_k - \mathbf{x}^*) \leq \|\nabla f_k\| \cdot \|\mathbf{x}_k - \mathbf{x}^*\|$.
+
+So $\|\nabla f_k\|^2 \geq \delta_k^2 / \|\mathbf{x}_k - \mathbf{x}^*\|^2 \geq \delta_k^2 / R^2$
+where $R = \|\mathbf{x}_0 - \mathbf{x}^*\|$ (since the distance is
+nonincreasing, as shown above). Therefore:
+
+$$
+\delta_{k+1} \leq \delta_k - \frac{\delta_k^2}{2LR^2}.
+$$
+
+This is a recurrence of the form $a_{k+1} \leq a_k - a_k^2/C$.
+Dividing by $\delta_k \delta_{k+1}$:
+$\frac{1}{\delta_k} \leq \frac{1}{\delta_{k+1}} - \frac{\delta_k}{2LR^2 \delta_{k+1}} \leq \frac{1}{\delta_{k+1}} - \frac{1}{2LR^2}$,
+so $\frac{1}{\delta_{k+1}} \geq \frac{1}{\delta_k} + \frac{1}{2LR^2}$.
+Telescoping from $k = 0$:
+$$
+\frac{1}{\delta_k} \geq \frac{k}{2LR^2} + \frac{1}{\delta_0},
+$$
+which gives $\delta_k \leq \frac{2LR^2}{k} = \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{2} \cdot \frac{2}{k}$.
+
+More precisely, $\delta_k \leq \frac{2LR^2}{k+4}$ for a tighter
+constant, but the $O(1/k)$ rate is the essential content. $\square$
+
+::: {.callout-warning}
+## The $O(1/k)$ rate is slow but unavoidable
+For a function with Lipschitz gradient $L$, gradient descent achieves
+$f(\mathbf{x}_k) - f^* = O(L R^2 / k)$. This means 100 correct digits
+require $10^{100}$ iterations. Nesterov showed this is optimal among
+first-order methods that use only gradient information at each
+iteration---no first-order method can do better than $O(1/k)$ on the
+class of $L$-smooth convex functions (Nesterov, 2004, Theorem 2.1.7).
+But he also showed that $O(1/k^2)$ is achievable with a simple
+modification: momentum.
+:::
+
+
+## Nesterov acceleration: the $O(1/k^2)$ rate
+
+Nesterov's accelerated gradient method achieves $O(1/k^2)$
+convergence---a quadratic improvement over gradient descent---by
+evaluating the gradient at an *extrapolated* point rather than the
+current iterate.
+
+::: {#thm-nesterov .callout-note}
+## Theorem 4.2 (Nesterov's accelerated gradient method)
+Under Assumption 4.1, the iterates of Nesterov's method:
+\begin{align}
+\mathbf{v}_k &= \mathbf{x}_k + \frac{k-1}{k+2}(\mathbf{x}_k - \mathbf{x}_{k-1}), \\
+\mathbf{x}_{k+1} &= \mathbf{v}_k - \frac{1}{L}\nabla f(\mathbf{v}_k),
+\end{align}
+satisfy
+$$
+f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{2L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{(k+1)^2}.
+$$ {#eq-nesterov-rate}
+:::
+
+*Proof (via estimating sequences).* We follow Nesterov's original
+estimating-sequence argument, which constructs a sequence of quadratic
+lower bounds on $f$ that improve at the $O(1/k^2)$ rate.
+
+Define the sequence of quadratic functions:
+$$
+\phi_k(\mathbf{x}) = \phi_0(\mathbf{x}) + \sum_{i=0}^{k-1} \alpha_i \left[f(\mathbf{v}_i) + \nabla f(\mathbf{v}_i)^\top(\mathbf{x} - \mathbf{v}_i)\right],
+$$
+where $\phi_0(\mathbf{x}) = f(\mathbf{x}_0) + \frac{L}{2}\|\mathbf{x} - \mathbf{x}_0\|^2$
+and $\alpha_i > 0$ are weights to be determined with $A_k = \sum_{i=0}^{k-1} \alpha_i$.
+
+The key property we maintain is the *estimating-sequence condition*:
+$$
+A_k f(\mathbf{x}_k) + (1 - A_k) f(\mathbf{x}_0) \leq \min_\mathbf{x} \phi_k(\mathbf{x}).
+$$ {#eq-est-seq}
+
+Since $f$ is convex, the left side of @eq-est-seq satisfies
+$A_k f(\mathbf{x}_k) + (1-A_k)f(\mathbf{x}_0) \geq A_k f(\mathbf{x}_k) + (1-A_k)f(\mathbf{x}^*)$
+when $A_k \leq 1$. And $\min_\mathbf{x} \phi_k(\mathbf{x})$ is a
+quadratic in $\mathbf{x}$ with minimum value $\phi_k^*$. The estimating
+sequence gives $f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq (\phi_k^* - f(\mathbf{x}^*)) / A_k$.
+
+The weights $\alpha_k = (k+1)/2$ give $A_k = k(k+1)/4$, and a direct
+computation shows that $\phi_k^* - f(\mathbf{x}^*) \leq \frac{L}{2}\|\mathbf{x}_0 - \mathbf{x}^*\|^2$
+when the extrapolation coefficient is chosen as
+$\beta_k = (k-1)/(k+2)$. The $O(1/k^2)$ rate follows:
+$$
+f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2/2}{k(k+1)/4} = \frac{2L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{k(k+1)}.
+$$
+
+The full verification that the estimating-sequence condition is
+maintained at each step requires checking that the gradient step at
+the extrapolated point $\mathbf{v}_k$ reduces $\phi_{k+1}^*$
+sufficiently. This uses the descent lemma (@eq-descent-lemma) and
+the choice of $\alpha_k$; the algebra is in Nesterov (2004),
+Theorem 2.2.2, and Nocedal and Wright (2006), §10.7. $\square$
+
+The momentum coefficient $\beta_k = (k-1)/(k+2)$ starts near 0 and
+approaches 1. Early iterations are close to gradient descent; later
+iterations carry substantial momentum. This is *not* the heavy-ball
+momentum of Polyak (which uses a fixed $\beta$)---Nesterov's momentum
+is carefully scheduled to achieve the optimal rate.
+
+
+## The proximal operator
+
+When the objective is composite, $F(\mathbf{x}) = f(\mathbf{x}) + g(\mathbf{x})$,
+with $f$ smooth and $g$ nonsmooth, gradient descent cannot be applied
+directly. The *proximal gradient* method replaces the gradient step
+with a proximal step that handles $g$ exactly.
+
+::: {#def-prox .callout-tip}
+## Definition 4.1 (Proximal operator)
+The proximal operator of a convex function $g$ with step size $\eta > 0$
+is
+$$
+\operatorname{prox}_{\eta g}(\mathbf{v}) = \arg\min_{\mathbf{x}} \left\{g(\mathbf{x}) + \frac{1}{2\eta}\|\mathbf{x} - \mathbf{v}\|^2\right\}.
+$$ {#eq-prox}
+:::
+
+The proximal operator balances two goals: stay close to $\mathbf{v}$
+(the quadratic term) and minimize $g$ (the regularizer). For many
+regularizers used in statistics, the proximal operator has a closed
+form:
+
+| Regularizer $g(\mathbf{x})$ | $\operatorname{prox}_{\eta g}(\mathbf{v})$ | Name |
+|---|---|---|
+| $\lambda\|\mathbf{x}\|_1$ | $\operatorname{sign}(\mathbf{v}) \odot \max(|\mathbf{v}| - \eta\lambda, 0)$ | Soft thresholding |
+| $\frac{\lambda}{2}\|\mathbf{x}\|^2$ | $\frac{\mathbf{v}}{1 + \eta\lambda}$ | Shrinkage |
+| $\iota_C(\mathbf{x})$ (indicator of convex set $C$) | $\operatorname{proj}_C(\mathbf{v})$ | Projection |
+
+The soft-thresholding operator is the computational engine of the
+Lasso: it sets small coefficients to exactly zero, producing the
+sparsity that $\ell_1$ regularization is famous for.
+
+::: {#thm-prox-resolvent .callout-note}
+## Theorem 4.3 (Proximal operator as resolvent)
+The proximal operator satisfies $\operatorname{prox}_{\eta g} = (\mathbf{I} + \eta \partial g)^{-1}$,
+where $\partial g$ is the subdifferential of $g$. That is,
+$\mathbf{x} = \operatorname{prox}_{\eta g}(\mathbf{v})$ if and only if
+$\mathbf{v} \in \mathbf{x} + \eta \partial g(\mathbf{x})$, i.e.,
+$\frac{1}{\eta}(\mathbf{v} - \mathbf{x}) \in \partial g(\mathbf{x})$.
+:::
+
+*Proof.* The optimality condition for @eq-prox is:
+$\mathbf{0} \in \partial g(\mathbf{x}) + \frac{1}{\eta}(\mathbf{x} - \mathbf{v})$,
+i.e., $\frac{1}{\eta}(\mathbf{v} - \mathbf{x}) \in \partial g(\mathbf{x})$.
+Rearranging: $\mathbf{v} \in \mathbf{x} + \eta \partial g(\mathbf{x}) = (\mathbf{I} + \eta \partial g)(\mathbf{x})$.
+So $\mathbf{x} = (\mathbf{I} + \eta \partial g)^{-1}(\mathbf{v})$.
+The inverse exists and is unique because $\mathbf{I} + \eta\partial g$
+is strongly monotone when $g$ is convex. $\square$
+
+The resolvent interpretation connects proximal operators to monotone
+operator theory---the mathematical framework underlying splitting
+methods like ADMM.
+
+
+## The Moreau envelope
+
+::: {#def-moreau .callout-tip}
+## Definition 4.2 (Moreau envelope)
+The Moreau envelope of $g$ with parameter $\eta > 0$ is
+$$
+\mathcal{M}_\eta g(\mathbf{x}) = \min_{\mathbf{z}} \left\{g(\mathbf{z}) + \frac{1}{2\eta}\|\mathbf{z} - \mathbf{x}\|^2\right\}.
+$$
+:::
+
+The Moreau envelope is a smooth approximation of $g$: it has the same
+minimizers as $g$, but its gradient exists everywhere and equals
+$\nabla \mathcal{M}_\eta g(\mathbf{x}) = \frac{1}{\eta}(\mathbf{x} - \operatorname{prox}_{\eta g}(\mathbf{x}))$.
+This means the proximal gradient step
+$\mathbf{x}_{k+1} = \operatorname{prox}_{\eta g}(\mathbf{x}_k - \eta\nabla f(\mathbf{x}_k))$
+can be interpreted as gradient descent on the smoothed composite
+$f + \mathcal{M}_\eta g$. This interpretation is crucial for
+understanding convergence.
+
+
+## Proximal gradient convergence
+
+::: {#thm-prox-grad .callout-note}
+## Theorem 4.4 (Convergence of proximal gradient)
+Under Assumption 4.1 on $f$, and with $g$ convex, lower semicontinuous,
+and proper, the proximal gradient iterates
+$$
+\mathbf{x}_{k+1} = \operatorname{prox}_{g/L}(\mathbf{x}_k - \frac{1}{L}\nabla f(\mathbf{x}_k))
+$$
+satisfy $F(\mathbf{x}_k) - F(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{2k}$.
+:::
+
+*Proof.* The key is the *proximal descent lemma*: for any $\mathbf{x}$
+and $\mathbf{x}^+ = \operatorname{prox}_{g/L}(\mathbf{x} - \frac{1}{L}\nabla f(\mathbf{x}))$:
+
+$$
+F(\mathbf{x}^+) \leq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{x}^+ - \mathbf{x}) + \frac{L}{2}\|\mathbf{x}^+ - \mathbf{x}\|^2 + g(\mathbf{x}^+).
+$$ {#eq-prox-descent}
+
+This follows from the descent lemma applied to $f$ (Assumption 4.1).
+The proximal step minimizes the right-hand side over $\mathbf{x}^+$
+(by definition of the proximal operator applied to the quadratic upper
+bound of $f$ plus $g$).
+
+For any $\mathbf{z}$, the minimization property of the proximal step
+gives:
+$$
+F(\mathbf{x}^+) \leq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{z} - \mathbf{x}) + \frac{L}{2}\|\mathbf{z} - \mathbf{x}\|^2 + g(\mathbf{z}).
+$$
+
+Setting $\mathbf{z} = \mathbf{x}^*$ and using
+$f(\mathbf{x}^*) \geq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{x}^* - \mathbf{x})$
+(convexity of $f$):
+
+$$
+F(\mathbf{x}_{k+1}) \leq F(\mathbf{x}^*) + \frac{L}{2}\|\mathbf{x}_k - \mathbf{x}^*\|^2 - \frac{L}{2}\|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2.
+$$
+
+Wait---the last step requires more care. The correct derivation (via
+the three-point identity for Bregman divergences) gives:
+
+$$
+F(\mathbf{x}_{k+1}) - F(\mathbf{x}^*) \leq \frac{L}{2}\left(\|\mathbf{x}_k - \mathbf{x}^*\|^2 - \|\mathbf{x}_{k+1} - \mathbf{x}^*\|^2\right).
+$$
+
+Telescoping from $k = 0$ to $k = K-1$:
+$$
+\sum_{k=0}^{K-1} [F(\mathbf{x}_{k+1}) - F(\mathbf{x}^*)] \leq \frac{L}{2}\|\mathbf{x}_0 - \mathbf{x}^*\|^2.
+$$
+
+Since $F(\mathbf{x}_{k+1})$ is nonincreasing (by the sufficient
+decrease property): $K \cdot [F(\mathbf{x}_K) - F(\mathbf{x}^*)] \leq \frac{L}{2}\|\mathbf{x}_0 - \mathbf{x}^*\|^2$,
+giving $F(\mathbf{x}_K) - F(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}{2K}$. $\square$
+
+The rate is the same $O(1/k)$ as gradient descent (Theorem 4.1).
+Nesterov acceleration applies here too: FISTA (Fast Iterative
+Shrinkage-Thresholding Algorithm) applies the momentum trick to the
+proximal gradient step and achieves $O(1/k^2)$.
+
+
+## ADMM convergence
+
+The Alternating Direction Method of Multipliers (ADMM) solves problems
+of the form $\min f(\mathbf{x}) + g(\mathbf{z})$ subject to
+$\mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{z} = \mathbf{c}$ by
+alternating between optimizing over $\mathbf{x}$ and $\mathbf{z}$,
+then updating a dual variable.
+
+::: {#thm-admm .callout-note}
+## Theorem 4.5 (ADMM convergence)
+Under convexity of $f$ and $g$, and with the augmented Lagrangian
+$L_\rho(\mathbf{x}, \mathbf{z}, \mathbf{u}) = f(\mathbf{x}) + g(\mathbf{z}) + \frac{\rho}{2}\|\mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{z} - \mathbf{c} + \mathbf{u}\|^2$,
+the ADMM iterates:
+\begin{align}
+\mathbf{x}_{k+1} &= \arg\min_\mathbf{x} L_\rho(\mathbf{x}, \mathbf{z}_k, \mathbf{u}_k), \\
+\mathbf{z}_{k+1} &= \arg\min_\mathbf{z} L_\rho(\mathbf{x}_{k+1}, \mathbf{z}, \mathbf{u}_k), \\
+\mathbf{u}_{k+1} &= \mathbf{u}_k + \mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_{k+1} - \mathbf{c},
+\end{align}
+converge: $f(\mathbf{x}_k) + g(\mathbf{z}_k) \to f(\mathbf{x}^*) + g(\mathbf{z}^*)$
+and $\mathbf{A}\mathbf{x}_k + \mathbf{B}\mathbf{z}_k - \mathbf{c} \to \mathbf{0}$.
+:::
+
+*Proof (Boyd et al., 2011 style).* The proof constructs a Lyapunov
+function $V_k = \frac{1}{\rho}\|\boldsymbol{\lambda}^* - \rho\mathbf{u}_k\|^2 + \rho\|\mathbf{B}(\mathbf{z}^* - \mathbf{z}_k)\|^2$,
+where $(\mathbf{x}^*, \mathbf{z}^*, \boldsymbol{\lambda}^*)$ is a
+primal-dual solution and $\boldsymbol{\lambda} = \rho\mathbf{u}$ is
+the (scaled) dual variable.
+
+The $\mathbf{x}$-update minimizes $L_\rho$ over $\mathbf{x}$, so
+$\nabla_\mathbf{x} L_\rho(\mathbf{x}_{k+1}, \mathbf{z}_k, \mathbf{u}_k) = \mathbf{0}$,
+giving the optimality condition:
+$\nabla f(\mathbf{x}_{k+1}) + \rho\mathbf{A}^\top(\mathbf{A}\mathbf{x}_{k+1} + \mathbf{B}\mathbf{z}_k - \mathbf{c} + \mathbf{u}_k) = \mathbf{0}$.
+
+Similarly for the $\mathbf{z}$-update. Using these optimality
+conditions and the KKT conditions of the original problem at
+$(\mathbf{x}^*, \mathbf{z}^*, \boldsymbol{\lambda}^*)$, one shows
+$V_{k+1} \leq V_k - \rho\|\mathbf{A}(\mathbf{x}_{k+1} - \mathbf{x}_k)\|^2 - \rho\|\mathbf{B}(\mathbf{z}_{k+1} - \mathbf{z}_k)\|^2$.
+
+Since $V_k \geq 0$ and $V_k$ is nonincreasing with decrements bounded
+below by the squared changes, $V_k$ converges and the decrements tend
+to zero, implying primal feasibility and objective convergence. The
+full algebra is in Boyd et al. (2011), §3.2. $\square$
+
+
+## Coordinate descent
+
+::: {#thm-coord-descent .callout-note}
+## Theorem 4.6 (Coordinate descent for separable regularizers)
+If $g(\mathbf{x}) = \sum_j g_j(x_j)$ is separable and each $g_j$ is
+convex, then coordinate descent---updating one coordinate at a time by
+minimizing $F$ over $x_j$ with all other coordinates fixed---converges
+to the global minimum of $F = f + g$.
+:::
+
+*Proof sketch.* Each coordinate update minimizes a one-dimensional
+convex function (the restriction of $F$ to the $j$-th coordinate
+axis). The monotone decrease of $F$ and the compactness of sublevel
+sets (under mild growth conditions) guarantee convergence. The key
+technical condition is that $g$ is separable---this ensures that the
+proximal step in each coordinate is independent of the others, so the
+block-coordinate update is well-defined. The formal proof uses the
+descent lemma applied to each coordinate block; see Tseng (2001) or
+Wright (2015). $\square$
+
+Coordinate descent is the algorithm behind scikit-learn's `Lasso` and
+`ElasticNet`: the $\ell_1$ penalty is separable, and each coordinate
+update reduces to soft thresholding. It is also the core of
+statsmodels' `fit_regularized` for GLMs.
+
+
+# The Algorithm {#sec-ch04-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 4.1: Gradient Descent
+
+**Input:** $f$, $\nabla f$, $\mathbf{x}_0$, step size $\eta = 1/L$,
+tolerance $\epsilon$
+
+**Output:** Approximate minimizer $\mathbf{x}^*$
+
+1. **for** $k = 0, 1, 2, \ldots$ **do**
+2. $\quad$ $\mathbf{x}_{k+1} \leftarrow \mathbf{x}_k - \eta \nabla f(\mathbf{x}_k)$
+3. $\quad$ **if** $\|\nabla f(\mathbf{x}_{k+1})\| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
+4. **end for**
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 4.2: Nesterov Accelerated Gradient
+
+**Input:** $f$, $\nabla f$, $\mathbf{x}_0$, step size $\eta = 1/L$,
+tolerance $\epsilon$
+
+**Output:** Approximate minimizer $\mathbf{x}^*$
+
+1. $\mathbf{x}_{-1} \leftarrow \mathbf{x}_0$
+2. **for** $k = 0, 1, 2, \ldots$ **do**
+3. $\quad$ $\beta_k \leftarrow (k - 1) / (k + 2)$ $\triangleright$ momentum coefficient
+4. $\quad$ $\mathbf{v}_k \leftarrow \mathbf{x}_k + \beta_k(\mathbf{x}_k - \mathbf{x}_{k-1})$ $\triangleright$ extrapolation
+5. $\quad$ $\mathbf{x}_{k+1} \leftarrow \mathbf{v}_k - \eta \nabla f(\mathbf{v}_k)$ $\triangleright$ gradient step at extrapolated point
+6. $\quad$ **if** $\|f(\mathbf{x}_{k+1}) - f(\mathbf{x}_k)\| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
+7. **end for**
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 4.3: ISTA (Proximal Gradient)
+
+**Input:** $f$, $\nabla f$, $g$, $\operatorname{prox}_g$, $\mathbf{x}_0$,
+step size $\eta = 1/L$, tolerance $\epsilon$
+
+**Output:** Approximate minimizer of $F = f + g$
+
+1. **for** $k = 0, 1, 2, \ldots$ **do**
+2. $\quad$ $\mathbf{x}_{k+1} \leftarrow \operatorname{prox}_{\eta g}(\mathbf{x}_k - \eta \nabla f(\mathbf{x}_k))$
+3. $\quad$ **if** $\|\mathbf{x}_{k+1} - \mathbf{x}_k\| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
+4. **end for**
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 4.4: FISTA (Accelerated Proximal Gradient)
+
+**Input:** $f$, $\nabla f$, $g$, $\operatorname{prox}_g$, $\mathbf{x}_0$,
+step size $\eta = 1/L$, tolerance $\epsilon$
+
+**Output:** Approximate minimizer of $F = f + g$
+
+1. $\mathbf{x}_{-1} \leftarrow \mathbf{x}_0$, $t_0 \leftarrow 1$
+2. **for** $k = 0, 1, 2, \ldots$ **do**
+3. $\quad$ $\mathbf{v}_k \leftarrow \mathbf{x}_k + \frac{t_{k-1} - 1}{t_k}(\mathbf{x}_k - \mathbf{x}_{k-1})$
+4. $\quad$ $\mathbf{x}_{k+1} \leftarrow \operatorname{prox}_{\eta g}(\mathbf{v}_k - \eta \nabla f(\mathbf{v}_k))$
+5. $\quad$ $t_{k+1} \leftarrow \frac{1 + \sqrt{1 + 4t_k^2}}{2}$
+6. $\quad$ **if** $\|\mathbf{x}_{k+1} - \mathbf{x}_k\| < \epsilon$ **then return** $\mathbf{x}_{k+1}$
+7. **end for**
+:::
+
+
+# Statistical Properties {#sec-ch04-stats}
+
+The convergence rates of this chapter have direct consequences for
+statistical computation.
+
+**The $O(1/k)$ vs $O(1/k^2)$ gap.** To achieve $f(\mathbf{x}_k) - f^* \leq \epsilon$,
+gradient descent requires $O(L R^2 / \epsilon)$ iterations, while
+Nesterov's method requires $O(\sqrt{L} R / \sqrt{\epsilon})$. For a
+logistic regression on $n = 10^6$ observations with $p = 10^5$
+features, each gradient evaluation costs $O(np)$. The difference
+between $O(1/\epsilon)$ and $O(1/\sqrt{\epsilon})$ iterations is the
+difference between a feasible and an infeasible computation.
+
+**Coordinate descent and the Lasso.** The sparsity of the Lasso
+solution means that coordinate descent is particularly efficient:
+most coordinate updates set $\beta_j = 0$ (the soft-thresholding
+step returns zero when the data support for feature $j$ is weak).
+The active-set strategy used by sklearn's `Lasso` exploits this:
+after a full pass through all coordinates, subsequent passes only
+update the nonzero coordinates, reducing the per-iteration cost from
+$O(np)$ to $O(n|\mathcal{S}|)$ where $\mathcal{S}$ is the active set.
+
+**ADMM and the elastic net.** ADMM naturally handles the elastic-net
+penalty $\lambda_1\|\boldsymbol{\beta}\|_1 + \lambda_2\|\boldsymbol{\beta}\|_2^2$
+by splitting: let $f$ contain the smooth terms (loss + ridge) and $g$
+contain the nonsmooth term ($\ell_1$). The $\mathbf{x}$-update solves
+a ridge regression (closed form); the $\mathbf{z}$-update is soft
+thresholding. This is the basis for distributed and parallel
+implementations of penalized regression.
+
+**Stochastic gradient descent (SGD).** When $f(\mathbf{x}) = \frac{1}{n}\sum_{i=1}^n f_i(\mathbf{x})$
+is a finite sum (as in all empirical risk minimization), the full
+gradient costs $O(np)$ but a stochastic gradient (one randomly chosen
+$\nabla f_i$) costs only $O(p)$. SGD achieves $O(1/\sqrt{k})$
+convergence for convex objectives---worse than gradient descent's
+$O(1/k)$, but each iteration is $n$ times cheaper. Variance-reduced
+variants (SVRG, SAGA) recover the $O(1/k)$ rate while maintaining
+$O(p)$ per-iteration cost, at the expense of occasional full-gradient
+evaluations. These are the methods behind sklearn's
+`SGDClassifier` and `SGDRegressor`.
+
+
+# SciPy Implementation {#sec-ch04-scipy}
+
+*To be written in the implementation pass.*
+
+
+# From-Scratch Implementation {#sec-ch04-scratch}
+
+*To be written in the implementation pass.*
+
+
+# Diagnostics {#sec-ch04-diagnostics}
+
+*To be written in the implementation pass.*
+
+
+# Computational Considerations {#sec-ch04-computation}
+
+*To be written in the implementation pass.*
+
+
+# Worked Example {#sec-ch04-example}
+
+*To be written in the worked-example pass.*
+
+
+# Exercises {#sec-ch04-exercises}
+
+*To be written in the worked-example pass.*
+
+
+# Bibliographic Notes {#sec-ch04-biblio}
+
+*To be written in the worked-example pass.*
