@@ -139,6 +139,10 @@ print(f"(Biased because treatment is confounded by x1)")
 
 ## Three estimators
 
+We implement three estimators of the ATE, each using a different
+strategy to remove confounding bias. All three should give similar
+answers when the models are correctly specified.
+
 ```{python}
 #| label: estimators
 X_sm = sm.add_constant(X)

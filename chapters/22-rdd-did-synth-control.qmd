@@ -78,11 +78,17 @@ is $\hat{\tau}_t = Y_{1t} - \hat{Y}_{0t}$ for $t$ in the post-period.
 
 ## RDD from scratch
 
+In a sharp RDD, treatment is deterministic: everyone above the cutoff
+gets treated, everyone below does not. We estimate the treatment
+effect by comparing outcomes just above and just below the cutoff
+using local linear regression (OLS restricted to observations near
+the cutoff).
+
 ```{python}
 #| label: rdd-demo
-# Simulate sharp RDD data
+# Simulate sharp RDD: treatment assigned by whether x >= 0
 n = 500
-x_run = rng.uniform(-3, 3, n)  # running variable
+x_run = rng.uniform(-3, 3, n)  # running variable (e.g., test score)
 cutoff = 0
 D_rdd = (x_run >= cutoff).astype(int)
 
@@ -123,9 +129,15 @@ plt.show()
 
 ## DiD from scratch
 
+Difference-in-differences compares the *change* in outcomes for the
+treated group to the *change* for the control group. The identifying
+assumption is that both groups would have followed the same trend
+absent treatment (parallel trends). The treatment effect is the
+difference between the actual and counterfactual changes.
+
 ```{python}
 #| label: did-demo
-# Simulate 2x2 DiD
+# Simulate a simple 2x2 DiD: 2 groups × 2 time periods
 n_did = 200
 treated = np.repeat([0, 1], n_did // 2)
 post = np.tile([0, 1], n_did // 2)

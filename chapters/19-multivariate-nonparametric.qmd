@@ -66,17 +66,30 @@ $n \sim 10^{10}$ observations for the same accuracy as $d = 1$.
 
 ## PCA
 
+PCA finds the directions of maximum variance in your data. If you
+have 10 variables but only 3 underlying factors drive the variation,
+PCA will reveal this: the first 3 principal components will capture
+most of the variance, and the remaining 7 will be noise.
+
+`statsmodels.multivariate.pca.PCA` provides PCA with eigenvalue
+decomposition, scree plots, and component scores.
+
 ```{python}
 #| label: pca-demo
-# High-dimensional data with low-rank structure
+# Create synthetic data with a known low-rank structure:
+# 200 observations, 10 variables, but only 3 true factors
 n, p = 200, 10
-# 3 true factors
-factors = rng.standard_normal((n, 3))
-loadings = rng.standard_normal((3, p))
-X_pca = factors @ loadings + 0.5*rng.standard_normal((n, p))
+factors = rng.standard_normal((n, 3))        # 3 latent factors
+loadings = rng.standard_normal((3, p))       # how factors map to variables
+X_pca = factors @ loadings + 0.5*rng.standard_normal((n, p))  # + noise
 
+# Fit PCA: extract 5 components, standardize variables first
+# standardize=True centers and scales each column (like StandardScaler)
 pca = smPCA(X_pca, ncomp=5, standardize=True)
-print("Variance explained:")
+
+# pca.eigenvals: variance captured by each component
+# If 3 factors are real, PC1-PC3 should capture most variance
+print("Variance explained by each component:")
 for i in range(5):
     print(f"  PC{i+1}: {pca.eigenvals[i]/pca.eigenvals.sum():.1%}")
 ```
@@ -97,9 +110,15 @@ plt.show()
 
 ## Kernel density estimation
 
+KDE estimates the probability density from data, without assuming a
+parametric form (like "the data is normal"). It places a small bump
+(kernel) at each data point and sums them up. The `bw` (bandwidth)
+parameter controls how wide each bump is --- wider = smoother estimate.
+
 ```{python}
 #| label: kde-demo
-# Bimodal distribution
+# Create bimodal data: a mixture of two normal distributions
+# KDE should reveal the two peaks without us telling it there are two
 x_kde = np.concatenate([rng.normal(-2, 0.8, 300),
                          rng.normal(2, 1.2, 200)])
 

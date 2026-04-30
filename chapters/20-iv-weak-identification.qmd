@@ -86,10 +86,18 @@ $H_0: \beta = \beta_0$ without requiring strong instruments.
 
 ## Simulating endogenous data
 
+To understand IV, let's simulate data where we *know* the true causal
+effect and can see why OLS gets it wrong.
+
+The setup: a confounder $u$ affects both the treatment $x$ and the
+outcome $y$. OLS picks up the confounding and gives a biased estimate.
+The instrument $z$ affects $x$ but not $y$ directly --- it provides
+the "clean" variation we need.
+
 ```{python}
 #| label: data-sim
 n = 500
-# Confounder
+# u is the confounder: it affects BOTH x and y
 u = rng.standard_normal(n)
 
 # Instrument (affects X but not Y directly)
@@ -107,6 +115,12 @@ print(f"OLS is biased upward because Cov(x, u) > 0")
 ```
 
 ## 2SLS with `linearmodels`
+
+The `linearmodels` package provides `IV2SLS` for two-stage least
+squares. The formula syntax `y ~ 1 + [x ~ z]` means: regress $y$ on
+an intercept and $x$, where $x$ is endogenous and instrumented by $z$.
+The square brackets `[endogenous ~ instruments]` distinguish the
+endogenous variable from the instruments.
 
 ```{python}
 #| label: iv-demo
