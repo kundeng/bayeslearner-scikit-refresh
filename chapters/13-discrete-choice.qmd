@@ -2,29 +2,665 @@
 title: "Discrete Choice and Limited Dependent Variables"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from statsmodels.discrete.discrete_model import (
+    Logit, Probit, MNLogit, Poisson, NegativeBinomial,
+)
+from statsmodels.discrete.count_model import (
+    ZeroInflatedPoisson, ZeroInflatedNegativeBinomialP,
+)
+from statsmodels.miscmodels.ordinal_model import OrderedModel
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $\Pr(y = j \mid \mathbf{x})$ | Choice probability for outcome $j$ | `.predict()` |
+| $\Lambda(\eta) = e^\eta/(1+e^\eta)$ | Logistic CDF | Logit link inverse |
+| $\Phi(\eta)$ | Standard normal CDF | Probit link inverse |
+| $\partial \Pr / \partial x_j$ | Marginal effect | `.get_margeff()` |
+| AME, MEM | Average marginal effect, marginal effect at means | `at='overall'`, `at='mean'` |
+
+
+# Motivation {#sec-ch13-motivation}
+
+Many outcomes in applied statistics are not continuous: a customer
+defaults or doesn't, a patient chooses one of three treatments, a
+count of insurance claims is 0, 1, 2, .... Standard regression
+predicts a continuous $\hat{y}$, which is meaningless for these
+variables (you can't have $\hat{y} = 0.7$ defaults).
+
+Discrete choice models map the linear predictor
+$\eta = \mathbf{x}^\top\boldsymbol{\beta}$ through a nonlinear
+function to produce probabilities. They are GLMs (Chapter 12) with
+specific families --- but they deserve their own chapter because the
+*interpretation* is different. In a linear model, $\beta_j$ is the
+change in $\mathbb{E}[y]$ per unit change in $x_j$. In a logistic
+model, $\beta_j$ is the change in log-odds --- and converting this to
+a change in probability requires knowing $\mathbf{x}$, because the
+logistic function is nonlinear.
+
+This chapter covers:
+
+- **Binary:** Logit, Probit, and the marginal effects that make them
+  interpretable
+- **Multinomial:** MNLogit and the IIA problem
+- **Ordinal:** `OrderedModel` for ordered categories
+- **Counts:** Poisson, Negative Binomial, zero-inflated models
+
+
+# Mathematical Foundation {#sec-ch13-math}
+
+## Binary choice: the latent-utility model
+
+The logit and probit models can be derived from a latent variable:
+$$
+y_i^* = \mathbf{x}_i^\top\boldsymbol{\beta} + \varepsilon_i, \qquad
+y_i = \mathbb{1}(y_i^* > 0).
+$$
+
+- If $\varepsilon_i \sim \text{Logistic}(0, 1)$:
+  $\Pr(y = 1 \mid \mathbf{x}) = \Lambda(\mathbf{x}^\top\boldsymbol{\beta})$ → **Logit**.
+- If $\varepsilon_i \sim \mathcal{N}(0, 1)$:
+  $\Pr(y = 1 \mid \mathbf{x}) = \Phi(\mathbf{x}^\top\boldsymbol{\beta})$ → **Probit**.
+
+**Why this matters:** The latent-utility interpretation explains *why*
+$\beta_j$ is not a marginal effect. The effect of $x_j$ on the
+*latent* utility is $\beta_j$, but the effect on the *probability*
+depends on where you are on the S-curve:
+
+$$
+\frac{\partial \Pr(y=1)}{\partial x_j} = f(\mathbf{x}^\top\boldsymbol{\beta}) \cdot \beta_j,
+$$
+
+where $f = \Lambda'$ (logit) or $f = \phi$ (probit). This marginal
+effect varies with $\mathbf{x}$ --- it is largest at
+$\Pr(y=1) = 0.5$ and approaches zero at the extremes.
+
+## Identification
+
+The scale of $\varepsilon$ is not identified: multiplying $\beta$ and
+$\sigma_\varepsilon$ by the same constant gives the same probability.
+This is why logit assumes $\text{Var}(\varepsilon) = \pi^2/3$ and
+probit assumes $\text{Var}(\varepsilon) = 1$ --- both are normalizations.
+The implication: $\beta_{\text{logit}} \approx 1.6 \cdot \beta_{\text{probit}}$.
+
+## Marginal effects
+
+Two conventions:
+
+- **Average marginal effect (AME):**
+  $\frac{1}{n}\sum_i f(\mathbf{x}_i^\top\hat{\boldsymbol{\beta}}) \cdot \hat{\beta}_j$.
+  Averages the marginal effect over the sample.
+
+- **Marginal effect at the mean (MEM):**
+  $f(\bar{\mathbf{x}}^\top\hat{\boldsymbol{\beta}}) \cdot \hat{\beta}_j$.
+  Evaluates at the sample means.
+
+AME is generally preferred because it does not assume the "average
+person" is representative. For dummy variables, the marginal effect
+is a discrete change:
+$\Pr(y=1 \mid x_j=1, \mathbf{x}_{-j}) - \Pr(y=1 \mid x_j=0, \mathbf{x}_{-j})$.
+
+## Count models and zero-inflation
+
+Poisson regression (Chapter 12) assumes $\text{Var}(y) = \mu$. When
+the data has more variance (overdispersion) or more zeros
+(zero-inflation) than Poisson predicts, alternatives are needed:
+
+- **Negative Binomial:** adds a dispersion parameter:
+  $\text{Var}(y) = \mu + \alpha\mu^2$. Handles overdispersion.
+- **Zero-Inflated Poisson (ZIP):** mixes a point mass at zero with a
+  Poisson: $\Pr(y=0) = \pi + (1-\pi)e^{-\mu}$. Handles excess zeros
+  from a separate zero-generating process.
+- **Hurdle model:** separates the zero/nonzero decision from the count
+  given nonzero. Logit for the hurdle, truncated Poisson for the count.
+
+
+# The Algorithm {#sec-ch13-algorithm}
+
+All models in this chapter are fit by MLE using Newton-Raphson or
+BFGS (Chapter 2). The key computational step is the log-likelihood
+gradient (score), which statsmodels computes analytically.
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 13.1: Marginal Effects (AME)
+
+**Input:** Fitted model, design matrix $\mathbf{X}$
+
+**Output:** Average marginal effects and standard errors (delta method)
+
+1. **for** each predictor $j$ **do**
+2. $\quad$ **for** each observation $i$ **do**
+3. $\quad\quad$ $\text{ME}_{ij} \leftarrow f(\mathbf{x}_i^\top\hat{\boldsymbol{\beta}}) \cdot \hat{\beta}_j$
+4. $\quad$ **end for**
+5. $\quad$ $\text{AME}_j \leftarrow \frac{1}{n}\sum_i \text{ME}_{ij}$
+6. $\quad$ $\text{SE}_j \leftarrow$ delta method (see below)
+7. **end for**
+8. **return** AME, SE
 :::
 
-# Motivation {#sec-ch12-motivation}
 
-# Mathematical Foundation {#sec-ch12-math}
+# Statistical Properties {#sec-ch13-stats}
 
-# The Algorithm {#sec-ch12-algorithm}
+**Logit vs Probit:** In practice, they give nearly identical predicted
+probabilities. The logit coefficients are approximately 1.6× the
+probit coefficients. Choose logit for the odds-ratio interpretation
+(in epidemiology); choose probit when the latent-variable story matters
+(in economics).
 
-# Statistical Properties {#sec-ch12-stats}
+**IIA (Independence of Irrelevant Alternatives):** The multinomial
+logit (MNLogit) assumes that the relative odds between any two
+alternatives are independent of other alternatives. The classic
+counterexample: red bus vs blue bus. Adding a blue bus (identical to
+the red one) should not change the car-vs-bus choice, but MNLogit
+redistributes probability equally. The Hausman--McFadden test checks
+for IIA violations.
 
-# Statsmodels Implementation {#sec-ch12-statsmodels}
+**Marginal effect SEs via the delta method:** The AME is a nonlinear
+function of $\hat{\boldsymbol{\beta}}$. Its variance is computed via
+the delta method:
+$\text{Var}(\text{AME}_j) \approx \left(\frac{\partial \text{AME}_j}{\partial \boldsymbol{\beta}}\right)^\top \hat{\mathbf{V}} \left(\frac{\partial \text{AME}_j}{\partial \boldsymbol{\beta}}\right)$,
+where $\hat{\mathbf{V}}$ is the covariance of $\hat{\boldsymbol{\beta}}$.
+Statsmodels' `get_margeff()` computes this automatically.
 
-# From-Scratch Implementation {#sec-ch12-scratch}
 
-# Diagnostics {#sec-ch12-diagnostics}
+# Statsmodels Implementation {#sec-ch13-statsmodels}
 
-# Computational Considerations {#sec-ch12-computation}
+## Logit and marginal effects
 
-# Worked Example {#sec-ch12-example}
+```{python}
+#| label: logit-demo
+# Simulate binary choice data
+n = 500
+income = rng.exponential(50000, n)
+age = rng.uniform(20, 65, n)
+X = np.column_stack([
+    np.log(income / 50000),
+    (age - 40) / 10,
+])
+X_sm = sm.add_constant(X)
 
-# Exercises {#sec-ch12-exercises}
+# True model: default probability depends on income and age
+eta = -1 + 0.8*X[:, 0] - 0.5*X[:, 1]
+prob = 1 / (1 + np.exp(-eta))
+y_default = rng.binomial(1, prob)
 
-# Bibliographic Notes {#sec-ch12-biblio}
+# Fit logit
+logit_res = Logit(y_default, X_sm).fit(disp=0)
+print(logit_res.summary().tables[1])
+```
+
+```{python}
+#| label: margeff-demo
+# Marginal effects: the interpretable output
+mfx = logit_res.get_margeff(at='overall')  # AME
+print("\nAverage Marginal Effects:")
+print(mfx.summary())
+```
+
+**Reading the output:** The AME for `x1` (log income) tells you:
+on average across the sample, a one-unit increase in log income
+changes the probability of default by `AME` percentage points. This
+is directly interpretable; the logit coefficient is not (it's in
+log-odds units).
+
+## Probit comparison
+
+```{python}
+#| label: probit-comparison
+probit_res = Probit(y_default, X_sm).fit(disp=0)
+
+print(f"{'':>12} {'Logit':>10} {'Probit':>10} {'Ratio':>8}")
+for j in range(3):
+    ratio = logit_res.params[j] / probit_res.params[j]
+    print(f"beta_{j:>8} {logit_res.params[j]:>10.4f} "
+          f"{probit_res.params[j]:>10.4f} {ratio:>8.2f}")
+print(f"\nRatio ≈ 1.6 (logistic variance π²/3 vs normal variance 1)")
+```
+
+## Count models: Poisson vs NegBin vs ZIP
+
+```{python}
+#| label: count-demo
+# Simulate zero-inflated count data
+n = 500
+x = rng.standard_normal((n, 1))
+x_sm = sm.add_constant(x)
+
+# Zero-inflation: 30% of observations are structural zeros
+is_zero = rng.binomial(1, 0.3, n)
+mu = np.exp(0.5 + 0.8 * x[:, 0])
+y_zip = np.where(is_zero, 0, rng.poisson(mu))
+
+print(f"Zeros: {np.mean(y_zip == 0):.1%} (30% structural + Poisson zeros)")
+print(f"Mean: {y_zip.mean():.2f}, Var: {y_zip.var():.2f}")
+print(f"Var/Mean: {y_zip.var()/y_zip.mean():.2f}")
+
+# Fit three models
+pois_res = Poisson(y_zip, x_sm).fit(disp=0)
+nb_res = NegativeBinomial(y_zip, x_sm).fit(disp=0)
+zip_res = ZeroInflatedPoisson(y_zip, x_sm, exog_infl=x_sm).fit(
+    disp=0, maxiter=100,
+)
+
+print(f"\n{'Model':<8} {'AIC':>8} {'β₁':>8} {'Pr(y=0) pred':>14}")
+for name, res in [('Poisson', pois_res), ('NegBin', nb_res), ('ZIP', zip_res)]:
+    pred_zero = (res.predict() == 0).mean() if name != 'ZIP' else None
+    if name == 'Poisson':
+        pred_zero = np.mean(np.exp(-np.exp(x_sm @ pois_res.params)))
+    elif name == 'NegBin':
+        pred_zero = np.mean(res.predict(which='prob')[:, 0]) if hasattr(res, 'predict') else 'N/A'
+    print(f"{name:<8} {res.aic:>8.1f} {res.params[1]:>8.3f} {'':>14}")
+```
+
+## Ordered model
+
+```{python}
+#| label: ordered-demo
+# Simulate ordered outcome (satisfaction: low, medium, high)
+n = 400
+x_ord = rng.standard_normal((n, 2))
+latent = x_ord @ [1.5, -0.5] + rng.logistic(size=n)
+y_ord = np.digitize(latent, [-1, 1])  # 0, 1, 2
+
+ord_res = OrderedModel(y_ord, x_ord, distr='logit').fit(disp=0)
+print("Ordered Logit:")
+print(f"Coefficients: {ord_res.params[:2].round(3)}")
+print(f"Thresholds:   {ord_res.params[2:].round(3)}")
+
+# Predicted probabilities for the first observation
+pred_probs = ord_res.predict()
+print(f"\nPredicted probs (first 3 obs):")
+print(pred_probs[:3].round(3))
+```
+
+
+# From-Scratch Implementation {#sec-ch13-scratch}
+
+## Marginal effects via the delta method
+
+```{python}
+#| label: margeff-scratch
+
+def logit_margeff_ame(params, X, cov_params):
+    """Average marginal effects for logit with delta-method SEs.
+
+    Implements Algorithm 13.1.
+    """
+    n, p = X.shape
+    eta = X @ params
+    f = np.exp(-eta) / (1 + np.exp(-eta))**2  # logistic PDF
+
+    # Average marginal effect for each predictor
+    ame = np.zeros(p)
+    for j in range(p):
+        ame[j] = np.mean(f * params[j])
+
+    # Delta method for SEs
+    # Jacobian: d(AME_j)/d(beta)
+    J = np.zeros((p, p))
+    for j in range(p):
+        for k in range(p):
+            if j == k:
+                J[j, k] = np.mean(f) + np.mean(
+                    params[j] * f * (1 - 2/(1+np.exp(-eta))) * X[:, k]
+                )
+            else:
+                J[j, k] = np.mean(
+                    params[j] * f * (1 - 2/(1+np.exp(-eta))) * X[:, k]
+                )
+
+    ame_cov = J @ cov_params @ J.T
+    ame_se = np.sqrt(np.diag(ame_cov))
+
+    return ame, ame_se
+```
+
+```{python}
+#| label: margeff-verify
+ame_ours, se_ours = logit_margeff_ame(
+    logit_res.params, X_sm, logit_res.cov_params(),
+)
+mfx_sm = logit_res.get_margeff(at='overall')
+
+print(f"{'':>12} {'Our AME':>10} {'SM AME':>10} {'Our SE':>8} {'SM SE':>8}")
+for j in range(len(ame_ours)):
+    print(f"x{j:<10} {ame_ours[j]:>10.4f} {mfx_sm.margeff[j]:>10.4f} "
+          f"{se_ours[j]:>8.4f} {mfx_sm.margeff_se[j]:>8.4f}")
+```
+
+
+# Diagnostics {#sec-ch13-diagnostics}
+
+## Checking predicted probabilities
+
+```{python}
+#| label: fig-calibration
+#| fig-cap: "Calibration plot for the logit model. The sample is divided into deciles of predicted probability; within each decile, the observed proportion of defaults is plotted against the mean predicted probability. A well-calibrated model has points on the 45-degree line."
+
+pred_prob = logit_res.predict()
+n_bins = 10
+bins = np.percentile(pred_prob, np.linspace(0, 100, n_bins + 1))
+bins[-1] += 1e-6
+
+fig, ax = plt.subplots()
+for i in range(n_bins):
+    mask = (pred_prob >= bins[i]) & (pred_prob < bins[i+1])
+    if mask.sum() > 0:
+        obs_rate = y_default[mask].mean()
+        pred_rate = pred_prob[mask].mean()
+        ax.scatter(pred_rate, obs_rate, s=mask.sum()/2, color="C0")
+
+ax.plot([0, 1], [0, 1], '--', color="gray", alpha=0.5)
+ax.set_xlabel("Mean predicted probability")
+ax.set_ylabel("Observed proportion")
+ax.set_title("Calibration plot")
+plt.show()
+```
+
+## Vuong test for non-nested model comparison
+
+When comparing Poisson vs ZIP (non-nested), the LR test does not
+apply. The Vuong test compares the pointwise log-likelihood ratios:
+
+```{python}
+#| label: vuong-test
+# Vuong test: Poisson vs ZIP
+ll_pois = pois_res.llnobs  # per-observation log-likelihood
+ll_zip = zip_res.llnobs
+
+m = ll_zip - ll_pois
+vuong_stat = np.sqrt(n) * m.mean() / m.std()
+vuong_pval = 2 * (1 - stats.norm.cdf(abs(vuong_stat)))
+
+print(f"Vuong test (ZIP vs Poisson): z={vuong_stat:.3f}, p={vuong_pval:.4f}")
+if vuong_stat > 1.96:
+    print("ZIP preferred over Poisson")
+elif vuong_stat < -1.96:
+    print("Poisson preferred over ZIP")
+else:
+    print("No significant difference")
+```
+
+
+# Computational Considerations {#sec-ch13-computation}
+
+| Model | Parameters | Optimization | Notes |
+|---|---|---|---|
+| Logit/Probit | $p$ | Newton-Raphson | Fast, concave likelihood |
+| MNLogit | $(J-1) \times p$ | BFGS/Newton | Scales with $J$ (categories) |
+| OrderedModel | $p + J - 1$ | BFGS | Thresholds add $J-1$ params |
+| Poisson/NegBin | $p$ (+1 for NB) | Newton-Raphson | NB has extra $\alpha$ |
+| ZIP/ZINB | $2p$ | BFGS/Newton | Inflation + count params |
+
+MNLogit with many categories ($J > 10$) can be slow because the
+parameter count is $(J-1) \times p$. For many categories, consider
+sequential logit or random-utility models.
+
+
+# Worked Example {#sec-ch13-example}
+
+Modeling loan default with logit: a complete analysis from
+specification to marginal effects.
+
+```{python}
+#| label: worked-full
+# Synthetic loan data
+n = 1000
+credit_score = rng.normal(700, 50, n)
+loan_amount = rng.exponential(30000, n)
+income = rng.exponential(60000, n)
+
+X_loan = np.column_stack([
+    (credit_score - 700) / 50,      # standardized credit score
+    np.log(loan_amount / 30000),    # log loan amount
+    np.log(income / 60000),         # log income
+])
+X_loan_sm = sm.add_constant(X_loan)
+
+# Default probability
+eta_loan = -2 - 1.5*X_loan[:, 0] + 0.5*X_loan[:, 1] - 0.3*X_loan[:, 2]
+p_default = 1 / (1 + np.exp(-eta_loan))
+y_loan = rng.binomial(1, p_default)
+
+print(f"Default rate: {y_loan.mean():.1%}")
+print(f"n = {n}")
+```
+
+```{python}
+#| label: worked-fit
+logit_loan = Logit(y_loan, X_loan_sm).fit(disp=0)
+print("Logit model:")
+print(logit_loan.summary().tables[1])
+
+print("\nMarginal effects (AME):")
+mfx_loan = logit_loan.get_margeff()
+print(mfx_loan.summary())
+
+print(f"\nInterpretation:")
+print(f"  A 1-SD increase in credit score decreases default")
+print(f"  probability by {abs(mfx_loan.margeff[0]):.1%} on average.")
+```
+
+```{python}
+#| label: fig-worked-effects
+#| fig-cap: "Predicted default probability as a function of credit score, holding other variables at their means. The S-shape shows that the effect of credit score is nonlinear: it matters most around the inflection point (≈ 50% default probability) and less at the extremes."
+
+cs_grid = np.linspace(-3, 3, 100)
+X_pred = np.column_stack([
+    np.ones(100),
+    cs_grid,
+    np.zeros(100),  # log loan amount at mean
+    np.zeros(100),  # log income at mean
+])
+pred_probs = logit_loan.predict(X_pred)
+
+fig, ax = plt.subplots()
+ax.plot(cs_grid * 50 + 700, pred_probs, color="C0", linewidth=1.8)
+ax.set_xlabel("Credit score")
+ax.set_ylabel("Default probability")
+ax.axhline(0.5, color="gray", linestyle="--", alpha=0.5)
+plt.show()
+```
+
+
+# Exercises {#sec-ch13-exercises}
+
+**Exercise 13.1** ($\star\star$, diagnostic failure). Fit a Poisson
+model to data that is actually zero-inflated. Examine the residual
+plot and the predicted vs observed zero proportion. How does the
+Poisson model's predicted zero rate compare to the observed rate?
+Use the Vuong test to compare Poisson vs ZIP.
+
+%%
+
+```{python}
+#| label: ex-13-1-solution
+# Zero-inflated data (reuse from earlier)
+pois_pred_zeros = np.exp(-pois_res.predict()).mean()
+obs_zeros = (y_zip == 0).mean()
+
+print(f"Observed zero rate:         {obs_zeros:.3f}")
+print(f"Poisson predicted zeros:    {pois_pred_zeros:.3f}")
+print(f"Gap:                        {obs_zeros - pois_pred_zeros:.3f}")
+print(f"\nPoisson underpredicts zeros by {(obs_zeros-pois_pred_zeros)/obs_zeros:.0%}")
+
+# Vuong test (reuse from diagnostics)
+m = zip_res.llnobs - pois_res.llnobs
+v_stat = np.sqrt(len(m)) * m.mean() / m.std()
+print(f"\nVuong: z={v_stat:.2f}, p={2*(1-stats.norm.cdf(abs(v_stat))):.4f}")
+print("ZIP is significantly better at capturing the zero-inflation.")
+```
+
+The diagnostic pattern: Poisson underpredicts zeros because it cannot
+separate structural zeros (the data-generating process never produces
+a count) from sampling zeros (the count happens to be zero). This
+shows up as a gap between observed and predicted zero rates, and as
+overdispersion (Var/Mean > 1).
+
+%%
+
+
+**Exercise 13.2** ($\star\star$, comparison). Fit logit and probit to
+the same binary data. Compare: (a) the coefficient ratio
+$\beta_{\text{logit}}/\beta_{\text{probit}}$, (b) the predicted
+probabilities (scatterplot of logit vs probit predictions), and
+(c) the average marginal effects. Are the AMEs more similar than the
+coefficients?
+
+%%
+
+```{python}
+#| label: ex-13-2-solution
+logit_ex = Logit(y_default, X_sm).fit(disp=0)
+probit_ex = Probit(y_default, X_sm).fit(disp=0)
+
+# (a) Coefficient ratio
+print("Coefficient ratios:")
+for j in range(3):
+    print(f"  beta_{j}: {logit_ex.params[j]/probit_ex.params[j]:.3f}")
+
+# (b) Predicted probabilities
+pred_logit = logit_ex.predict()
+pred_probit = probit_ex.predict()
+max_diff = np.max(np.abs(pred_logit - pred_probit))
+print(f"\nMax |pred_logit - pred_probit|: {max_diff:.4f}")
+
+# (c) AMEs
+ame_logit = logit_ex.get_margeff().margeff
+ame_probit = probit_ex.get_margeff().margeff
+print(f"\nAME comparison:")
+print(f"  Logit:  {ame_logit.round(4)}")
+print(f"  Probit: {ame_probit.round(4)}")
+print(f"  Ratio:  {(ame_logit/ame_probit).round(3)}")
+```
+
+The coefficient ratio is ~1.6 (as expected from the variance
+normalization). But the predicted probabilities differ by at most a
+few percentage points, and the AMEs are nearly identical. This is
+why applied researchers often don't worry about logit vs probit ---
+the marginal effects (which are what matter for interpretation)
+are essentially the same.
+
+%%
+
+
+**Exercise 13.3** ($\star\star$, implementation). Compute the
+logit log-likelihood and its gradient (score) from scratch. Verify
+against `logit_res.llf` and `logit_res.model.score(logit_res.params)`.
+
+%%
+
+```{python}
+#| label: ex-13-3-solution
+
+def logit_loglik(params, X, y):
+    """Log-likelihood for logistic regression."""
+    eta = X @ params
+    # Numerically stable: log(sigma(eta)) = -log(1+exp(-eta))
+    ll = np.sum(y * eta - np.logaddexp(0, eta))
+    return ll
+
+def logit_score(params, X, y):
+    """Score (gradient) for logistic regression."""
+    eta = X @ params
+    mu = 1 / (1 + np.exp(-eta))
+    return X.T @ (y - mu)
+
+ll_ours = logit_loglik(logit_res.params, X_sm, y_default)
+score_ours = logit_score(logit_res.params, X_sm, y_default)
+
+print(f"Log-likelihood:")
+print(f"  From-scratch: {ll_ours:.4f}")
+print(f"  statsmodels:  {logit_res.llf:.4f}")
+print(f"  Match: {np.isclose(ll_ours, logit_res.llf, atol=0.01)}")
+
+score_sm = logit_res.model.score(logit_res.params)
+print(f"\nScore (should be ≈ 0 at MLE):")
+print(f"  From-scratch: {score_ours.round(6)}")
+print(f"  statsmodels:  {score_sm.round(6)}")
+```
+
+At the MLE, the score should be approximately zero (the gradient of
+the log-likelihood vanishes at the maximum). Both implementations
+confirm this.
+
+%%
+
+
+**Exercise 13.4** ($\star\star\star$, conceptual). Explain the
+Independence of Irrelevant Alternatives (IIA) assumption in
+multinomial logit. Construct the "red bus / blue bus" example:
+create a three-choice model where adding a third alternative
+(identical to one existing alternative) changes the predicted
+shares of the unrelated alternative. Show this with code.
+
+%%
+
+```{python}
+#| label: ex-13-4-solution
+# Red bus / blue bus example
+# Choice set 1: {car, red_bus} with equal utility → 50/50 split
+# Choice set 2: {car, red_bus, blue_bus} where blue_bus = red_bus
+
+# Under MNLogit (IIA), P(car) = exp(V_car) / sum(exp(V_j))
+# With 2 choices: P(car) = exp(1) / (exp(1) + exp(1)) = 0.5
+# With 3 choices: P(car) = exp(1) / (exp(1) + exp(1) + exp(1)) = 0.333
+
+V_car = 1.0
+V_rbus = 1.0
+V_bbus = 1.0  # identical to red bus
+
+# 2-choice model
+p2_car = np.exp(V_car) / (np.exp(V_car) + np.exp(V_rbus))
+print(f"2 choices: P(car) = {p2_car:.3f}, P(red_bus) = {1-p2_car:.3f}")
+
+# 3-choice model (IIA prediction)
+denom3 = np.exp(V_car) + np.exp(V_rbus) + np.exp(V_bbus)
+p3_car = np.exp(V_car) / denom3
+p3_rbus = np.exp(V_rbus) / denom3
+p3_bbus = np.exp(V_bbus) / denom3
+print(f"3 choices: P(car) = {p3_car:.3f}, P(red) = {p3_rbus:.3f}, "
+      f"P(blue) = {p3_bbus:.3f}")
+
+print(f"\nIIA violation: P(car) dropped from {p2_car:.1%} to {p3_car:.1%}")
+print("Adding an irrelevant alternative (blue bus = red bus)")
+print("changed the car share. This is wrong — the car's desirability")
+print("didn't change. IIA forces proportional substitution.")
+```
+
+The IIA property means that the ratio $P(i)/P(j)$ is independent of
+other alternatives. When you add blue bus,
+$P(\text{car})/P(\text{red bus})$ stays at 1 — but both drop to 1/3.
+In reality, the new blue bus should steal only from red bus (they're
+identical), leaving P(car) at 0.5. MNLogit cannot model this because
+the error terms are independent across alternatives. Nested logit and
+mixed logit relax IIA.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch13-biblio}
+
+The latent-variable derivation of logit and probit is in McFadden
+(1974). The multinomial logit and IIA: McFadden (1974), Hausman and
+McFadden (1984) for the test. Marginal effects and the delta method:
+Cameron and Trivedi (2005), Chapter 14.
+
+Count models: Cameron and Trivedi (1998) is the definitive reference.
+Zero-inflated models: Lambert (1992). Hurdle models: Mullahy (1986).
+The Vuong test for non-nested comparison: Vuong (1989).
+
+Ordered choice models: McKelvey and Zavoina (1975). The `OrderedModel`
+in statsmodels follows the standard parameterization with threshold
+cutpoints.
