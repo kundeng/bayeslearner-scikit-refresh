@@ -67,6 +67,36 @@ format:
     html-math-method: mathjax
     fig-responsive: true
     fig-dpi: 150
+    include-in-header:
+      text: |
+        <style>
+        /* Fix sidebar chapter titles: cosmo theme makes them huge */
+        .sidebar .chapter-title {
+          font-size: 0.85rem !important;
+          font-weight: 400 !important;
+          line-height: 1.3 !important;
+          text-transform: none !important;
+          border-bottom: none !important;
+        }
+        .sidebar .chapter-number {
+          font-size: 0.85rem !important;
+          font-weight: 400 !important;
+          text-transform: none !important;
+          border-bottom: none !important;
+        }
+        .sidebar a,
+        .sidebar a:link,
+        .sidebar a:visited,
+        .sidebar a:hover,
+        .sidebar a:active {
+          text-decoration: none !important;
+          border-bottom: none !important;
+        }
+        .sidebar-item-container {
+          padding: 0.1rem 0 !important;
+          margin: 0 !important;
+        }
+        </style>
 
   pdf:
     documentclass: scrbook
