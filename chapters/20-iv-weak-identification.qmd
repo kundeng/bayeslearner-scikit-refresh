@@ -1,0 +1,30 @@
+---
+title: "Instrumental Variables and Weak Identification"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch19-motivation}
+
+# Mathematical Foundation {#sec-ch19-math}
+
+# The Algorithm {#sec-ch19-algorithm}
+
+# Statistical Properties {#sec-ch19-stats}
+
+# Implementation {#sec-ch19-impl}
+
+# From-Scratch Implementation {#sec-ch19-scratch}
+
+# Diagnostics {#sec-ch19-diagnostics}
+
+# Computational Considerations {#sec-ch19-computation}
+
+# Worked Example {#sec-ch19-example}
+
+# Exercises {#sec-ch19-exercises}
+
+# Bibliographic Notes {#sec-ch19-biblio}

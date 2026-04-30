@@ -1,0 +1,30 @@
+---
+title: "Quasi-Experimental Designs: RDD, DiD, and Synthetic Control"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch21-motivation}
+
+# Mathematical Foundation {#sec-ch21-math}
+
+# The Algorithm {#sec-ch21-algorithm}
+
+# Statistical Properties {#sec-ch21-stats}
+
+# Implementation {#sec-ch21-impl}
+
+# From-Scratch Implementation {#sec-ch21-scratch}
+
+# Diagnostics {#sec-ch21-diagnostics}
+
+# Computational Considerations {#sec-ch21-computation}
+
+# Worked Example {#sec-ch21-example}
+
+# Exercises {#sec-ch21-exercises}
+
+# Bibliographic Notes {#sec-ch21-biblio}

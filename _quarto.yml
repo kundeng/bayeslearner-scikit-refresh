@@ -1,0 +1,110 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Advanced Methods in SciPy and Statsmodels"
+  subtitle: "The Theory They Never Fully Explained"
+  author: "Kunden G"
+  date: today
+  chapters:
+    - index.qmd
+    - part: "Part I — Motivation and Overview"
+      chapters:
+        - chapters/01-ml-pipeline.qmd
+    - part: "Part II — Optimization for Statistical Estimation"
+      chapters:
+        - chapters/02-smooth-optimization.qmd
+        - chapters/03-constrained-optimization.qmd
+        - chapters/04-large-scale-composite.qmd
+        - chapters/05-global-derivative-free.qmd
+        - chapters/06-nonlinear-least-squares.qmd
+    - part: "Part III — Probability, Sampling, and Monte Carlo"
+      chapters:
+        - chapters/07-monte-carlo.qmd
+        - chapters/08-mcmc.qmd
+        - chapters/09-resampling-bootstrap.qmd
+    - part: "Part IV — Inference in Likelihood Models"
+      chapters:
+        - chapters/10-wald-score-lr.qmd
+        - chapters/11-linear-regression-misspecification.qmd
+        - chapters/12-glm-m-estimation.qmd
+        - chapters/13-discrete-choice.qmd
+        - chapters/14-mixed-effects-gee.qmd
+    - part: "Part V — Time Series"
+      chapters:
+        - chapters/15-arima-box-jenkins.qmd
+        - chapters/16-state-space-kalman.qmd
+        - chapters/17-multivariate-ts-cointegration.qmd
+    - part: "Part VI — Specialized and Multivariate Models"
+      chapters:
+        - chapters/18-survival-analysis.qmd
+        - chapters/19-multivariate-nonparametric.qmd
+        - chapters/20-iv-weak-identification.qmd
+    - part: "Part VII — Causal Inference"
+      chapters:
+        - chapters/21-potential-outcomes.qmd
+        - chapters/22-rdd-did-synth-control.qmd
+        - chapters/23-hte-double-ml.qmd
+    - chapters/appendix-prerequisites.qmd
+
+format:
+  html:
+    theme:
+      light:
+        - cosmo
+        - assets/custom.scss
+      dark: darkly
+    code-fold: false
+    code-tools: true
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    highlight-style: github
+    mainfont: "Latin Modern Roman"
+    monofont: "JuliaMono"
+    html-math-method: mathjax
+    fig-responsive: true
+    fig-dpi: 150
+
+  pdf:
+    documentclass: scrbook
+    papersize: letter
+    fontsize: 11pt
+    mainfont: "Latin Modern Roman"
+    monofont: "JuliaMono"
+    mathfont: "Latin Modern Math"
+    keep-tex: true
+    number-sections: true
+    toc: true
+    toc-depth: 3
+    fig-pos: "htbp"
+    colorlinks: true
+    linkcolor: "NavyBlue"
+    citecolor: "ForestGreen"
+    urlcolor: "Maroon"
+    include-in-header:
+      text: |
+        \usepackage{amsmath,amssymb,amsthm}
+        \newtheorem{theorem}{Theorem}[chapter]
+        \newtheorem{lemma}[theorem]{Lemma}
+        \newtheorem{proposition}[theorem]{Proposition}
+        \newtheorem{corollary}[theorem]{Corollary}
+        \newtheorem{definition}{Definition}[chapter]
+        \newtheorem{assumption}{Assumption}[chapter]
+        \newtheorem{remark}{Remark}[chapter]
+        \newtheorem{example}{Example}[chapter]
+
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+
+crossref:
+  chapters: true
+  thm-title: "Theorem"
+  lem-title: "Lemma"
+  cor-title: "Corollary"
+  def-title: "Definition"
+
+bibliography: references.bib

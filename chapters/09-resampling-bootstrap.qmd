@@ -1,0 +1,30 @@
+---
+title: "Resampling Inference and the Bootstrap"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch08-motivation}
+
+# Mathematical Foundation {#sec-ch08-math}
+
+# The Algorithm {#sec-ch08-algorithm}
+
+# Statistical Properties {#sec-ch08-stats}
+
+# SciPy Implementation {#sec-ch08-scipy}
+
+# From-Scratch Implementation {#sec-ch08-scratch}
+
+# Diagnostics {#sec-ch08-diagnostics}
+
+# Computational Considerations {#sec-ch08-computation}
+
+# Worked Example {#sec-ch08-example}
+
+# Exercises {#sec-ch08-exercises}
+
+# Bibliographic Notes {#sec-ch08-biblio}

@@ -1,0 +1,30 @@
+---
+title: "Mixed Effects, GEE, and Clustered Data"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch13-motivation}
+
+# Mathematical Foundation {#sec-ch13-math}
+
+# The Algorithm {#sec-ch13-algorithm}
+
+# Statistical Properties {#sec-ch13-stats}
+
+# Statsmodels Implementation {#sec-ch13-statsmodels}
+
+# From-Scratch Implementation {#sec-ch13-scratch}
+
+# Diagnostics {#sec-ch13-diagnostics}
+
+# Computational Considerations {#sec-ch13-computation}
+
+# Worked Example {#sec-ch13-example}
+
+# Exercises {#sec-ch13-exercises}
+
+# Bibliographic Notes {#sec-ch13-biblio}

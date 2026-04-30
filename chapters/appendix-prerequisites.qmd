@@ -1,0 +1,22 @@
+---
+title: "Prerequisites Appendix"
+---
+
+::: {.callout-note}
+## Status
+This appendix is **planned**. Content below is a scaffold.
+:::
+
+A ~30-page reference (not pedagogy) covering foundational material assumed by the main chapters:
+
+- Floating point and conditioning
+- Dense linear algebra decompositions
+- Sparse and large-scale linear algebra (sketch)
+- Numerical integration and ODEs (sketch)
+- Interpolation and FFT/spectral methods (sketch)
+- Probability distributions in SciPy (API tour)
+- Multivariate distributions in SciPy (API tour)
+- Parametric hypothesis testing ($t$/$F$/$\chi^2$)
+- Nonparametric tests
+- Correlation and dependence
+- Power and sample size

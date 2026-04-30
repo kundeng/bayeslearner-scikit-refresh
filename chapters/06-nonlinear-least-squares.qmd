@@ -1,0 +1,30 @@
+---
+title: "Nonlinear Least Squares and Implicit Estimation"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch05-motivation}
+
+# Mathematical Foundation {#sec-ch05-math}
+
+# The Algorithm {#sec-ch05-algorithm}
+
+# Statistical Properties {#sec-ch05-stats}
+
+# SciPy Implementation {#sec-ch05-scipy}
+
+# From-Scratch Implementation {#sec-ch05-scratch}
+
+# Diagnostics {#sec-ch05-diagnostics}
+
+# Computational Considerations {#sec-ch05-computation}
+
+# Worked Example {#sec-ch05-example}
+
+# Exercises {#sec-ch05-exercises}
+
+# Bibliographic Notes {#sec-ch05-biblio}

@@ -1,0 +1,30 @@
+---
+title: "Generalized Linear Models and M-Estimation"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch11-motivation}
+
+# Mathematical Foundation {#sec-ch11-math}
+
+# The Algorithm {#sec-ch11-algorithm}
+
+# Statistical Properties {#sec-ch11-stats}
+
+# Statsmodels Implementation {#sec-ch11-statsmodels}
+
+# From-Scratch Implementation {#sec-ch11-scratch}
+
+# Diagnostics {#sec-ch11-diagnostics}
+
+# Computational Considerations {#sec-ch11-computation}
+
+# Worked Example {#sec-ch11-example}
+
+# Exercises {#sec-ch11-exercises}
+
+# Bibliographic Notes {#sec-ch11-biblio}

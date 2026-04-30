@@ -1,0 +1,30 @@
+---
+title: "Discrete Choice and Limited Dependent Variables"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch12-motivation}
+
+# Mathematical Foundation {#sec-ch12-math}
+
+# The Algorithm {#sec-ch12-algorithm}
+
+# Statistical Properties {#sec-ch12-stats}
+
+# Statsmodels Implementation {#sec-ch12-statsmodels}
+
+# From-Scratch Implementation {#sec-ch12-scratch}
+
+# Diagnostics {#sec-ch12-diagnostics}
+
+# Computational Considerations {#sec-ch12-computation}
+
+# Worked Example {#sec-ch12-example}
+
+# Exercises {#sec-ch12-exercises}
+
+# Bibliographic Notes {#sec-ch12-biblio}

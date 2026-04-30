@@ -1,0 +1,30 @@
+---
+title: "ARIMA, Exponential Smoothing, and the Box–Jenkins Methodology"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch14-motivation}
+
+# Mathematical Foundation {#sec-ch14-math}
+
+# The Algorithm {#sec-ch14-algorithm}
+
+# Statistical Properties {#sec-ch14-stats}
+
+# Statsmodels Implementation {#sec-ch14-statsmodels}
+
+# From-Scratch Implementation {#sec-ch14-scratch}
+
+# Diagnostics {#sec-ch14-diagnostics}
+
+# Computational Considerations {#sec-ch14-computation}
+
+# Worked Example {#sec-ch14-example}
+
+# Exercises {#sec-ch14-exercises}
+
+# Bibliographic Notes {#sec-ch14-biblio}

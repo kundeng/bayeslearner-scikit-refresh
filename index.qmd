@@ -1,0 +1,42 @@
+# Preface {.unnumbered}
+
+This book gives a rigorous, code-grounded treatment of the advanced methods
+that underlie SciPy and statsmodels -- the theory they never fully explained.
+Every theorem is proved or cited. Every code block runs. Every figure earns
+its place.
+
+## How to Read This Book
+
+Each chapter follows a fixed eleven-section template:
+
+1. **Motivation** -- why the method exists and when you need it
+2. **Mathematical Foundation** -- definitions, theorems, proofs
+3. **The Algorithm** -- pseudocode matching the notation ledger
+4. **Statistical Properties** -- what the theory guarantees
+5. **Library Implementation** -- the library's choices and their consequences
+6. **From-Scratch Implementation** -- building it yourself, verified against the library
+7. **Diagnostics** -- how to tell when the method is working and when it is not
+8. **Computational Considerations** -- complexity, scaling, practical limits
+9. **Worked Example** -- end to end on real or synthetic data
+10. **Exercises** -- including at least one diagnostic-failure exercise
+11. **Bibliographic Notes** -- where the ideas came from and where to go deeper
+
+## Environment
+
+All code targets the versions pinned in `requirements.txt`.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+```{python}
+#| echo: true
+#| label: version-check
+import scipy, numpy, statsmodels, matplotlib
+print(f"scipy:        {scipy.__version__}")
+print(f"numpy:        {numpy.__version__}")
+print(f"statsmodels:  {statsmodels.__version__}")
+print(f"matplotlib:   {matplotlib.__version__}")
+```

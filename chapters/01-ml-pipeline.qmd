@@ -1,0 +1,979 @@
+---
+title: "The ML Pipeline as a Window into SciPy"
+---
+
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import (
+    LogisticRegression, Ridge, LinearRegression,
+)
+from sklearn.model_selection import (
+    cross_val_score,
+    GridSearchCV,
+    RandomizedSearchCV,
+    LeaveOneOut,
+    learning_curve,
+    train_test_split,
+)
+from sklearn.datasets import (
+    fetch_california_housing, load_iris, make_blobs,
+)
+from sklearn.metrics import mean_squared_error
+from scipy.optimize import minimize
+import statsmodels.api as sm
+import warnings
+import time
+
+plt.style.use('assets/book.mplstyle')
+```
+
+# Motivation {#sec-ch01-motivation}
+
+You have a dataset. You build a scikit-learn pipeline---a `StandardScaler`
+feeding into a `Ridge` regression, wrapped in `GridSearchCV` to pick the
+regularization strength. You call `.fit()`. A number comes back. You report
+it. The project moves on.
+
+Then one day the number is wrong. The optimizer does not converge. The
+cross-validation variance is enormous. Switching from `Ridge` to `Lasso`
+zeroes out half the coefficients and you cannot explain why. AutoML returns
+a model your collaborator cannot interrogate. The pipeline, which you
+treated as a black box, has become a black box that is failing, and the
+scikit-learn documentation tells you *what* each parameter does but not
+*why it exists* or *what breaks when the assumptions behind it fail*.
+
+This book is the layer underneath.
+
+Scikit-learn is a *dispatcher*. When you call `LogisticRegression.fit()`,
+it dispatches to `scipy.optimize.minimize` with L-BFGS-B---an algorithm
+whose convergence theory fills Chapter 2 of this book. When you call
+`cross_val_score`, it performs a statistical procedure whose variance
+properties are the subject of Chapter 9. When `GridSearchCV` searches a
+parameter grid, it solves a derivative-free optimization problem over a
+noisy objective---the setting of Chapter 5. The documentation does not
+explain any of this because it does not need to. This book does, because
+you do.
+
+This chapter builds a complete pipeline on a real dataset, then takes it
+apart. Each component maps to a chapter where the theory is developed in
+full. By the end, you will have a roadmap for the book and a concrete
+sense of what "the theory underneath" means in practice.
+
+## Notation for this chapter
+
+| Symbol | Meaning |
+|--------|---------|
+| $\hat{f}$ | A fitted regression estimator |
+| $\mathcal{D}$ | Training dataset $\{(\mathbf{x}_i, y_i)\}_{i=1}^n$ |
+| $K$ | Number of cross-validation folds |
+| $D_k$ | Indices in fold $k$ |
+| $L(y, \hat{y})$ | Loss function |
+| $\hat{f}^{(-k)}$ | Estimator trained without fold $k$ |
+| $\mathcal{A}$ | Set of learning algorithms (AutoML) |
+| $\boldsymbol{\Lambda}_r$ | Hyperparameter space for algorithm $A_r$ |
+| $T_j$ | The $j$-th transformer in a pipeline |
+| $E$ | The final estimator in a pipeline |
+| $P$ (italic) | A pipeline object (Algorithms 1.2–1.3) |
+| $\mathbf{P}$ (bold) | Hat matrix $\mathbf{X}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top$ (Exercise 1.4) |
+
+
+# Mathematical Foundation {#sec-ch01-math}
+
+This is a survey chapter, not a theory chapter. The results below are
+stated without proof; each is developed rigorously in the chapter
+indicated.
+
+## The bias--variance decomposition
+
+For a regression estimator $\hat{f}$ trained on data $\mathcal{D}$ and
+evaluated at a point $\mathbf{x}$, the expected prediction error under
+squared loss decomposes as
+
+$$
+\mathbb{E}_{\mathcal{D}}\!\left[(y - \hat{f}(\mathbf{x}))^2\right]
+= \underbrace{\bigl(\mathbb{E}_{\mathcal{D}}[\hat{f}(\mathbf{x})] - f(\mathbf{x})\bigr)^2}_{\text{Bias}^2}
++ \underbrace{\text{Var}_{\mathcal{D}}\!\bigl(\hat{f}(\mathbf{x})\bigr)}_{\text{Variance}}
++ \underbrace{\sigma^2}_{\text{Irreducible}}.
+$$ {#eq-bias-variance}
+
+The bias term measures systematic error: how far the average prediction
+is from the truth. The variance term measures instability: how much the
+prediction changes across training sets. Regularization trades increased
+bias for decreased variance. This decomposition is proved and
+operationalized in §12.4 (M-estimation, statistical properties).
+
+## Cross-validation as a loss estimator
+
+$K$-fold cross-validation partitions the training data into $K$ folds of
+roughly equal size. For each fold $k = 1, \ldots, K$, the model is trained
+on the remaining $K - 1$ folds and evaluated on fold $k$. The
+cross-validation estimate of expected loss is
+
+$$
+\widehat{\text{Err}}_{\text{CV}} = \frac{1}{K} \sum_{k=1}^{K} \frac{1}{|D_k|} \sum_{i \in D_k} L(y_i, \hat{f}^{(-k)}(\mathbf{x}_i)),
+$$ {#eq-cv-loss}
+
+where $\hat{f}^{(-k)}$ is the model trained without fold $k$ and $L$ is
+the loss function. This estimator is approximately unbiased for the
+expected loss of a model trained on $(K-1)/K$ of the data---not the full
+dataset. Its variance can be substantial, especially when $K$ is large
+(leave-one-out) and the training sets overlap heavily. The variance
+analysis is developed in §9 (resampling inference and the bootstrap).
+
+## The CASH problem
+
+Automated machine learning (AutoML) formalizes model selection and
+hyperparameter tuning as a single optimization problem. Let
+$\mathcal{A} = \{A_1, \ldots, A_R\}$ be a set of learning algorithms,
+each with its own hyperparameter space $\boldsymbol{\Lambda}_r$. The
+Combined Algorithm Selection and Hyperparameter optimization (CASH)
+problem is
+
+$$
+A^*, \boldsymbol{\lambda}^* = \arg\min_{A_r \in \mathcal{A},\, \boldsymbol{\lambda} \in \boldsymbol{\Lambda}_r}
+\widehat{\text{Err}}_{\text{CV}}(A_r, \boldsymbol{\lambda}, \mathcal{D}).
+$$ {#eq-cash}
+
+This is a mixed discrete-continuous optimization problem with a noisy
+objective (the CV estimate has variance). The search space is typically
+nonconvex, nondifferentiable, and high-dimensional. No gradient is
+available. This is precisely the setting of Chapter 5
+(global, stochastic, and derivative-free optimization).
+
+Note what the CASH formulation automates and what it does not. It
+automates algorithm selection and hyperparameter tuning---the inner
+loop. It does not automate feature engineering (which features to
+construct, how to encode them), problem formulation (what loss function
+to optimize, what population the data represents), or model
+diagnostics (whether the assumptions hold, whether the fit is
+trustworthy). These remain human work, and they are where most
+applied projects fail. AutoML is a tool for the inner loop; the outer
+loop is this book.
+
+
+# The Algorithm {#sec-ch01-algorithm}
+
+Three procedures underlie every scikit-learn pipeline. We state them in
+pseudocode using the conventions of §2.8.
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 1.1: FitPipeline
+
+**Input:** Training data $(\mathbf{X}, \mathbf{y})$, sequence of
+transformers $T_1, \ldots, T_{m-1}$, estimator $E$
+
+**Output:** Fitted pipeline
+
+1. $\mathbf{Z}_0 \leftarrow \mathbf{X}$
+2. **for** $j = 1, \ldots, m-1$ **do**
+3. $\quad$ Fit $T_j$ on $\mathbf{Z}_{j-1}$
+4. $\quad$ $\mathbf{Z}_j \leftarrow T_j.\text{transform}(\mathbf{Z}_{j-1})$
+5. **end for**
+6. Fit $E$ on $(\mathbf{Z}_{m-1}, \mathbf{y})$
+7. **return** fitted pipeline $(T_1, \ldots, T_{m-1}, E)$
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 1.2: K-Fold Cross-Validation
+
+**Input:** Data $(\mathbf{X}, \mathbf{y})$, pipeline $P$, loss $L$,
+number of folds $K$
+
+**Output:** Vector of fold scores $\mathbf{s} \in \mathbb{R}^K$
+
+1. Partition $\{1, \ldots, n\}$ into $K$ disjoint folds $D_1, \ldots, D_K$
+2. **for** $k = 1, \ldots, K$ **do**
+3. $\quad$ $\mathbf{X}_{\text{train}} \leftarrow \mathbf{X}[\{1,\ldots,n\} \setminus D_k,\, :]$
+4. $\quad$ $\mathbf{y}_{\text{train}} \leftarrow \mathbf{y}[\{1,\ldots,n\} \setminus D_k]$
+5. $\quad$ Fit $P$ on $(\mathbf{X}_{\text{train}}, \mathbf{y}_{\text{train}})$ $\triangleright$ Algorithm 1.1
+6. $\quad$ $\hat{\mathbf{y}}_k \leftarrow P.\text{predict}(\mathbf{X}[D_k,\, :])$
+7. $\quad$ $s_k \leftarrow \frac{1}{|D_k|}\sum_{i \in D_k} L(y_i, \hat{y}_i)$
+8. **end for**
+9. **return** $\mathbf{s} = (s_1, \ldots, s_K)$
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 1.3: Grid Search with Cross-Validation
+
+**Input:** Data $(\mathbf{X}, \mathbf{y})$, pipeline $P$, loss $L$,
+parameter grid $\mathcal{G}$, number of folds $K$
+
+**Output:** Best parameters $\boldsymbol{\lambda}^*$, refitted pipeline
+
+1. **for each** $\boldsymbol{\lambda} \in \mathcal{G}$ **do**
+2. $\quad$ Set $P$'s parameters to $\boldsymbol{\lambda}$
+3. $\quad$ $\mathbf{s}(\boldsymbol{\lambda}) \leftarrow \textsc{KFoldCV}(\mathbf{X}, \mathbf{y}, P, L, K)$ $\triangleright$ Algorithm 1.2
+4. $\quad$ $\bar{s}(\boldsymbol{\lambda}) \leftarrow \frac{1}{K}\sum_{k=1}^K s_k(\boldsymbol{\lambda})$
+5. **end for**
+6. $\boldsymbol{\lambda}^* \leftarrow \arg\min_{\boldsymbol{\lambda} \in \mathcal{G}} \bar{s}(\boldsymbol{\lambda})$
+7. Set $P$'s parameters to $\boldsymbol{\lambda}^*$
+8. Fit $P$ on full $(\mathbf{X}, \mathbf{y})$ $\triangleright$ refit step
+9. **return** $\boldsymbol{\lambda}^*$, fitted $P$
+:::
+
+
+# Statistical Properties {#sec-ch01-stats}
+
+This section is deliberately brief. The claims here are proved elsewhere;
+the point is to name what the pipeline *does not guarantee* so the reader
+knows what to watch for.
+
+**Cross-validation is not an unbiased estimator of generalization error.**
+It estimates the expected loss of a model trained on $(K-1)/K$ of the
+data, not on the full dataset. For small $n$ the difference matters. For
+large $K$ (especially leave-one-out), the fold-level estimates are highly
+correlated because the training sets overlap in all but one observation,
+which inflates the variance of the average. The rigorous variance
+analysis appears in §9.
+
+**Convergence of `.fit()` means convergence to a stationary point.**
+For convex losses (linear regression, logistic regression without
+regularization pathologies), this stationary point is the global minimum.
+For nonconvex losses, it may be a local minimum or a saddle point.
+Scikit-learn's default solver for `LogisticRegression` is L-BFGS-B, a
+quasi-Newton method whose convergence theory is developed in §2.
+"Convergence" in sklearn's sense means the gradient norm fell below a
+tolerance---nothing more.
+
+**Grid search does not optimize in any rigorous sense.** It evaluates a
+finite set of parameter configurations and picks the best one on the
+CV estimate. There is no convergence guarantee, no confidence interval
+on the gap between the best-in-grid and the true optimum.
+`RandomizedSearchCV` replaces the grid with random samples, which
+Bergstra and Bengio (2012) showed is more efficient in high dimensions---
+but the fundamental limitation (noisy objective, no gradients, finite
+budget) remains. This is the setting of Chapter 5.
+
+
+# Library Implementation {#sec-ch01-sklearn}
+
+We build a complete pipeline and examine what each call does.
+
+## The dataset
+
+```{python}
+#| label: load-data
+housing = fetch_california_housing(as_frame=True)
+X, y = housing.data, housing.target
+print(f"Shape: {X.shape}")
+print(f"Features: {list(X.columns)}")
+print(f"Target: median house value (units of $100k)")
+X.describe().round(2)
+```
+
+California Housing has 20,640 observations and 8 features. It is a
+regression problem: predict median house value from census-tract-level
+covariates. We use it as a running example throughout the book.
+
+## Building the pipeline
+
+```{python}
+#| label: build-pipeline
+pipe = Pipeline([
+    ("scaler", StandardScaler()),
+    ("ridge", Ridge(alpha=1.0)),   # default alpha, stated explicitly
+])
+```
+
+This pipeline has two stages: standardize features (subtract mean, divide
+by standard deviation), then fit a ridge regression. `StandardScaler` is
+a transformer; `Ridge` is an estimator. The pipeline applies Algorithm 1.1.
+
+## Cross-validation
+
+```{python}
+#| label: cross-val
+scores = cross_val_score(
+    estimator=pipe,
+    X=X,
+    y=y,
+    cv=5,                          # 5-fold, the default
+    scoring="neg_mean_squared_error",  # sklearn negates for maximization
+)
+print(f"Per-fold MSE: {-scores.round(4)}")
+print(f"Mean MSE:     {-scores.mean():.4f}")
+print(f"Std MSE:      {scores.std():.4f}")
+```
+
+Two defaults carry theoretical content here:
+
+- **`cv=5`**: Five-fold cross-validation. For regressors, sklearn uses
+  `KFold` (not stratified). The choice of $K = 5$ is conventional, not
+  optimal---the bias-variance trade-off in the CV estimator itself
+  (not the model) depends on $K$.
+
+- **`scoring="neg_mean_squared_error"`**: Sklearn negates the loss
+  because its internal API maximizes scores. This is a convention, not
+  statistics. The actual loss being estimated is $L(y, \hat{y}) = (y - \hat{y})^2$.
+
+## Grid search
+
+```{python}
+#| label: grid-search
+alphas = np.logspace(-2, 4, 50)
+param_grid = {"ridge__alpha": alphas}
+
+grid = GridSearchCV(
+    estimator=pipe,
+    param_grid=param_grid,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    refit=True,                    # default, but stated: refits on full data
+)
+grid.fit(X, y)
+print(f"Best alpha: {grid.best_params_['ridge__alpha']:.4f}")
+print(f"Best CV MSE: {-grid.best_score_:.4f}")
+```
+
+**`refit=True`** means that after identifying the best `alpha`, sklearn
+refits the pipeline on the entire training set with that `alpha`. The
+final model in `grid.best_estimator_` has seen all the data. This is
+statistically defensible---the CV score estimates out-of-sample
+performance, and the final model should use all available data for
+prediction---but it means the reported CV score was *not* computed on
+this model. The score describes the procedure, not the artifact.
+
+## The regularization path
+
+```{python}
+#| label: fig-reg-path
+#| fig-cap: "Cross-validation MSE as a function of regularization strength. The U-shape reflects the bias-variance trade-off: too little regularization (left) yields high variance; too much (right) yields high bias. The dashed line marks the optimum found by grid search."
+
+cv_mse = -grid.cv_results_["mean_test_score"]
+cv_std = grid.cv_results_["std_test_score"]
+
+fig, ax = plt.subplots()
+ax.plot(alphas, cv_mse, color="C0", linewidth=1.8)
+ax.fill_between(
+    alphas,
+    cv_mse - cv_std,
+    cv_mse + cv_std,
+    alpha=0.2,
+    color="C0",
+)
+ax.axvline(
+    grid.best_params_["ridge__alpha"],
+    color="C1",
+    linestyle="--",
+    linewidth=1.2,
+    label=f"Best α = {grid.best_params_['ridge__alpha']:.2f}",
+)
+ax.set_xscale("log")
+ax.set_xlabel(r"Regularization strength $\alpha$")
+ax.set_ylabel("Cross-validation MSE")
+ax.legend()
+plt.show()
+```
+
+This plot is the visual form of @eq-bias-variance. At small $\alpha$
+(left), the model is nearly unregularized and overfits: the variance
+component of the error dominates. At large $\alpha$ (right), the model
+shrinks coefficients toward zero and underfits: the bias dominates.
+The U-shape exists because regularization trades one for the other.
+
+
+# What `.fit()` Actually Calls {#sec-ch01-fit}
+
+Scikit-learn's `Ridge` uses a closed-form solution (the normal equations
+with an $\ell_2$ penalty), so there is no optimizer to trace. But for
+models where the objective has no closed form---logistic regression,
+support vector machines, neural networks---`.fit()` dispatches to an
+optimization algorithm.
+
+`LogisticRegression` defaults to `solver='lbfgs'`, which is scipy's
+L-BFGS-B algorithm. We can verify this by solving the same problem
+both ways.
+
+```{python}
+#| label: logistic-sklearn
+# Binary problem: versicolor vs. virginica (classes overlap — not separable)
+iris = load_iris()
+mask = iris.target != 0
+X_iris = iris.data[mask, :2]  # first two features for simplicity
+y_iris = (iris.target[mask] == 1).astype(float)
+
+# Sklearn fit — no regularization via C=1e15
+lr_sklearn = LogisticRegression(
+    solver='lbfgs',
+    C=1e15,                      # no regularization
+    max_iter=5000,
+    tol=1e-12,
+)
+lr_sklearn.fit(X_iris, y_iris)
+print("sklearn coefficients:", lr_sklearn.coef_.ravel().round(6))
+print("sklearn intercept:   ", lr_sklearn.intercept_.round(6))
+```
+
+Now the same problem via `scipy.optimize.minimize`, supplying the
+analytical gradient:
+
+```{python}
+#| label: scipy-direct
+
+def neg_ll_and_grad(params, X, y):
+    """Negative log-likelihood and gradient for logistic regression."""
+    beta = params[:-1]
+    b = params[-1]
+    z = X @ beta + b
+    # Numerically stable negative log-likelihood
+    nll = np.sum(np.logaddexp(0, z) - y * z)
+    # Gradient: sigmoid(z) - y, projected onto X and 1
+    sigma_z = 1.0 / (1.0 + np.exp(-np.clip(z, -500, 500)))
+    residual = sigma_z - y
+    grad = np.append(X.T @ residual, residual.sum())
+    return nll, grad
+
+x0 = np.zeros(X_iris.shape[1] + 1)
+result = minimize(
+    fun=neg_ll_and_grad,
+    x0=x0,
+    args=(X_iris, y_iris),
+    method='L-BFGS-B',            # same solver as sklearn
+    jac=True,                     # fun returns (value, gradient)
+    options={'maxiter': 5000, 'gtol': 1e-12},
+)
+print(f"scipy coefficients:  {result.x[:-1].round(6)}")
+print(f"scipy intercept:     {result.x[-1]:.6f}")
+print(f"Converged:           {result.success}")
+print(f"Max |gradient|:      {np.abs(result.jac).max():.2e}")
+```
+
+The coefficients match. This is not a coincidence: both calls end up
+in the same Fortran L-BFGS-B routine. Scikit-learn adds preprocessing
+(scaling, warm starts, regularization handling), but the core
+computation is scipy's.
+
+The convergence theory for L-BFGS-B---Wolfe conditions, the secant
+equation, the Dennis--Moré characterization of superlinear
+convergence---is developed in Chapter 2.
+
+
+# What scikit-learn Deliberately Omits {#sec-ch01-omits}
+
+Scikit-learn is a prediction library. It answers "what is $\hat{y}$?"
+but not "how confident should I be in $\hat{\boldsymbol{\beta}}$?" or
+"is this coefficient statistically significant?" These are inference
+questions, and scikit-learn's API is designed to avoid them.
+
+Statsmodels answers them. Here is the same regression on California
+Housing, with inference:
+
+```{python}
+#| label: statsmodels-comparison
+X_sm = sm.add_constant(X.values)  # statsmodels requires explicit intercept
+ols_result = sm.OLS(
+    endog=y.values,
+    exog=X_sm,
+).fit(
+    cov_type='HC1',               # heteroscedasticity-robust SEs
+)
+print(ols_result.summary2().tables[1].to_string())
+```
+
+Every row has a coefficient, a standard error, a $t$-statistic, a
+$p$-value, and a confidence interval. The `cov_type='HC1'` flag
+requests heteroscedasticity-consistent standard errors---a choice with
+theoretical content (the sandwich variance estimator, derived in
+§11). Statsmodels makes this choice explicit. Scikit-learn does not
+offer it at all.
+
+This division of labor is the organizing principle of the book.
+Scikit-learn tells you *what* the model predicts. SciPy tells you
+*how* the model was fit. Statsmodels tells you *what the parameters
+mean*. The theory underneath all three is what the remaining 22
+chapters develop.
+
+
+# The Roadmap {#sec-ch01-roadmap}
+
+Each component of the pipeline maps to a part of this book.
+
+| When you call... | You are using... | Developed in... |
+|---|---|---|
+| `Ridge.fit()` | Normal equations with $\ell_2$ penalty | Ch. 11 (regression under misspecification) |
+| `LogisticRegression.fit(solver='lbfgs')` | L-BFGS-B quasi-Newton optimization | Ch. 2 (smooth optimization) |
+| `Lasso.fit()` | Coordinate descent for $\ell_1$ penalty | Ch. 4 (composite optimization) |
+| `StandardScaler.fit_transform()` | Sample mean and variance estimation | Prerequisites Appendix |
+| `cross_val_score()` | Resampling-based loss estimation | Ch. 9 (bootstrap and resampling) |
+| `GridSearchCV()` | Exhaustive search over a discrete grid | Ch. 5 (derivative-free optimization) |
+| `RandomizedSearchCV()` | Random search (Bergstra--Bengio) | Ch. 5 (derivative-free optimization) |
+| `OLS.fit(cov_type='HC1')` | Sandwich variance estimator | Ch. 11 (regression under misspecification) |
+| `GLM.fit()` | IRLS / Fisher scoring | Ch. 12 (GLMs and M-estimation) |
+| `ARIMA.fit()` | State-space MLE via Kalman filter | Ch. 16 (state space and Kalman) |
+
+The AutoML setting---choosing among algorithms *and* hyperparameters
+simultaneously---is the CASH problem (@eq-cash), a derivative-free
+optimization problem over a mixed discrete-continuous space with a
+noisy objective. Its connection to the theory of Chapter 5 is direct:
+the tools are `differential_evolution`, `dual_annealing`, and
+`basinhopping`, and the theory tells you why none of them come with
+global convergence guarantees.
+
+
+# Diagnostics {#sec-ch01-diagnostics}
+
+Diagnostics for each method are developed in the chapters that treat
+them: residual plots for regression (Ch. 11), convergence checks for
+optimization (Ch. 2), bootstrap failure detection (Ch. 9), assumption
+tests for inference (Ch. 10–14). This section previews the diagnostic
+mindset that runs through the book.
+
+Every `.fit()` call makes assumptions. Every assumption has a
+diagnostic. The pipeline abstracts both away, which is efficient when
+the assumptions hold and dangerous when they do not. The discipline
+this book teaches is: after every `.fit()`, ask what could be wrong,
+and check. The specific checks depend on the method; the habit is
+universal.
+
+Three diagnostic patterns recur:
+
+- **Convergence.** Did the optimizer find a stationary point? Check
+  `result.success` and the gradient norm. (Ch. 2)
+- **Specification.** Does the model's functional form match the data?
+  Check residuals against fitted values, against predictors, against
+  time. (Ch. 11)
+- **Stability.** Do the conclusions change under perturbation? Refit
+  with different seeds, different folds, different subsets. If the
+  answer moves, the analysis is not stable. (Ch. 9)
+
+
+# Computational Considerations {#sec-ch01-computation}
+
+The cost of a full pipeline evaluation is
+
+$$
+\text{Cost} = |\mathcal{G}| \times K \times C_{\text{fit}},
+$$
+
+where $|\mathcal{G}|$ is the grid size, $K$ is the number of folds,
+and $C_{\text{fit}}$ is the cost of a single fit-predict cycle. For
+`Ridge` on California Housing, $C_{\text{fit}}$ is dominated by an
+$O(np^2)$ matrix solve; with $n = 20{,}640$ and $p = 8$ this is
+trivial. For `LogisticRegression` with L-BFGS-B, $C_{\text{fit}}$
+depends on the number of optimizer iterations, each costing $O(np)$
+for the gradient and $O(p^2)$ for the BFGS update.
+
+`GridSearchCV` with 50 grid points and 5 folds costs 250 fits.
+`RandomizedSearchCV` with 50 random draws and 5 folds also costs 250
+fits, but Bergstra and Bengio (2012) showed that random search covers
+each marginal dimension more densely---a point developed in Chapter 5.
+
+Setting `n_jobs=-1` parallelizes across folds and grid points. This
+helps when $C_{\text{fit}}$ is large relative to the overhead of
+spawning processes. For cheap models on small data, the overhead
+dominates and parallelism hurts. The computational analysis of each
+optimization method is in Chapters 2–6.
+
+
+# Worked Example {#sec-ch01-example}
+
+We work through a complete analysis: load data, build pipeline, tune,
+diagnose, interpret.
+
+## Setup
+
+```{python}
+#| label: worked-setup
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+)
+print(f"Train: {X_train.shape[0]}, Test: {X_test.shape[0]}")
+```
+
+## Build and tune
+
+```{python}
+#| label: worked-tune
+pipe_ex = Pipeline([
+    ("scaler", StandardScaler()),
+    ("ridge", Ridge()),
+])
+
+param_grid = {"ridge__alpha": np.logspace(-4, 4, 60)}
+
+grid_ex = GridSearchCV(
+    estimator=pipe_ex,
+    param_grid=param_grid,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    refit=True,
+    return_train_score=True,
+)
+grid_ex.fit(X_train, y_train)
+print(f"Best alpha:    {grid_ex.best_params_['ridge__alpha']:.6f}")
+print(f"Best CV MSE:   {-grid_ex.best_score_:.4f}")
+```
+
+The best `alpha` is at the low end of the grid---effectively
+unregularized. This is not an error: on this train/test split with only
+8 features, Ridge has no overfitting to control, and OLS suffices.
+The regularization path on the full dataset (the earlier plot) shows the
+U-shape because the larger dataset exposes the bias-variance trade-off
+more clearly. When the optimal $\alpha$ hits the grid boundary, that
+is itself a diagnostic: the model is telling you it does not need
+regularization.
+
+## Diagnose: learning curves
+
+```{python}
+#| label: fig-learning-curve
+#| fig-cap: "Learning curves for Ridge regression at the optimal regularization strength. The gap between training and validation scores indicates how much variance remains in the estimator. A persistent gap at large training set sizes suggests the model is well-specified but data-limited, not that it needs more complexity."
+
+train_sizes, train_scores, val_scores = learning_curve(
+    estimator=Pipeline([
+        ("scaler", StandardScaler()),
+        ("ridge", Ridge(
+            alpha=grid_ex.best_params_["ridge__alpha"],
+        )),
+    ]),
+    X=X_train,
+    y=y_train,
+    train_sizes=np.linspace(0.1, 1.0, 10),
+    cv=5,
+    scoring="neg_mean_squared_error",
+    random_state=42,
+)
+train_mse = -train_scores.mean(axis=1)
+val_mse = -val_scores.mean(axis=1)
+
+fig, ax = plt.subplots()
+ax.plot(train_sizes, train_mse, color="C0", label="Training MSE")
+ax.plot(train_sizes, val_mse, color="C1", label="Validation MSE")
+ax.set_xlabel("Training set size")
+ax.set_ylabel("MSE")
+ax.legend()
+plt.show()
+```
+
+## Test-set evaluation
+
+```{python}
+#| label: worked-test
+y_pred = grid_ex.predict(X_test)
+test_mse = mean_squared_error(y_test, y_pred)
+print(f"Test MSE: {test_mse:.4f}")
+print(f"CV MSE:  {-grid_ex.best_score_:.4f}")
+print(f"Gap:     {abs(test_mse - (-grid_ex.best_score_)):.4f}")
+```
+
+The test MSE and CV MSE should be close. A large gap would suggest
+either data leakage or that the CV estimate has high variance---both
+worth diagnosing, and both connected to the theory in Chapter 9.
+
+## Coefficient interpretation via statsmodels
+
+```{python}
+#| label: worked-statsmodels
+# Same data, same features, but now with inference
+X_train_sm = sm.add_constant(
+    StandardScaler().fit_transform(X_train),
+)
+ols = sm.OLS(
+    endog=y_train.values,
+    exog=X_train_sm,
+).fit(cov_type='HC1')
+print(ols.summary2().tables[1].round(4).to_string())
+```
+
+The coefficients are the same linear regression weights that Ridge
+would produce at $\alpha = 0$. But statsmodels gives us standard errors,
+which let us ask: "Is this coefficient distinguishable from zero?" That
+question is unanswerable from scikit-learn alone. The sandwich standard
+errors (`HC1`) and the test framework (Wald, score, likelihood ratio)
+that makes this table interpretable are developed in Chapters 10--12.
+
+
+# Exercises {#sec-ch01-exercises}
+
+**Exercise 1.1** ($\star\star$, diagnostic failure). Fit
+`LogisticRegression(solver='lbfgs', C=1e15, max_iter=10000)` on a
+dataset where the two classes are perfectly linearly separable. (Create
+one with `make_blobs(centers=2, cluster_std=0.5, random_state=42)`.)
+Examine the coefficients, the predicted probabilities, and the training
+accuracy. Does sklearn warn you that anything is wrong? Now fit the same
+data with `C=1.0` (the default) and compare. Explain, using the
+structure of the log-likelihood, why the unregularized MLE does not
+exist, and why sklearn reports clean convergence anyway.
+
+%%
+
+```{python}
+#| label: ex-1-1-solution
+# Perfectly separable data
+X_sep, y_sep = make_blobs(
+    n_samples=100,
+    centers=2,
+    cluster_std=0.5,
+    random_state=42,
+)
+
+# Unregularized fit — no warning despite perfect separation
+lr_unreg = LogisticRegression(
+    solver='lbfgs',
+    C=1e15,                        # effectively no regularization
+    max_iter=10000,
+)
+lr_unreg.fit(X_sep, y_sep)
+probs = lr_unreg.predict_proba(X_sep)
+
+print("=== Unregularized (C=1e15) ===")
+print(f"Coefficients:  {lr_unreg.coef_.ravel().round(2)}")
+print(f"Intercept:     {lr_unreg.intercept_[0]:.2f}")
+print(f"Training acc:  {lr_unreg.score(X_sep, y_sep):.4f}")
+print(f"Prob range:    [{probs.min():.6f}, {probs.max():.6f}]")
+print(f"Warnings:      none — sklearn reports clean convergence")
+
+# Regularized fit for comparison
+lr_reg = LogisticRegression(
+    solver='lbfgs',
+    C=1.0,                         # default: moderate regularization
+    max_iter=10000,
+)
+lr_reg.fit(X_sep, y_sep)
+probs_reg = lr_reg.predict_proba(X_sep)
+
+print("\n=== Regularized (C=1.0) ===")
+print(f"Coefficients:  {lr_reg.coef_.ravel().round(2)}")
+print(f"Intercept:     {lr_reg.intercept_[0]:.2f}")
+print(f"Training acc:  {lr_reg.score(X_sep, y_sep):.4f}")
+print(f"Prob range:    [{probs_reg.min():.6f}, {probs_reg.max():.6f}]")
+```
+
+**The diagnostic failure is silence.** Sklearn does not warn about
+perfect separation. The optimizer converges cleanly because the
+hardcoded `ftol = 64 * np.finfo(float).eps` triggers: once the loss
+approaches zero (all observations classified correctly), the relative
+change in function value drops below `ftol` and L-BFGS-B declares
+convergence---even though the MLE does not exist at any finite point.
+
+The mathematical reason: when the classes are perfectly separable, the
+log-likelihood
+$\ell(\boldsymbol{\beta}) = \sum_i [y_i \log \sigma(\mathbf{x}_i^\top \boldsymbol{\beta}) + (1 - y_i) \log(1 - \sigma(\mathbf{x}_i^\top \boldsymbol{\beta}))]$
+is maximized as $\|\boldsymbol{\beta}\| \to \infty$. The objective is
+bounded above (by zero) but the supremum is not attained. The
+"converged" coefficients are artifacts of when L-BFGS-B stopped, not
+genuine parameter estimates.
+
+The symptoms to watch for: (1) coefficients much larger than the
+regularized version, (2) predicted probabilities crowding 0 and 1,
+(3) perfect training accuracy on a non-trivial problem. Contrast with
+statsmodels' `Logit`, which explicitly detects and warns about perfect
+separation.
+
+Regularization ($\ell_2$ penalty) is not merely a variance-reduction
+device---it is an existence guarantee for the MLE. With `C=1.0`, the
+objective $-\ell(\boldsymbol{\beta}) + \frac{1}{2C}\|\boldsymbol{\beta}\|^2$
+is strictly convex, the minimum exists and is unique, and the
+coefficients are finite and interpretable. The optimization theory
+behind this is in Chapter 2; the statistical consequences
+(existence and uniqueness of the MLE under regularization) are
+in Chapter 10.
+
+%%
+
+
+**Exercise 1.2** ($\star$, comparison). Run `GridSearchCV` and
+`RandomizedSearchCV` on the California Housing pipeline with the same
+parameter space (`alpha` from $10^{-2}$ to $10^4$) and roughly the same
+computational budget (50 candidates each, 5-fold CV). Compare: (a) the
+best CV MSE found by each, and (b) wall-clock time. Repeat 5 times with
+different random seeds and report the mean and standard deviation of
+both quantities.
+
+%%
+
+```{python}
+#| label: ex-1-2-solution
+alphas_grid = np.logspace(-2, 4, 50)
+alpha_dist = {"ridge__alpha": np.logspace(-2, 4, 1000)}
+
+pipe_comp = Pipeline([
+    ("scaler", StandardScaler()),
+    ("ridge", Ridge()),
+])
+
+results = {"grid_mse": [], "grid_time": [],
+           "rand_mse": [], "rand_time": []}
+
+for seed in range(5):
+    # Grid search
+    t0 = time.perf_counter()
+    gs = GridSearchCV(
+        pipe_comp, {"ridge__alpha": alphas_grid},
+        cv=5, scoring="neg_mean_squared_error",
+    ).fit(X, y)
+    results["grid_time"].append(time.perf_counter() - t0)
+    results["grid_mse"].append(-gs.best_score_)
+
+    # Random search with same budget (50 candidates)
+    t0 = time.perf_counter()
+    rs = RandomizedSearchCV(
+        pipe_comp, alpha_dist,
+        n_iter=50, cv=5, scoring="neg_mean_squared_error",
+        random_state=seed,
+    ).fit(X, y)
+    results["rand_time"].append(time.perf_counter() - t0)
+    results["rand_mse"].append(-rs.best_score_)
+
+for method in ["grid", "rand"]:
+    mse = np.array(results[f"{method}_mse"])
+    t = np.array(results[f"{method}_time"])
+    label = "GridSearchCV" if method == "grid" else "RandomizedSearchCV"
+    print(f"{label}:")
+    print(f"  MSE:  {mse.mean():.4f} +/- {mse.std():.4f}")
+    print(f"  Time: {t.mean():.3f}s +/- {t.std():.3f}s")
+```
+
+For a one-dimensional parameter space, grid search and random search
+perform comparably. The advantage of random search emerges in higher
+dimensions: when only a few parameters matter, random search explores
+each marginal direction more densely than a grid of the same size.
+This is the Bergstra--Bengio (2012) result. In this exercise, the
+parameter space is one-dimensional, so the difference is negligible.
+
+%%
+
+
+**Exercise 1.3** ($\star\star$, conceptual). `GridSearchCV(refit=True)`
+selects the best hyperparameters via cross-validation, then refits the
+model on the *entire* training set with those hyperparameters. Why not
+just return the best fold's model? What statistical assumption justifies
+refitting on more data?
+
+%%
+
+The CV procedure uses each fold's model to *estimate expected loss*,
+not to produce a final model. Each fold's model was trained on only
+$(K-1)/K$ of the data. Refitting on the full training set produces a
+model with strictly lower variance (more data implies more stable
+estimates) at the same bias level (the hyperparameters were already
+chosen).
+
+The assumption is that the optimal hyperparameters are approximately
+invariant to training set size---that is, the best $\alpha$ for
+$n \cdot (K-1)/K$ observations is also good for $n$ observations.
+This is usually reasonable when the model is correctly specified and
+$n$ is not tiny. When it fails (e.g., the optimal regularization
+strength depends on $n$, as in the asymptotic theory of ridge
+regression), refitting can produce a model whose actual performance
+differs from the CV estimate. This gap between the CV estimate and
+the refitted model's true performance is another reason the test set
+exists.
+
+%%
+
+
+**Exercise 1.4** ($\star\star\star$, derivation). For ordinary least
+squares with squared-error loss, show that the leave-one-out
+cross-validation (LOO-CV) estimate can be computed from a single model
+fit using the hat matrix $\mathbf{P} = \mathbf{X}(\mathbf{X}^\top \mathbf{X})^{-1}\mathbf{X}^\top$:
+
+$$
+\widehat{\text{Err}}_{\text{LOO}} = \frac{1}{n} \sum_{i=1}^{n} \left(\frac{y_i - \hat{y}_i}{1 - P_{ii}}\right)^2,
+$$
+
+where $\hat{y}_i$ is the fitted value from the full-data OLS and
+$P_{ii}$ is the $i$-th diagonal element of $\mathbf{P}$.
+
+*Hint:* Start from the Sherman--Morrison formula for the inverse of a
+rank-one update to $\mathbf{X}^\top \mathbf{X}$.
+
+%%
+
+```{python}
+#| label: ex-1-4-solution
+# Verify the LOO-CV shortcut numerically
+# Use a small subset for tractability of brute-force LOO
+X_small = X.values[:200]
+y_small = y.values[:200]
+
+# Brute-force LOO
+loo = LeaveOneOut()
+loo_errors = []
+for train_idx, test_idx in loo.split(X_small):
+    lr_loo = LinearRegression().fit(
+        X_small[train_idx], y_small[train_idx],
+    )
+    pred = lr_loo.predict(X_small[test_idx])
+    loo_errors.append((y_small[test_idx[0]] - pred[0]) ** 2)
+loo_mse_brute = np.mean(loo_errors)
+
+# Hat-matrix shortcut
+X_sm_loo = np.column_stack([np.ones(len(X_small)), X_small])
+P = X_sm_loo @ np.linalg.solve(
+    X_sm_loo.T @ X_sm_loo, X_sm_loo.T,
+)
+y_hat = P @ y_small
+residuals = y_small - y_hat
+leverages = np.diag(P)
+loo_mse_hat = np.mean((residuals / (1 - leverages)) ** 2)
+
+print(f"LOO-CV (brute force): {loo_mse_brute:.6f}")
+print(f"LOO-CV (hat matrix):  {loo_mse_hat:.6f}")
+print(f"Match: {np.isclose(loo_mse_brute, loo_mse_hat, rtol=1e-6)}")
+```
+
+**Proof.** Let $\hat{\boldsymbol{\beta}}$ be the full-data OLS
+estimate and $\hat{\boldsymbol{\beta}}^{(-i)}$ the leave-one-out estimate
+with observation $i$ removed. By the Sherman--Morrison formula applied
+to $(\mathbf{X}^\top \mathbf{X} - \mathbf{x}_i \mathbf{x}_i^\top)^{-1}$:
+
+$$
+\hat{\boldsymbol{\beta}}^{(-i)} = \hat{\boldsymbol{\beta}}
+- \frac{(\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{x}_i (y_i - \mathbf{x}_i^\top \hat{\boldsymbol{\beta}})}{1 - P_{ii}}.
+$$
+
+The leave-one-out prediction error for observation $i$ is:
+
+$$
+y_i - \mathbf{x}_i^\top \hat{\boldsymbol{\beta}}^{(-i)}
+= y_i - \mathbf{x}_i^\top \hat{\boldsymbol{\beta}}
+  + \frac{P_{ii}(y_i - \mathbf{x}_i^\top \hat{\boldsymbol{\beta}})}{1 - P_{ii}}
+= \frac{y_i - \hat{y}_i}{1 - P_{ii}}.
+$$
+
+Squaring and averaging gives the result. The full derivation, connecting
+$P_{ii}$ (leverage) to influence diagnostics and Cook's distance,
+appears in Chapter 11. $\square$
+
+%%
+
+
+# Bibliographic Notes {#sec-ch01-biblio}
+
+The scikit-learn API and its design philosophy are described in
+Buitinck et al. (2013). The `Pipeline` abstraction enforces a clean
+separation between data-dependent preprocessing and model fitting,
+preventing the most common form of data leakage (applying the
+scaler to test data before splitting).
+
+The cross-validation procedure dates to Stone (1974) for model
+selection and Geisser (1975) for predictive inference. The
+leave-one-out shortcut via the hat matrix is due to Allen (1974),
+who called it the PRESS statistic. The variance of CV estimators---and
+why leave-one-out has high variance despite low bias---is analyzed in
+Bengio and Grandvalet (2004).
+
+The Bergstra--Bengio result that random search outperforms grid search
+in high dimensions appears in Bergstra and Bengio (2012). The intuition
+is geometric: a $d$-dimensional grid of $n$ points projects onto
+$n^{1/d}$ distinct values per axis, while $n$ random points project
+onto $n$ distinct values per axis.
+
+The CASH problem was formalized by Thornton et al. (2013) in the context
+of Auto-WEKA. Auto-sklearn (Feurer et al., 2015) extends it with
+meta-learning and ensemble construction. The connection between AutoML
+and derivative-free optimization is underappreciated in the ML
+literature; the optimization community's perspective (Chapter 5)
+clarifies both the power and the limitations.
+
+The "two cultures" distinction between prediction and inference is
+from Breiman (2001). This book treats both, but keeps them
+separate: scikit-learn for prediction, statsmodels for inference,
+scipy for the computation that underlies both.

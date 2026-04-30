@@ -1,0 +1,30 @@
+---
+title: "Heterogeneous Treatment Effects and Double Machine Learning"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch22-motivation}
+
+# Mathematical Foundation {#sec-ch22-math}
+
+# The Algorithm {#sec-ch22-algorithm}
+
+# Statistical Properties {#sec-ch22-stats}
+
+# Implementation {#sec-ch22-impl}
+
+# From-Scratch Implementation {#sec-ch22-scratch}
+
+# Diagnostics {#sec-ch22-diagnostics}
+
+# Computational Considerations {#sec-ch22-computation}
+
+# Worked Example {#sec-ch22-example}
+
+# Exercises {#sec-ch22-exercises}
+
+# Bibliographic Notes {#sec-ch22-biblio}

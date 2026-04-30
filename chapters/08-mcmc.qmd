@@ -1,0 +1,30 @@
+---
+title: "MCMC: Theory and Diagnostics"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch07-motivation}
+
+# Mathematical Foundation {#sec-ch07-math}
+
+# The Algorithm {#sec-ch07-algorithm}
+
+# Statistical Properties {#sec-ch07-stats}
+
+# Implementation {#sec-ch07-impl}
+
+# From-Scratch Implementation {#sec-ch07-scratch}
+
+# Diagnostics {#sec-ch07-diagnostics}
+
+# Computational Considerations {#sec-ch07-computation}
+
+# Worked Example {#sec-ch07-example}
+
+# Exercises {#sec-ch07-exercises}
+
+# Bibliographic Notes {#sec-ch07-biblio}

@@ -1,0 +1,30 @@
+---
+title: "Multivariate Methods and Nonparametric Smoothing"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch18-motivation}
+
+# Mathematical Foundation {#sec-ch18-math}
+
+# The Algorithm {#sec-ch18-algorithm}
+
+# Statistical Properties {#sec-ch18-stats}
+
+# Statsmodels Implementation {#sec-ch18-statsmodels}
+
+# From-Scratch Implementation {#sec-ch18-scratch}
+
+# Diagnostics {#sec-ch18-diagnostics}
+
+# Computational Considerations {#sec-ch18-computation}
+
+# Worked Example {#sec-ch18-example}
+
+# Exercises {#sec-ch18-exercises}
+
+# Bibliographic Notes {#sec-ch18-biblio}

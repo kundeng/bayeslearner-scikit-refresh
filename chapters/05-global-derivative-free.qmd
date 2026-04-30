@@ -1,0 +1,30 @@
+---
+title: "Global, Stochastic, and Derivative-Free Optimization"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch04-motivation}
+
+# Mathematical Foundation {#sec-ch04-math}
+
+# The Algorithm {#sec-ch04-algorithm}
+
+# Statistical Properties {#sec-ch04-stats}
+
+# SciPy Implementation {#sec-ch04-scipy}
+
+# From-Scratch Implementation {#sec-ch04-scratch}
+
+# Diagnostics {#sec-ch04-diagnostics}
+
+# Computational Considerations {#sec-ch04-computation}
+
+# Worked Example {#sec-ch04-example}
+
+# Exercises {#sec-ch04-exercises}
+
+# Bibliographic Notes {#sec-ch04-biblio}

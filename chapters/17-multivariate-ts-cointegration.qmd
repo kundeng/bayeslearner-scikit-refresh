@@ -1,0 +1,30 @@
+---
+title: "Multivariate Time Series and Cointegration"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch16-motivation}
+
+# Mathematical Foundation {#sec-ch16-math}
+
+# The Algorithm {#sec-ch16-algorithm}
+
+# Statistical Properties {#sec-ch16-stats}
+
+# Statsmodels Implementation {#sec-ch16-statsmodels}
+
+# From-Scratch Implementation {#sec-ch16-scratch}
+
+# Diagnostics {#sec-ch16-diagnostics}
+
+# Computational Considerations {#sec-ch16-computation}
+
+# Worked Example {#sec-ch16-example}
+
+# Exercises {#sec-ch16-exercises}
+
+# Bibliographic Notes {#sec-ch16-biblio}

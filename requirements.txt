@@ -1,0 +1,12 @@
+# Pinned dependencies for the book
+# Version drift is a release blocker (STEERING.md §5.8)
+# Tested on Python 3.13.3
+numpy==2.2.6
+scipy==1.14.1
+scikit-learn==1.8.0
+statsmodels==0.14.4
+matplotlib==3.9.2
+pandas==2.2.3
+linearmodels==7.0
+jupyter==1.1.1
+nbformat==5.10.4

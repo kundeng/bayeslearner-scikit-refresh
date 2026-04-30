@@ -1,0 +1,30 @@
+---
+title: "Survival Analysis"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch17-motivation}
+
+# Mathematical Foundation {#sec-ch17-math}
+
+# The Algorithm {#sec-ch17-algorithm}
+
+# Statistical Properties {#sec-ch17-stats}
+
+# Statsmodels Implementation {#sec-ch17-statsmodels}
+
+# From-Scratch Implementation {#sec-ch17-scratch}
+
+# Diagnostics {#sec-ch17-diagnostics}
+
+# Computational Considerations {#sec-ch17-computation}
+
+# Worked Example {#sec-ch17-example}
+
+# Exercises {#sec-ch17-exercises}
+
+# Bibliographic Notes {#sec-ch17-biblio}

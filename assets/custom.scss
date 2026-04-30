@@ -1,0 +1,126 @@
+/*-- scss:defaults --*/
+
+// Typography
+$font-family-sans-serif: "Latin Modern Roman", "Palatino", "Georgia", serif;
+$font-family-monospace: "JuliaMono", "Fira Code", "Source Code Pro", monospace;
+$headings-font-family: "Latin Modern Roman", "Palatino", serif;
+$headings-font-weight: 700;
+
+// Colors -- restrained academic palette, functional not decorative
+$body-color: #1a1a2e;
+$body-bg: #fafaf8;
+$link-color: #16537e;
+$code-color: #2d3436;
+$code-bg: #f4f3ef;
+
+// Theorem / definition blocks
+$callout-color-note: #16537e;
+$callout-color-tip: #2d6a4f;
+$callout-color-warning: #9c4221;
+$callout-color-important: #6b21a8;
+
+/*-- scss:rules --*/
+
+// Theorem-style blocks
+.theorem-block, .definition-block, .lemma-block, .proposition-block {
+  border-left: 4px solid $callout-color-note;
+  padding: 1em 1.2em;
+  margin: 1.5em 0;
+  background: rgba(22, 83, 126, 0.04);
+  border-radius: 0 4px 4px 0;
+}
+
+.definition-block {
+  border-left-color: $callout-color-tip;
+  background: rgba(45, 106, 79, 0.04);
+}
+
+// Math display -- generous spacing
+.math.display {
+  margin: 1.5em 0;
+  overflow-x: auto;
+}
+
+// Figure captions -- always visible, styled
+.figure .caption, figcaption {
+  font-size: 0.9em;
+  color: #555;
+  font-style: italic;
+  margin-top: 0.5em;
+  line-height: 1.5;
+}
+
+// Code blocks -- clean, readable
+div.sourceCode {
+  border: 1px solid #e0ddd4;
+  border-radius: 4px;
+  margin: 1em 0;
+}
+
+pre.sourceCode {
+  font-size: 0.88em;
+  line-height: 1.5;
+  padding: 1em;
+}
+
+// Chapter title pages
+.chapter-title {
+  font-size: 2.4em;
+  border-bottom: 2px solid $callout-color-note;
+  padding-bottom: 0.3em;
+  margin-bottom: 1em;
+}
+
+// Pseudocode blocks -- visually distinct from Python
+.pseudocode {
+  font-family: $font-family-sans-serif;
+  background: #f9f7f1;
+  border: 1px solid #d4c9a8;
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1em 0;
+  font-size: 0.92em;
+  line-height: 1.6;
+}
+
+// Table styling
+table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+}
+
+th {
+  background: #f0ede4;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.6em 0.8em;
+  border-bottom: 2px solid #c9c3b3;
+}
+
+td {
+  padding: 0.5em 0.8em;
+  border-bottom: 1px solid #e8e4da;
+}
+
+// Exercises section
+.exercises ol {
+  counter-reset: exercise;
+  list-style: none;
+  padding-left: 0;
+}
+
+.exercises ol > li {
+  counter-increment: exercise;
+  margin-bottom: 1.5em;
+  padding-left: 2.5em;
+  position: relative;
+}
+
+.exercises ol > li::before {
+  content: counter(exercise) ".";
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+  color: $callout-color-note;
+}

@@ -1,0 +1,30 @@
+---
+title: "Monte Carlo Integration and Variance Reduction"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch06-motivation}
+
+# Mathematical Foundation {#sec-ch06-math}
+
+# The Algorithm {#sec-ch06-algorithm}
+
+# Statistical Properties {#sec-ch06-stats}
+
+# SciPy Implementation {#sec-ch06-scipy}
+
+# From-Scratch Implementation {#sec-ch06-scratch}
+
+# Diagnostics {#sec-ch06-diagnostics}
+
+# Computational Considerations {#sec-ch06-computation}
+
+# Worked Example {#sec-ch06-example}
+
+# Exercises {#sec-ch06-exercises}
+
+# Bibliographic Notes {#sec-ch06-biblio}

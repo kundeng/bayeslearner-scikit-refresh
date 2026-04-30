@@ -1,0 +1,30 @@
+---
+title: "Linear Regression Under Misspecification"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch10-motivation}
+
+# Mathematical Foundation {#sec-ch10-math}
+
+# The Algorithm {#sec-ch10-algorithm}
+
+# Statistical Properties {#sec-ch10-stats}
+
+# Statsmodels Implementation {#sec-ch10-statsmodels}
+
+# From-Scratch Implementation {#sec-ch10-scratch}
+
+# Diagnostics {#sec-ch10-diagnostics}
+
+# Computational Considerations {#sec-ch10-computation}
+
+# Worked Example {#sec-ch10-example}
+
+# Exercises {#sec-ch10-exercises}
+
+# Bibliographic Notes {#sec-ch10-biblio}

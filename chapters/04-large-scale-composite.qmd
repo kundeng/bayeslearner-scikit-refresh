@@ -1,0 +1,30 @@
+---
+title: "Large-Scale and Composite Optimization"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch03-motivation}
+
+# Mathematical Foundation {#sec-ch03-math}
+
+# The Algorithm {#sec-ch03-algorithm}
+
+# Statistical Properties {#sec-ch03-stats}
+
+# SciPy Implementation {#sec-ch03-scipy}
+
+# From-Scratch Implementation {#sec-ch03-scratch}
+
+# Diagnostics {#sec-ch03-diagnostics}
+
+# Computational Considerations {#sec-ch03-computation}
+
+# Worked Example {#sec-ch03-example}
+
+# Exercises {#sec-ch03-exercises}
+
+# Bibliographic Notes {#sec-ch03-biblio}

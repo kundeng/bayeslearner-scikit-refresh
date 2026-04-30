@@ -1,0 +1,29 @@
+# Quarto
+_book/
+_freeze/
+.quarto/
+*.html
+!_quarto.yml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Rendered figures (regenerated from code)
+_site/

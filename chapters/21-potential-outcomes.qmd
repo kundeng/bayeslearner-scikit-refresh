@@ -1,0 +1,30 @@
+---
+title: "Potential Outcomes, Identification, and Estimation Under Unconfoundedness"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch20-motivation}
+
+# Mathematical Foundation {#sec-ch20-math}
+
+# The Algorithm {#sec-ch20-algorithm}
+
+# Statistical Properties {#sec-ch20-stats}
+
+# Implementation {#sec-ch20-impl}
+
+# From-Scratch Implementation {#sec-ch20-scratch}
+
+# Diagnostics {#sec-ch20-diagnostics}
+
+# Computational Considerations {#sec-ch20-computation}
+
+# Worked Example {#sec-ch20-example}
+
+# Exercises {#sec-ch20-exercises}
+
+# Bibliographic Notes {#sec-ch20-biblio}

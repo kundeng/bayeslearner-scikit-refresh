@@ -1,0 +1,30 @@
+---
+title: "The Wald, Score, and Likelihood-Ratio Trinity"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch09-motivation}
+
+# Mathematical Foundation {#sec-ch09-math}
+
+# The Algorithm {#sec-ch09-algorithm}
+
+# Statistical Properties {#sec-ch09-stats}
+
+# Statsmodels Implementation {#sec-ch09-statsmodels}
+
+# From-Scratch Implementation {#sec-ch09-scratch}
+
+# Diagnostics {#sec-ch09-diagnostics}
+
+# Computational Considerations {#sec-ch09-computation}
+
+# Worked Example {#sec-ch09-example}
+
+# Exercises {#sec-ch09-exercises}
+
+# Bibliographic Notes {#sec-ch09-biblio}

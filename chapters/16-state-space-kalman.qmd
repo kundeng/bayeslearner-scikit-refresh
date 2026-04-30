@@ -1,0 +1,30 @@
+---
+title: "State Space Models, Kalman Filtering, and Regime Switching"
+---
+
+::: {.callout-note}
+## Status
+This chapter is **planned**. Content below is a scaffold.
+:::
+
+# Motivation {#sec-ch15-motivation}
+
+# Mathematical Foundation {#sec-ch15-math}
+
+# The Algorithm {#sec-ch15-algorithm}
+
+# Statistical Properties {#sec-ch15-stats}
+
+# Statsmodels Implementation {#sec-ch15-statsmodels}
+
+# From-Scratch Implementation {#sec-ch15-scratch}
+
+# Diagnostics {#sec-ch15-diagnostics}
+
+# Computational Considerations {#sec-ch15-computation}
+
+# Worked Example {#sec-ch15-example}
+
+# Exercises {#sec-ch15-exercises}
+
+# Bibliographic Notes {#sec-ch15-biblio}
