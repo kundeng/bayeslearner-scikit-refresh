@@ -2,29 +2,409 @@
 title: "Multivariate Time Series and Cointegration"
 ---
 
-::: {.callout-note}
-## Status
-This chapter is **planned**. Content below is a scaffold.
+```{python}
+#| label: imports
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.tsa.api import VAR
+from statsmodels.tsa.vector_ar.vecm import coint_johansen, VECM
+from statsmodels.tsa.stattools import grangercausalitytests, adfuller
+from scipy import stats
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Notation for this chapter
+
+| Symbol | Meaning | statsmodels |
+|--------|---------|-------------|
+| $\mathbf{y}_t = (y_{1t}, \ldots, y_{Kt})^\top$ | $K$-dimensional series | `endog` (T x K) |
+| $\boldsymbol{\Phi}_i$ | VAR coefficient matrix at lag $i$ | `.coefs[i]` |
+| $\boldsymbol{\Pi}$ | Cointegrating matrix ($\boldsymbol{\Pi} = \boldsymbol{\alpha}\boldsymbol{\beta}^\top$) | |
+| $r$ | Cointegrating rank | Johansen trace test |
+| $\boldsymbol{\Sigma}_u$ | Innovation covariance | `.sigma_u` |
+
+
+# Motivation {#sec-ch17-motivation}
+
+Economic and financial variables don't move independently: interest
+rates affect exchange rates, GDP growth affects unemployment,
+consumption tracks income. Modeling these interdependencies requires
+*multivariate* time series models.
+
+The VAR (Vector Autoregression) is the multivariate extension of the
+AR model from Chapter 15: each variable is regressed on its own lags
+and the lags of all other variables. It captures *Granger causality*
+(does variable $A$'s past help predict variable $B$?) and produces
+*impulse response functions* (how does a shock to $A$ propagate to
+$B$ over time?).
+
+*Cointegration* addresses a deeper issue: when two non-stationary
+series share a common stochastic trend, their linear combination is
+stationary. The Johansen test identifies these long-run relationships
+and the VECM (Vector Error Correction Model) models them.
+
+
+# Mathematical Foundation {#sec-ch17-math}
+
+## The VAR(p) model
+
+$$
+\mathbf{y}_t = \boldsymbol{\nu} + \boldsymbol{\Phi}_1\mathbf{y}_{t-1} + \cdots + \boldsymbol{\Phi}_p\mathbf{y}_{t-p} + \mathbf{u}_t,
+\quad \mathbf{u}_t \sim \mathcal{N}(\mathbf{0}, \boldsymbol{\Sigma}_u).
+$$
+
+**Stability:** The VAR is stable (stationary) when all eigenvalues of
+the companion matrix lie inside the unit circle. Statsmodels' `VAR`
+checks this automatically.
+
+## Granger causality
+
+Variable $A$ *Granger-causes* $B$ if the lags of $A$ help predict $B$
+beyond $B$'s own lags. This is a test of coefficient restrictions:
+$H_0: \Phi_{BA,i} = 0$ for all lags $i$. It is a Wald test (Chapter
+10) applied to the VAR coefficients.
+
+Granger causality is *predictive*, not causal in the counterfactual
+sense (Chapter 21-23).
+
+## Cointegration
+
+Two $I(1)$ series $y_{1t}$ and $y_{2t}$ are cointegrated if there
+exists $\beta$ such that $y_{1t} - \beta y_{2t}$ is $I(0)$
+(stationary). The Johansen test determines the cointegrating rank $r$
+(how many independent cointegrating relationships exist) using the
+reduced-rank regression of the VECM:
+
+$$
+\Delta\mathbf{y}_t = \boldsymbol{\Pi}\mathbf{y}_{t-1} + \sum_{i=1}^{p-1}\boldsymbol{\Gamma}_i\Delta\mathbf{y}_{t-i} + \mathbf{u}_t,
+$$
+
+where $\boldsymbol{\Pi} = \boldsymbol{\alpha}\boldsymbol{\beta}^\top$
+has rank $r$. The columns of $\boldsymbol{\beta}$ are the cointegrating
+vectors; $\boldsymbol{\alpha}$ is the adjustment speed.
+
+
+# The Algorithm {#sec-ch17-algorithm}
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 17.1: VAR Estimation and Analysis
+
+1. Choose lag order $p$ via AIC/BIC (`var.select_order()`)
+2. Fit VAR($p$) via OLS (equation by equation)
+3. Test Granger causality for each pair of variables
+4. Compute impulse response functions
+5. Check stability (eigenvalues of companion matrix)
 :::
 
-# Motivation {#sec-ch16-motivation}
 
-# Mathematical Foundation {#sec-ch16-math}
+# Statistical Properties {#sec-ch17-stats}
 
-# The Algorithm {#sec-ch16-algorithm}
+VAR estimation by OLS is consistent and asymptotically normal (each
+equation is a standard regression). The Johansen test has non-standard
+distributions (like ADF in Chapter 15) because it involves non-stationary
+regressors.
 
-# Statistical Properties {#sec-ch16-stats}
 
-# Statsmodels Implementation {#sec-ch16-statsmodels}
+# Statsmodels Implementation {#sec-ch17-statsmodels}
 
-# From-Scratch Implementation {#sec-ch16-scratch}
+## VAR: fitting and analysis
 
-# Diagnostics {#sec-ch16-diagnostics}
+```{python}
+#| label: var-demo
+# Simulate a bivariate VAR(1)
+T = 300
+Phi = np.array([[0.5, 0.2], [-0.1, 0.6]])
+y_var = np.zeros((T, 2))
+for t in range(1, T):
+    y_var[t] = Phi @ y_var[t-1] + rng.standard_normal(2)
 
-# Computational Considerations {#sec-ch16-computation}
+# Fit VAR
+var_model = VAR(y_var)
+order = var_model.select_order(maxlags=5)
+print("Lag selection:")
+print(order.summary())
 
-# Worked Example {#sec-ch16-example}
+var_result = var_model.fit(maxlags=2)
+print(f"\nVAR(2) coefficients (lag 1):")
+print(np.round(var_result.coefs[0], 3))
+print(f"True Phi:\n{Phi}")
+```
 
-# Exercises {#sec-ch16-exercises}
+## Granger causality
 
-# Bibliographic Notes {#sec-ch16-biblio}
+```{python}
+#| label: granger-demo
+# Test: does y1 Granger-cause y2?
+gc = var_result.test_causality('y2', ['y1'], kind='f')
+print(f"y1 → y2: F={gc.test_statistic:.3f}, p={gc.pvalue:.4f}")
+
+gc2 = var_result.test_causality('y1', ['y2'], kind='f')
+print(f"y2 → y1: F={gc2.test_statistic:.3f}, p={gc2.pvalue:.4f}")
+```
+
+## Impulse response functions
+
+```{python}
+#| label: fig-irf
+#| fig-cap: "Impulse response functions: effect of a one-unit shock to each variable on both variables over 20 periods. The cross-effects show how shocks propagate through the system."
+
+irf = var_result.irf(periods=20)
+fig, axes = plt.subplots(2, 2, figsize=(10, 7))
+for i in range(2):
+    for j in range(2):
+        axes[i, j].plot(irf.irfs[:, i, j], color="C0", linewidth=1.5)
+        axes[i, j].fill_between(
+            range(21),
+            irf.irfs[:, i, j] - 1.96*irf.stderr()[:, i, j],
+            irf.irfs[:, i, j] + 1.96*irf.stderr()[:, i, j],
+            alpha=0.2, color="C0",
+        )
+        axes[i, j].axhline(0, color="gray", linewidth=0.5)
+        axes[i, j].set_title(f"Shock to y{j+1} → y{i+1}")
+axes[1, 0].set_xlabel("Periods")
+axes[1, 1].set_xlabel("Periods")
+plt.tight_layout()
+plt.show()
+```
+
+## Cointegration: Johansen test
+
+```{python}
+#| label: johansen-demo
+# Simulate cointegrated series: y1 and y2 share a common trend
+T_ci = 300
+trend = np.cumsum(rng.standard_normal(T_ci))
+y1 = trend + rng.standard_normal(T_ci)
+y2 = 2*trend + 0.5 + rng.standard_normal(T_ci)
+y_coint = np.column_stack([y1, y2])
+
+# Both are non-stationary
+print(f"ADF y1: p={adfuller(y1)[1]:.4f}")
+print(f"ADF y2: p={adfuller(y2)[1]:.4f}")
+
+# But y1 - 0.5*y2 is stationary
+print(f"ADF y1 - 0.5*y2: p={adfuller(y1 - 0.5*y2)[1]:.4f}")
+
+# Johansen test
+joh = coint_johansen(y_coint, det_order=0, k_ar_diff=1)
+print(f"\nJohansen trace statistics: {joh.lr1.round(2)}")
+print(f"Critical values (5%):     {joh.cvt[:, 1].round(2)}")
+print(f"Cointegrating rank: {np.sum(joh.lr1 > joh.cvt[:, 1])}")
+```
+
+## VECM: Vector Error Correction Model
+
+```{python}
+#| label: vecm-demo
+vecm = VECM(y_coint, k_ar_diff=1, coint_rank=1, deterministic='ci').fit()
+print(f"Cointegrating vector: {vecm.beta.ravel().round(3)}")
+print(f"Adjustment speeds:    {vecm.alpha.ravel().round(3)}")
+print(f"\nInterpretation: when y1 - {abs(vecm.beta[1,0]):.2f}*y2 is")
+print(f"above equilibrium, y1 adjusts down by {vecm.alpha[0,0]:.2f}")
+print(f"and y2 adjusts up by {vecm.alpha[1,0]:.2f} per period.")
+```
+
+
+# From-Scratch Implementation {#sec-ch17-scratch}
+
+## VAR(1) by OLS
+
+```{python}
+#| label: var-scratch
+
+def fit_var1(y):
+    """Fit VAR(1) by OLS: y_t = Phi * y_{t-1} + u_t."""
+    T, K = y.shape
+    Y = y[1:]          # (T-1) x K
+    X = y[:-1]         # (T-1) x K (lagged)
+    # OLS: Phi = (X'X)^-1 X'Y
+    Phi = np.linalg.solve(X.T @ X, X.T @ Y).T
+    resid = Y - X @ Phi.T
+    Sigma = resid.T @ resid / (T - 1)
+    return Phi, Sigma
+
+Phi_hat, Sigma_hat = fit_var1(y_var)
+print(f"From-scratch Phi:\n{Phi_hat.round(3)}")
+print(f"statsmodels Phi:\n{var_result.coefs[0].round(3)}")
+```
+
+
+# Diagnostics {#sec-ch17-diagnostics}
+
+## Stability check
+
+```{python}
+#| label: stability
+# All eigenvalues of companion matrix must be inside unit circle
+eigenvalues = np.linalg.eigvals(Phi_hat)
+print(f"Eigenvalues: {eigenvalues.round(3)}")
+print(f"|eigenvalues|: {np.abs(eigenvalues).round(3)}")
+print(f"Stable: {np.all(np.abs(eigenvalues) < 1)}")
+```
+
+## Residual cross-correlation
+
+```{python}
+#| label: portmanteau
+# Portmanteau test for residual autocorrelation
+pt = var_result.test_whiteness(nlags=10)
+print(f"Portmanteau test: stat={pt.test_statistic:.2f}, "
+      f"p={pt.pvalue:.4f}")
+```
+
+
+# Computational Considerations {#sec-ch17-computation}
+
+| Model | Cost | Parameters | Notes |
+|---|---|---|---|
+| VAR($p$) | $O(TK^2p)$ per equation | $K^2p + K$ | OLS, equation by equation |
+| Johansen | $O(TK^2p + K^3)$ | Eigenvalue problem | Reduced-rank regression |
+| VECM | $O(TK^2p)$ | $Kr + K^2(p-1)$ | $r$ = cointegrating rank |
+
+VAR scales quadratically in $K$ (number of variables). For $K > 10$,
+consider regularized VAR (Lasso-VAR) or factor models.
+
+
+# Worked Example {#sec-ch17-example}
+
+Testing whether consumption and income are cointegrated.
+
+```{python}
+#| label: worked-ci
+# Simulated consumption-income data
+T_w = 500
+income = np.cumsum(0.5 + 0.5*rng.standard_normal(T_w))
+consumption = 0.8*income + 5 + 2*rng.standard_normal(T_w)
+
+y_ci = np.column_stack([consumption, income])
+
+# Both I(1)
+print(f"ADF consumption: p={adfuller(consumption)[1]:.4f}")
+print(f"ADF income:      p={adfuller(income)[1]:.4f}")
+
+# Cointegrated? (consumption = 0.8*income + 5 + noise)
+joh_w = coint_johansen(y_ci, det_order=1, k_ar_diff=1)
+print(f"\nJohansen trace: {joh_w.lr1.round(2)}")
+print(f"CV (5%):        {joh_w.cvt[:, 1].round(2)}")
+r = np.sum(joh_w.lr1 > joh_w.cvt[:, 1])
+print(f"Cointegrating rank: {r}")
+```
+
+```{python}
+#| label: worked-vecm
+if r > 0:
+    vecm_w = VECM(y_ci, k_ar_diff=1, coint_rank=1,
+                   deterministic='ci').fit()
+    print(f"Cointegrating vector: {vecm_w.beta.ravel().round(3)}")
+    print(f"(Should be ≈ [1, -0.8] for C = 0.8*Y)")
+```
+
+
+# Exercises {#sec-ch17-exercises}
+
+**Exercise 17.1** ($\star\star$, diagnostic failure). Fit a VAR to two
+independent random walks. Test Granger causality. Should the test
+reject? What happens in practice (try 10 different seeds)? This
+illustrates *spurious regression* in the multivariate setting.
+
+%%
+
+```{python}
+#| label: ex-17-1
+reject_count = 0
+for seed in range(10):
+    r2 = np.random.default_rng(seed)
+    y_spur = np.column_stack([
+        np.cumsum(r2.standard_normal(200)),
+        np.cumsum(r2.standard_normal(200)),
+    ])
+    var_spur = VAR(np.diff(y_spur, axis=0)).fit(maxlags=2)
+    gc_spur = var_spur.test_causality('y2', ['y1'], kind='f')
+    if gc_spur.pvalue < 0.05:
+        reject_count += 1
+
+print(f"Rejected H0 (no Granger causality): {reject_count}/10")
+print("Should be ≈ 0-1 (at 5% level) for independent series.")
+print("If using levels instead of differences, spurious rejection")
+print("is much more common.")
+```
+
+%%
+
+**Exercise 17.2** ($\star\star$, comparison). Compare VAR lag selection
+using AIC vs BIC on the simulated VAR(1) data. Do they agree? Try
+with $T = 50$ and $T = 500$.
+
+%%
+
+```{python}
+#| label: ex-17-2
+for T_sel in [50, 500]:
+    y_sel = np.zeros((T_sel, 2))
+    for t in range(1, T_sel):
+        y_sel[t] = Phi @ y_sel[t-1] + rng.standard_normal(2)
+    order_sel = VAR(y_sel).select_order(maxlags=5)
+    print(f"T={T_sel}: AIC selects p={order_sel.aic}, "
+          f"BIC selects p={order_sel.bic}")
+```
+
+%%
+
+**Exercise 17.3** ($\star\star$, implementation). Implement VAR(1)
+estimation by OLS from scratch. Verify against `VAR.fit()`.
+
+%%
+
+```{python}
+#| label: ex-17-3
+P_ours, S_ours = fit_var1(y_var)
+var1 = VAR(y_var).fit(maxlags=1)
+print(f"Match: {np.allclose(P_ours, var1.coefs[0], atol=0.01)}")
+```
+
+%%
+
+**Exercise 17.4** ($\star\star\star$, conceptual). Two stock prices are
+both random walks but their spread (price difference) is stationary.
+This is cointegration. Explain why you should trade the spread (pairs
+trading), not the individual stocks. What role does the adjustment
+speed $\alpha$ play in determining how fast the spread reverts?
+
+%%
+
+If the spread $y_{1t} - \beta y_{2t}$ is stationary, it fluctuates
+around a long-run mean. When the spread is wide (above the mean),
+$y_1$ is "too expensive" relative to $y_2$: sell $y_1$ and buy $y_2$
+(the spread will revert). The adjustment speed $\alpha$ determines how
+fast: large $|\alpha|$ means fast reversion (profitable trades, short
+holding period), small $|\alpha|$ means slow reversion (trades tie up
+capital). The half-life of reversion is approximately $\ln(2)/|\alpha|$
+periods.
+
+Trading individual stocks is unprofitable because they are random
+walks (unpredictable). Trading the spread is profitable because it is
+stationary (mean-reverting). This is the basis of statistical
+arbitrage / pairs trading.
+
+%%
+
+
+# Bibliographic Notes {#sec-ch17-biblio}
+
+VAR: Sims (1980) for the VAR methodology in macroeconomics. Lütkepohl
+(2005) for the comprehensive textbook treatment.
+
+Granger causality: Granger (1969). The test is a Wald test on VAR
+coefficients (Chapter 10). Sims (1972) for the practical interpretation.
+
+Cointegration: Engle and Granger (1987) for the two-step procedure.
+Johansen (1991) for the reduced-rank regression approach. Hamilton
+(1994) Chapter 19 for the textbook treatment.
+
+Impulse response functions and forecast error variance decomposition:
+Lütkepohl (2005) Chapter 2. Structural identification (Cholesky, sign
+restrictions): Kilian and Lütkepohl (2017).
