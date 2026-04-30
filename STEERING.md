@@ -162,11 +162,13 @@ Length: 1–2 pages.
 
 ### Section 2: Mathematical Foundation
 
-The mathematical framework the method rests on. Definitions, assumptions (numbered and named), and the core theory. Theorems are numbered, stated formally, and proved, sketched, or referenced according to the proof standard in §4. Every assumption used later in the chapter is introduced here and given a label that can be cited by number.
+The mathematical framework the method rests on. Definitions, key assumptions, and the core results stated precisely. The emphasis is on **intuition**: why does this method work? What happens when the assumptions fail? How does the theory explain the API design and the default parameter choices?
 
-This section contains no code.
+This section is *not* a theory textbook. Proofs are included only when they build intuition that the reader will reuse — typically when the proof *is* the algorithm (e.g., the BFGS update derivation leads directly to the code) or when the proof explains a failure mode the reader will encounter. Most results are stated precisely, given 2–3 sentences of intuition, and cited.
 
-Length: varies, typically 5–15 pages. This is the densest section.
+This section may contain short code demonstrations when a theoretical claim is best understood by seeing what happens.
+
+Length: 3–8 pages. Shorter is better if the intuition is clear.
 
 ### Section 3: The Algorithm
 
@@ -247,33 +249,41 @@ Length: 1–2 pages.
 
 ## 4. Proof Standard
 
-### 4.1 Three Levels
+### 4.1 Guiding Principle
 
-Every theorem, proposition, or lemma in the book receives one of three treatments:
+This is a coding book, not a theory book. Proofs are included only when they serve one or more of:
 
-1. **Full proof.** The proof is given in the text, step by step, with enough detail that a reader meeting the prerequisites (§1.2) can verify every line. No steps are hidden behind "it can be shown" or "clearly." If a step is nontrivial, it is worked out; if it is routine, it is marked as such with a one-line justification ("by the chain rule," "by the triangle inequality").
+- **Intuition** — the proof explains *why* the method works in a way that changes how the reader thinks about it
+- **Algorithm** — the proof *is* the algorithm (e.g., deriving the BFGS update leads directly to the NumPy code)
+- **API design** — the proof explains *why* the interface is designed the way it is (e.g., why `method='BFGS'` needs a gradient but not a Hessian)
+- **Diagnostics** — the proof explains *what goes wrong* when assumptions fail and *how to detect it*
+- **Practical tuning** — the proof explains *why* a parameter choice matters (e.g., why `c2=0.9` for BFGS but `c2=0.1` for CG)
 
-2. **Sketch with citation.** The key ideas of the proof are presented — enough for the reader to see *why* the result is true and *where the difficulty lies* — but technical details are deferred to a cited reference. The sketch must be honest: it identifies what it is skipping rather than papering over gaps. The citation must be to a specific theorem or section in a specific source, not to a book in general.
+If a proof does none of these, it should be a statement with intuition and a citation. The from-scratch implementation is the proof for most readers: if the code matches scipy's output, the theory is validated.
 
-3. **Statement with reference.** The result is stated precisely (with all conditions) but not proved. A specific reference is given. This level is used for results that are needed but whose proofs require machinery outside the book's scope (e.g., measure-theoretic arguments, functional-analytic results).
+### 4.2 Three Levels
 
-### 4.2 Assignment Policy
+1. **Proof that builds intuition.** The proof is given because it teaches something the reader will use — either directly in code or in understanding why code behaves as it does. These proofs are typically short (under 1 page) and lead directly to an implementation or a diagnostic.
 
-The choice of proof level is not left to the drafting agent. It is specified per chapter in `CHAPTERS.md` under the "Theory — full proofs" and "Theory — sketched" headings. Any result not listed in either heading defaults to level 3 (statement with reference) unless the drafting agent judges that a full proof or sketch is short and illuminating, in which case the agent may upgrade the level and note the upgrade in `STYLE_DEVIATIONS.md`.
+2. **Result with intuition and citation.** The result is stated precisely. Two to three sentences explain *why* it is true — the key idea, the geometric picture, what would go wrong without it. A specific reference is given. Code may demonstrate the result. This is the **default level** for most results.
 
-Downgrading a result from full proof to sketch or from sketch to reference-only requires human approval. This is a §7.3 decision.
+3. **Statement with reference.** The result is stated precisely and cited. Used for technical results that the reader needs to trust but not internalize (e.g., convergence rates, regularity conditions).
 
-### 4.3 General Principles
+### 4.3 Assignment Policy
 
-- **No "clearly" without backing.** If something is clear, it takes one sentence to say why. If it takes more than one sentence, it was not clear.
-- **No "it can be shown."** Either show it, sketch it with a citation, or state it with a reference. The reader paid for the book; they should not have to look things up to complete a proof the book claims to give.
-- **Asymptotic regime stated.** Every asymptotic result specifies what is growing ($n \to \infty$, $p$ fixed; $n, p \to \infty$ with $p/n \to \gamma$; $k \to \infty$ iterations; etc.). A bare "$\to 0$" is never acceptable.
-- **Assumptions referenced by number.** When a proof step invokes an assumption, it cites the assumption by label ("by Assumption 2.1 (Lipschitz gradient)"). This is how the reader tracks which assumptions are load-bearing and which are cosmetic.
-- **Regularity conditions surfaced.** If a result requires "standard regularity conditions," those conditions are stated explicitly at least once in the chapter (typically in Section 2) and then cited by label thereafter. The phrase "under regularity conditions" is allowed only after the conditions have been defined and labelled.
+The default is level 2 (result with intuition). The agent *upgrades* to level 1 only when the proof serves one of the purposes in §4.1. The agent does not need approval to *downgrade* from the proof levels specified in `CHAPTERS.md` — the CHAPTERS.md entries were written before this rebalancing and many of their "full proof" designations should now be level 2.
 
-### 4.4 Cross-Chapter Proof Reuse
+### 4.4 General Principles
 
-When a later chapter needs a result proved in an earlier chapter, it cites the earlier theorem by number ("by Theorem 9.2") and does not re-prove it. If the later chapter needs a mild extension, it states the extension as a corollary and proves only the delta.
+- **No "clearly" without backing.** One sentence of intuition replaces the word "clearly."
+- **No "it can be shown."** State the result, give intuition, cite the reference, or show code.
+- **Asymptotic regime stated.** Every asymptotic result specifies what is growing.
+- **The code is the proof.** When a from-scratch implementation matches scipy's output to 6 digits, that verification carries more weight for this book's audience than a convergence theorem.
+- **Don't get stuck in proofs.** If a proof is taking more than a page and doesn't lead to code or a diagnostic, it's too long. State the result, give the key idea, cite, and move on.
+
+### 4.5 Cross-Chapter Reuse
+
+When a later chapter needs a result from an earlier chapter, it cites by number and does not re-derive.
 
 ---
 
