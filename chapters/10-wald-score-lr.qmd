@@ -83,7 +83,7 @@ $$ {#eq-info-equality}
 
 This equality holds under the true model. Under misspecification (the
 model is wrong), the two sides differ, and the sandwich estimator
-(§7 of this chapter) is needed.
+(@eq-sandwich) is needed.
 
 ## The three test statistics
 
@@ -303,9 +303,9 @@ $$ {#eq-sandwich}
 # Test H0: beta_1 = beta_2 = 0 (jointly)
 ols_robust = sm.OLS(y, X_sm).fit(cov_type='HC1')
 f_result = ols_robust.f_test('x2 = 0, x3 = 0')
-print(f"F-statistic: {f_result.fvalue[0][0]:.4f}")
+print(f"F-statistic: {f_result.fvalue:.4f}")
 print(f"p-value:     {f_result.pvalue:.4f}")
-print(f"df:          ({f_result.df_num}, {f_result.df_denom[0]:.0f})")
+print(f"df:          ({f_result.df_num:.0f}, {f_result.df_denom:.0f})")
 ```
 
 ## Likelihood-ratio test
@@ -406,7 +406,7 @@ print(f"Match: {np.isclose(stat_ours, ols.tvalues[2]**2, atol=0.01)}")
 ```{python}
 #| label: score-scratch
 
-def score_test(model_restricted, X_full, y):
+def score_test(model_restricted, X_full, y, omitted_cols):
     """Score test for omitted variables.
 
     Computes the score of the FULL model evaluated at the
@@ -421,6 +421,9 @@ def score_test(model_restricted, X_full, y):
         Full design matrix.
     y : array
         Response.
+    omitted_cols : list of int
+        Column indices in X_full that were omitted from the
+        restricted model.
 
     Returns
     -------
@@ -429,21 +432,21 @@ def score_test(model_restricted, X_full, y):
     pval : float
     """
     # Restricted residuals
-    y_hat = model_restricted.predict()
-    resid = y - y_hat
+    resid = y - model_restricted.predict()
 
     # Score at restricted estimates = X_omitted' @ residuals / sigma^2
-    # (for OLS with known sigma)
-    X_omitted = X_full[:, model_restricted.model.exog.shape[1]:]
+    X_omitted = X_full[:, omitted_cols]
     sigma2 = np.sum(resid**2) / len(y)
 
     score = X_omitted.T @ resid / sigma2
     info = X_omitted.T @ X_omitted / sigma2
+    q = len(omitted_cols)
     stat = score @ np.linalg.solve(info, score)
-    pval = 1 - stats.chi2.cdf(stat, X_omitted.shape[1])
+    pval = 1 - stats.chi2.cdf(stat, q)
     return stat, pval
 
-score_stat, score_pval = score_test(ols_restricted, X_sm, y)
+score_stat, score_pval = score_test(ols_restricted, X_sm, y,
+                                     omitted_cols=[2])
 print(f"Score test: S={score_stat:.4f}, p={score_pval:.4f}")
 print(f"LR test:    Λ={lr_stat:.4f}, p={lr_pval:.4f}")
 print(f"Wald test:  W={ols.tvalues[2]**2:.4f}, p={ols.pvalues[2]:.4f}")
@@ -473,7 +476,7 @@ $\chi^2_1$.
 
 ```{python}
 #| label: fig-trinity
-#| fig-cap: "The three test statistics as functions of the restriction value θ₀ for a single-parameter test. All three are zero at the MLE (where H₀: θ = θ̂ is trivially true) and grow as θ₀ moves away. The Wald statistic (dashed) is always a parabola; the LR and score statistics curve with the likelihood shape. The ordering W ≥ Λ ≥ S is visible for this well-behaved case."
+#| fig-cap: "The three test statistics as functions of the restriction value θ₀ for a single-parameter test. All three are zero at the MLE (where H₀: θ = θ̂ is trivially true) and grow as θ₀ moves away. The Wald statistic (dashed) is always a parabola; the LR and score statistics curve with the likelihood shape. For this well-behaved OLS case the three nearly coincide; they diverge more visibly in nonlinear models (see Exercise 10.2)."
 
 # Illustration: test H0: beta_0 = theta0 for various theta0 values
 beta_hat = ols.params[0]
@@ -484,18 +487,27 @@ wald_curve = ((beta_hat - theta0_grid) / se_hat)**2
 lr_curve = np.zeros_like(theta0_grid)
 score_curve = np.zeros_like(theta0_grid)
 
+X_nc = X_sm[:, 1:]  # non-constant columns
+RSS_u = np.sum(ols.resid**2)
+XtX_inv_00 = np.linalg.inv(X_sm.T @ X_sm)[0, 0]
+n_obs = len(y)
+
 for i, t0 in enumerate(theta0_grid):
-    # LR: fit restricted model with beta_0 = t0
-    from statsmodels.base.model import GenericLikelihoodModel
-    # Approximate LR by 2*(llf_full - llf at t0)
-    # Using quadratic approx: LR ≈ (beta_hat - t0)^2 / var * (info ratio)
-    lr_curve[i] = wald_curve[i] * 0.95  # approximate for illustration
-    score_curve[i] = wald_curve[i] * 0.90
+    # LR: fix beta_0 = t0, refit remaining params by OLS
+    ols_r = sm.OLS(y - t0, X_nc).fit()
+    RSS_r = np.sum(ols_r.resid**2)
+    lr_curve[i] = n_obs * np.log(RSS_r / RSS_u)
+
+    # Score: gradient of full log-likelihood at restricted MLE
+    resid_r = y - t0 - X_nc @ ols_r.params
+    sigma2_r = RSS_r / n_obs
+    s0 = np.sum(resid_r) / sigma2_r
+    score_curve[i] = s0**2 * XtX_inv_00 * sigma2_r
 
 fig, ax = plt.subplots()
 ax.plot(theta0_grid, wald_curve, '--', color="C0", label="Wald", linewidth=1.8)
-ax.plot(theta0_grid, lr_curve, '-', color="C1", label="LR (approx)", linewidth=1.8)
-ax.plot(theta0_grid, score_curve, ':', color="C2", label="Score (approx)", linewidth=1.8)
+ax.plot(theta0_grid, lr_curve, '-', color="C1", label="LR", linewidth=1.8)
+ax.plot(theta0_grid, score_curve, ':', color="C2", label="Score", linewidth=1.8)
 ax.axhline(stats.chi2.ppf(0.95, 1), color="gray", linestyle="-",
            alpha=0.5, label=r"$\chi^2_1$ critical value")
 ax.axvline(beta_hat, color="gray", linestyle="--", alpha=0.3)
@@ -543,7 +555,7 @@ X_wage_sm = sm.add_constant(X_wage)
 
 # Fit full and restricted models
 full = sm.OLS(log_wage, X_wage_sm).fit(cov_type='HC1')
-restricted = sm.OLS(log_wage, sm.add_constant(np.ones(n))).fit()
+restricted = sm.OLS(log_wage, np.ones((n, 1))).fit()
 
 print("Full model:")
 print(full.summary().tables[1])
@@ -555,7 +567,7 @@ print(full.summary().tables[1])
 
 # 1. Wald (joint F-test)
 f_res = full.f_test('x1 = 0, x2 = 0')
-print(f"Wald F-test: F={f_res.fvalue[0][0]:.2f}, p={f_res.pvalue:.6f}")
+print(f"Wald F-test: F={f_res.fvalue:.2f}, p={f_res.pvalue:.6f}")
 
 # 2. LR test
 lr = 2 * (full.llf - restricted.llf)
@@ -572,7 +584,7 @@ score_p = 1 - stats.chi2.cdf(score_stat, df=2)
 print(f"Score test:  S={score_stat:.2f}, p={score_p:.6f}")
 
 print(f"\nAll three reject H0 (education and experience matter).")
-print(f"Ordering: W={f_res.fvalue[0][0]*2:.1f} ≥ Λ={lr:.1f} ≥ S={score_stat:.1f}")
+print(f"Ordering: W={f_res.fvalue*2:.1f} ≥ Λ={lr:.1f} ≥ S={score_stat:.1f}")
 ```
 
 ```{python}

@@ -406,9 +406,9 @@ ols_robust = sm.OLS(y, X_sm).fit(cov_type='HC1')
 print("\nCoefficient comparison:")
 print(f"{'Variable':<12} {'Naive SE':>10} {'HC1 SE':>10} {'Ratio':>8}")
 for j, name in enumerate(['const'] + list(X.columns)):
-    ratio = ols_robust.bse[j] / ols_naive.bse[j]
-    print(f"{name:<12} {ols_naive.bse[j]:>10.4f} "
-          f"{ols_robust.bse[j]:>10.4f} {ratio:>8.2f}")
+    ratio = ols_robust.bse.iloc[j] / ols_naive.bse.iloc[j]
+    print(f"{name:<12} {ols_naive.bse.iloc[j]:>10.4f} "
+          f"{ols_robust.bse.iloc[j]:>10.4f} {ratio:>8.2f}")
 ```
 
 ```{python}
@@ -500,7 +500,7 @@ print()
 for j, name in enumerate(['const'] + list(X.columns)):
     print(f"{name:<12}", end="")
     for ct in ['nonrobust', 'HC0', 'HC1', 'HC2', 'HC3']:
-        ratio = se_table[ct][j] / se_table['nonrobust'][j]
+        ratio = se_table[ct].iloc[j] / se_table['nonrobust'].iloc[j]
         print(f" {ratio:>10.3f}", end="")
     print()
 ```
