@@ -100,6 +100,8 @@ execute:
   echo: true
   warning: false
 
+jupyter: book-venv
+
 crossref:
   chapters: true
   thm-title: "Theorem"
