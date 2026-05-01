@@ -114,7 +114,11 @@ $$
 $$
 
 The damping parameter $\lambda_k$ is the Lagrange multiplier for this
-constraint. Scipy's `least_squares(method='lm')` implements this.
+constraint. See Chapter 3 for the full theory of Lagrange multipliers
+and KKT conditions; here we only need the intuition that $\lambda_k$
+penalizes the step size, trading off between the Gauss--Newton
+direction and a shorter, safer step.
+Scipy's `least_squares(method='lm')` implements this.
 
 **Why scipy has three methods:**
 

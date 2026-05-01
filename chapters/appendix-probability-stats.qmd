@@ -1081,6 +1081,416 @@ plt.show()
 ```
 
 
+---
+
+The sections above cover standard undergraduate probability and
+statistics. The sections below introduce **advanced concepts** that
+appear in specific chapters of this book. A reader who has taken a
+one-semester mathematical statistics course will likely recognize the
+names but may not have internalized the mechanics. Each section
+states the result, gives intuition, and points to the chapter(s)
+that use it.
+
+---
+
+# Jensen's Inequality {.unnumbered}
+
+**Theorem.** If $g$ is convex and $\mathbb{E}[|X|] < \infty$, then
+$$
+\mathbb{E}[g(X)] \ge g(\mathbb{E}[X]).
+$$ {#eq-jensen}
+If $g$ is strictly convex, equality holds only when $X$ is constant
+(degenerate).
+
+**Proof sketch.** A convex function lies above every tangent line.
+At the point $\mu = \mathbb{E}[X]$, there exists a supporting
+hyperplane $g(x) \ge g(\mu) + \lambda(x - \mu)$ for some slope
+$\lambda$ (a subgradient). Taking expectations of both sides:
+$\mathbb{E}[g(X)] \ge g(\mu) + \lambda(\mathbb{E}[X] - \mu)
+= g(\mu) = g(\mathbb{E}[X])$.
+
+**Intuition.** Averaging first and then applying a curved function
+is not the same as applying the curve first and then averaging.
+The curvature of $g$ creates a systematic gap. The classic trap is
+$\mathbb{E}[1/X] \ne 1/\mathbb{E}[X]$: since $g(x) = 1/x$ is
+convex on $(0, \infty)$, Jensen gives
+$\mathbb{E}[1/X] \ge 1/\mathbb{E}[X]$.
+
+**Where this appears.** In Ch. 14, marginal coefficients in a
+logistic GLMM differ from conditional coefficients precisely
+because of Jensen's inequality. The logistic link is nonlinear,
+so averaging predicted probabilities across random effects is not
+the same as predicting at the average random effect. The gap is
+not a bug --- it is Jensen at work.
+
+
+# Kullback-Leibler Divergence {.unnumbered}
+
+The **Kullback-Leibler (KL) divergence** from distribution $p$ to
+distribution $q$ is:
+$$
+D_{\text{KL}}(p \| q)
+= \mathbb{E}_p\!\left[\log \frac{p(X)}{q(X)}\right]
+= \int p(x) \log \frac{p(x)}{q(x)}\, dx.
+$$ {#eq-kl}
+
+**Key properties:**
+
+1. $D_{\text{KL}}(p \| q) \ge 0$ (Gibbs' inequality), with equality
+   iff $p = q$ almost everywhere.
+2. $D_{\text{KL}}$ is **not symmetric**: $D_{\text{KL}}(p \| q)
+   \ne D_{\text{KL}}(q \| p)$ in general. It is not a distance.
+3. $D_{\text{KL}}$ is not defined when $q(x) = 0$ at any point
+   where $p(x) > 0$.
+
+**Connection to likelihood.** Maximizing the log-likelihood
+$\sum \log q(x_i; \theta)$ over a model family $q(\cdot; \theta)$
+is equivalent to minimizing the KL divergence from the true data
+distribution $p$ to $q$. Write
+$D_{\text{KL}}(p \| q_\theta) = \mathbb{E}_p[\log p(X)]
+- \mathbb{E}_p[\log q(X; \theta)]$. The first term does not
+depend on $\theta$, so minimizing $D_{\text{KL}}$ is the same as
+maximizing $\mathbb{E}_p[\log q(X; \theta)]$, which the LLN
+approximates by the sample average $\frac{1}{n}\sum \log q(X_i;
+\theta)$. This is why MLE finds the model closest to truth in the
+KL sense.
+
+**Where this appears.** In Ch. 10, the Akaike Information
+Criterion (AIC) is derived as an approximately unbiased estimator
+of the expected KL divergence from truth to the fitted model. The
+penalty $2k$ in $\text{AIC} = -2\ell(\hat{\theta}) + 2k$ corrects
+for the optimism of evaluating fit on the same data used for
+estimation.
+
+```{python}
+#| label: kl-demo
+# KL divergence between two normals: closed form
+# KL(N(mu1,s1^2) || N(mu2,s2^2))
+#   = log(s2/s1) + (s1^2 + (mu1-mu2)^2)/(2*s2^2) - 1/2
+
+def kl_normal(mu1, s1, mu2, s2):
+    """KL divergence from N(mu1,s1^2) to N(mu2,s2^2)."""
+    return (
+        np.log(s2 / s1)
+        + (s1**2 + (mu1 - mu2)**2) / (2 * s2**2)
+        - 0.5
+    )
+
+# KL(N(0,1) || N(1,2)) vs KL(N(1,2) || N(0,1))
+kl_forward = kl_normal(
+    mu1=0, s1=1, mu2=1, s2=2
+)
+kl_reverse = kl_normal(
+    mu1=1, s1=2, mu2=0, s2=1
+)
+print(f"KL(N(0,1) || N(1,2)) = {kl_forward:.4f}")
+print(f"KL(N(1,2) || N(0,1)) = {kl_reverse:.4f}")
+print("KL is not symmetric: "
+      f"{kl_forward:.4f} ≠ {kl_reverse:.4f}")
+```
+
+
+# Stochastic Processes and Stationarity {.unnumbered}
+
+A **stochastic process** is a collection of random variables
+$\{X_t\}$ indexed by time (or another ordered set). The simplest
+and most important example is the **random walk**.
+
+## Random walk
+
+Start at $X_0 = 0$ and define $X_t = X_{t-1} + \varepsilon_t$
+where $\varepsilon_t \sim \text{iid}(0, \sigma^2)$. Equivalently,
+$X_t = \sum_{s=1}^t \varepsilon_s$. Two properties make the random
+walk the canonical non-stationary process:
+
+1. $\mathbb{E}[X_t] = 0$ for all $t$ --- the mean is constant.
+2. $\text{Var}(X_t) = t\sigma^2$ --- the variance **grows** with
+   $t$, so the process spreads out over time.
+
+Property 2 disqualifies the random walk from stationarity. It also
+explains why OLS on non-stationary data produces nonsense: the
+usual asymptotics rely on fixed variances, and when the variance
+diverges, $t$-statistics inflate and $R^2$ drifts toward 1 even
+between unrelated series (spurious regression, Ch. 17).
+
+## Strict and weak stationarity
+
+**Strict stationarity:** the joint distribution of
+$(X_{t_1}, \ldots, X_{t_k})$ is the same as
+$(X_{t_1+h}, \ldots, X_{t_k+h})$ for every shift $h$. This is a
+strong condition --- rarely verifiable in practice.
+
+**Weak (covariance) stationarity:** the process has constant mean
+$\mathbb{E}[X_t] = \mu$, finite constant variance
+$\text{Var}(X_t) = \gamma(0)$, and autocovariance
+$\text{Cov}(X_t, X_{t+h}) = \gamma(h)$ depending only on the lag
+$h$, not on time $t$.
+
+## Integration order
+
+A process is **integrated of order $d$**, written $I(d)$, if
+differencing $d$ times produces a stationary process.
+
+- $I(0)$: the process itself is stationary. ARMA models (Ch. 15)
+  apply directly.
+- $I(1)$: the first difference $\Delta X_t = X_t - X_{t-1}$ is
+  stationary. The random walk is $I(1)$. ARIMA models (Ch. 15)
+  difference first, then fit ARMA.
+- $I(2)$: need to difference twice. Rare in practice but arises
+  in some macro series.
+
+The **augmented Dickey-Fuller (ADF) test** (Ch. 15) tests the null
+$H_0$: unit root ($I(1)$) against the alternative of stationarity
+($I(0)$). When two $I(1)$ series share a common stochastic trend,
+they are **cointegrated** (Ch. 17): a linear combination is $I(0)$
+even though each series individually is not.
+
+```{python}
+#| label: random-walk-demo
+# Random walk: variance grows linearly with t
+n_steps = 500
+n_paths = 200
+eps = rng.standard_normal(size=(n_paths, n_steps))
+walks = np.cumsum(eps, axis=1)
+
+# Variance at each time step (across paths)
+empirical_var = walks.var(axis=0)
+theoretical_var = np.arange(1, n_steps + 1).astype(float)
+
+fig, axes = plt.subplots(1, 2, figsize=(9, 3.5))
+
+# Left: sample paths
+for i in range(8):
+    axes[0].plot(
+        walks[i], linewidth=0.6, alpha=0.7
+    )
+axes[0].set_xlabel("$t$")
+axes[0].set_ylabel("$X_t$")
+axes[0].set_title("Random walk: paths spread out")
+
+# Right: variance grows linearly
+axes[1].plot(
+    empirical_var, label="Empirical Var($X_t$)",
+    linewidth=0.8
+)
+axes[1].plot(
+    theoretical_var, '--',
+    label="Theoretical: $t\\sigma^2$",
+    linewidth=1.2
+)
+axes[1].set_xlabel("$t$")
+axes[1].set_ylabel("Variance")
+axes[1].legend(fontsize=8)
+axes[1].set_title("Var($X_t$) = $t\\sigma^2$")
+fig.tight_layout()
+plt.show()
+```
+
+
+# Martingales {.unnumbered}
+
+A sequence $\{X_t\}$ adapted to a filtration
+$\{\mathcal{F}_t\}$ is a **martingale** if:
+
+1. $\mathbb{E}[|X_t|] < \infty$ for all $t$.
+2. $\mathbb{E}[X_{t+1} \mid \mathcal{F}_t] = X_t$.
+
+In plain language: the best forecast of tomorrow's value, given
+everything you know today, is today's value. It is the
+mathematical formalization of a *fair game* --- no systematic
+drift, no exploitable trend.
+
+**Examples.**
+
+- **Random walk:** $X_t = \sum_{s=1}^t \varepsilon_s$ with
+  $\mathbb{E}[\varepsilon_s] = 0$. Then
+  $\mathbb{E}[X_{t+1} \mid X_1, \ldots, X_t]
+  = X_t + \mathbb{E}[\varepsilon_{t+1}] = X_t$.
+- **Cumulative sum of mean-zero variables:** if $Z_1, Z_2, \ldots$
+  are iid with $\mathbb{E}[Z_i] = 0$, then
+  $M_t = \sum_{i=1}^t Z_i$ is a martingale.
+- **Partial sums of a fair bet:** if each round has expected gain
+  zero, your cumulative winnings form a martingale.
+
+We use this concept at the level of conditional expectation --- no
+measure-theoretic machinery (filtrations are just "information up
+to time $t$").
+
+**Martingales in survival analysis (Ch. 18).** Let $N(t)$ be the
+counting process that jumps by 1 each time an event (death,
+failure) occurs, and let $H(t) = \int_0^t \lambda(s)\, ds$ be the
+cumulative hazard --- the "expected" number of events by time $t$
+under the model. The process $M(t) = N(t) - H(t)$ is a martingale:
+events arrive "as predicted" by the hazard, so the increments
+$dM(t) = dN(t) - \lambda(t)\, dt$ have conditional expectation
+zero. When events arrive faster than the model predicts,
+$M(t) > 0$; when they arrive slower, $M(t) < 0$.
+
+The **martingale residual** for individual $i$ is $\hat{M}_i
+= \delta_i - \hat{H}(T_i \mid \mathbf{x}_i)$: observed event
+indicator minus expected cumulative hazard. These residuals have
+approximately mean zero under the correct model, making them
+a diagnostic for Cox regression model fit.
+
+
+# Gâteaux Derivatives and Influence Functions {.unnumbered}
+
+A **statistical functional** is a map $T$ from distributions to
+real numbers. The sample mean $T(F) = \int x\, dF(x)$ is a
+functional of the distribution $F$. OLS coefficients, the median,
+and the variance are all functionals. To ask "how sensitive is $T$
+to a small contamination of $F$?" we need a notion of derivative
+in function space.
+
+## The Gâteaux derivative
+
+The **Gâteaux derivative** of $T$ at $F$ in the direction of
+a point mass $\delta_x$ is:
+$$
+\text{IF}(x; T, F) = \lim_{\varepsilon \to 0}
+\frac{T((1 - \varepsilon)F + \varepsilon \delta_x) - T(F)}
+{\varepsilon}.
+$$ {#eq-gateaux}
+
+This is the **influence function** (IF): it measures how much $T$
+changes when an infinitesimal mass is placed at $x$.
+
+**Worked examples.**
+
+- **Mean functional:** $T(F) = \int x\, dF(x)$. The contaminated
+  distribution $(1-\varepsilon)F + \varepsilon \delta_x$ has mean
+  $(1-\varepsilon)\mu + \varepsilon x$. The derivative is
+  $\text{IF}(x; T, F) = x - \mu$. The influence grows linearly
+  in $x$: outliers have unbounded influence on the mean.
+- **Variance functional:** $T(F) = \int (x - \mu)^2\, dF(x)$.
+  The influence function is $\text{IF}(x; T, F)
+  = (x - \mu)^2 - \sigma^2$. Outliers have quadratically growing
+  influence.
+
+No Fréchet-derivative or operator-norm machinery is needed here.
+The Gâteaux derivative is simply a directional derivative in the
+space of distributions, evaluated in the direction of point masses.
+
+**Where this appears.** The influence function is the central
+object of Ch. 12 (M-estimation and robust inference): the
+asymptotic variance of $\sqrt{n}(T(F_n) - T(F))$ equals
+$\text{Var}(\text{IF}(X; T, F))$, and the sandwich estimator
+plugs in empirical influence values. In Ch. 23 (double/debiased
+ML), Neyman orthogonality requires that the Gâteaux derivative of
+the target functional with respect to nuisance parameters vanishes
+at the truth --- making the estimator insensitive to first-order
+errors in nuisance estimation.
+
+
+# Empirical Processes and the Donsker Condition {.unnumbered}
+
+## The empirical process
+
+Given iid observations $X_1, \ldots, X_n$ from distribution $F$,
+the **empirical distribution** is $F_n(x) = \frac{1}{n}
+\sum_{i=1}^n \mathbf{1}(X_i \le x)$. The **empirical process**
+is the scaled deviation:
+$$
+\mathbb{G}_n(x) = \sqrt{n}(F_n(x) - F(x)).
+$$
+By the CLT, at any fixed $x$, $\mathbb{G}_n(x) \xrightarrow{d}
+\mathcal{N}(0, F(x)(1 - F(x)))$. Donsker's theorem says much more:
+the *entire function* $\mathbb{G}_n$ converges to a Gaussian
+process (a Brownian bridge) in a suitable function space.
+
+## Donsker's theorem and function classes
+
+More broadly, consider a class of functions $\mathcal{F}$ and the
+process $\mathbb{G}_n f = \sqrt{n}(\mathbb{P}_n f - Pf)$, where
+$\mathbb{P}_n f = \frac{1}{n}\sum f(X_i)$ is the empirical
+average and $Pf = \mathbb{E}[f(X)]$. The class $\mathcal{F}$
+satisfies the **Donsker condition** if $\mathbb{G}_n$ converges
+weakly to a tight Gaussian process over $\mathcal{F}$.
+
+**When does Donsker hold?** The key is the *complexity* of the
+function class, measured by the **VC dimension**:
+
+- **Finite VC dimension** (linear functions, indicators of
+  half-spaces, GLM score functions): Donsker holds. You can
+  interchange limits and sums, and uniform convergence results
+  apply.
+- **Growing complexity** (deep neural networks, tree ensembles
+  whose depth grows with $n$): Donsker fails. The function class
+  is too rich for uniform convergence at $\sqrt{n}$ rate.
+
+## Why this matters for double ML (Ch. 23)
+
+In semiparametric estimation, you estimate a nuisance function
+$\hat{\eta}$ (e.g., a propensity score or outcome regression) and
+plug it into a target estimating equation. If $\hat{\eta}$ belongs
+to a Donsker class, you can analyze the plugged-in estimator using
+standard empirical process arguments: the estimation error in
+$\hat{\eta}$ is asymptotically negligible.
+
+When $\hat{\eta}$ comes from a flexible ML method (random forests,
+neural nets), the Donsker condition fails. The nuisance estimation
+error does not vanish uniformly, and the "plug-in" estimator is
+contaminated. **Cross-fitting** is the remedy: split the data into
+$K$ folds, estimate $\hat{\eta}$ on $K-1$ folds, and evaluate the
+estimating equation on the held-out fold. Because $\hat{\eta}$ is
+*fixed* relative to the evaluation data in each fold, no uniform
+convergence over a complex function class is needed. The CLT
+applies fold by fold, and averaging across folds restores
+$\sqrt{n}$-consistency for the target parameter --- even when the
+nuisance learner is non-Donsker.
+
+
+# Semiparametric Efficiency {.unnumbered}
+
+In a **parametric model**, the Cramér-Rao bound
+($\text{Var}(T) \ge (n\mathcal{I}_1)^{-1}$) sets the minimum
+variance for any unbiased estimator. When the model also contains
+**infinite-dimensional nuisance parameters** (nonparametric
+components), we enter the semiparametric setting, and the variance
+bound changes.
+
+## The semiparametric efficiency bound
+
+A semiparametric model targets a finite-dimensional parameter
+$\theta$ while leaving the rest of the data-generating process
+(the nuisance $\eta$) unrestricted or lightly restricted. The
+**semiparametric efficiency bound** is the smallest asymptotic
+variance achievable by any regular estimator of $\theta$ in
+this model.
+
+The bound is achieved by the **efficient influence function**
+$\psi^*(X; \theta, \eta)$: the unique influence function (see
+@eq-gateaux) whose variance equals the bound. Concretely:
+$$
+\text{Var}(\psi^*(X; \theta_0, \eta_0))
+= \text{semiparametric efficiency bound}.
+$$
+
+**Intuition.** The efficient influence function is the "best
+one-number summary" of each observation's contribution to
+estimating $\theta$. Any estimator whose influence function
+differs from $\psi^*$ leaves information on the table. You cannot
+do better than $\text{Var}(\psi^*)$ because $\psi^*$ already
+extracts all available information about $\theta$ --- net of the
+uncertainty introduced by not knowing $\eta$.
+
+## Where this appears
+
+- **Ch. 12 (M-estimation):** The sandwich variance of an
+  M-estimator equals the variance of its influence function.
+  When the influence function is efficient, the M-estimator
+  achieves the semiparametric bound.
+- **Ch. 21 (AIPW):** The augmented inverse probability weighted
+  estimator has influence function equal to the efficient
+  influence function for the ATE under unconfoundedness. It
+  achieves the semiparametric efficiency bound and is therefore
+  *locally efficient*.
+- **Ch. 23 (DML):** Double/debiased ML constructs estimating
+  equations from the efficient influence function, ensuring
+  $\sqrt{n}$-consistency and semiparametric efficiency even when
+  nuisance functions are estimated with flexible ML methods.
+
+
 # Summary of Key Results and Where They Are Used {.unnumbered}
 
 This table maps each result in this appendix to the chapters that
@@ -1098,6 +1508,13 @@ invokes a result you want to revisit.
 | Tower property | $\mathbb{E}[\mathbb{E}[Y \mid X]] = \mathbb{E}[Y]$ | 7, 14, 21, 23 |
 | Rao-Blackwell | Conditioning on sufficient stat reduces variance | 7, 8 |
 | Factorization thm | $f(\mathbf{x}; \theta) = g(T, \theta) h(\mathbf{x}) \iff T$ sufficient | 10, 12 |
+| Jensen's inequality | $\mathbb{E}[g(X)] \ge g(\mathbb{E}[X])$ for convex $g$ | 14 |
+| KL divergence | $D_{\text{KL}}(p \| q) = \mathbb{E}_p[\log(p/q)] \ge 0$ | 10 |
+| Stationarity | Constant mean, variance, autocovariance structure | 15, 17 |
+| Martingales | $\mathbb{E}[X_{t+1} \mid \mathcal{F}_t] = X_t$ (fair game) | 18 |
+| Gâteaux derivative | $\text{IF}(x; T, F) = \lim_{\varepsilon \to 0} [T((1-\varepsilon)F + \varepsilon\delta_x) - T(F)]/\varepsilon$ | 12, 23 |
+| Donsker condition | $\sqrt{n}(F_n - F) \Rightarrow$ Gaussian process for bounded-complexity classes | 23 |
+| Semiparametric efficiency | Variance of efficient IF = semiparametric bound | 12, 21, 23 |
 
 : Cross-reference table: appendix results to main chapters. {#tbl-xref}
 

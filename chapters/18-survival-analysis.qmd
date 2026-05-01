@@ -940,6 +940,17 @@ If the PH assumption is violated:
 
 ## Martingale residuals {#sec-ch18-martingale}
 
+The name "martingale" comes from probability theory (Appendix A): a
+stochastic process whose expected future value, given the past, equals
+its current value. In survival analysis, the counting process
+$N_i(t) = \mathbb{1}(T_i \leq t, \delta_i = 1)$ (number of observed
+events for subject $i$ by time $t$) minus the expected number of
+events $\hat{H}_0(t)\exp(\mathbf{x}_i^\top\hat{\boldsymbol{\beta}})$
+forms a martingale under the correctly specified Cox model. The
+residual measures the discrepancy between observed and expected
+events --- a large residual means the model poorly predicts that
+subject's event time.
+
 The martingale residual for subject $i$ is
 
 $$

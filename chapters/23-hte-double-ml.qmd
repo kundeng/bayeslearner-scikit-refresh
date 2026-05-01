@@ -108,6 +108,13 @@ $$
   + O(\|\hat{\eta} - \eta_0\|^2).
 $$
 
+(The Gâteaux derivative $\partial_\eta \mathbb{E}[\psi]$ is the
+directional derivative of the expected moment in function space ---
+how much the expectation changes when the nuisance function $\eta$
+is perturbed. See Appendix A for the formal definition. The key
+property: if this derivative vanishes at the true $\eta_0$, small
+nuisance errors produce only second-order bias in $\hat{\tau}$.)
+
 The Gateaux derivative has two components. Perturbing in the $g$
 direction:
 
@@ -160,6 +167,14 @@ random forests, neural networks) do *not*: their complexity grows with
 $n$, violating the entropy bounds. Without Donsker, the empirical
 process $\frac{1}{n}\sum_i \psi(\tau; \hat{\eta})$ does not converge
 uniformly, and the CLT for the estimator breaks down.
+
+(The Donsker condition bounds the complexity of the function class.
+Linear models and smooth parametric families satisfy it; random
+forests and neural networks do not because their complexity grows
+with sample size. Cross-fitting eliminates the need for this
+condition by ensuring the nuisance estimates are computed on data
+independent of the evaluation sample. See Appendix A for a fuller
+explanation.)
 
 Cross-fitting sidesteps Donsker entirely. Because $\hat{\eta}^{(-k)}$
 is trained on folds $\neq k$ and evaluated on fold $k$, the nuisance

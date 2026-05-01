@@ -182,7 +182,14 @@ variance is larger.
 
 The jackknife gives $a$ because the leave-one-out influence values
 approximate the functional derivative of $\hat{\theta}$ with respect
-to $F$. The third moment of these values (the numerator of $a$)
+to $F$. By "functional derivative of $\hat{\theta}$ with respect to
+$F$" we mean the Gâteaux derivative (Appendix A): how much
+$\hat{\theta}$ changes when the data distribution shifts
+infinitesimally from $F$ toward a point mass at $x$. The jackknife
+approximates this by measuring how much $\hat{\theta}$ changes when
+one observation is removed. When this derivative is unbounded --- as
+for the sample maximum --- the bootstrap fails.
+The third moment of these values (the numerator of $a$)
 measures asymmetry: if removing high-influence observations shifts
 $\hat{\theta}$ more than removing low-influence observations, the
 distribution is skewed.

@@ -235,6 +235,17 @@ $\hat{\boldsymbol{\beta}}$ when observation $i$ is deleted; the IF
 measures the infinitesimal change as you contaminate the distribution
 at that point. For large $n$, they tell the same story.
 
+The influence function plays a dual role. First, it measures
+robustness: a bounded IF means bounded sensitivity to outliers.
+Second, it defines the *efficiency bound*: for any regular estimator
+of a functional $T(F)$, the asymptotic variance is at least
+$\text{Var}(\text{IF}(X; T, F))$ --- the Cramér--Rao bound
+generalized to nonparametric settings. An estimator achieving this
+bound is *semiparametrically efficient*. The AIPW estimator in
+Chapter 21 and the DML estimator in Chapter 23 both achieve
+semiparametric efficiency because their moment conditions use the
+efficient influence function. See Appendix A for a fuller discussion.
+
 ### Breakdown point {#sec-ch12-breakdown}
 
 The breakdown point is the largest fraction of contaminated
@@ -266,7 +277,10 @@ $$
 $$
 
 This is an M-estimator with $\psi_\tau(u) = \tau - \mathbb{1}(u < 0)$
---- the subgradient of the check loss.
+--- the subgradient of the check loss (see Chapter 4 for
+subdifferentials and proximal operators; the check loss
+$\rho_\tau(u)$ has a kink at $u = 0$, so its "derivative" is a
+set-valued subgradient rather than a single value).
 
 At the minimum, the subgradient condition requires:
 
