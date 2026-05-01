@@ -431,9 +431,38 @@ exponentially — this is the curse of dimensionality.
 %%
 
 
+# Choosing Between Methods {#sec-ch19-choosing}
+
+| Question | Method | Why |
+|---|---|---|
+| "What are the main patterns in my data?" | PCA | Finds directions of max variance |
+| "What does this distribution look like?" | KDE | Estimates density without assuming shape |
+| "What is $\mathbb{E}[Y \mid X]$ without assuming linearity?" | LOWESS / KernelReg | Nonparametric regression |
+| "Can I reduce 100 variables to 5?" | PCA | If the first 5 PCs explain >90% variance |
+| "Is this data normal?" | KDE + QQ plot | Visual check before applying parametric tests |
+
+**The fundamental tradeoff:** Nonparametric methods make fewer
+assumptions (more general) but converge slower ($n^{-2/5}$ vs
+$n^{-1/2}$) and suffer from the curse of dimensionality. Use them
+when you don't trust the parametric form; switch to parametric
+methods when you have evidence the parametric model is correct.
+
+
 # Bibliographic Notes {#sec-ch19-biblio}
 
-PCA: Pearson (1901), Hotelling (1933). Factor analysis: Spearman (1904).
-KDE: Rosenblatt (1956), Parzen (1962). Bandwidth selection: Silverman
-(1986). LOWESS: Cleveland (1979). Kernel regression: Nadaraya (1964),
-Watson (1964). Local linear regression: Fan (1993).
+PCA: Pearson (1901), Hotelling (1933). The connection to the
+eigendecomposition of the covariance matrix is in Anderson (2003).
+
+KDE: Rosenblatt (1956), Parzen (1962). Silverman (1986) for
+bandwidth selection theory and the rule-of-thumb bandwidth.
+
+LOWESS: Cleveland (1979). The `frac` parameter is the analogue of
+the bandwidth.
+
+Kernel regression: Nadaraya (1964), Watson (1964). Local linear
+regression: Fan (1993), who showed it has better boundary behavior
+than kernel regression.
+
+For a comprehensive treatment of nonparametric methods in Python:
+see the `statsmodels.nonparametric` documentation and Wasserman
+(2006), *All of Nonparametric Statistics*.
