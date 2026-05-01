@@ -292,7 +292,7 @@ seasonal) is a state variable estimated by the Kalman filter.
 # Simulate: random walk level + stochastic cycle
 n = 200
 level_true = np.cumsum(0.3 * rng.standard_normal(n))
-cycle_true = 5 * np.sin(2 * np.pi * np.arange(n) / 50)
+cycle_true = 5 * np.sin(2 * np.pi * np.arange(n) / 20)
 y_uc = level_true + cycle_true + rng.standard_normal(n)
 
 # Fit unobserved components model
