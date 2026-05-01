@@ -50,24 +50,41 @@ be estimated but are not of primary interest.
 
 ## Why naive plug-in fails
 
-If you estimate $\hat{g}$ and $\hat{m}$ by ML, then regress
-$Y - \hat{g}(\mathbf{X})$ on $D - \hat{m}(\mathbf{X})$, the estimate
-of $\tau$ is biased by $O(\|\hat{g} - g_0\| \cdot \|\hat{m} - m_0\|)$.
-For $n^{-1/4}$-rate nuisance estimators (typical for ML), this bias is
-$O(n^{-1/2})$ — the same order as the standard error. The bias doesn't
-vanish.
+The obvious approach: estimate $g_0$ and $m_0$ with machine learning
+(Lasso, random forest), plug them in, and estimate $\tau$ by
+regressing $Y - \hat{g}(\mathbf{X})$ on $D - \hat{m}(\mathbf{X})$.
 
-## Neyman orthogonality
+**This does not work.** The plug-in estimate of $\tau$ has bias of
+order $O(\|\hat{g} - g_0\| \cdot \|\hat{m} - m_0\|)$. If the nuisance
+estimators converge at rate $n^{-1/4}$ (typical for ML in high
+dimensions), the bias is $O(n^{-1/2})$ --- the same order as the
+standard error. The bias *never goes away* relative to the noise, so
+confidence intervals have wrong coverage and $p$-values are invalid.
 
-DML uses a *Neyman-orthogonal* moment condition:
+**The root cause:** The moment condition
+$\mathbb{E}[(Y - D\tau - g(\mathbf{X}))(D - m(\mathbf{X}))] = 0$
+is *sensitive* to errors in $g$ and $m$. Small errors in the nuisance
+functions propagate into first-order bias in $\hat{\tau}$.
+
+## Neyman orthogonality: the fix
+
+The key insight of Chernozhukov et al. (2018): use a *different*
+moment condition that is *insensitive* to nuisance errors at first
+order. A moment condition $\psi(\tau; g, m)$ is
+*Neyman-orthogonal* if:
 
 $$
-\psi(\tau; \eta) = (Y - D\tau - g(\mathbf{X}))(D - m(\mathbf{X})) + (D - m(\mathbf{X}))\tau - (Y - g(\mathbf{X}))(D - m(\mathbf{X})),
+\frac{\partial}{\partial g} \mathbb{E}[\psi(\tau_0; g_0, m_0)] = 0
+\quad \text{and} \quad
+\frac{\partial}{\partial m} \mathbb{E}[\psi(\tau_0; g_0, m_0)] = 0.
 $$
 
-where $\eta = (g, m)$ are the nuisance parameters. The key property:
-$\partial_\eta \mathbb{E}[\psi(\tau_0; \eta_0)] = 0$. This means
-first-order errors in $\hat{\eta}$ do not affect $\hat{\tau}$.
+This means: small perturbations of $g$ and $m$ around their true values
+do not change the expected value of $\psi$. The bias from nuisance
+estimation becomes second-order: $O(\|\hat{g} - g_0\|^2)$ instead of
+$O(\|\hat{g} - g_0\|)$. For $n^{-1/4}$-rate estimators, this is
+$O(n^{-1})$, which is negligible relative to the $n^{-1/2}$ sampling
+error. The bias vanishes.
 
 In practice, DML for the partially linear model reduces to:
 
