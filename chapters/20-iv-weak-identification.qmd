@@ -312,6 +312,90 @@ Tests whether the *extra* instruments are valid. A rejection means
 at least one instrument is invalid.
 
 
+# Computational Considerations {#sec-ch20-computation}
+
+| Method | Cost | Parameters | When to use |
+|---|---|---|---|
+| 2SLS | $O(np^2)$ × 2 stages | $p$ | Default; fast |
+| LIML | $O(np^2)$ | $p$ | Weak instruments (less biased) |
+| GMM | $O(np^2)$ per iteration | $p$ | Overidentified (efficient) |
+
+All three methods are fast for typical IV problems ($n < 10^5$,
+$p < 100$). The computational bottleneck is usually not the estimation
+but the *thinking*: finding a valid instrument is the hard part.
+
+
+# Worked Example {#sec-ch20-example}
+
+**Effect of class size on test scores.**
+
+A classic IV application: does reducing class size improve student
+performance? The problem: schools that choose smaller classes may
+differ systematically from those that don't (selection bias).
+
+Angrist and Lavy (1999) used *Maimonides' Rule* as an instrument:
+Israeli schools must split classes that exceed 40 students. This
+creates discontinuous jumps in class size that are plausibly exogenous
+(driven by enrollment counts, not school quality).
+
+Let's simulate this setup:
+
+```{python}
+#| label: worked-example
+# Simulate: class size → test scores, confounded by school quality
+n_schools = 500
+
+# School quality (unobserved confounder)
+quality = rng.standard_normal(n_schools)
+
+# Enrollment (drives the instrument)
+enrollment = rng.integers(20, 80, n_schools)
+
+# Instrument: predicted class size from Maimonides' Rule
+# If enrollment <= 40: class_size ≈ enrollment
+# If enrollment > 40: class_size ≈ enrollment / 2
+predicted_class_size = np.where(
+    enrollment <= 40, enrollment,
+    enrollment / np.ceil(enrollment / 40),
+)
+
+# Actual class size (affected by quality: good schools have smaller classes)
+class_size = predicted_class_size - 5 * quality + rng.standard_normal(n_schools) * 3
+
+# Test scores (affected by class size AND quality)
+# True effect: -0.5 points per student in class
+true_effect = -0.5
+test_scores = (80 + true_effect * class_size + 10 * quality
+               + rng.standard_normal(n_schools) * 5)
+
+# OLS (biased: quality confounds)
+ols_cs = sm.OLS(test_scores, sm.add_constant(class_size)).fit()
+print(f"OLS estimate: {ols_cs.params[1]:.3f} per student")
+print(f"(Biased toward zero: good schools have small classes AND")
+print(f" high scores, making it look like small classes don't help)")
+
+# 2SLS (using predicted class size as instrument)
+df_cs = pd.DataFrame({
+    'scores': test_scores,
+    'class_size': class_size,
+    'predicted': predicted_class_size,
+    'const': 1,
+})
+iv_cs = IV2SLS.from_formula(
+    'scores ~ 1 + [class_size ~ predicted]', data=df_cs,
+).fit(cov_type='robust')
+
+print(f"\n2SLS estimate: {iv_cs.params.iloc[1]:.3f} per student")
+print(f"True effect:   {true_effect} per student")
+print(f"First-stage F: {iv_cs.first_stage.diagnostics['f.stat'].iloc[0]:.1f}")
+```
+
+**Interpretation:** OLS underestimates the negative effect of class
+size because school quality confounds the relationship. 2SLS, using
+the enrollment-based instrument, recovers an estimate closer to the
+true effect. The first-stage F > 10 confirms the instrument is strong.
+
+
 # Exercises {#sec-ch20-exercises}
 
 **Exercise 20.1** ($\star\star$, diagnostic failure). Simulate data

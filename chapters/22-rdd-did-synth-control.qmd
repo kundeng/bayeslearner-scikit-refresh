@@ -299,6 +299,74 @@ plt.show()
 ```
 
 
+# Variations, Diagnostics, and Pitfalls {#sec-ch22-diagnostics}
+
+## RDD diagnostics
+
+**Placebo tests:** Run the RDD analysis at fake cutoffs where there
+is no treatment. The estimated "effect" should be zero. If you find
+significant effects at fake cutoffs, your specification is wrong.
+
+**Density test (McCrary test):** Check whether observations bunch at
+the cutoff. If people can manipulate their running variable to be
+just above (or below) the cutoff, the quasi-random assignment breaks
+down. A discontinuity in the density of the running variable at the
+cutoff is evidence of manipulation.
+
+**Bandwidth sensitivity:** The RDD estimate depends on the bandwidth.
+Report results for multiple bandwidths; if the estimate changes
+substantially, the result is fragile.
+
+## DiD diagnostics
+
+**Pre-trends test:** Plot the outcome for treated and control groups
+in the pre-treatment period. Parallel pre-trends support (but do not
+prove) the parallel trends assumption. Diverging pre-trends are a
+red flag.
+
+**Event study plot:** Estimate treatment effects at each pre- and
+post-treatment period separately. Pre-treatment effects should be
+zero; post-treatment effects show the dynamics of the treatment.
+
+## Synthetic control diagnostics
+
+**Pre-treatment fit:** The synthetic control should closely match the
+treated unit in the pre-treatment period. A poor pre-treatment fit
+(large gap) means the synthetic control is not a credible
+counterfactual.
+
+**Placebo test (permutation inference):** Apply the synthetic control
+method to each control unit (pretending it was treated). The
+estimated "effect" for control units should be small. The treated
+unit's effect is significant if it is larger than most placebo effects.
+
+## Choosing between methods
+
+| Method | Requires | Identifies | Limitation |
+|---|---|---|---|
+| RDD | Cutoff in running variable | Local effect at cutoff | Not for people far from cutoff |
+| DiD | Pre/post comparison group | Average effect of policy | Parallel trends assumption |
+| Synth control | Many control units, 1 treated | Effect for treated unit | Can't do standard inference |
+
+**Rule of thumb:** Use RDD when there is a clear eligibility cutoff;
+DiD when there is a clear before/after treatment date with a
+comparison group; synthetic control when there is a single treated
+unit and many potential controls.
+
+
+# Computational Considerations {#sec-ch22-computation}
+
+| Method | Cost | Notes |
+|---|---|---|
+| RDD (local linear) | $O(n p^2)$ in the bandwidth window | Standard OLS |
+| DiD (TWFE) | $O(n p^2)$ | Standard panel regression |
+| Synthetic control | $O(T_{\text{pre}} \cdot J)$ optimization | $J$ = number of control units |
+
+All methods are fast for typical quasi-experimental data. The
+challenge is not computation but *design*: finding the right
+comparison group or cutoff.
+
+
 # Exercises {#sec-ch22-exercises}
 
 **Exercise 22.1** ($\star\star$, diagnostic failure). Run a "placebo"
