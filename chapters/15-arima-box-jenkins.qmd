@@ -715,13 +715,15 @@ lb_w = acorr_ljungbox(sarima_w.resid, lags=20, return_df=True)
 print(f"\nStep 4: Residual diagnostics")
 print(f"  Ljung-Box: all p > 0.05? {(lb_w['lb_pvalue'] > 0.05).all()}")
 print(f"  Min p-value: {lb_w['lb_pvalue'].min():.4f}")
+print(f"  (Some autocorrelation remains — in practice, try higher")
+print(f"   seasonal orders or additional AR/MA terms before forecasting)")
 
 # Step 5: Forecast
 print(f"\nStep 5: Forecast next 24 months")
 fc_w = sarima_w.get_forecast(24)
-print(f"  Point forecast (month 1): {fc_w.predicted_mean.iloc[0]:.1f}")
-print(f"  95% CI width (month 1):   {fc_w.conf_int().iloc[0, 1] - fc_w.conf_int().iloc[0, 0]:.1f}")
-print(f"  95% CI width (month 24):  {fc_w.conf_int().iloc[23, 1] - fc_w.conf_int().iloc[23, 0]:.1f}")
+print(f"  Point forecast (month 1): {fc_w.predicted_mean[0]:.1f}")
+print(f"  95% CI width (month 1):   {fc_w.conf_int()[0, 1] - fc_w.conf_int()[0, 0]:.1f}")
+print(f"  95% CI width (month 24):  {fc_w.conf_int()[23, 1] - fc_w.conf_int()[23, 0]:.1f}")
 print(f"  → CI widens with forecast horizon (more uncertainty)")
 ```
 
@@ -738,7 +740,7 @@ fc_mean = fc_w.predicted_mean
 fc_ci = fc_w.conf_int()
 ax.plot(range(T_w, T_w + 24), fc_mean, color='C2',
         linewidth=1.5, label='Forecast')
-ax.fill_between(range(T_w, T_w + 24), fc_ci.iloc[:, 0], fc_ci.iloc[:, 1],
+ax.fill_between(range(T_w, T_w + 24), fc_ci[:, 0], fc_ci[:, 1],
                 alpha=0.2, color='C2')
 ax.axvline(T_w, color='gray', linestyle='--', alpha=0.5)
 ax.set_xlabel('Month')
@@ -767,12 +769,13 @@ print(f"phi_hat = {ar_wrong.params[1]:.4f} (near 1 = unit root)")
 print(f"ADF on raw:  p = {adfuller(y_rw_ex)[1]:.4f}")
 print(f"ADF on diff: p = {adfuller(np.diff(y_rw_ex))[1]:.4f}")
 
-# The residual ACF will show remaining autocorrelation
+# Residual diagnostics may look clean — that is the trap
 lb_wrong = acorr_ljungbox(ar_wrong.resid, lags=10, return_df=True)
 print(f"Ljung-Box: all p > 0.05? {(lb_wrong['lb_pvalue'] > 0.05).all()}")
-print(f"\nThe model is WRONG: phi ≈ 1 means it's a near-unit-root model,")
-print(f"and the t-test on phi is invalid because the ADF distribution")
-print(f"should be used instead of the normal distribution.")
+print(f"\nThe model is WRONG even though residuals look fine.")
+print(f"phi ≈ 1 means near-unit-root: the t-test on phi is invalid")
+print(f"because the ADF distribution should be used, not the normal.")
+print(f"Residual diagnostics cannot detect this — only the ADF test can.")
 ```
 
 %%
