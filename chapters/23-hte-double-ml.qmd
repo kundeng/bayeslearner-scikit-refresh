@@ -164,9 +164,19 @@ def double_ml(X, D, Y, n_folds=5, seed=42):
 
 ## Demonstration
 
+Let's see DML in action. We simulate a problem where:
+
+- The confounding is *nonlinear* (so OLS can't remove it)
+- The treatment effect is a constant (ATE = 2)
+- The propensity score depends on covariates (confounded assignment)
+
+Naive OLS (regressing $Y$ on $D$ without adjusting for $X$) will be
+biased. DML removes the bias by residualizing both $Y$ and $D$ on
+$X$ using flexible ML models.
+
 ```{python}
 #| label: dml-demo
-# Simulate data with confounding
+# Simulate: nonlinear confounding, constant treatment effect
 n = 2000
 p = 20
 X = rng.standard_normal((n, p))

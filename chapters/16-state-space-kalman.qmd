@@ -129,9 +129,19 @@ L-BFGS-B (Chapter 2). This is what `SARIMAX.fit()` does.
 
 ## Structural time series (`UnobservedComponents`)
 
+`UnobservedComponents` decomposes a time series into interpretable
+parts: a *level* (where the series is now), a *trend* (where it's
+going), and a *cycle* (periodic fluctuations). Each component is
+modeled as a state in the state-space framework and estimated via the
+Kalman filter.
+
+This is the same idea as exponential smoothing (Ch. 15), but
+formulated as a state-space model with explicit noise variances for
+each component.
+
 ```{python}
 #| label: uc-demo
-# Simulate: local level + cycle
+# Simulate a series with a stochastic level and a cycle
 n = 200
 level = np.cumsum(0.3*rng.standard_normal(n))
 cycle = 5*np.sin(2*np.pi*np.arange(n)/50)
@@ -167,9 +177,20 @@ plt.show()
 
 ## Markov regime switching
 
+Sometimes the parameters of a time series *change* over time --- for
+example, stock returns have low-volatility periods (calm markets) and
+high-volatility periods (crises). Markov switching models allow the
+parameters to switch between discrete "regimes" according to a hidden
+Markov chain.
+
+`MarkovRegression` fits a regression where the coefficients (and
+optionally the variance) switch between $K$ regimes. The model
+estimates both the regime-specific parameters and the transition
+probabilities between regimes.
+
 ```{python}
 #| label: markov-demo
-# Two-regime data: low-volatility and high-volatility periods
+# Simulate two-regime data: low-volatility and high-volatility periods
 n_ms = 300
 regime = np.zeros(n_ms, dtype=int)
 for t in range(1, n_ms):

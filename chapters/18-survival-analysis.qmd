@@ -122,22 +122,39 @@ to the score test from a Cox model with a single binary covariate.
 
 ## Kaplan--Meier
 
+The Kaplan--Meier estimator is the nonparametric way to estimate the
+survival curve from data with censoring. It takes two inputs:
+
+- `time`: the observed time (either event time or censoring time,
+  whichever came first)
+- `status`: 1 if the event occurred, 0 if the observation was censored
+
+Let's simulate survival data and fit the KM estimator:
+
 ```{python}
 #| label: km-demo
-# Simulate survival data
+# Simulate survival data with censoring
 n = 200
-# Exponential survival times
+
+# True event times: exponential with rate 0.05 (mean = 20 time units)
 true_rate = 0.05
 event_time = rng.exponential(1/true_rate, n)
-# Random censoring
+
+# Censoring times: uniformly distributed between 5 and 30
+# (simulating a study that runs for 5-30 time units per subject)
 censor_time = rng.uniform(5, 30, n)
+
+# What we observe: the minimum of event time and censoring time
 observed_time = np.minimum(event_time, censor_time)
+
+# Event indicator: 1 if the event happened before censoring
 event = (event_time <= censor_time).astype(int)
 
-print(f"Events: {event.sum()} ({event.mean():.0%})")
-print(f"Censored: {(1-event).sum()} ({(1-event).mean():.0%})")
+print(f"Events observed: {event.sum()} ({event.mean():.0%})")
+print(f"Censored:        {(1-event).sum()} ({(1-event).mean():.0%})")
 
-# Kaplan-Meier
+# Fit Kaplan-Meier
+# SurvfuncRight handles right-censored data (the most common type)
 sf = SurvfuncRight(observed_time, event)
 ```
 

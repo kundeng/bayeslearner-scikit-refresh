@@ -113,9 +113,18 @@ regressors.
 
 ## VAR: fitting and analysis
 
+A VAR model is fitted equation by equation via OLS --- each variable
+is regressed on lags of *all* variables. Statsmodels' `VAR` class
+handles lag selection, fitting, Granger causality tests, and impulse
+response functions.
+
+The workflow: (1) select the lag order via information criteria,
+(2) fit the model, (3) test for Granger causality, (4) compute
+impulse responses to understand how shocks propagate.
+
 ```{python}
 #| label: var-demo
-# Simulate a bivariate VAR(1)
+# Simulate a bivariate VAR(1): two variables that influence each other
 T = 300
 Phi = np.array([[0.5, 0.2], [-0.1, 0.6]])
 y_var = np.zeros((T, 2))
@@ -173,9 +182,19 @@ plt.show()
 
 ## Cointegration: Johansen test
 
+Two non-stationary series are *cointegrated* if some linear
+combination of them is stationary. Think of two stock prices that
+wander randomly but stay close to each other --- their spread
+(difference) is stationary even though neither price is.
+
+The Johansen test determines how many cointegrating relationships
+exist (the *cointegrating rank*). If the rank is 0, the series are
+not cointegrated. If the rank is 1, there is one linear combination
+that is stationary.
+
 ```{python}
 #| label: johansen-demo
-# Simulate cointegrated series: y1 and y2 share a common trend
+# Simulate cointegrated series: y1 and y2 share a common stochastic trend
 T_ci = 300
 trend = np.cumsum(rng.standard_normal(T_ci))
 y1 = trend + rng.standard_normal(T_ci)

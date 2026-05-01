@@ -114,10 +114,20 @@ necessarily both). This is the key advantage over regression adjustment
 
 ## Simulating observational data
 
+To understand causal inference, we simulate data where we *control*
+the data-generating process. This lets us know the true treatment
+effect and see whether each estimator recovers it.
+
+The key feature of observational data: treatment assignment is *not*
+random. People who receive treatment differ systematically from those
+who don't (confounding). In our simulation, $x_1$ affects both who
+gets treated and the outcome --- it is a confounder.
+
 ```{python}
 #| label: sim-data
 n = 1000
-# Covariates
+
+# Covariates: x1 is a confounder (affects both treatment and outcome)
 x1 = rng.standard_normal(n)
 x2 = rng.standard_normal(n)
 X = np.column_stack([x1, x2])
