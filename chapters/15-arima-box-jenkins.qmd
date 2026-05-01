@@ -92,20 +92,35 @@ smoothing is equivalent to a state-space model (Chapter 16).
 
 ## Simulating and fitting AR processes
 
+An AR(2) process generates each observation as a weighted combination
+of the two previous observations plus random noise:
+$y_t = \phi_1 y_{t-1} + \phi_2 y_{t-2} + \varepsilon_t$.
+
+Let's simulate one and then recover the parameters from data:
+
 ```{python}
 #| label: ar-demo
-# Simulate AR(2)
+# Simulate AR(2) with known parameters
 n = 300
-phi1, phi2 = 0.6, -0.3
+phi1, phi2 = 0.6, -0.3  # true AR coefficients
 y_ar = np.zeros(n)
 for t in range(2, n):
+    # Each observation = weighted sum of past + noise
     y_ar[t] = phi1*y_ar[t-1] + phi2*y_ar[t-2] + rng.standard_normal()
 
+# Fit an ARIMA model to recover the parameters
+# order=(p, d, q): p=AR order, d=differencing, q=MA order
+# Since we know it's AR(2), we use order=(2, 0, 0)
 model = ARIMA(y_ar, order=(2, 0, 0)).fit()
+
+# model.params contains: [constant, phi1, phi2, sigma^2]
 print(f"AR(2) fit: phi1={model.params[1]:.3f} (true {phi1}), "
       f"phi2={model.params[2]:.3f} (true {phi2})")
 print(f"AIC: {model.aic:.1f}")
 ```
+
+The fitted coefficients are close to the true values. The small
+discrepancy is expected --- we are estimating from a finite sample.
 
 ```{python}
 #| label: fig-acf-pacf
@@ -122,35 +137,74 @@ plt.show()
 
 ## Unit root testing
 
+Before fitting an ARIMA model, you must check whether the series is
+*stationary* (constant mean and variance over time). A non-stationary
+series (e.g., a random walk with a trend) needs to be differenced
+first.
+
+The **Augmented Dickey-Fuller (ADF) test** tests the null hypothesis
+that the series has a *unit root* (is non-stationary). A small
+$p$-value means we can reject the null and conclude the series is
+stationary.
+
 ```{python}
 #| label: unit-root
-# Stationary series
+# Test our AR(2) series — should be stationary
 adf = adfuller(y_ar, autolag='AIC')
-print(f"AR(2): ADF p={adf[1]:.4f} (stationary)")
+print(f"AR(2) series:")
+print(f"  ADF statistic: {adf[0]:.3f}")
+print(f"  p-value:       {adf[1]:.4f}")
+print(f"  → {'Stationary' if adf[1] < 0.05 else 'Non-stationary'}")
 
-# Random walk
+# Compare with a random walk — should be non-stationary
 y_rw = np.cumsum(rng.standard_normal(300))
 adf_rw = adfuller(y_rw, autolag='AIC')
-print(f"RW:    ADF p={adf_rw[1]:.4f} (non-stationary)")
+print(f"\nRandom walk:")
+print(f"  ADF statistic: {adf_rw[0]:.3f}")
+print(f"  p-value:       {adf_rw[1]:.4f}")
+print(f"  → {'Stationary' if adf_rw[1] < 0.05 else 'Non-stationary'}")
 ```
+
+The AR(2) series is stationary (we can fit ARIMA with $d = 0$). The
+random walk is non-stationary (we need $d = 1$ to difference it first,
+or equivalently, model it as ARIMA(0,1,0)).
 
 ## Exponential smoothing
 
+Exponential smoothing is an alternative to ARIMA for forecasting
+series with trend and seasonality. Instead of modeling the
+autocorrelation structure (AR/MA terms), it directly decomposes the
+series into *level*, *trend*, and *seasonal* components, each updated
+by a smoothing parameter.
+
+The three smoothing parameters control how quickly the model adapts:
+
+- **alpha** (level): how much weight to give the latest observation
+- **beta** (trend): how quickly the trend changes
+- **gamma** (seasonal): how quickly the seasonal pattern evolves
+
 ```{python}
 #| label: ets-demo
-# Monthly data with trend + seasonality
-T = 120
-trend = np.linspace(100, 150, T)
-seasonal = 10 * np.sin(2*np.pi*np.arange(T)/12)
-y_ets = trend + seasonal + 3*rng.standard_normal(T)
+# Simulate monthly data with a linear trend and seasonal cycle
+T = 120  # 10 years of monthly data
+trend = np.linspace(100, 150, T)              # upward trend
+seasonal = 10 * np.sin(2*np.pi*np.arange(T)/12)  # 12-month cycle
+y_ets = trend + seasonal + 3*rng.standard_normal(T)  # + noise
 
+# Fit ETS(A,A,A): Additive error, Additive trend, Additive seasonal
+# seasonal_periods=12 tells the model the cycle repeats every 12 points
 ets = ExponentialSmoothing(
-    y_ets, seasonal_periods=12, trend='add', seasonal='add',
-).fit(optimized=True)
+    y_ets,
+    seasonal_periods=12,
+    trend='add',      # additive trend (vs 'mul' for multiplicative)
+    seasonal='add',   # additive seasonality
+).fit(optimized=True)  # optimize the smoothing parameters
 
-print(f"alpha={ets.params['smoothing_level']:.3f}, "
-      f"beta={ets.params['smoothing_trend']:.3f}, "
-      f"gamma={ets.params['smoothing_seasonal']:.3f}")
+print(f"Smoothing parameters:")
+print(f"  alpha (level):    {ets.params['smoothing_level']:.3f}")
+print(f"  beta  (trend):    {ets.params['smoothing_trend']:.3f}")
+print(f"  gamma (seasonal): {ets.params['smoothing_seasonal']:.3f}")
+print(f"AIC: {ets.aic:.1f}")
 ```
 
 ```{python}
