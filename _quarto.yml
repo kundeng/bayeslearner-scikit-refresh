@@ -47,7 +47,10 @@ book:
         - chapters/21-potential-outcomes.qmd
         - chapters/22-rdd-did-synth-control.qmd
         - chapters/23-hte-double-ml.qmd
-    - chapters/appendix-prerequisites.qmd
+  appendices:
+      - chapters/appendix-probability-stats.qmd
+      - chapters/appendix-matrix-algebra.qmd
+      - chapters/appendix-prerequisites.qmd
 
 format:
   html:

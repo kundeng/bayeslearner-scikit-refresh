@@ -1,0 +1,1111 @@
+---
+title: "Appendix A: Probability and Mathematical Statistics"
+---
+
+This appendix collects the probability and mathematical statistics
+that the main chapters assume. It is a *reference*, not a course ---
+substantive enough that a reader with rusty probability can refresh
+the machinery and follow along, but not a substitute for Casella and
+Berger or Rice. Every concept connects to code via `scipy.stats` and
+NumPy, because seeing a formula evaluated on real numbers cements
+intuition in a way that notation alone cannot.
+
+```{python}
+#| label: imports
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+
+# Random Variables and Distributions {.unnumbered}
+
+A **random variable** $X$ is a function from a sample space to
+$\mathbb{R}$. We work entirely at the non-measure-theoretic level:
+$X$ either has a countable range (discrete) or a density
+(continuous). The book never needs more generality than this.
+
+## Discrete random variables
+
+A discrete random variable takes values in a countable set. Its
+**probability mass function** (PMF) is $p(x) = \Pr(X = x)$. The
+PMF is nonnegative and sums to one.
+
+```{python}
+#| label: pmf-demo
+# Binomial(n=10, p=0.3) -- number of successes in 10 trials
+X = stats.binom(n=10, p=0.3)
+k = np.arange(0, 11)
+print("k   P(X=k)")
+for ki in k:
+    print(f"{ki:2d}  {X.pmf(ki):.4f}")
+```
+
+## Continuous random variables
+
+A continuous random variable has a **probability density function**
+(PDF) $f(x)$ satisfying $\Pr(a \le X \le b) = \int_a^b f(x)\, dx$.
+The PDF can exceed 1 at a point --- it is a density, not a
+probability.
+
+The **cumulative distribution function** (CDF) is defined for both
+types:
+$$
+F(x) = \Pr(X \le x).
+$$
+For continuous $X$, $F(x) = \int_{-\infty}^x f(t)\, dt$ and
+$f(x) = F'(x)$. For discrete $X$, $F$ is a right-continuous step
+function.
+
+```{python}
+#| label: pdf-cdf-demo
+x = np.linspace(-4, 4, 300)
+rv = stats.norm(loc=0, scale=1)
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 3))
+axes[0].plot(x, rv.pdf(x))
+axes[0].set_title("Standard Normal PDF")
+axes[0].set_xlabel("$x$")
+axes[0].set_ylabel("$f(x)$")
+
+axes[1].plot(x, rv.cdf(x))
+axes[1].set_title("Standard Normal CDF")
+axes[1].set_xlabel("$x$")
+axes[1].set_ylabel("$F(x)$")
+fig.tight_layout()
+plt.show()
+```
+
+## Expectation, variance, covariance
+
+The **expectation** of $g(X)$ is:
+$$
+\mathbb{E}[g(X)] = \begin{cases}
+\sum_x g(x) p(x) & \text{(discrete)} \\
+\int g(x) f(x)\, dx & \text{(continuous)}.
+\end{cases}
+$$
+
+Key special cases:
+
+- **Mean:** $\mu = \mathbb{E}[X]$
+- **Variance:** $\text{Var}(X) = \mathbb{E}[(X - \mu)^2]
+  = \mathbb{E}[X^2] - \mu^2$
+- **Covariance:** $\text{Cov}(X, Y) = \mathbb{E}[(X - \mu_X)(Y - \mu_Y)]
+  = \mathbb{E}[XY] - \mu_X \mu_Y$
+- **Correlation:** $\rho(X, Y) = \text{Cov}(X, Y) / (\sigma_X \sigma_Y)$
+
+Two properties used constantly throughout the book:
+
+1. **Linearity of expectation:** $\mathbb{E}[aX + bY] = a\mathbb{E}[X]
+   + b\mathbb{E}[Y]$, always --- no independence required.
+2. **Variance of a sum:** $\text{Var}(X + Y) = \text{Var}(X) + \text{Var}(Y)
+   + 2\,\text{Cov}(X, Y)$. Under independence, the covariance term
+   vanishes, giving $\text{Var}(\bar{X}_n) = \sigma^2 / n$.
+
+```{python}
+#| label: moments-demo
+# Verify moments of Gamma(a=3, scale=2) numerically
+rv = stats.gamma(a=3, scale=2)
+sample = rv.rvs(size=100_000, random_state=rng)
+
+print("Gamma(a=3, scale=2):")
+print(f"  Theoretical mean: {rv.mean():.4f}, "
+      f"sample mean: {sample.mean():.4f}")
+print(f"  Theoretical var:  {rv.var():.4f}, "
+      f"sample var:  {sample.var():.4f}")
+```
+
+## Joint, marginal, and conditional distributions
+
+For a pair $(X, Y)$:
+
+- **Joint PDF / PMF:** $f(x, y)$ or $p(x, y)$.
+- **Marginal:** $f_X(x) = \int f(x, y)\, dy$ (integrate out $Y$).
+- **Conditional:** $f(y \mid x) = f(x, y) / f_X(x)$, defined when
+  $f_X(x) > 0$.
+- **Independence:** $X \perp Y$ iff $f(x, y) = f_X(x) f_Y(y)$.
+
+These definitions extend to vectors: the joint density of
+$\mathbf{X} = (X_1, \ldots, X_d)^\top$ factors as a product of
+marginals iff the components are mutually independent.
+
+```{python}
+#| label: joint-demo
+# Bivariate normal: sample and compute marginal/conditional
+from scipy.stats import multivariate_normal
+
+mu = np.array([1.0, 2.0])
+Sigma = np.array([[1.0, 0.6],
+                  [0.6, 1.0]])
+joint = multivariate_normal(mean=mu, cov=Sigma)
+samples = joint.rvs(size=5000, random_state=rng)
+
+# Marginal of X1 is N(1, 1)
+print(f"Marginal X1: mean={samples[:, 0].mean():.3f}, "
+      f"std={samples[:, 0].std():.3f}")
+
+# Conditional E[X2 | X1=1.5] = mu2 + rho*(1.5 - mu1) = 2.3
+rho = 0.6
+cond_mean = mu[1] + rho * (1.5 - mu[0])
+print(f"E[X2 | X1=1.5] = {cond_mean:.1f}")
+
+# Verify: filter samples near X1=1.5
+mask = np.abs(samples[:, 0] - 1.5) < 0.1
+print(f"Sample mean of X2 | X1≈1.5: "
+      f"{samples[mask, 1].mean():.2f} "
+      f"(n={mask.sum()})")
+```
+
+
+# Common Distribution Families {.unnumbered}
+
+The distributions below recur throughout the book. For each, the table
+gives the scipy parameterization, key properties, and where in the
+book it appears most prominently.
+
+## Continuous distributions
+
+| Distribution | scipy call | Mean | Variance | Key chapters |
+|---|---|---|---|---|
+| $\mathcal{N}(\mu, \sigma^2)$ | `norm(loc=mu, scale=sigma)` | $\mu$ | $\sigma^2$ | All |
+| $t_\nu$ | `t(df=nu)` | 0 ($\nu>1$) | $\nu/(\nu-2)$ ($\nu>2$) | 10, 11, 15 |
+| $\chi^2_\nu$ | `chi2(df=nu)` | $\nu$ | $2\nu$ | 10, 11 |
+| $F_{\nu_1, \nu_2}$ | `f(dfn=nu1, dfd=nu2)` | $\frac{\nu_2}{\nu_2-2}$ | see text | 10, 11, 19 |
+| $\text{Gamma}(a, s)$ | `gamma(a, scale=s)` | $as$ | $as^2$ | 7, 10, 12 |
+| $\text{Beta}(a, b)$ | `beta(a, b)` | $\frac{a}{a+b}$ | $\frac{ab}{(a+b)^2(a+b+1)}$ | 8, 12 |
+| $\text{Exp}(\lambda)$ | `expon(scale=1/lam)` | $1/\lambda$ | $1/\lambda^2$ | 18 |
+
+: Continuous distributions used in the book. {#tbl-continuous-dists}
+
+**Parameterization warning.** scipy's `expon(scale=s)` uses scale
+$s = 1/\lambda$, *not* the rate $\lambda$ common in textbooks.
+Similarly, `gamma(a, scale=s)` uses the shape-scale parameterization,
+not shape-rate. Always check the scipy docstring when translating
+from a textbook formula.
+
+**The $t$ distribution in practice.** The $t$ distribution arises
+whenever a normal mean is estimated with unknown variance. If
+$Z \sim \mathcal{N}(0,1)$ and $V \sim \chi^2_\nu$ independently,
+then $T = Z/\sqrt{V/\nu} \sim t_\nu$. For $\nu > 30$, $t_\nu$ is
+nearly indistinguishable from $\mathcal{N}(0,1)$, but at small $\nu$
+the heavier tails matter --- this is why small-sample $t$-tests use
+$t$ critical values rather than normal ones. At $\nu = 1$, the $t$
+distribution is the Cauchy, which has no finite mean.
+
+**The chi-squared and $F$ in testing.** The $\chi^2_\nu$ distribution
+is the distribution of the sum of $\nu$ squared standard normals.
+It governs goodness-of-fit tests, likelihood ratio statistics, and
+Wald statistics. The $F$ distribution, as the ratio of two
+independent scaled chi-squareds, governs $F$-tests in ANOVA and
+regression (Ch. 11). Both are special cases of the Gamma: $\chi^2_\nu
+= \text{Gamma}(\nu/2, \text{scale}=2)$.
+
+## Discrete distributions
+
+| Distribution | scipy call | Mean | Variance | Key chapters |
+|---|---|---|---|---|
+| $\text{Binomial}(n, p)$ | `binom(n, p)` | $np$ | $np(1-p)$ | 9, 12 |
+| $\text{Poisson}(\lambda)$ | `poisson(mu=lam)` | $\lambda$ | $\lambda$ | 12, 13 |
+
+: Discrete distributions used in the book. {#tbl-discrete-dists}
+
+**Note on scipy's Poisson.** The parameter is `mu`, not `lam` or
+`lambda`. This follows scipy's convention of naming the mean
+directly: `poisson(mu=5)`.
+
+## Relationships between distributions
+
+Several distributions are linked by transformations used constantly
+in hypothesis testing (Ch. 10):
+
+- If $Z \sim \mathcal{N}(0, 1)$, then $Z^2 \sim \chi^2_1$.
+- If $Z_1, \ldots, Z_\nu \sim \mathcal{N}(0,1)$ iid, then
+  $\sum Z_i^2 \sim \chi^2_\nu$.
+- If $Z \sim \mathcal{N}(0,1)$ and $V \sim \chi^2_\nu$ independent,
+  then $Z / \sqrt{V/\nu} \sim t_\nu$.
+- If $U \sim \chi^2_{\nu_1}$ and $V \sim \chi^2_{\nu_2}$ independent,
+  then $(U/\nu_1) / (V/\nu_2) \sim F_{\nu_1, \nu_2}$.
+
+```{python}
+#| label: dist-relationships
+# Verify Z^2 ~ chi2(1) by simulation
+Z = rng.standard_normal(50_000)
+Z_sq = Z ** 2
+
+fig, ax = plt.subplots(figsize=(5, 3))
+x = np.linspace(0, 8, 200)
+ax.hist(
+    Z_sq, bins=80, density=True,
+    alpha=0.5, label="$Z^2$ histogram"
+)
+ax.plot(x, stats.chi2(df=1).pdf(x), label="$\\chi^2_1$ PDF")
+ax.set_xlim(0, 8)
+ax.set_xlabel("$x$")
+ax.legend()
+ax.set_title("$Z^2$ matches $\\chi^2_1$")
+fig.tight_layout()
+plt.show()
+```
+
+
+# Moment Generating Functions {.unnumbered}
+
+The **moment generating function** (MGF) of $X$ is
+$$
+M_X(t) = \mathbb{E}[e^{tX}],
+$$
+defined for $t$ in a neighborhood of zero. When it exists:
+
+1. $M_X^{(k)}(0) = \mathbb{E}[X^k]$ (moments via differentiation).
+2. $M_X$ uniquely determines the distribution of $X$.
+3. If $X_1, \ldots, X_n$ are independent, then
+   $M_{X_1 + \cdots + X_n}(t) = \prod_{i=1}^n M_{X_i}(t)$.
+
+**Why MGFs matter.** Property 2 is the workhorse: to prove that a
+sum of independent normals is normal, show the MGF of the sum is the
+MGF of a normal. The CLT proof (next section) uses the same strategy
+with the closely related **characteristic function**
+$\varphi_X(t) = \mathbb{E}[e^{itX}]$, which always exists (unlike
+the MGF, which may not exist for heavy-tailed distributions like
+the Cauchy).
+
+| Distribution | MGF $M_X(t)$ | Restriction |
+|---|---|---|
+| $\mathcal{N}(\mu, \sigma^2)$ | $\exp(\mu t + \sigma^2 t^2 / 2)$ | All $t$ |
+| $\text{Gamma}(a, s)$ | $(1 - st)^{-a}$ | $t < 1/s$ |
+| $\text{Poisson}(\lambda)$ | $\exp(\lambda(e^t - 1))$ | All $t$ |
+| $\text{Bernoulli}(p)$ | $1 - p + pe^t$ | All $t$ |
+| Cauchy | Does not exist | --- |
+
+: MGFs for distributions used in this book. {#tbl-mgfs}
+
+```{python}
+#| label: mgf-demo
+# Verify MGF of N(mu, sigma^2) at t=0.5 numerically
+mu, sigma = 3.0, 2.0
+t = 0.5
+theoretical = np.exp(mu * t + sigma**2 * t**2 / 2)
+
+sample = rng.normal(loc=mu, scale=sigma, size=200_000)
+numerical = np.mean(np.exp(t * sample))
+
+print(f"MGF at t={t}:")
+print(f"  Theoretical: {theoretical:.4f}")
+print(f"  MC estimate: {numerical:.4f}")
+```
+
+
+# Convergence Concepts {.unnumbered}
+
+Three modes of convergence appear in the book. They differ in what
+exactly "converges" means, and the distinctions matter when a theorem
+gives you one mode but you need another.
+
+## Convergence in probability
+
+$X_n \xrightarrow{p} X$ means: for every $\epsilon > 0$,
+$$
+\Pr(|X_n - X| > \epsilon) \to 0 \quad \text{as } n \to \infty.
+$$
+**Intuition:** the probability of being far from $X$ vanishes, but
+there is no claim about *how quickly*. This is the mode the law of
+large numbers delivers.
+
+## Convergence in distribution
+
+$X_n \xrightarrow{d} X$ means: $F_n(x) \to F(x)$ at every
+continuity point $x$ of $F$. Equivalently: $\mathbb{E}[g(X_n)]
+\to \mathbb{E}[g(X)]$ for every bounded continuous $g$.
+
+**Intuition:** the distribution shapes converge, but the random
+variables need not live on the same probability space. This is the
+mode the CLT delivers.
+
+## Almost sure convergence
+
+$X_n \xrightarrow{a.s.} X$ means:
+$\Pr(\lim_{n \to \infty} X_n = X) = 1$. This is the strongest
+mode --- it implies convergence in probability, which in turn implies
+convergence in distribution.
+
+**The hierarchy:**
+$$
+X_n \xrightarrow{a.s.} X \implies X_n \xrightarrow{p} X
+\implies X_n \xrightarrow{d} X.
+$$
+The converses are false in general.
+
+## A crucial non-implication
+
+Convergence in distribution does NOT imply convergence of
+expectations. The classic counterexample uses the Cauchy distribution,
+which has no finite mean. Consider $X_n \sim t_n$ (Student's $t$
+with $n$ degrees of freedom). As $n \to \infty$,
+$X_n \xrightarrow{d} \mathcal{N}(0, 1)$, so
+$\mathbb{E}[X_n^2] = n/(n-2) \to 1 = \text{Var}(Z)$ --- that works
+fine. But consider $Y_n = n \cdot \mathbf{1}(|X_n| > n^{1/2})$.
+Then $Y_n \xrightarrow{d} 0$ but $\mathbb{E}[Y_n]$ does not converge
+to 0. The point: convergence in distribution controls the *shape* of
+the distribution, not the *tails*.
+
+A sufficient condition for $\mathbb{E}[X_n] \to \mathbb{E}[X]$ is
+**uniform integrability** --- the tails of $\{X_n\}$ must be
+uniformly controlled. When you see a theorem in the main chapters
+that says "$\hat{\theta}_n$ is asymptotically normal," the CLT gives
+convergence in distribution of the standardized statistic. To also
+conclude that moments converge (e.g., that the MSE of $\hat{\theta}_n$
+converges to zero), you need uniform integrability or a separate
+argument.
+
+## Slutsky's theorem
+
+A companion result used repeatedly alongside the CLT:
+
+If $X_n \xrightarrow{d} X$ and $Y_n \xrightarrow{p} c$ (a constant),
+then:
+
+- $X_n + Y_n \xrightarrow{d} X + c$
+- $Y_n X_n \xrightarrow{d} cX$
+- $X_n / Y_n \xrightarrow{d} X / c$ (when $c \ne 0$)
+
+**Why this matters.** The CLT gives you
+$\sqrt{n}(\bar{X}_n - \mu)/\sigma \xrightarrow{d} \mathcal{N}(0,1)$,
+but $\sigma$ is unknown. Replacing it with $\hat{\sigma}_n
+\xrightarrow{p} \sigma$ and applying Slutsky gives
+$\sqrt{n}(\bar{X}_n - \mu)/\hat{\sigma}_n \xrightarrow{d}
+\mathcal{N}(0,1)$. This is the theoretical justification for using
+estimated standard errors in confidence intervals and $t$-tests.
+The delta method proof also relies on Slutsky.
+
+```{python}
+#| label: convergence-demo
+# Demonstrate convergence in probability: LLN
+sample_sizes = [10, 50, 200, 1000, 5000]
+true_mean = 3.0
+rv = stats.expon(scale=true_mean)
+
+fig, ax = plt.subplots(figsize=(6, 3.5))
+for n in sample_sizes:
+    # 500 replications of the sample mean
+    means = np.array([
+        rv.rvs(size=n, random_state=rng).mean()
+        for _ in range(500)
+    ])
+    ax.hist(
+        means, bins=30, density=True, alpha=0.4,
+        label=f"$n={n}$"
+    )
+ax.axvline(true_mean, color='k', linestyle='--',
+           label="True mean")
+ax.set_xlabel("$\\bar{X}_n$")
+ax.set_ylabel("Density")
+ax.legend(fontsize=8)
+ax.set_title(
+    "LLN: sample means concentrate "
+    "around $\\mu=3$"
+)
+fig.tight_layout()
+plt.show()
+```
+
+
+# Law of Large Numbers {.unnumbered}
+
+**Theorem (Strong LLN).** If $X_1, X_2, \ldots$ are iid with
+$\mathbb{E}[|X_1|] < \infty$, then
+$$
+\bar{X}_n = \frac{1}{n}\sum_{i=1}^n X_i
+\xrightarrow{a.s.} \mathbb{E}[X_1].
+$$
+
+**Why it matters.** The LLN is the theoretical license for Monte
+Carlo. Every time Ch. 7 replaces an integral $\mathbb{E}[h(X)]$ with
+a sample average $\frac{1}{n}\sum h(X_i)$, that replacement is
+justified by the LLN. Every time Ch. 9 estimates a bootstrap
+distribution by resampling $B$ times, the LLN guarantees that the
+empirical distribution converges to the bootstrap distribution.
+
+The Weak LLN requires only $\text{Var}(X_1) < \infty$ and delivers
+convergence in probability. The Strong LLN requires only
+$\mathbb{E}[|X_1|] < \infty$ and delivers almost sure convergence.
+The strong version is what justifies path-by-path Monte Carlo:
+for *almost every* sequence of random draws, the running average
+converges to the right answer.
+
+```{python}
+#| label: lln-demo
+# Running average converges path-by-path
+X = rng.exponential(scale=3.0, size=10_000)
+running_avg = np.cumsum(X) / np.arange(1, len(X) + 1)
+
+fig, ax = plt.subplots(figsize=(6, 3))
+ax.plot(running_avg, linewidth=0.7)
+ax.axhline(3.0, color='k', linestyle='--',
+           label="$\\mathbb{E}[X] = 3$")
+ax.set_xlabel("$n$")
+ax.set_ylabel("$\\bar{X}_n$")
+ax.set_xscale('log')
+ax.legend()
+ax.set_title("Strong LLN: running average "
+             "converges a.s.")
+fig.tight_layout()
+plt.show()
+```
+
+
+# Central Limit Theorem {.unnumbered}
+
+**Theorem (CLT).** If $X_1, X_2, \ldots$ are iid with mean $\mu$
+and finite variance $\sigma^2 > 0$, then
+$$
+\sqrt{n}\,\frac{\bar{X}_n - \mu}{\sigma}
+\xrightarrow{d} \mathcal{N}(0, 1).
+$$ {#eq-clt}
+
+**Proof sketch (via characteristic functions).** The characteristic
+function of $Z_n = \sqrt{n}(\bar{X}_n - \mu)/\sigma$ can be written
+as $\varphi_{Z_n}(t) = [\varphi_{(X_1 - \mu)/\sigma}(t/\sqrt{n})]^n$.
+Expand $\varphi_{(X_1 - \mu)/\sigma}$ in a Taylor series around $0$:
+$\varphi(s) = 1 - s^2/2 + o(s^2)$. Substituting $s = t/\sqrt{n}$
+and taking the $n$-th power gives
+$[1 - t^2/(2n) + o(1/n)]^n \to e^{-t^2/2}$, which is the
+characteristic function of $\mathcal{N}(0, 1)$. Lévy's continuity
+theorem converts pointwise convergence of characteristic functions to
+convergence in distribution.
+
+**Why $\sqrt{n}$ matters.** The CLT rate $1/\sqrt{n}$ is the
+fundamental speed limit of estimation from iid data. All standard
+errors in the book scale as $O(1/\sqrt{n})$: the standard error of a
+regression coefficient (Ch. 11), of a maximum likelihood estimate
+(Ch. 10), of a Monte Carlo average (Ch. 7), of a treatment effect
+estimator (Ch. 21). When you see $\sqrt{n}$ in a denominator, you are
+looking at the CLT at work.
+
+**The Berry-Esseen bound** quantifies the approximation error:
+$$
+\sup_x \left| \Pr\left(\frac{\bar{X}_n - \mu}{\sigma/\sqrt{n}} \le x
+\right) - \Phi(x) \right| \le \frac{C \rho}{\sigma^3 \sqrt{n}},
+$$
+where $\rho = \mathbb{E}[|X - \mu|^3]$ and $C \le 0.4748$. The
+bound scales as $1/\sqrt{n}$ and depends on skewness (via $\rho$):
+the more skewed the population, the slower the normal approximation
+kicks in. This is why bootstrap $t$ intervals (Ch. 9) outperform
+normal-based intervals for skewed data at moderate sample sizes.
+
+```{python}
+#| label: clt-demo
+# CLT in action: exponential data (skewed)
+fig, axes = plt.subplots(2, 3, figsize=(9, 5))
+true_mean = 1.0
+true_var = 1.0  # Exp(1): mean=1, var=1
+sample_sizes = [5, 15, 50, 200, 1000, 5000]
+
+for ax, n in zip(axes.flat, sample_sizes):
+    # 5000 replications of the standardized mean
+    z_vals = np.array([
+        np.sqrt(n) * (
+            rng.exponential(scale=1.0, size=n).mean()
+            - true_mean
+        ) / np.sqrt(true_var)
+        for _ in range(5000)
+    ])
+    ax.hist(z_vals, bins=40, density=True, alpha=0.5)
+    x_grid = np.linspace(-4, 4, 200)
+    ax.plot(
+        x_grid, stats.norm.pdf(x_grid),
+        'k-', linewidth=1.2
+    )
+    ax.set_title(f"$n = {n}$", fontsize=10)
+    ax.set_xlim(-4, 4)
+    ax.set_yticks([])
+
+fig.suptitle(
+    "CLT: standardized means of Exp(1) data "
+    "converge to $\\mathcal{N}(0,1)$",
+    fontsize=11
+)
+fig.tight_layout()
+plt.show()
+```
+
+
+# The Delta Method {.unnumbered}
+
+The delta method translates CLT-type results through smooth
+transformations. It is used in Ch. 10 (confidence intervals for
+transformed parameters), Ch. 12 (variance of marginal effects in
+GLMs), Ch. 13 (marginal effects in discrete-choice models),
+Ch. 18 (survival function from cumulative hazard), and
+Ch. 21 (variance of causal estimators).
+
+**Theorem (Univariate delta method).** If
+$\sqrt{n}(T_n - \theta) \xrightarrow{d} \mathcal{N}(0, \sigma^2)$
+and $g$ is differentiable at $\theta$ with $g'(\theta) \ne 0$, then
+$$
+\sqrt{n}(g(T_n) - g(\theta))
+\xrightarrow{d} \mathcal{N}(0, [g'(\theta)]^2 \sigma^2).
+$$ {#eq-delta-method}
+
+**Proof sketch.** Taylor-expand $g(T_n)$ around $\theta$:
+$g(T_n) = g(\theta) + g'(\theta)(T_n - \theta) + o_p(|T_n - \theta|)$.
+Since $T_n \xrightarrow{p} \theta$, the remainder is $o_p(1/\sqrt{n})$.
+Multiply by $\sqrt{n}$:
+$\sqrt{n}(g(T_n) - g(\theta)) = g'(\theta) \cdot \sqrt{n}(T_n - \theta)
++ o_p(1)$. Apply Slutsky's theorem to get the result.
+
+**Multivariate version.** If
+$\sqrt{n}(\mathbf{T}_n - \boldsymbol{\theta})
+\xrightarrow{d} \mathcal{N}(\mathbf{0}, \boldsymbol{\Sigma})$
+and $g: \mathbb{R}^p \to \mathbb{R}$ is differentiable at
+$\boldsymbol{\theta}$, then
+$$
+\sqrt{n}(g(\mathbf{T}_n) - g(\boldsymbol{\theta}))
+\xrightarrow{d} \mathcal{N}\!\left(0,\;
+\nabla g(\boldsymbol{\theta})^\top \boldsymbol{\Sigma}\,
+\nabla g(\boldsymbol{\theta})\right).
+$$
+
+## Worked example: variance of $\log(\bar{X})$
+
+Suppose $X_1, \ldots, X_n$ are iid with $\mathbb{E}[X_1] = \mu > 0$
+and $\text{Var}(X_1) = \sigma^2$. What is the asymptotic variance of
+$\log(\bar{X}_n)$?
+
+By the CLT, $\sqrt{n}(\bar{X}_n - \mu) \xrightarrow{d}
+\mathcal{N}(0, \sigma^2)$. Take $g(x) = \log(x)$, so
+$g'(x) = 1/x$. By the delta method:
+$$
+\sqrt{n}(\log \bar{X}_n - \log \mu) \xrightarrow{d}
+\mathcal{N}\!\left(0,\, \frac{\sigma^2}{\mu^2}\right).
+$$
+The asymptotic variance of $\log \bar{X}_n$ is
+$\sigma^2 / (n \mu^2)$.
+
+```{python}
+#| label: delta-method-demo
+# Verify delta method: Var(log(X_bar)) for Exp(mu)
+mu = 3.0
+sigma2 = mu**2  # Var(Exp(mu)) = mu^2
+n = 200
+n_reps = 20_000
+
+# Simulate log(X_bar) many times
+log_xbar = np.array([
+    np.log(rng.exponential(scale=mu, size=n).mean())
+    for _ in range(n_reps)
+])
+
+# Delta method prediction: Var = sigma^2 / (n * mu^2)
+predicted_var = sigma2 / (n * mu**2)
+observed_var = log_xbar.var()
+
+print(f"Delta method predicted Var(log(X_bar)):"
+      f" {predicted_var:.6f}")
+print(f"Simulated Var(log(X_bar)):             "
+      f" {observed_var:.6f}")
+print(f"Ratio (should be ≈ 1):                 "
+      f" {observed_var / predicted_var:.3f}")
+```
+
+
+# Maximum Likelihood Estimation {.unnumbered}
+
+Maximum likelihood is the inferential backbone of most models in this
+book: GLMs (Ch. 12), discrete choice (Ch. 13), mixed effects (Ch. 14),
+ARIMA (Ch. 15), state-space models (Ch. 16), Cox regression (Ch. 18).
+Ch. 10 develops the asymptotic theory in full; here we give the
+definitions and a from-scratch example.
+
+## Setup
+
+Given iid observations $X_1, \ldots, X_n$ from a density $f(x; \theta)$,
+the **likelihood** is
+$$
+L(\theta) = \prod_{i=1}^n f(X_i; \theta),
+$$
+and the **log-likelihood** is
+$$
+\ell(\theta) = \sum_{i=1}^n \log f(X_i; \theta).
+$$
+The **maximum likelihood estimator** (MLE) is
+$\hat{\theta}_n = \arg\max_\theta \ell(\theta)$.
+
+## Score function and Fisher information
+
+The **score function** is the gradient of the log-likelihood:
+$$
+S(\theta) = \nabla_\theta \ell(\theta)
+= \sum_{i=1}^n \nabla_\theta \log f(X_i; \theta).
+$$
+
+Under regularity conditions (interchangeability of differentiation
+and integration):
+
+- $\mathbb{E}[S(\theta_0)] = \mathbf{0}$ --- the score has mean zero
+  at the true parameter.
+- The **Fisher information** is $\mathcal{I}(\theta) =
+  \text{Var}(S(\theta)) = \mathbb{E}[S(\theta) S(\theta)^\top]$.
+- The **information matrix equality**: $\mathcal{I}(\theta)
+  = -\mathbb{E}[\nabla^2_\theta \ell(\theta)]$. This says the
+  curvature of the log-likelihood equals the variance of the score ---
+  a fact used to construct the observed information
+  $\hat{\mathcal{I}} = -\nabla^2 \ell(\hat{\theta})$ as an estimator
+  of $\mathcal{I}$.
+
+## Asymptotic normality
+
+Under standard regularity conditions (see Ch. 10 for the precise
+statement):
+$$
+\sqrt{n}(\hat{\theta}_n - \theta_0) \xrightarrow{d}
+\mathcal{N}\!\left(\mathbf{0},\;
+\mathcal{I}_1(\theta_0)^{-1}\right),
+$$
+where $\mathcal{I}_1(\theta_0)$ is the Fisher information for a
+*single* observation. The MLE is consistent, asymptotically normal,
+and asymptotically efficient (achieves the Cramér-Rao bound).
+
+## Cramér-Rao lower bound
+
+For any unbiased estimator $T$ of $\theta$:
+$$
+\text{Var}(T) \ge \frac{1}{n \mathcal{I}_1(\theta)}.
+$$
+No unbiased estimator can have smaller variance. The MLE achieves
+this bound asymptotically --- this is what "efficient" means in
+the likelihood context.
+
+**Observed vs expected information.** In practice, the Fisher
+information $\mathcal{I}(\theta)$ (the *expected* information) is
+replaced by the **observed information**
+$\hat{\mathcal{I}} = -\nabla^2 \ell(\hat{\theta})$, which does not
+require computing an expectation. Under standard conditions, these
+converge to the same limit. Efron and Hinkley (1978) showed that the
+observed information is preferable in many settings because it
+conditions on the observed data. Ch. 10 develops this distinction
+in detail.
+
+**What "regularity conditions" means.** The MLE results above hold
+under conditions that roughly require: (1) the parameter space is
+an open set, (2) the support of $f(x; \theta)$ does not depend on
+$\theta$, (3) $f$ is thrice differentiable in $\theta$, and (4) the
+Fisher information is positive definite. These are Cramér's
+conditions. The most commonly violated condition in practice is (2):
+the uniform distribution $\text{Uniform}(0, \theta)$ has support
+depending on $\theta$, so the standard MLE theory does not apply ---
+and indeed, the MLE converges at rate $1/n$ rather than $1/\sqrt{n}$.
+
+## From-scratch MLE: fitting a Gamma distribution
+
+```{python}
+#| label: mle-gamma
+# Generate Gamma(a=3, scale=2) data
+true_a, true_scale = 3.0, 2.0
+data = stats.gamma.rvs(
+    a=true_a, scale=true_scale,
+    size=500, random_state=rng
+)
+
+# From-scratch MLE using scipy.optimize
+from scipy.optimize import minimize
+from scipy.special import gammaln, digamma
+
+def neg_loglik(params, data):
+    """Negative log-likelihood for Gamma(a, scale)."""
+    a, scale = params
+    if a <= 0 or scale <= 0:
+        return np.inf
+    n = len(data)
+    return (
+        -n * a * np.log(1 / scale)
+        + n * gammaln(a)
+        - (a - 1) * np.sum(np.log(data))
+        + np.sum(data) / scale
+    )
+
+def neg_loglik_grad(params, data):
+    """Gradient of negative log-likelihood."""
+    a, scale = params
+    n = len(data)
+    da = (
+        -n * np.log(1 / scale)
+        + n * digamma(a)
+        - np.sum(np.log(data))
+    )
+    dscale = (
+        n * a / scale
+        - np.sum(data) / scale**2
+    )
+    return np.array([da, dscale])
+
+result = minimize(
+    fun=neg_loglik,
+    x0=np.array([1.0, 1.0]),
+    args=(data,),
+    jac=neg_loglik_grad,
+    method='L-BFGS-B',
+    bounds=[(1e-6, None), (1e-6, None)],
+)
+
+a_hat, scale_hat = result.x
+print(f"From-scratch MLE: a={a_hat:.3f}, "
+      f"scale={scale_hat:.3f}")
+
+# Compare to scipy.stats.gamma.fit
+a_scipy, loc_scipy, scale_scipy = stats.gamma.fit(
+    data, floc=0  # fix loc=0 for standard Gamma
+)
+print(f"scipy.stats.fit:  a={a_scipy:.3f}, "
+      f"scale={scale_scipy:.3f}")
+print(f"True values:      a={true_a:.1f}, "
+      f"scale={true_scale:.1f}")
+```
+
+```{python}
+#| label: mle-gamma-verify
+# Overlay fitted density on histogram
+x_grid = np.linspace(0, data.max(), 200)
+
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.hist(data, bins=40, density=True, alpha=0.4,
+        label="Data")
+ax.plot(
+    x_grid,
+    stats.gamma.pdf(
+        x_grid, a=a_hat, scale=scale_hat
+    ),
+    label=(f"MLE fit: $a={a_hat:.2f}$, "
+           f"scale$={scale_hat:.2f}$"),
+    linewidth=1.5,
+)
+ax.plot(
+    x_grid,
+    stats.gamma.pdf(
+        x_grid, a=true_a, scale=true_scale
+    ),
+    '--', label="True density", linewidth=1.5,
+)
+ax.set_xlabel("$x$")
+ax.legend(fontsize=8)
+ax.set_title("MLE fit vs true Gamma density")
+fig.tight_layout()
+plt.show()
+```
+
+
+# Exponential Families {.unnumbered}
+
+Most parametric models in the book belong to the exponential family.
+This structure drives the theory of GLMs (Ch. 12), links to
+sufficient statistics, and explains why IRLS works.
+
+## Canonical form
+
+A family of distributions is an **exponential family** in canonical
+form if the density can be written as:
+$$
+f(x; \theta, \phi) = \exp\!\left\{
+\frac{x\theta - b(\theta)}{\phi} + c(x, \phi)
+\right\},
+$$ {#eq-expfam}
+where $\theta$ is the **natural parameter**, $b(\theta)$ is the
+**cumulant function** (also called the log-partition function), $\phi$
+is the **dispersion parameter**, and $c(x, \phi)$ collects everything
+that does not depend on $\theta$.
+
+The key property: all the distributional information about $\theta$
+is captured by:
+$$
+\mathbb{E}[X] = b'(\theta), \qquad
+\text{Var}(X) = \phi \, b''(\theta).
+$$ {#eq-expfam-moments}
+
+The mean is a function of $\theta$ alone; the variance factors into
+a dispersion term and a **variance function** $V(\mu) = b''(\theta(\mu))$
+that depends on the mean. This factoring is the foundation of GLM
+theory in Ch. 12.
+
+## Canonical table
+
+| Distribution | $\theta$ | $b(\theta)$ | $\phi$ | $V(\mu) = b''(\theta)$ |
+|---|---|---|---|---|
+| $\mathcal{N}(\mu, \sigma^2)$ | $\mu$ | $\theta^2/2$ | $\sigma^2$ | 1 |
+| $\text{Poisson}(\mu)$ | $\log \mu$ | $e^\theta$ | 1 | $\mu$ |
+| $\text{Binomial}(m, p)$ | $\log\frac{p}{1-p}$ | $m\log(1+e^\theta)$ | 1 | $\mu(1-\mu/m)$ |
+| $\text{Gamma}(\mu, \nu)$ | $-1/\mu$ | $-\log(-\theta)$ | $1/\nu$ | $\mu^2$ |
+| $\text{Exp}(\mu)$ | $-1/\mu$ | $-\log(-\theta)$ | 1 | $\mu^2$ |
+
+: Exponential family representations. The natural parameter $\theta$,
+cumulant function $b(\theta)$, dispersion $\phi$, and variance
+function $V(\mu)$ for distributions used in Ch. 12. {#tbl-expfam}
+
+```{python}
+#| label: expfam-demo
+# Verify E[X] = b'(theta) for Poisson
+# b(theta) = exp(theta), so b'(theta) = exp(theta) = mu
+
+lam = 5.0  # Poisson rate
+theta = np.log(lam)  # natural parameter
+b_prime = np.exp(theta)
+
+sample = stats.poisson.rvs(mu=lam, size=100_000,
+                           random_state=rng)
+
+print(f"Poisson(lambda={lam}):")
+print(f"  b'(theta) = exp(theta) = {b_prime:.1f}")
+print(f"  Sample mean = {sample.mean():.3f}")
+
+# Verify Var(X) = phi * b''(theta) = 1 * exp(theta) = mu
+b_double_prime = np.exp(theta)
+print(f"  phi * b''(theta) = {b_double_prime:.1f}")
+print(f"  Sample var = {sample.var():.3f}")
+```
+
+## Why exponential families matter for the book
+
+1. **Sufficient statistics.** The exponential family is the *only*
+   family with finite-dimensional sufficient statistics (by the
+   Pitman-Koopman-Darmois theorem). This is why MLE reduces to
+   solving a finite system of equations.
+2. **GLMs.** Every GLM (Ch. 12) specifies a response distribution
+   from the exponential family and a link function connecting
+   $\mathbb{E}[Y_i]$ to the linear predictor $\mathbf{x}_i^\top
+   \boldsymbol{\beta}$. The canonical link sets $\theta_i =
+   \mathbf{x}_i^\top \boldsymbol{\beta}$, giving the log-likelihood
+   a concave, well-behaved form.
+3. **IRLS convergence.** Fisher scoring for GLMs with canonical links
+   is equivalent to IRLS, and the concavity of the log-likelihood
+   guarantees convergence --- no step-size tuning needed.
+4. **Natural conjugacy.** For Bayesian analysis (Ch. 8), exponential
+   families admit conjugate priors of the same exponential form. The
+   posterior update becomes a simple parameter update rather than a
+   general integration problem. This is why Gibbs sampling for
+   exponential-family models is straightforward: the full conditionals
+   have closed forms.
+
+
+# Conditional Expectation and the Tower Property {.unnumbered}
+
+The **conditional expectation** $\mathbb{E}[Y \mid X]$ is the
+function of $X$ that best predicts $Y$ in the mean-squared-error
+sense:
+$$
+\mathbb{E}[Y \mid X] = \arg\min_{g(X)} \mathbb{E}[(Y - g(X))^2].
+$$
+
+The most important property of conditional expectation for this book
+is the **tower property** (law of iterated expectations):
+$$
+\mathbb{E}\!\left[\mathbb{E}[Y \mid X]\right] = \mathbb{E}[Y].
+$$ {#eq-tower}
+
+**Why this matters for causal inference.** In Ch. 21, the average
+treatment effect is $\text{ATE} = \mathbb{E}[Y(1) - Y(0)]$. Under
+unconfoundedness, $\mathbb{E}[Y(1) \mid X] = \mathbb{E}[Y \mid T=1, X]$.
+The tower property turns this into a marginal statement:
+$$
+\mathbb{E}[Y(1)] = \mathbb{E}\!\left[\mathbb{E}[Y \mid T=1, X]\right],
+$$
+which is estimable from observed data. Without the tower property,
+the bridge from conditional identification to marginal estimation
+collapses.
+
+**The conditional variance formula** is a close relative:
+$$
+\text{Var}(Y) = \mathbb{E}[\text{Var}(Y \mid X)]
++ \text{Var}(\mathbb{E}[Y \mid X]).
+$$
+This decomposes total variance into the average within-group variance
+and the between-group variance --- a partition used in ANOVA,
+mixed-effects models (Ch. 14), and variance reduction (Ch. 7).
+
+**Iterated expectations in regression.** For the linear regression
+model $Y = \mathbf{x}^\top \boldsymbol{\beta} + \varepsilon$ with
+$\mathbb{E}[\varepsilon \mid \mathbf{X}] = 0$, the tower property
+gives $\mathbb{E}[Y] = \mathbb{E}[\mathbf{x}^\top \boldsymbol{\beta}]$.
+More importantly, the conditional-mean restriction
+$\mathbb{E}[Y \mid \mathbf{X}] = \mathbf{X}\boldsymbol{\beta}$ is
+what makes OLS identify the population regression function. When this
+condition fails (endogeneity, omitted variables), Ch. 11 and Ch. 20
+develop the consequences and remedies.
+
+```{python}
+#| label: tower-demo
+# Simulation: E[E[Y|X]] = E[Y]
+# Generate (X, Y) where Y|X ~ N(2X, 1)
+n = 50_000
+X = rng.uniform(0, 5, size=n)
+Y = 2 * X + rng.standard_normal(n)
+
+# E[Y] by direct average
+EY_direct = Y.mean()
+
+# E[Y] via tower: compute E[Y|X] in bins, then average
+n_bins = 50
+bins = np.linspace(0, 5, n_bins + 1)
+conditional_means = np.zeros(n_bins)
+bin_counts = np.zeros(n_bins)
+for j in range(n_bins):
+    mask = (X >= bins[j]) & (X < bins[j + 1])
+    if mask.sum() > 0:
+        conditional_means[j] = Y[mask].mean()
+        bin_counts[j] = mask.sum()
+
+# Weighted average of conditional means
+EY_tower = np.average(
+    conditional_means,
+    weights=bin_counts
+)
+
+print(f"E[Y] direct:             {EY_direct:.4f}")
+print(f"E[E[Y|X]] via binning:   {EY_tower:.4f}")
+print(f"Theoretical E[Y]=E[2X]:  {2 * 2.5:.1f}")
+```
+
+
+# Sufficient Statistics and Rao-Blackwell {.unnumbered}
+
+## Sufficient statistics
+
+A statistic $T(\mathbf{X})$ is **sufficient** for $\theta$ if the
+conditional distribution of $\mathbf{X}$ given $T(\mathbf{X})$ does
+not depend on $\theta$. Informally: $T$ captures everything in the
+data that is relevant for inference about $\theta$.
+
+**Factorization theorem (Neyman).** $T(\mathbf{X})$ is sufficient for
+$\theta$ iff the joint density factors as
+$$
+f(\mathbf{x}; \theta) = g(T(\mathbf{x}), \theta) \cdot h(\mathbf{x}),
+$$
+where $h$ does not depend on $\theta$. The exponential family
+(@eq-expfam) makes sufficiency immediate: the sufficient statistic is
+whatever multiplies $\theta$ inside the exponent.
+
+**Examples:**
+
+- For $X_1, \ldots, X_n \sim \mathcal{N}(\mu, \sigma^2)$ with
+  $\sigma^2$ known: $T = \sum X_i$ (or equivalently $\bar{X}$) is
+  sufficient for $\mu$.
+- For $X_1, \ldots, X_n \sim \text{Poisson}(\lambda)$:
+  $T = \sum X_i$ is sufficient for $\lambda$.
+- For $X_1, \ldots, X_n \sim \mathcal{N}(\mu, \sigma^2)$ with both
+  unknown: $T = (\sum X_i, \sum X_i^2)$ is jointly sufficient for
+  $(\mu, \sigma^2)$.
+
+## Rao-Blackwell theorem
+
+**Theorem.** If $T$ is sufficient for $\theta$ and $\tilde{\theta}$
+is any unbiased estimator of $\theta$, define
+$\hat{\theta} = \mathbb{E}[\tilde{\theta} \mid T]$. Then:
+
+1. $\hat{\theta}$ is unbiased.
+2. $\text{Var}(\hat{\theta}) \le \text{Var}(\tilde{\theta})$, with
+   equality iff $\tilde{\theta}$ is already a function of $T$.
+
+**Intuition.** Conditioning on a sufficient statistic averages out
+the irrelevant noise while preserving all the information about
+$\theta$. The result can only be less variable.
+
+**Connection to variance reduction (Ch. 7).** Rao-Blackwellization
+in Monte Carlo is exactly this theorem applied to simulation: if
+you can compute $\mathbb{E}[h(X) \mid T]$ analytically for some
+sufficient (or near-sufficient) statistic $T$, the conditional
+estimator has lower variance than the raw sample average. Ch. 7
+uses this principle for variance reduction in importance sampling
+and Gibbs sampling.
+
+```{python}
+#| label: rao-blackwell-demo
+# Rao-Blackwell for Poisson rate estimation
+# Crude estimator: theta_tilde = X_1 (first observation)
+# Sufficient statistic: T = sum(X_i)
+# RB estimator: E[X_1 | T] = T/n = X_bar
+
+lam_true = 4.0
+n = 20
+n_reps = 10_000
+
+crude_estimates = np.zeros(n_reps)
+rb_estimates = np.zeros(n_reps)
+
+for rep in range(n_reps):
+    sample = rng.poisson(lam=lam_true, size=n)
+    crude_estimates[rep] = sample[0]  # just X_1
+    rb_estimates[rep] = sample.mean()  # X_bar = T/n
+
+print(f"Estimating lambda = {lam_true}:")
+print(f"  Crude (X_1):  mean={crude_estimates.mean():.3f}"
+      f"  var={crude_estimates.var():.3f}")
+print(f"  RB (X_bar):   mean={rb_estimates.mean():.3f}"
+      f"  var={rb_estimates.var():.3f}")
+print(f"  Variance ratio: "
+      f"{crude_estimates.var() / rb_estimates.var():.1f}x")
+print(f"  (Expected ratio: n = {n})")
+```
+
+```{python}
+#| label: rao-blackwell-plot
+fig, axes = plt.subplots(1, 2, figsize=(8, 3),
+                         sharex=True, sharey=True)
+bins = np.arange(-0.5, 12.5, 0.5)
+
+axes[0].hist(
+    crude_estimates, bins=bins,
+    density=True, alpha=0.5
+)
+axes[0].axvline(lam_true, color='k', linestyle='--')
+axes[0].set_title("Crude: $\\tilde{\\theta} = X_1$")
+axes[0].set_xlabel("Estimate")
+
+axes[1].hist(
+    rb_estimates, bins=np.linspace(1, 7, 40),
+    density=True, alpha=0.5
+)
+axes[1].axvline(lam_true, color='k', linestyle='--')
+axes[1].set_title(
+    "Rao-Blackwell: $\\hat{\\theta} = \\bar{X}$"
+)
+axes[1].set_xlabel("Estimate")
+
+fig.suptitle(
+    "Rao-Blackwell reduces variance by "
+    f"factor of {n}",
+    fontsize=11
+)
+fig.tight_layout()
+plt.show()
+```
+
+
+# Summary of Key Results and Where They Are Used {.unnumbered}
+
+This table maps each result in this appendix to the chapters that
+rely on it most directly. Use it to navigate back when a main chapter
+invokes a result you want to revisit.
+
+| Result | Statement | Primary chapters |
+|---|---|---|
+| LLN | $\bar{X}_n \xrightarrow{a.s.} \mu$ | 7, 8, 9 |
+| CLT | $\sqrt{n}(\bar{X}_n - \mu)/\sigma \xrightarrow{d} \mathcal{N}(0,1)$ | All |
+| Delta method | $\sqrt{n}(g(T_n) - g(\theta)) \xrightarrow{d} \mathcal{N}(0, [g']^2 \sigma^2)$ | 10, 12, 13, 18, 21 |
+| MLE asymptotics | $\sqrt{n}(\hat{\theta} - \theta_0) \xrightarrow{d} \mathcal{N}(0, \mathcal{I}_1^{-1})$ | 10, 12, 13, 15, 16 |
+| Cramér-Rao bound | $\text{Var}(T) \ge (n\mathcal{I}_1)^{-1}$ | 10, 12 |
+| Exponential family | $\mathbb{E}[X] = b'(\theta)$, $\text{Var}(X) = \phi b''(\theta)$ | 12, 13, 14 |
+| Tower property | $\mathbb{E}[\mathbb{E}[Y \mid X]] = \mathbb{E}[Y]$ | 7, 14, 21, 23 |
+| Rao-Blackwell | Conditioning on sufficient stat reduces variance | 7, 8 |
+| Factorization thm | $f(\mathbf{x}; \theta) = g(T, \theta) h(\mathbf{x}) \iff T$ sufficient | 10, 12 |
+
+: Cross-reference table: appendix results to main chapters. {#tbl-xref}
+
+
+**References.** Casella and Berger (2002), *Statistical Inference*,
+2nd ed., is the primary reference for this material. Rice (2006),
+*Mathematical Statistics and Data Analysis*, provides an accessible
+alternative. For exponential families and their role in GLMs, see
+McCullagh and Nelder (1989), Ch. 2. For convergence concepts and
+the CLT, see Billingsley (1995), *Probability and Measure*, 3rd ed.,
+and van der Vaart (1998), *Asymptotic Statistics*, Ch. 2.
