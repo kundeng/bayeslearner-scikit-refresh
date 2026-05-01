@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -829,7 +852,7 @@ window.Quarto = {
 \text{Var}(Y) = \phi \, b''(\theta).
 \]</span></p>
 <p>The first identity follows from setting <span class="math inline">\(\partial/\partial\theta\)</span> of <span class="math inline">\(\int f(y;\theta,\phi)\,dy = 1\)</span> and recognizing the resulting integral as <span class="math inline">\(\mathbb{E}[Y]\)</span>. The second follows from differentiating again (the variance is the curvature of <span class="math inline">\(b\)</span>).</p>
-<p><strong>Verify for Poisson.</strong> The Poisson cumulant function is <span class="math inline">\(b(\theta) = e^\theta\)</span>. Then <span class="math inline">\(b'(\theta) = e^\theta = \mu\)</span> (the mean) and <span class="math inline">\(b''(\theta) = e^\theta = \mu\)</span> (the variance). So <span class="math inline">\(\text{Var}(Y) = \phi \cdot \mu\)</span> with <span class="math inline">\(\phi = 1\)</span> — the variance <em>equals</em> the mean, the defining property of Poisson data. If your data shows <span class="math inline">\(\text{Var}(Y) &gt; \mu\)</span>, the Poisson assumption is wrong and you need negative binomial or quasi-Poisson (see <a href="#sec-ch12-diagnostics" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch12-diagnostics</span></a>).</p>
+<p><strong>Verify for Poisson.</strong> The Poisson cumulant function is <span class="math inline">\(b(\theta) = e^\theta\)</span>. Then <span class="math inline">\(b'(\theta) = e^\theta = \mu\)</span> (the mean) and <span class="math inline">\(b''(\theta) = e^\theta = \mu\)</span> (the variance). So <span class="math inline">\(\text{Var}(Y) = \phi \cdot \mu\)</span> with <span class="math inline">\(\phi = 1\)</span> — the variance <em>equals</em> the mean, the defining property of Poisson data. If your data shows <span class="math inline">\(\text{Var}(Y) &gt; \mu\)</span>, the Poisson assumption is wrong and you need negative binomial or quasi-Poisson (see <a href="#sec-ch12-diagnostics" class="quarto-xref"><span>Chapter 19</span></a>).</p>
 <p>This also explains why the canonical link simplifies the score equation. When <span class="math inline">\(g(\mu) = \theta\)</span> (canonical link), the chain rule collapses and the score becomes:</p>
 <p><span class="math display">\[
 S(\boldsymbol{\beta}) = \frac{1}{\phi}\mathbf{X}^\top
@@ -1330,7 +1353,7 @@ Match: True</code></pre>
 </section>
 <section id="sandwich-covariance-from-scratch" class="level2" data-number="18.3">
 <h2 data-number="18.3" class="anchored" data-anchor-id="sandwich-covariance-from-scratch"><span class="header-section-number">18.3</span> Sandwich covariance from scratch</h2>
-<p>The sandwich covariance (<a href="#eq-m-sandwich" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-m-sandwich</span></a>) is the universal standard error for M-estimators. Let’s verify it for the Poisson GLM.</p>
+<p>The sandwich covariance (<a href="#eq-m-sandwich" class="quarto-xref">Equation&nbsp;<span>14.2</span></a>) is the universal standard error for M-estimators. Let’s verify it for the Poisson GLM.</p>
 <div id="sandwich-scratch" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Poisson GLM sandwich covariance from scratch</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>mu_hat <span class="op">=</span> np.exp(X_sm <span class="op">@</span> glm_pois.params)</span>
@@ -1830,9 +1853,9 @@ Match: True</code></pre>
 </div>
 </div>
 <p>%%</p>
-<p><strong>Exercise 12.4</strong> (<span class="math inline">\(\star\star\star\)</span>, conceptual). Explain why the sandwich covariance (<a href="#eq-m-sandwich" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-m-sandwich</span></a>) reduces to <span class="math inline">\(\mathcal{I}(\boldsymbol{\theta})^{-1}\)</span> when the GLM is correctly specified, but differs under misspecification. What does “correctly specified” mean in terms of the bread and meat?</p>
+<p><strong>Exercise 12.4</strong> (<span class="math inline">\(\star\star\star\)</span>, conceptual). Explain why the sandwich covariance (<a href="#eq-m-sandwich" class="quarto-xref">Equation&nbsp;<span>14.2</span></a>) reduces to <span class="math inline">\(\mathcal{I}(\boldsymbol{\theta})^{-1}\)</span> when the GLM is correctly specified, but differs under misspecification. What does “correctly specified” mean in terms of the bread and meat?</p>
 <p>%%</p>
-<p>Under correct specification, the information matrix equality holds (<a href="#eq-info-equality" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-info-equality</span></a> from Chapter 10): <span class="math inline">\(\mathcal{I} = \text{Var}(S) = -\mathbb{E}[\nabla^2 \ell]\)</span>.</p>
+<p>Under correct specification, the information matrix equality holds (<a href="10-wald-score-lr.html#eq-info-equality" class="quarto-xref">Equation&nbsp;<span>12.2</span></a> from Chapter 10): <span class="math inline">\(\mathcal{I} = \text{Var}(S) = -\mathbb{E}[\nabla^2 \ell]\)</span>.</p>
 <p>The bread is <span class="math inline">\((-\mathbb{E}[\nabla^2 \ell])^{-1} = \mathcal{I}^{-1}\)</span>. The meat is <span class="math inline">\(\text{Var}(S) = \mathcal{I}\)</span>. The sandwich becomes <span class="math inline">\(\mathcal{I}^{-1} \mathcal{I} \mathcal{I}^{-1} = \mathcal{I}^{-1}\)</span> — the model-based variance.</p>
 <p>Under misspecification, the model’s expected Hessian (bread) and the actual score variance (meat) are not equal. The Hessian reflects the curvature of the <em>model’s</em> likelihood; the score variance reflects the variability of the <em>data’s</em> scores. When the model is wrong, these disagree, and the sandwich covariance corrects for the discrepancy.</p>
 <p>This is why <code>cov_type='nonrobust'</code> (which uses <span class="math inline">\(\mathcal{I}^{-1}\)</span> alone) gives wrong SEs under misspecification: it uses the bread without the meat. The robust <code>cov_type='HC1'</code> computes the full sandwich.</p>

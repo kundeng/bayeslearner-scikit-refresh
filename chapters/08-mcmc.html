@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -748,7 +771,7 @@ window.Quarto = {
 \alpha(\mathbf{x}, \mathbf{x}') = \min\!\left(1,\, \frac{\pi(\mathbf{x}')\, q(\mathbf{x} \mid \mathbf{x}')}{\pi(\mathbf{x})\, q(\mathbf{x}' \mid \mathbf{x})}\right).
 \tag{10.2}\]</span></span></p>
 <p><strong>Why this works:</strong> The resulting transition kernel <span class="math inline">\(T(\mathbf{x}' \mid \mathbf{x}) = q(\mathbf{x}' \mid \mathbf{x})\, \alpha(\mathbf{x}, \mathbf{x}')\)</span> satisfies detailed balance by construction. Check: <span class="math inline">\(\pi(\mathbf{x}) q(\mathbf{x}' \mid \mathbf{x}) \alpha(\mathbf{x}, \mathbf{x}') = \min(\pi(\mathbf{x}) q(\mathbf{x}' \mid \mathbf{x}),\, \pi(\mathbf{x}') q(\mathbf{x} \mid \mathbf{x}'))\)</span>, which is symmetric in <span class="math inline">\((\mathbf{x}, \mathbf{x}')\)</span>. Done.</p>
-<p>The beauty of <a href="#eq-mh-ratio" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-mh-ratio</span></a>: it only requires the <em>ratio</em> <span class="math inline">\(\pi(\mathbf{x}')/\pi(\mathbf{x})\)</span>, so the normalizing constant of <span class="math inline">\(\pi\)</span> cancels. This is why MCMC works for Bayesian posteriors where the marginal likelihood <span class="math inline">\(p(\mathbf{y})\)</span> is intractable.</p>
+<p>The beauty of <a href="#eq-mh-ratio" class="quarto-xref">Equation&nbsp;<span>10.2</span></a>: it only requires the <em>ratio</em> <span class="math inline">\(\pi(\mathbf{x}')/\pi(\mathbf{x})\)</span>, so the normalizing constant of <span class="math inline">\(\pi\)</span> cancels. This is why MCMC works for Bayesian posteriors where the marginal likelihood <span class="math inline">\(p(\mathbf{y})\)</span> is intractable.</p>
 </section>
 <section id="gibbs-sampling-as-a-special-case" class="level2" data-number="10.3">
 <h2 data-number="10.3" class="anchored" data-anchor-id="gibbs-sampling-as-a-special-case"><span class="header-section-number">10.3</span> Gibbs sampling as a special case</h2>

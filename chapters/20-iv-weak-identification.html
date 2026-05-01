@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -1098,7 +1121,7 @@ LIML        1.451    0.086
 GMM         1.584    0.074</code></pre>
 </div>
 </div>
-<p>With a strong instrument, all three estimators agree closely. The differences emerge under weak instruments (see <a href="#sec-ch20-diagnostics" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch20-diagnostics</span></a>) and overidentification.</p>
+<p>With a strong instrument, all three estimators agree closely. The differences emerge under weak instruments (see <a href="#sec-ch20-diagnostics" class="quarto-xref"><span>Chapter 25</span></a>) and overidentification.</p>
 </section>
 <section id="overidentification-the-j-test" class="level2" data-number="23.4">
 <h2 data-number="23.4" class="anchored" data-anchor-id="overidentification-the-j-test"><span class="header-section-number">23.4</span> Overidentification: the J-test</h2>
@@ -1494,7 +1517,7 @@ If the gap is large → endogeneity is present → use IV</code></pre>
 </section>
 <section id="sarganhansen-j-test" class="level2" data-number="25.3">
 <h2 data-number="25.3" class="anchored" data-anchor-id="sarganhansen-j-test"><span class="header-section-number">25.3</span> Sargan/Hansen J-test</h2>
-<p>For overidentified models (more instruments than endogenous variables). Tests whether the <em>extra</em> instruments are valid. A rejection means at least one instrument is invalid. See the implementation in <a href="#sec-ch20-impl" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch20-impl</span></a> for a worked code example.</p>
+<p>For overidentified models (more instruments than endogenous variables). Tests whether the <em>extra</em> instruments are valid. A rejection means at least one instrument is invalid. See the implementation in <a href="#sec-ch20-impl" class="quarto-xref"><span>Chapter 23</span></a> for a worked code example.</p>
 </section>
 <section id="simulation-2sls-bias-under-weak-instruments" class="level2" data-number="25.4">
 <h2 data-number="25.4" class="anchored" data-anchor-id="simulation-2sls-bias-under-weak-instruments"><span class="header-section-number">25.4</span> Simulation: 2SLS bias under weak instruments</h2>

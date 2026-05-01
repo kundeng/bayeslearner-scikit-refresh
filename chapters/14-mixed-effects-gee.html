@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -820,7 +843,7 @@ window.Quarto = {
 = \mathbf{D}\mathbf{Z}_i^\top\mathbf{V}_i^{-1}
   (\mathbf{y}_i - \mathbf{X}_i\hat{\boldsymbol{\beta}}).
 \tag{16.5}\]</span></span></p>
-<p>For the random-intercept model (<span class="math inline">\(\mathbf{Z}_i = \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{D} = \sigma^2_b\)</span>), <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-blup</span></a> simplifies to a scalar shrinkage estimator:</p>
+<p>For the random-intercept model (<span class="math inline">\(\mathbf{Z}_i = \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{D} = \sigma^2_b\)</span>), <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span>16.5</span></a> simplifies to a scalar shrinkage estimator:</p>
 <p><span id="eq-shrinkage"><span class="math display">\[
 \hat{b}_i
 = \underbrace{\frac{\sigma^2_b}{\sigma^2_b
@@ -910,7 +933,7 @@ window.Quarto = {
 = \mathbf{B}^{-1}\mathbf{M}\mathbf{B}^{-1}.
 \tag{16.9}\]</span></span></p>
 <p><strong>Why this works when the working correlation is wrong:</strong> <span class="math inline">\(\mathbf{B}\)</span> depends on the assumed working covariance <span class="math inline">\(\mathbf{V}_i\)</span>, which may be misspecified. But <span class="math inline">\(\mathbf{M}\)</span> uses the <em>actual</em> residuals <span class="math inline">\((\mathbf{y}_i - \boldsymbol{\mu}_i)\)</span> to capture the true variability. If the working correlation were correct, <span class="math inline">\(\mathbf{M} \to \mathbf{B}\)</span> and the sandwich collapses to the model-based variance <span class="math inline">\(\mathbf{B}^{-1}\)</span>—the usual GLS result. When the working correlation is wrong, <span class="math inline">\(\mathbf{M} \neq \mathbf{B}\)</span>, and the sandwich corrects for the discrepancy.</p>
-<p>The cost of this robustness: the sandwich estimator requires <span class="math inline">\(G \to \infty\)</span> for consistency (each cluster contributes one “observation” to <span class="math inline">\(\mathbf{M}\)</span>). With few clusters (<span class="math inline">\(G &lt; 30\)</span>), the sandwich underestimates variability and coverage drops below nominal. We demonstrate this failure in <a href="#sec-ch14-diagnostics" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch14-diagnostics</span></a>.</p>
+<p>The cost of this robustness: the sandwich estimator requires <span class="math inline">\(G \to \infty\)</span> for consistency (each cluster contributes one “observation” to <span class="math inline">\(\mathbf{M}\)</span>). With few clusters (<span class="math inline">\(G &lt; 30\)</span>), the sandwich underestimates variability and coverage drops below nominal. We demonstrate this failure in <a href="#sec-ch14-diagnostics" class="quarto-xref"><span>Chapter 21</span></a>.</p>
 </section>
 </section>
 <section id="sec-ch14-algorithm" class="level1" data-number="17">
@@ -933,7 +956,7 @@ Algorithm 14.1: GEE (Iteratively Reweighted)
 <li><span class="math inline">\(\quad\)</span> Compute <span class="math inline">\(\boldsymbol{\mu}_i = g^{-1}(\mathbf{X}_i\boldsymbol{\beta}^{(k)})\)</span></li>
 <li><span class="math inline">\(\quad\)</span> Estimate <span class="math inline">\(\hat{\boldsymbol{\alpha}}\)</span> from Pearson residuals</li>
 <li><span class="math inline">\(\quad\)</span> Form <span class="math inline">\(\mathbf{V}_i = \mathbf{A}_i^{1/2}\mathbf{R}(\hat{\boldsymbol{\alpha}})\mathbf{A}_i^{1/2}\)</span></li>
-<li><span class="math inline">\(\quad\)</span> <span class="math inline">\(\boldsymbol{\beta}^{(k+1)} \leftarrow\)</span> solve <a href="#eq-gee" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-gee</span></a> (modified Fisher scoring)</li>
+<li><span class="math inline">\(\quad\)</span> <span class="math inline">\(\boldsymbol{\beta}^{(k+1)} \leftarrow\)</span> solve <a href="#eq-gee" class="quarto-xref">Equation&nbsp;<span>16.7</span></a> (modified Fisher scoring)</li>
 <li><span class="math inline">\(\quad\)</span> <strong>if</strong> <span class="math inline">\(\|\boldsymbol{\beta}^{(k+1)} - \boldsymbol{\beta}^{(k)}\| &lt; \epsilon\)</span> <strong>then break</strong></li>
 <li><strong>end for</strong></li>
 <li>Compute sandwich covariance (robust to working correlation misspecification)</li>
@@ -1067,7 +1090,7 @@ ICC: 0.057</code></pre>
 <li><code>reml=True</code> (default): REML estimation for variance components</li>
 <li><code>reml=False</code>: ML estimation (needed for LR tests comparing models with different fixed effects)</li>
 </ul>
-<p><strong>New cluster prediction:</strong> BLUPs for clusters <em>in the training data</em> use <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-blup</span></a>. For a <em>new</em> cluster not seen during fitting, <span class="math inline">\(\hat{\mathbf{b}}_{\text{new}} = \mathbf{0}\)</span>—the prediction reverts to the population average. This is by design: with no data from the new cluster, the best prediction is the prior mean.</p>
+<p><strong>New cluster prediction:</strong> BLUPs for clusters <em>in the training data</em> use <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span>16.5</span></a>. For a <em>new</em> cluster not seen during fitting, <span class="math inline">\(\hat{\mathbf{b}}_{\text{new}} = \mathbf{0}\)</span>—the prediction reverts to the population average. This is by design: with no data from the new cluster, the best prediction is the prior mean.</p>
 </section>
 <section id="gee-marginal-model" class="level2" data-number="19.2">
 <h2 data-number="19.2" class="anchored" data-anchor-id="gee-marginal-model"><span class="header-section-number">19.2</span> <code>GEE</code>: marginal model</h2>
@@ -1249,7 +1272,7 @@ They would differ for logistic or Poisson models.</code></pre>
 </section>
 <section id="blup-from-scratch" class="level2" data-number="20.2">
 <h2 data-number="20.2" class="anchored" data-anchor-id="blup-from-scratch"><span class="header-section-number">20.2</span> BLUP from scratch</h2>
-<p>The from-scratch EM above already computes BLUPs in its E-step. Here we verify the shrinkage formula <a href="#eq-shrinkage" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-shrinkage</span></a> against statsmodels’ <code>.random_effects</code>.</p>
+<p>The from-scratch EM above already computes BLUPs in its E-step. Here we verify the shrinkage formula <a href="#eq-shrinkage" class="quarto-xref">Equation&nbsp;<span>16.6</span></a> against statsmodels’ <code>.random_effects</code>.</p>
 <div id="blup-scratch" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sigma2_b_hat <span class="op">=</span> res_ours[<span class="st">'sigma2_b'</span>]</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>sigma2_e_hat <span class="op">=</span> res_ours[<span class="st">'sigma2_e'</span>]</span>

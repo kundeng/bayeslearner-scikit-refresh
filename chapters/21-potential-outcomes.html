@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -818,7 +841,7 @@ e(\mathbf{X})) = \Pr(D=1 \mid e(\mathbf{X}))\)</span>. Start from the right-hand
 <li><strong>Effective sample size drops.</strong> The ESS formula <span class="math inline">\((\sum w_i)^2 / \sum w_i^2\)</span> captures how many independent observations the weighted sample is worth. Extreme weights mean few observations drive the estimate.</li>
 <li><strong>Extrapolation.</strong> If no treated units exist in some covariate region, the outcome model must extrapolate the counterfactual <span class="math inline">\(\mu_1(\mathbf{x})\)</span> from distant data — pure model dependence.</li>
 </ul>
-<p><strong>Diagnostic:</strong> The propensity score histogram (shown in <a href="#sec-ch21-diagnostics" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch21-diagnostics</span></a>) reveals positivity violations as regions where one group’s distribution has mass but the other’s does not.</p>
+<p><strong>Diagnostic:</strong> The propensity score histogram (shown in <a href="#sec-ch21-diagnostics" class="quarto-xref"><span>Chapter 27</span></a>) reveals positivity violations as regions where one group’s distribution has mass but the other’s does not.</p>
 <p><strong>Practical responses:</strong></p>
 <ol type="1">
 <li><strong>Trimming:</strong> Discard units with <span class="math inline">\(\hat{e}(\mathbf{x}) &lt; c\)</span> or <span class="math inline">\(&gt; 1 - c\)</span> (common choices: <span class="math inline">\(c = 0.01\)</span> or <span class="math inline">\(c = 0.05\)</span>). This changes the estimand from the population ATE to the ATE among the trimmed population.</li>
@@ -941,7 +964,7 @@ Algorithm 21.1: AIPW Estimator
 <ol type="1">
 <li><p><strong>Estimate propensity score:</strong> Fit logistic regression of <span class="math inline">\(D\)</span> on <span class="math inline">\(\mathbf{X}\)</span>. Get <span class="math inline">\(\hat{e}(\mathbf{X}_i)\)</span> for each observation. Clip to <span class="math inline">\([0.01, 0.99]\)</span> to avoid division by zero.</p></li>
 <li><p><strong>Estimate outcome models:</strong> Fit OLS of <span class="math inline">\(Y\)</span> on <span class="math inline">\(\mathbf{X}\)</span> separately for treated (<span class="math inline">\(D=1\)</span>) and control (<span class="math inline">\(D=0\)</span>) subsamples. Predict <span class="math inline">\(\hat{\mu}_1(\mathbf{X}_i)\)</span> and <span class="math inline">\(\hat{\mu}_0(\mathbf{X}_i)\)</span> for <em>all</em> observations (including counterfactual predictions).</p></li>
-<li><p><strong>Compute AIPW scores:</strong> For each observation, compute the individual AIPW contribution using <a href="#eq-aipw" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-aipw</span></a>.</p></li>
+<li><p><strong>Compute AIPW scores:</strong> For each observation, compute the individual AIPW contribution using <a href="#eq-aipw" class="quarto-xref">Equation&nbsp;<span>23.2</span></a>.</p></li>
 <li><p><strong>Estimate ATE:</strong> <span class="math inline">\(\hat{\tau} = \bar{\text{AIPW}}\)</span> (sample mean of AIPW scores).</p></li>
 <li><p><strong>Standard error:</strong> <span class="math inline">\(\hat{\text{se}} = \text{sd}(\text{AIPW}_i) / \sqrt{n}\)</span>. This uses the <em>influence function</em> representation of the estimator (connecting to M-estimation theory from Chapter 12).</p></li>
 </ol>
@@ -1891,7 +1914,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <p>Propensity score: Rosenbaum and Rubin (1983). The balancing property (propensity score suffices for unconfoundedness) is Theorem 3 of that paper.</p>
 <p>IPW: Horvitz and Thompson (1952) for the survey sampling origin. The application to causal inference: Robins (1986). The stabilized (Hajek) estimator: Hajek (1971).</p>
 <p>Matching: Rubin (1973) for bias reduction via matching; Abadie and Imbens (2006) for large-sample properties of matching estimators, including the result that matching with replacement is <span class="math inline">\(\sqrt{n}\)</span>-consistent but has a bias term that requires correction when the number of matches is fixed. Mahalanobis distance matching: Rubin (1980).</p>
-<p>AIPW and double robustness: Robins, Rotnitzky, and Zhao (1994). The semiparametric efficiency bound for the ATE: Hahn (1998). The double-robustness proof in <a href="#sec-ch21-dr-proof" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch21-dr-proof</span></a> follows the argument in Lunceford and Davidian (2004), which gives a clear finite-sample decomposition.</p>
+<p>AIPW and double robustness: Robins, Rotnitzky, and Zhao (1994). The semiparametric efficiency bound for the ATE: Hahn (1998). The double-robustness proof in <a href="#sec-ch21-dr-proof" class="quarto-xref"><span>Section 23.5.5</span></a> follows the argument in Lunceford and Davidian (2004), which gives a clear finite-sample decomposition.</p>
 <p>Sensitivity analysis: Rosenbaum (2002, Ch. 4) for the theory of sensitivity bounds. Cinelli and Hazlett (2020) for the omitted variable bias framework as a modern alternative.</p>
 <p>For textbooks: Imbens and Rubin (2015) for the potential-outcomes approach; Hernán and Robins (2020) for a modern epidemiological perspective (freely available online). Pearl (2009) for the structural causal model (SCM) approach, which this chapter does not cover but which is complementary.</p>
 

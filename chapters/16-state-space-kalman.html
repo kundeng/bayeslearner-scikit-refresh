@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -873,7 +896,7 @@ window.Quarto = {
 </section>
 <section id="why-the-kalman-filter-is-optimal" class="level2" data-number="18.5">
 <h2 data-number="18.5" class="anchored" data-anchor-id="why-the-kalman-filter-is-optimal"><span class="header-section-number">18.5</span> Why the Kalman filter is optimal</h2>
-<p>For the linear Gaussian model (<a href="#eq-state" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-state</span></a>, <a href="#eq-obs" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-obs</span></a>), the Kalman filter produces the <em>minimum-variance unbiased</em> state estimate given all observations up to time <span class="math inline">\(t\)</span>. That is:</p>
+<p>For the linear Gaussian model (<a href="#eq-state" class="quarto-xref">Equation&nbsp;<span>18.1</span></a>, <a href="#eq-obs" class="quarto-xref">Equation&nbsp;<span>18.2</span></a>), the Kalman filter produces the <em>minimum-variance unbiased</em> state estimate given all observations up to time <span class="math inline">\(t\)</span>. That is:</p>
 <p><span class="math display">\[
 \boldsymbol{\alpha}_{t|t} = \mathbb{E}[\boldsymbol{\alpha}_t \mid y_1, \ldots, y_t]
 \]</span></p>
@@ -887,7 +910,7 @@ window.Quarto = {
 \ell = -\frac{1}{2}\sum_{t=1}^T \left[\ln|\mathbf{F}_t| + \mathbf{v}_t^\top \mathbf{F}_t^{-1} \mathbf{v}_t\right]
 \tag{18.3}\]</span></span></p>
 <p>This is the <em>prediction error decomposition</em>. Each term is the log-density of one observation’s prediction error. The parameters <span class="math inline">\((\mathbf{T}, \mathbf{Z}, \mathbf{Q}, \mathbf{H})\)</span> are chosen to maximize this log-likelihood, using numerical optimization (L-BFGS-B from Chapter 2).</p>
-<p><strong>This is what <code>SARIMAX.fit()</code> does:</strong> it runs the Kalman filter for a given set of ARIMA parameters, computes <a href="#eq-kalman-ll" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-kalman-ll</span></a>, and uses L-BFGS-B to find the parameters that maximize it.</p>
+<p><strong>This is what <code>SARIMAX.fit()</code> does:</strong> it runs the Kalman filter for a given set of ARIMA parameters, computes <a href="#eq-kalman-ll" class="quarto-xref">Equation&nbsp;<span>18.3</span></a>, and uses L-BFGS-B to find the parameters that maximize it.</p>
 </section>
 <section id="em-as-an-alternative-to-direct-optimization" class="level2" data-number="18.7">
 <h2 data-number="18.7" class="anchored" data-anchor-id="em-as-an-alternative-to-direct-optimization"><span class="header-section-number">18.7</span> EM as an alternative to direct optimization</h2>

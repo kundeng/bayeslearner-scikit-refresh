@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -810,7 +833,7 @@ L = \prod_{i:\delta_i=1} f(t_i) \prod_{i:\delta_i=0} S(c_i).
 \hat{S}(t) = \prod_{t_j \leq t}(1 - \hat{\lambda}_j)
            = \prod_{t_j \leq t}\left(1 - \frac{d_j}{n_j}\right),
 \]</span></p>
-<p>which is the KM estimator (<a href="#eq-km" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-km</span></a>). The product-of-conditionals structure is not a heuristic: it is the <em>consequence</em> of maximizing the nonparametric likelihood over discrete distributions supported on the event times.</p>
+<p>which is the KM estimator (<a href="#eq-km" class="quarto-xref">Equation&nbsp;<span>20.1</span></a>). The product-of-conditionals structure is not a heuristic: it is the <em>consequence</em> of maximizing the nonparametric likelihood over discrete distributions supported on the event times.</p>
 </section>
 <section id="sec-ch18-greenwood" class="level3" data-number="20.3.2">
 <h3 data-number="20.3.2" class="anchored" data-anchor-id="sec-ch18-greenwood"><span class="header-section-number">20.3.2</span> Greenwood’s variance</h3>
@@ -1648,7 +1671,7 @@ C = \frac{\sum_{i,j} \mathbb{1}(\hat{\eta}_i &gt; \hat{\eta}_j)
 <ol type="1">
 <li><p><strong>Ignoring censoring:</strong> Treating censored observations as events or dropping them biases the analysis. Always use survival methods.</p></li>
 <li><p><strong>Informative censoring:</strong> The methods assume censoring is <em>independent</em> of the event process (non-informative). If patients drop out of a study because they are getting sicker, censoring is informative and the KM estimator is biased.</p></li>
-<li><p><strong>Ignoring competing risks:</strong> If patients can die from multiple causes, the KM estimator for one cause is biased because it treats deaths from other causes as censoring. Use cause-specific hazards or the Fine–Gray subdistribution hazard (<a href="#sec-ch18-competing-risks" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch18-competing-risks</span></a>).</p></li>
+<li><p><strong>Ignoring competing risks:</strong> If patients can die from multiple causes, the KM estimator for one cause is biased because it treats deaths from other causes as censoring. Use cause-specific hazards or the Fine–Gray subdistribution hazard (<a href="#sec-ch18-competing-risks" class="quarto-xref"><span>Section 20.6</span></a>).</p></li>
 </ol>
 </section>
 </section>
@@ -1924,7 +1947,7 @@ S(t) correlation: 1.0000</code></pre>
 </div>
 </div>
 <p>%%</p>
-<p><strong>Exercise 18.4</strong> (<span class="math inline">\(\star\star\star\)</span>, conceptual). Explain why the Cox partial likelihood (<a href="#eq-partial-lik" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-partial-lik</span></a>) does not depend on the baseline hazard <span class="math inline">\(h_0(t)\)</span>. What does this gain (semiparametric flexibility) and what does it lose (efficiency compared to a correctly specified parametric model)?</p>
+<p><strong>Exercise 18.4</strong> (<span class="math inline">\(\star\star\star\)</span>, conceptual). Explain why the Cox partial likelihood (<a href="#eq-partial-lik" class="quarto-xref">Equation&nbsp;<span>20.4</span></a>) does not depend on the baseline hazard <span class="math inline">\(h_0(t)\)</span>. What does this gain (semiparametric flexibility) and what does it lose (efficiency compared to a correctly specified parametric model)?</p>
 <p>%%</p>
 <p>The partial likelihood considers only the <em>ordering</em> of events: at each event time, it asks “given that someone in the risk set experienced the event, what is the probability it was subject <span class="math inline">\(i\)</span>?” The answer <span class="math inline">\(\exp(\mathbf{x}_i^\top\boldsymbol{\beta}) / \sum_{j \in \mathcal{R}} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})\)</span> depends only on the covariate effects, not on <span class="math inline">\(h_0(t)\)</span>.</p>
 <p><strong>Gain:</strong> No need to specify <span class="math inline">\(h_0(t)\)</span>. The model is valid for any baseline hazard shape — Weibull, piecewise constant, or completely arbitrary.</p>

@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -786,8 +809,8 @@ f(\cdot; \boldsymbol{\theta}_2)\)</span>. Violated in mixture models with label 
 <p><strong>Why the two sides are equal</strong> (proof sketch). For a single observation, differentiate <span class="math inline">\(\int f(y; \theta)\, dy = 1\)</span> once to get <span class="math inline">\(\mathbb{E}[\nabla \log f] = 0\)</span> (the score has mean zero). Differentiate again: <span class="math display">\[
 0 = \mathbb{E}\!\left[\nabla^2 \log f\right]
   + \mathbb{E}\!\left[(\nabla \log f)(\nabla \log f)^\top\right].
-\]</span> The first term is <span class="math inline">\(-\mathcal{I}\)</span> (expected Hessian); the second is <span class="math inline">\(\text{Var}[S]\)</span> (since <span class="math inline">\(\mathbb{E}[S] = 0\)</span>). Rearranging gives <a href="#eq-info-equality" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-info-equality</span></a>. The interchange of differentiation and integration is where Cramér’s dominance condition does its work.</p>
-<p>This equality holds under the true model. Under misspecification (the model is wrong), the two sides differ, and the sandwich estimator (<a href="#eq-sandwich" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-sandwich</span></a>) is needed. Define <span class="math inline">\(\mathbf{A} = -\mathbb{E}[\nabla^2
+\]</span> The first term is <span class="math inline">\(-\mathcal{I}\)</span> (expected Hessian); the second is <span class="math inline">\(\text{Var}[S]\)</span> (since <span class="math inline">\(\mathbb{E}[S] = 0\)</span>). Rearranging gives <a href="#eq-info-equality" class="quarto-xref">Equation&nbsp;<span>12.2</span></a>. The interchange of differentiation and integration is where Cramér’s dominance condition does its work.</p>
+<p>This equality holds under the true model. Under misspecification (the model is wrong), the two sides differ, and the sandwich estimator (<a href="14-mixed-effects-gee.html#eq-sandwich" class="quarto-xref">Equation&nbsp;<span>16.9</span></a>) is needed. Define <span class="math inline">\(\mathbf{A} = -\mathbb{E}[\nabla^2
 \ell]\)</span> (the expected Hessian) and <span class="math inline">\(\mathbf{B} = \text{Var}[S]\)</span> (the outer-product-of-scores). Under correct specification, <span class="math inline">\(\mathbf{A} =
 \mathbf{B}\)</span>. Under misspecification, the asymptotic variance of <span class="math inline">\(\hat{\boldsymbol{\theta}}\)</span> becomes <span class="math inline">\(\mathbf{A}^{-1}\mathbf{B}\mathbf{A}^{-1}\)</span> — the sandwich. The Wald test built on <span class="math inline">\(\mathbf{A}^{-1}\)</span> alone (the model-based variance) has incorrect size; the robust Wald test built on the sandwich restores it. This is why <code>cov_type='HC1'</code> matters.</p>
 </section>
@@ -1406,7 +1429,7 @@ The three converge as n grows. At n=30, the gap can be substantial.</code></pre>
 </section>
 <section id="verifying-the-information-matrix-equality" class="level2" data-number="16.4">
 <h2 data-number="16.4" class="anchored" data-anchor-id="verifying-the-information-matrix-equality"><span class="header-section-number">16.4</span> Verifying the information matrix equality</h2>
-<p>The IME (<a href="#eq-info-equality" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-info-equality</span></a>) says that the variance of the score equals the negative expected Hessian under the true model. We verify this empirically for a logistic regression: compute the score at the true parameters for many samples, check that its empirical covariance matches the average Hessian.</p>
+<p>The IME (<a href="#eq-info-equality" class="quarto-xref">Equation&nbsp;<span>12.2</span></a>) says that the variance of the score equals the negative expected Hessian under the true model. We verify this empirically for a logistic regression: compute the score at the true parameters for many samples, check that its empirical covariance matches the average Hessian.</p>
 <div id="ime-verify" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># True parameters for logistic model</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>beta_true_logit <span class="op">=</span> np.array([<span class="fl">0.5</span>, <span class="fl">1.0</span>, <span class="op">-</span><span class="fl">0.5</span>])</span>

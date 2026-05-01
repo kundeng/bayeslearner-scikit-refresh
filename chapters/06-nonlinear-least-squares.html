@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -761,7 +784,7 @@ window.Quarto = {
 </section>
 <section id="levenbergmarquardt-trust-region-least-squares" class="level2" data-number="8.2">
 <h2 data-number="8.2" class="anchored" data-anchor-id="levenbergmarquardt-trust-region-least-squares"><span class="header-section-number">8.2</span> Levenberg–Marquardt: trust-region least squares</h2>
-<p>Gauss–Newton can fail when <span class="math inline">\(\mathbf{J}^\top\mathbf{J}\)</span> is nearly singular or when the step <a href="#eq-gauss-newton" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-gauss-newton</span></a> is too large. The Levenberg–Marquardt (LM) method adds a damping term:</p>
+<p>Gauss–Newton can fail when <span class="math inline">\(\mathbf{J}^\top\mathbf{J}\)</span> is nearly singular or when the step <a href="#eq-gauss-newton" class="quarto-xref">Equation&nbsp;<span>8.1</span></a> is too large. The Levenberg–Marquardt (LM) method adds a damping term:</p>
 <p><span id="eq-lm-step"><span class="math display">\[
 \mathbf{p}_k = -(\mathbf{J}_k^\top\mathbf{J}_k + \lambda_k \mathbf{I})^{-1}\mathbf{J}_k^\top\mathbf{r}_k.
 \tag{8.2}\]</span></span></p>
@@ -1001,7 +1024,7 @@ dogbox: params=[2.4051 1.34   0.5501], cost=0.5579, nfev=6</code></pre>
  broyden1: x=[0.841164 0.158836], success=True, nfev=24</code></pre>
 </div>
 </div>
-<p><code>hybr</code> (default) uses Powell’s hybrid method: Newton with a dogleg trust region. <code>broyden1</code> uses Broyden’s rank-one update (<a href="#eq-broyden" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-broyden</span></a>), which avoids computing the Jacobian at every step.</p>
+<p><code>hybr</code> (default) uses Powell’s hybrid method: Newton with a dogleg trust region. <code>broyden1</code> uses Broyden’s rank-one update (<a href="#eq-broyden" class="quarto-xref">Equation&nbsp;<span>8.3</span></a>), which avoids computing the Jacobian at every step.</p>
 </section>
 <section id="robust-loss-functions-in-least_squares" class="level2" data-number="11.4">
 <h2 data-number="11.4" class="anchored" data-anchor-id="robust-loss-functions-in-least_squares"><span class="header-section-number">11.4</span> Robust loss functions in <code>least_squares</code></h2>

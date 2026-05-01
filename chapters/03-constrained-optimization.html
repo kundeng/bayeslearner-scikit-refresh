@@ -618,12 +618,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -958,7 +981,7 @@ Theorem 3.1 (KKT necessary conditions under LICQ)
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Let <span class="math inline">\(\mathbf{x}^*\)</span> be a local minimizer of <a href="#eq-constrained" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-constrained</span></a>, and suppose LICQ holds at <span class="math inline">\(\mathbf{x}^*\)</span>. Then there exist unique multipliers <span class="math inline">\(\boldsymbol{\lambda}^* \in \mathbb{R}^{|\mathcal{E}|}\)</span> and <span class="math inline">\(\boldsymbol{\mu}^* \in \mathbb{R}^{|\mathcal{I}|}\)</span> such that:</p>
+<p>Let <span class="math inline">\(\mathbf{x}^*\)</span> be a local minimizer of <a href="#eq-constrained" class="quarto-xref">Equation&nbsp;<span>5.1</span></a>, and suppose LICQ holds at <span class="math inline">\(\mathbf{x}^*\)</span>. Then there exist unique multipliers <span class="math inline">\(\boldsymbol{\lambda}^* \in \mathbb{R}^{|\mathcal{E}|}\)</span> and <span class="math inline">\(\boldsymbol{\mu}^* \in \mathbb{R}^{|\mathcal{I}|}\)</span> such that:</p>
 <ol type="1">
 <li><strong>Stationarity.</strong> <span class="math inline">\(\nabla_\mathbf{x} \mathcal{L}(\mathbf{x}^*, \boldsymbol{\lambda}^*, \boldsymbol{\mu}^*) = \mathbf{0}\)</span>.</li>
 <li><strong>Primal feasibility.</strong> <span class="math inline">\(c_i(\mathbf{x}^*) = 0\)</span> for <span class="math inline">\(i \in \mathcal{E}\)</span>; <span class="math inline">\(c_j(\mathbf{x}^*) \geq 0\)</span> for <span class="math inline">\(j \in \mathcal{I}\)</span>.</li>
@@ -1019,7 +1042,7 @@ F(\mathbf{x}, \boldsymbol{\lambda}) = \begin{pmatrix} \nabla f(\mathbf{x}) - \ma
 \tag{5.5}\]</span></span></p>
 </div>
 </div>
-<p><em>Proof.</em> Newton’s method on <a href="#eq-kkt-system" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-kkt-system</span></a> computes <span class="math inline">\((\mathbf{p}, \boldsymbol{\lambda}_{k+1})\)</span> by solving</p>
+<p><em>Proof.</em> Newton’s method on <a href="#eq-kkt-system" class="quarto-xref">Equation&nbsp;<span>5.5</span></a> computes <span class="math inline">\((\mathbf{p}, \boldsymbol{\lambda}_{k+1})\)</span> by solving</p>
 <p><span id="eq-newton-kkt"><span class="math display">\[
 \begin{pmatrix}
 \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k &amp; -\mathbf{J}_k^\top \\
@@ -1031,8 +1054,8 @@ F(\mathbf{x}, \boldsymbol{\lambda}) = \begin{pmatrix} \nabla f(\mathbf{x}) - \ma
 \tag{5.6}\]</span></span></p>
 <p>The first block row gives: <span class="math inline">\(\nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k\, \mathbf{p} - \mathbf{J}_k^\top \boldsymbol{\lambda}_{k+1} = -\nabla f_k\)</span>, i.e., <span class="math inline">\(\nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k\, \mathbf{p} + \nabla f_k = \mathbf{J}_k^\top \boldsymbol{\lambda}_{k+1}\)</span>.</p>
 <p>The second block row gives: <span class="math inline">\(\mathbf{J}_k \mathbf{p} = -\mathbf{c}_k\)</span>, i.e., <span class="math inline">\(\mathbf{c}_k + \mathbf{J}_k \mathbf{p} = \mathbf{0}\)</span>.</p>
-<p>Now consider the KKT conditions of the SQP subproblem <a href="#eq-sqp-sub" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-sqp-sub</span></a>. The Lagrangian of the QP is <span class="math inline">\(\ell(\mathbf{p}, \boldsymbol{\nu}) = \nabla f_k^\top \mathbf{p} + \tfrac{1}{2}\mathbf{p}^\top \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k\, \mathbf{p} - \boldsymbol{\nu}^\top(\mathbf{c}_k + \mathbf{J}_k \mathbf{p})\)</span>. Stationarity gives: <span class="math inline">\(\nabla f_k + \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k\, \mathbf{p} = \mathbf{J}_k^\top \boldsymbol{\nu}\)</span>.</p>
-<p>Identifying <span class="math inline">\(\boldsymbol{\nu} = \boldsymbol{\lambda}_{k+1}\)</span>, the QP’s KKT conditions are identical to the Newton system <a href="#eq-newton-kkt" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-newton-kkt</span></a>. Therefore the SQP step <span class="math inline">\((\mathbf{p}, \boldsymbol{\lambda}_{k+1})\)</span> is exactly the Newton step on the KKT system. <span class="math inline">\(\square\)</span></p>
+<p>Now consider the KKT conditions of the SQP subproblem <a href="#eq-sqp-sub" class="quarto-xref">Equation&nbsp;<span>5.4</span></a>. The Lagrangian of the QP is <span class="math inline">\(\ell(\mathbf{p}, \boldsymbol{\nu}) = \nabla f_k^\top \mathbf{p} + \tfrac{1}{2}\mathbf{p}^\top \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k\, \mathbf{p} - \boldsymbol{\nu}^\top(\mathbf{c}_k + \mathbf{J}_k \mathbf{p})\)</span>. Stationarity gives: <span class="math inline">\(\nabla f_k + \nabla^2_{\mathbf{x}\mathbf{x}}\mathcal{L}_k\, \mathbf{p} = \mathbf{J}_k^\top \boldsymbol{\nu}\)</span>.</p>
+<p>Identifying <span class="math inline">\(\boldsymbol{\nu} = \boldsymbol{\lambda}_{k+1}\)</span>, the QP’s KKT conditions are identical to the Newton system <a href="#eq-newton-kkt" class="quarto-xref">Equation&nbsp;<span>5.6</span></a>. Therefore the SQP step <span class="math inline">\((\mathbf{p}, \boldsymbol{\lambda}_{k+1})\)</span> is exactly the Newton step on the KKT system. <span class="math inline">\(\square\)</span></p>
 <p>This is the conceptual foundation of SQP: it inherits Newton’s local quadratic convergence when applied to the KKT system, provided the active set is correctly identified near the solution and the Hessian of the Lagrangian is positive definite on the constraint null space.</p>
 </section>
 <section id="interior-point-barrier-methods" class="level2" data-number="5.6">
@@ -1053,10 +1076,10 @@ Theorem 3.4 (Barrier convergence)
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Under LICQ, if <span class="math inline">\(f\)</span> is convex, the inequality constraints <span class="math inline">\(c_j\)</span> are concave (so that <span class="math inline">\(\{c_j \geq 0\}\)</span> is convex), and the feasible set is bounded with nonempty interior, then for each <span class="math inline">\(\mu &gt; 0\)</span> the barrier problem <a href="#eq-barrier" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-barrier</span></a> has a unique solution <span class="math inline">\(\mathbf{x}(\mu)\)</span>. As <span class="math inline">\(\mu \to 0^+\)</span>, <span class="math inline">\(\mathbf{x}(\mu) \to \mathbf{x}^*\)</span>, the solution of <a href="#eq-constrained" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-constrained</span></a>. The path <span class="math inline">\(\{\mathbf{x}(\mu) : \mu &gt; 0\}\)</span> is called the <em>central path</em>.</p>
+<p>Under LICQ, if <span class="math inline">\(f\)</span> is convex, the inequality constraints <span class="math inline">\(c_j\)</span> are concave (so that <span class="math inline">\(\{c_j \geq 0\}\)</span> is convex), and the feasible set is bounded with nonempty interior, then for each <span class="math inline">\(\mu &gt; 0\)</span> the barrier problem <a href="#eq-barrier" class="quarto-xref">Equation&nbsp;<span>5.7</span></a> has a unique solution <span class="math inline">\(\mathbf{x}(\mu)\)</span>. As <span class="math inline">\(\mu \to 0^+\)</span>, <span class="math inline">\(\mathbf{x}(\mu) \to \mathbf{x}^*\)</span>, the solution of <a href="#eq-constrained" class="quarto-xref">Equation&nbsp;<span>5.1</span></a>. The path <span class="math inline">\(\{\mathbf{x}(\mu) : \mu &gt; 0\}\)</span> is called the <em>central path</em>.</p>
 </div>
 </div>
-<p><em>Proof sketch.</em> For each <span class="math inline">\(\mu &gt; 0\)</span>, the barrier objective <span class="math inline">\(\phi_\mu(\mathbf{x}) = f(\mathbf{x}) - \mu \sum \ln c_j(\mathbf{x})\)</span> is strictly convex on the interior of <span class="math inline">\(\Omega\)</span>: <span class="math inline">\(f\)</span> is convex by hypothesis, and <span class="math inline">\(-\ln(c_j(\mathbf{x}))\)</span> is convex when <span class="math inline">\(c_j\)</span> is concave (the composition of a convex decreasing function with a concave function is convex), and strictly convex when <span class="math inline">\(c_j\)</span> is strictly concave or the level sets of <span class="math inline">\(c_j\)</span> have curvature. On a bounded set, a strictly convex function attains a unique minimum. The KKT conditions of <a href="#eq-barrier" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-barrier</span></a> are:</p>
+<p><em>Proof sketch.</em> For each <span class="math inline">\(\mu &gt; 0\)</span>, the barrier objective <span class="math inline">\(\phi_\mu(\mathbf{x}) = f(\mathbf{x}) - \mu \sum \ln c_j(\mathbf{x})\)</span> is strictly convex on the interior of <span class="math inline">\(\Omega\)</span>: <span class="math inline">\(f\)</span> is convex by hypothesis, and <span class="math inline">\(-\ln(c_j(\mathbf{x}))\)</span> is convex when <span class="math inline">\(c_j\)</span> is concave (the composition of a convex decreasing function with a concave function is convex), and strictly convex when <span class="math inline">\(c_j\)</span> is strictly concave or the level sets of <span class="math inline">\(c_j\)</span> have curvature. On a bounded set, a strictly convex function attains a unique minimum. The KKT conditions of <a href="#eq-barrier" class="quarto-xref">Equation&nbsp;<span>5.7</span></a> are:</p>
 <p><span class="math display">\[
 \nabla f(\mathbf{x}) - \mu \sum_{j} \frac{\nabla c_j(\mathbf{x})}{c_j(\mathbf{x})} - \sum_i \lambda_i \nabla c_i(\mathbf{x}) = \mathbf{0}.
 \]</span></p>
@@ -1081,7 +1104,7 @@ Algorithm 3.1: SQP (Equality Constraints)
 <ol type="1">
 <li><span class="math inline">\(k \leftarrow 0\)</span></li>
 <li><strong>while</strong> <span class="math inline">\(\|\nabla_\mathbf{x} \mathcal{L}_k\| &gt; \epsilon\)</span> <strong>or</strong> <span class="math inline">\(\|\mathbf{c}_k\| &gt; \epsilon\)</span> <strong>do</strong></li>
-<li><span class="math inline">\(\quad\)</span> Solve the KKT system <a href="#eq-newton-kkt" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-newton-kkt</span></a> for <span class="math inline">\((\mathbf{p}_k, \boldsymbol{\lambda}_{k+1})\)</span></li>
+<li><span class="math inline">\(\quad\)</span> Solve the KKT system <a href="#eq-newton-kkt" class="quarto-xref">Equation&nbsp;<span>5.6</span></a> for <span class="math inline">\((\mathbf{p}_k, \boldsymbol{\lambda}_{k+1})\)</span></li>
 <li><span class="math inline">\(\quad\)</span> <span class="math inline">\(\mathbf{x}_{k+1} \leftarrow \mathbf{x}_k + \mathbf{p}_k\)</span></li>
 <li><span class="math inline">\(\quad\)</span> <span class="math inline">\(k \leftarrow k + 1\)</span></li>
 <li><strong>end while</strong></li>
@@ -1104,7 +1127,7 @@ Algorithm 3.2: Interior-Point Method
 <ol type="1">
 <li><span class="math inline">\(k \leftarrow 0\)</span></li>
 <li><strong>while</strong> <span class="math inline">\(\mu_k &gt; \epsilon\)</span> <strong>do</strong></li>
-<li><span class="math inline">\(\quad\)</span> Solve the barrier problem <a href="#eq-barrier" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-barrier</span></a> with parameter <span class="math inline">\(\mu_k\)</span></li>
+<li><span class="math inline">\(\quad\)</span> Solve the barrier problem <a href="#eq-barrier" class="quarto-xref">Equation&nbsp;<span>5.7</span></a> with parameter <span class="math inline">\(\mu_k\)</span></li>
 <li><span class="math inline">\(\quad\quad\)</span> using equality-constrained SQP (Algorithm 3.1) on the barrier Lagrangian</li>
 <li><span class="math inline">\(\quad\)</span> <span class="math inline">\(\mu_{k+1} \leftarrow \sigma \mu_k\)</span> <span class="math inline">\(\triangleright\)</span> reduce barrier (<span class="math inline">\(\sigma = 0.2\)</span> in scipy)</li>
 <li><span class="math inline">\(\quad\)</span> <span class="math inline">\(k \leftarrow k + 1\)</span></li>
@@ -1236,7 +1259,7 @@ trust-constr: x = [0.823037 0.676721], f = 0.031361</code></pre>
 </section>
 <section id="sec-ch03-scratch" class="level1" data-number="9">
 <h1 data-number="9"><span class="header-section-number">9</span> From-Scratch Implementation</h1>
-<p>We implement equality-constrained SQP (Algorithm 3.1) for a simple problem: minimize <span class="math inline">\(\|\mathbf{x}\|^2\)</span> subject to <span class="math inline">\(\mathbf{1}^\top \mathbf{x} = 1\)</span>. The SQP reduces to solving the Newton-KKT system <a href="#eq-newton-kkt" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-newton-kkt</span></a> at each iteration.</p>
+<p>We implement equality-constrained SQP (Algorithm 3.1) for a simple problem: minimize <span class="math inline">\(\|\mathbf{x}\|^2\)</span> subject to <span class="math inline">\(\mathbf{1}^\top \mathbf{x} = 1\)</span>. The SQP reduces to solving the Newton-KKT system <a href="#eq-newton-kkt" class="quarto-xref">Equation&nbsp;<span>5.6</span></a> at each iteration.</p>
 <div id="sqp-scratch" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sqp_equality(fun, grad, hess_lag, con, jac_con,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                 x0, lam0, tol<span class="op">=</span><span class="fl">1e-8</span>, maxiter<span class="op">=</span><span class="dv">50</span>):</span>

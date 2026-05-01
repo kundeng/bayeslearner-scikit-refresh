@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -1613,7 +1636,7 @@ True Phi:
 </section>
 <section id="impulse-response-functions-from-scratch" class="level2" data-number="22.2">
 <h2 data-number="22.2" class="anchored" data-anchor-id="impulse-response-functions-from-scratch"><span class="header-section-number">22.2</span> Impulse response functions from scratch</h2>
-<p>The IRF follows directly from the Wold recursion (<a href="#eq-psi-recursion" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-psi-recursion</span></a>). Starting from <span class="math inline">\(\boldsymbol{\Psi}_0 = \mathbf{I}\)</span>, each subsequent matrix is computed from the VAR coefficients.</p>
+<p>The IRF follows directly from the Wold recursion (<a href="#eq-psi-recursion" class="quarto-xref">Equation&nbsp;<span>19.2</span></a>). Starting from <span class="math inline">\(\boldsymbol{\Psi}_0 = \mathbf{I}\)</span>, each subsequent matrix is computed from the VAR coefficients.</p>
 <div id="irf-scratch" class="cell" data-execution_count="23">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> irf_from_scratch(Phi_list, n_periods):</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute IRF matrices via the Wold recursion.</span></span>

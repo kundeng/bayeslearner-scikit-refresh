@@ -5365,33 +5365,839 @@
     ]
   },
   {
+    "objectID": "chapters/appendix-probability-stats.html",
+    "href": "chapters/appendix-probability-stats.html",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "",
+    "text": "Random Variables and Distributions\nThis appendix collects the probability and mathematical statistics that the main chapters assume. It is a reference, not a course — substantive enough that a reader with rusty probability can refresh the machinery and follow along, but not a substitute for Casella and Berger or Rice. Every concept connects to code via scipy.stats and NumPy, because seeing a formula evaluated on real numbers cements intuition in a way that notation alone cannot.\nA random variable \\(X\\) is a function from a sample space to \\(\\mathbb{R}\\). We work entirely at the non-measure-theoretic level: \\(X\\) either has a countable range (discrete) or a density (continuous). The book never needs more generality than this.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#discrete-random-variables",
+    "href": "chapters/appendix-probability-stats.html#discrete-random-variables",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.1 Discrete random variables",
+    "text": "A.1 Discrete random variables\nA discrete random variable takes values in a countable set. Its probability mass function (PMF) is \\(p(x) = \\Pr(X = x)\\). The PMF is nonnegative and sums to one.\n\n# Binomial(n=10, p=0.3) -- number of successes in 10 trials\nX = stats.binom(n=10, p=0.3)\nk = np.arange(0, 11)\nprint(\"k   P(X=k)\")\nfor ki in k:\n    print(f\"{ki:2d}  {X.pmf(ki):.4f}\")\n\nk   P(X=k)\n 0  0.0282\n 1  0.1211\n 2  0.2335\n 3  0.2668\n 4  0.2001\n 5  0.1029\n 6  0.0368\n 7  0.0090\n 8  0.0014\n 9  0.0001\n10  0.0000",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#continuous-random-variables",
+    "href": "chapters/appendix-probability-stats.html#continuous-random-variables",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.2 Continuous random variables",
+    "text": "A.2 Continuous random variables\nA continuous random variable has a probability density function (PDF) \\(f(x)\\) satisfying \\(\\Pr(a \\le X \\le b) = \\int_a^b f(x)\\, dx\\). The PDF can exceed 1 at a point — it is a density, not a probability.\nThe cumulative distribution function (CDF) is defined for both types: \\[\nF(x) = \\Pr(X \\le x).\n\\] For continuous \\(X\\), \\(F(x) = \\int_{-\\infty}^x f(t)\\, dt\\) and \\(f(x) = F'(x)\\). For discrete \\(X\\), \\(F\\) is a right-continuous step function.\n\nx = np.linspace(-4, 4, 300)\nrv = stats.norm(loc=0, scale=1)\n\nfig, axes = plt.subplots(1, 2, figsize=(8, 3))\naxes[0].plot(x, rv.pdf(x))\naxes[0].set_title(\"Standard Normal PDF\")\naxes[0].set_xlabel(\"$x$\")\naxes[0].set_ylabel(\"$f(x)$\")\n\naxes[1].plot(x, rv.cdf(x))\naxes[1].set_title(\"Standard Normal CDF\")\naxes[1].set_xlabel(\"$x$\")\naxes[1].set_ylabel(\"$F(x)$\")\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#expectation-variance-covariance",
+    "href": "chapters/appendix-probability-stats.html#expectation-variance-covariance",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.3 Expectation, variance, covariance",
+    "text": "A.3 Expectation, variance, covariance\nThe expectation of \\(g(X)\\) is: \\[\n\\mathbb{E}[g(X)] = \\begin{cases}\n\\sum_x g(x) p(x) & \\text{(discrete)} \\\\\n\\int g(x) f(x)\\, dx & \\text{(continuous)}.\n\\end{cases}\n\\]\nKey special cases:\n\nMean: \\(\\mu = \\mathbb{E}[X]\\)\nVariance: \\(\\text{Var}(X) = \\mathbb{E}[(X - \\mu)^2]\n= \\mathbb{E}[X^2] - \\mu^2\\)\nCovariance: \\(\\text{Cov}(X, Y) = \\mathbb{E}[(X - \\mu_X)(Y - \\mu_Y)]\n= \\mathbb{E}[XY] - \\mu_X \\mu_Y\\)\nCorrelation: \\(\\rho(X, Y) = \\text{Cov}(X, Y) / (\\sigma_X \\sigma_Y)\\)\n\nTwo properties used constantly throughout the book:\n\nLinearity of expectation: \\(\\mathbb{E}[aX + bY] = a\\mathbb{E}[X]\n+ b\\mathbb{E}[Y]\\), always — no independence required.\nVariance of a sum: \\(\\text{Var}(X + Y) = \\text{Var}(X) + \\text{Var}(Y)\n+ 2\\,\\text{Cov}(X, Y)\\). Under independence, the covariance term vanishes, giving \\(\\text{Var}(\\bar{X}_n) = \\sigma^2 / n\\).\n\n\n# Verify moments of Gamma(a=3, scale=2) numerically\nrv = stats.gamma(a=3, scale=2)\nsample = rv.rvs(size=100_000, random_state=rng)\n\nprint(\"Gamma(a=3, scale=2):\")\nprint(f\"  Theoretical mean: {rv.mean():.4f}, \"\n      f\"sample mean: {sample.mean():.4f}\")\nprint(f\"  Theoretical var:  {rv.var():.4f}, \"\n      f\"sample var:  {sample.var():.4f}\")\n\nGamma(a=3, scale=2):\n  Theoretical mean: 6.0000, sample mean: 6.0034\n  Theoretical var:  12.0000, sample var:  12.1211",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#joint-marginal-and-conditional-distributions",
+    "href": "chapters/appendix-probability-stats.html#joint-marginal-and-conditional-distributions",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.4 Joint, marginal, and conditional distributions",
+    "text": "A.4 Joint, marginal, and conditional distributions\nFor a pair \\((X, Y)\\):\n\nJoint PDF / PMF: \\(f(x, y)\\) or \\(p(x, y)\\).\nMarginal: \\(f_X(x) = \\int f(x, y)\\, dy\\) (integrate out \\(Y\\)).\nConditional: \\(f(y \\mid x) = f(x, y) / f_X(x)\\), defined when \\(f_X(x) &gt; 0\\).\nIndependence: \\(X \\perp Y\\) iff \\(f(x, y) = f_X(x) f_Y(y)\\).\n\nThese definitions extend to vectors: the joint density of \\(\\mathbf{X} = (X_1, \\ldots, X_d)^\\top\\) factors as a product of marginals iff the components are mutually independent.\n\n# Bivariate normal: sample and compute marginal/conditional\nfrom scipy.stats import multivariate_normal\n\nmu = np.array([1.0, 2.0])\nSigma = np.array([[1.0, 0.6],\n                  [0.6, 1.0]])\njoint = multivariate_normal(mean=mu, cov=Sigma)\nsamples = joint.rvs(size=5000, random_state=rng)\n\n# Marginal of X1 is N(1, 1)\nprint(f\"Marginal X1: mean={samples[:, 0].mean():.3f}, \"\n      f\"std={samples[:, 0].std():.3f}\")\n\n# Conditional E[X2 | X1=1.5] = mu2 + rho*(1.5 - mu1) = 2.3\nrho = 0.6\ncond_mean = mu[1] + rho * (1.5 - mu[0])\nprint(f\"E[X2 | X1=1.5] = {cond_mean:.1f}\")\n\n# Verify: filter samples near X1=1.5\nmask = np.abs(samples[:, 0] - 1.5) &lt; 0.1\nprint(f\"Sample mean of X2 | X1≈1.5: \"\n      f\"{samples[mask, 1].mean():.2f} \"\n      f\"(n={mask.sum()})\")\n\nMarginal X1: mean=1.014, std=0.999\nE[X2 | X1=1.5] = 2.3\nSample mean of X2 | X1≈1.5: 2.32 (n=367)",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#continuous-distributions",
+    "href": "chapters/appendix-probability-stats.html#continuous-distributions",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.5 Continuous distributions",
+    "text": "A.5 Continuous distributions\n\n\n\nTable A.1: Continuous distributions used in the book.\n\n\n\n\n\n\n\n\n\n\n\n\nDistribution\nscipy call\nMean\nVariance\nKey chapters\n\n\n\n\n\\(\\mathcal{N}(\\mu, \\sigma^2)\\)\nnorm(loc=mu, scale=sigma)\n\\(\\mu\\)\n\\(\\sigma^2\\)\nAll\n\n\n\\(t_\\nu\\)\nt(df=nu)\n0 (\\(\\nu&gt;1\\))\n\\(\\nu/(\\nu-2)\\) (\\(\\nu&gt;2\\))\n10, 11, 15\n\n\n\\(\\chi^2_\\nu\\)\nchi2(df=nu)\n\\(\\nu\\)\n\\(2\\nu\\)\n10, 11\n\n\n\\(F_{\\nu_1, \\nu_2}\\)\nf(dfn=nu1, dfd=nu2)\n\\(\\frac{\\nu_2}{\\nu_2-2}\\)\nsee text\n10, 11, 19\n\n\n\\(\\text{Gamma}(a, s)\\)\ngamma(a, scale=s)\n\\(as\\)\n\\(as^2\\)\n7, 10, 12\n\n\n\\(\\text{Beta}(a, b)\\)\nbeta(a, b)\n\\(\\frac{a}{a+b}\\)\n\\(\\frac{ab}{(a+b)^2(a+b+1)}\\)\n8, 12\n\n\n\\(\\text{Exp}(\\lambda)\\)\nexpon(scale=1/lam)\n\\(1/\\lambda\\)\n\\(1/\\lambda^2\\)\n18\n\n\n\n\n\n\nParameterization warning. scipy’s expon(scale=s) uses scale \\(s = 1/\\lambda\\), not the rate \\(\\lambda\\) common in textbooks. Similarly, gamma(a, scale=s) uses the shape-scale parameterization, not shape-rate. Always check the scipy docstring when translating from a textbook formula.\nThe \\(t\\) distribution in practice. The \\(t\\) distribution arises whenever a normal mean is estimated with unknown variance. If \\(Z \\sim \\mathcal{N}(0,1)\\) and \\(V \\sim \\chi^2_\\nu\\) independently, then \\(T = Z/\\sqrt{V/\\nu} \\sim t_\\nu\\). For \\(\\nu &gt; 30\\), \\(t_\\nu\\) is nearly indistinguishable from \\(\\mathcal{N}(0,1)\\), but at small \\(\\nu\\) the heavier tails matter — this is why small-sample \\(t\\)-tests use \\(t\\) critical values rather than normal ones. At \\(\\nu = 1\\), the \\(t\\) distribution is the Cauchy, which has no finite mean.\nThe chi-squared and \\(F\\) in testing. The \\(\\chi^2_\\nu\\) distribution is the distribution of the sum of \\(\\nu\\) squared standard normals. It governs goodness-of-fit tests, likelihood ratio statistics, and Wald statistics. The \\(F\\) distribution, as the ratio of two independent scaled chi-squareds, governs \\(F\\)-tests in ANOVA and regression (Ch. 11). Both are special cases of the Gamma: \\(\\chi^2_\\nu\n= \\text{Gamma}(\\nu/2, \\text{scale}=2)\\).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#discrete-distributions",
+    "href": "chapters/appendix-probability-stats.html#discrete-distributions",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.6 Discrete distributions",
+    "text": "A.6 Discrete distributions\n\n\n\nTable A.2: Discrete distributions used in the book.\n\n\n\n\n\n\n\n\n\n\n\n\nDistribution\nscipy call\nMean\nVariance\nKey chapters\n\n\n\n\n\\(\\text{Binomial}(n, p)\\)\nbinom(n, p)\n\\(np\\)\n\\(np(1-p)\\)\n9, 12\n\n\n\\(\\text{Poisson}(\\lambda)\\)\npoisson(mu=lam)\n\\(\\lambda\\)\n\\(\\lambda\\)\n12, 13\n\n\n\n\n\n\nNote on scipy’s Poisson. The parameter is mu, not lam or lambda. This follows scipy’s convention of naming the mean directly: poisson(mu=5).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#relationships-between-distributions",
+    "href": "chapters/appendix-probability-stats.html#relationships-between-distributions",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.7 Relationships between distributions",
+    "text": "A.7 Relationships between distributions\nSeveral distributions are linked by transformations used constantly in hypothesis testing (Ch. 10):\n\nIf \\(Z \\sim \\mathcal{N}(0, 1)\\), then \\(Z^2 \\sim \\chi^2_1\\).\nIf \\(Z_1, \\ldots, Z_\\nu \\sim \\mathcal{N}(0,1)\\) iid, then \\(\\sum Z_i^2 \\sim \\chi^2_\\nu\\).\nIf \\(Z \\sim \\mathcal{N}(0,1)\\) and \\(V \\sim \\chi^2_\\nu\\) independent, then \\(Z / \\sqrt{V/\\nu} \\sim t_\\nu\\).\nIf \\(U \\sim \\chi^2_{\\nu_1}\\) and \\(V \\sim \\chi^2_{\\nu_2}\\) independent, then \\((U/\\nu_1) / (V/\\nu_2) \\sim F_{\\nu_1, \\nu_2}\\).\n\n\n# Verify Z^2 ~ chi2(1) by simulation\nZ = rng.standard_normal(50_000)\nZ_sq = Z ** 2\n\nfig, ax = plt.subplots(figsize=(5, 3))\nx = np.linspace(0, 8, 200)\nax.hist(\n    Z_sq, bins=80, density=True,\n    alpha=0.5, label=\"$Z^2$ histogram\"\n)\nax.plot(x, stats.chi2(df=1).pdf(x), label=\"$\\\\chi^2_1$ PDF\")\nax.set_xlim(0, 8)\nax.set_xlabel(\"$x$\")\nax.legend()\nax.set_title(\"$Z^2$ matches $\\\\chi^2_1$\")\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#convergence-in-probability",
+    "href": "chapters/appendix-probability-stats.html#convergence-in-probability",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.8 Convergence in probability",
+    "text": "A.8 Convergence in probability\n\\(X_n \\xrightarrow{p} X\\) means: for every \\(\\epsilon &gt; 0\\), \\[\n\\Pr(|X_n - X| &gt; \\epsilon) \\to 0 \\quad \\text{as } n \\to \\infty.\n\\] Intuition: the probability of being far from \\(X\\) vanishes, but there is no claim about how quickly. This is the mode the law of large numbers delivers.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#convergence-in-distribution",
+    "href": "chapters/appendix-probability-stats.html#convergence-in-distribution",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.9 Convergence in distribution",
+    "text": "A.9 Convergence in distribution\n\\(X_n \\xrightarrow{d} X\\) means: \\(F_n(x) \\to F(x)\\) at every continuity point \\(x\\) of \\(F\\). Equivalently: \\(\\mathbb{E}[g(X_n)]\n\\to \\mathbb{E}[g(X)]\\) for every bounded continuous \\(g\\).\nIntuition: the distribution shapes converge, but the random variables need not live on the same probability space. This is the mode the CLT delivers.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#almost-sure-convergence",
+    "href": "chapters/appendix-probability-stats.html#almost-sure-convergence",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.10 Almost sure convergence",
+    "text": "A.10 Almost sure convergence\n\\(X_n \\xrightarrow{a.s.} X\\) means: \\(\\Pr(\\lim_{n \\to \\infty} X_n = X) = 1\\). This is the strongest mode — it implies convergence in probability, which in turn implies convergence in distribution.\nThe hierarchy: \\[\nX_n \\xrightarrow{a.s.} X \\implies X_n \\xrightarrow{p} X\n\\implies X_n \\xrightarrow{d} X.\n\\] The converses are false in general.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#a-crucial-non-implication",
+    "href": "chapters/appendix-probability-stats.html#a-crucial-non-implication",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.11 A crucial non-implication",
+    "text": "A.11 A crucial non-implication\nConvergence in distribution does NOT imply convergence of expectations. The classic counterexample uses the Cauchy distribution, which has no finite mean. Consider \\(X_n \\sim t_n\\) (Student’s \\(t\\) with \\(n\\) degrees of freedom). As \\(n \\to \\infty\\), \\(X_n \\xrightarrow{d} \\mathcal{N}(0, 1)\\), so \\(\\mathbb{E}[X_n^2] = n/(n-2) \\to 1 = \\text{Var}(Z)\\) — that works fine. But consider \\(Y_n = n \\cdot \\mathbf{1}(|X_n| &gt; n^{1/2})\\). Then \\(Y_n \\xrightarrow{d} 0\\) but \\(\\mathbb{E}[Y_n]\\) does not converge to 0. The point: convergence in distribution controls the shape of the distribution, not the tails.\nA sufficient condition for \\(\\mathbb{E}[X_n] \\to \\mathbb{E}[X]\\) is uniform integrability — the tails of \\(\\{X_n\\}\\) must be uniformly controlled. When you see a theorem in the main chapters that says “\\(\\hat{\\theta}_n\\) is asymptotically normal,” the CLT gives convergence in distribution of the standardized statistic. To also conclude that moments converge (e.g., that the MSE of \\(\\hat{\\theta}_n\\) converges to zero), you need uniform integrability or a separate argument.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#slutskys-theorem",
+    "href": "chapters/appendix-probability-stats.html#slutskys-theorem",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.12 Slutsky’s theorem",
+    "text": "A.12 Slutsky’s theorem\nA companion result used repeatedly alongside the CLT:\nIf \\(X_n \\xrightarrow{d} X\\) and \\(Y_n \\xrightarrow{p} c\\) (a constant), then:\n\n\\(X_n + Y_n \\xrightarrow{d} X + c\\)\n\\(Y_n X_n \\xrightarrow{d} cX\\)\n\\(X_n / Y_n \\xrightarrow{d} X / c\\) (when \\(c \\ne 0\\))\n\nWhy this matters. The CLT gives you \\(\\sqrt{n}(\\bar{X}_n - \\mu)/\\sigma \\xrightarrow{d} \\mathcal{N}(0,1)\\), but \\(\\sigma\\) is unknown. Replacing it with \\(\\hat{\\sigma}_n\n\\xrightarrow{p} \\sigma\\) and applying Slutsky gives \\(\\sqrt{n}(\\bar{X}_n - \\mu)/\\hat{\\sigma}_n \\xrightarrow{d}\n\\mathcal{N}(0,1)\\). This is the theoretical justification for using estimated standard errors in confidence intervals and \\(t\\)-tests. The delta method proof also relies on Slutsky.\n\n# Demonstrate convergence in probability: LLN\nsample_sizes = [10, 50, 200, 1000, 5000]\ntrue_mean = 3.0\nrv = stats.expon(scale=true_mean)\n\nfig, ax = plt.subplots(figsize=(6, 3.5))\nfor n in sample_sizes:\n    # 500 replications of the sample mean\n    means = np.array([\n        rv.rvs(size=n, random_state=rng).mean()\n        for _ in range(500)\n    ])\n    ax.hist(\n        means, bins=30, density=True, alpha=0.4,\n        label=f\"$n={n}$\"\n    )\nax.axvline(true_mean, color='k', linestyle='--',\n           label=\"True mean\")\nax.set_xlabel(\"$\\\\bar{X}_n$\")\nax.set_ylabel(\"Density\")\nax.legend(fontsize=8)\nax.set_title(\n    \"LLN: sample means concentrate \"\n    \"around $\\\\mu=3$\"\n)\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#worked-example-variance-of-logbarx",
+    "href": "chapters/appendix-probability-stats.html#worked-example-variance-of-logbarx",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.13 Worked example: variance of \\(\\log(\\bar{X})\\)",
+    "text": "A.13 Worked example: variance of \\(\\log(\\bar{X})\\)\nSuppose \\(X_1, \\ldots, X_n\\) are iid with \\(\\mathbb{E}[X_1] = \\mu &gt; 0\\) and \\(\\text{Var}(X_1) = \\sigma^2\\). What is the asymptotic variance of \\(\\log(\\bar{X}_n)\\)?\nBy the CLT, \\(\\sqrt{n}(\\bar{X}_n - \\mu) \\xrightarrow{d}\n\\mathcal{N}(0, \\sigma^2)\\). Take \\(g(x) = \\log(x)\\), so \\(g'(x) = 1/x\\). By the delta method: \\[\n\\sqrt{n}(\\log \\bar{X}_n - \\log \\mu) \\xrightarrow{d}\n\\mathcal{N}\\!\\left(0,\\, \\frac{\\sigma^2}{\\mu^2}\\right).\n\\] The asymptotic variance of \\(\\log \\bar{X}_n\\) is \\(\\sigma^2 / (n \\mu^2)\\).\n\n# Verify delta method: Var(log(X_bar)) for Exp(mu)\nmu = 3.0\nsigma2 = mu**2  # Var(Exp(mu)) = mu^2\nn = 200\nn_reps = 20_000\n\n# Simulate log(X_bar) many times\nlog_xbar = np.array([\n    np.log(rng.exponential(scale=mu, size=n).mean())\n    for _ in range(n_reps)\n])\n\n# Delta method prediction: Var = sigma^2 / (n * mu^2)\npredicted_var = sigma2 / (n * mu**2)\nobserved_var = log_xbar.var()\n\nprint(f\"Delta method predicted Var(log(X_bar)):\"\n      f\" {predicted_var:.6f}\")\nprint(f\"Simulated Var(log(X_bar)):             \"\n      f\" {observed_var:.6f}\")\nprint(f\"Ratio (should be ≈ 1):                 \"\n      f\" {observed_var / predicted_var:.3f}\")\n\nDelta method predicted Var(log(X_bar)): 0.005000\nSimulated Var(log(X_bar)):              0.004892\nRatio (should be ≈ 1):                  0.978",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#setup",
+    "href": "chapters/appendix-probability-stats.html#setup",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.14 Setup",
+    "text": "A.14 Setup\nGiven iid observations \\(X_1, \\ldots, X_n\\) from a density \\(f(x; \\theta)\\), the likelihood is \\[\nL(\\theta) = \\prod_{i=1}^n f(X_i; \\theta),\n\\] and the log-likelihood is \\[\n\\ell(\\theta) = \\sum_{i=1}^n \\log f(X_i; \\theta).\n\\] The maximum likelihood estimator (MLE) is \\(\\hat{\\theta}_n = \\arg\\max_\\theta \\ell(\\theta)\\).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#score-function-and-fisher-information",
+    "href": "chapters/appendix-probability-stats.html#score-function-and-fisher-information",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.15 Score function and Fisher information",
+    "text": "A.15 Score function and Fisher information\nThe score function is the gradient of the log-likelihood: \\[\nS(\\theta) = \\nabla_\\theta \\ell(\\theta)\n= \\sum_{i=1}^n \\nabla_\\theta \\log f(X_i; \\theta).\n\\]\nUnder regularity conditions (interchangeability of differentiation and integration):\n\n\\(\\mathbb{E}[S(\\theta_0)] = \\mathbf{0}\\) — the score has mean zero at the true parameter.\nThe Fisher information is \\(\\mathcal{I}(\\theta) =\n\\text{Var}(S(\\theta)) = \\mathbb{E}[S(\\theta) S(\\theta)^\\top]\\).\nThe information matrix equality: \\(\\mathcal{I}(\\theta)\n= -\\mathbb{E}[\\nabla^2_\\theta \\ell(\\theta)]\\). This says the curvature of the log-likelihood equals the variance of the score — a fact used to construct the observed information \\(\\hat{\\mathcal{I}} = -\\nabla^2 \\ell(\\hat{\\theta})\\) as an estimator of \\(\\mathcal{I}\\).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#asymptotic-normality",
+    "href": "chapters/appendix-probability-stats.html#asymptotic-normality",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.16 Asymptotic normality",
+    "text": "A.16 Asymptotic normality\nUnder standard regularity conditions (see Ch. 10 for the precise statement): \\[\n\\sqrt{n}(\\hat{\\theta}_n - \\theta_0) \\xrightarrow{d}\n\\mathcal{N}\\!\\left(\\mathbf{0},\\;\n\\mathcal{I}_1(\\theta_0)^{-1}\\right),\n\\] where \\(\\mathcal{I}_1(\\theta_0)\\) is the Fisher information for a single observation. The MLE is consistent, asymptotically normal, and asymptotically efficient (achieves the Cramér-Rao bound).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#cramér-rao-lower-bound",
+    "href": "chapters/appendix-probability-stats.html#cramér-rao-lower-bound",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.17 Cramér-Rao lower bound",
+    "text": "A.17 Cramér-Rao lower bound\nFor any unbiased estimator \\(T\\) of \\(\\theta\\): \\[\n\\text{Var}(T) \\ge \\frac{1}{n \\mathcal{I}_1(\\theta)}.\n\\] No unbiased estimator can have smaller variance. The MLE achieves this bound asymptotically — this is what “efficient” means in the likelihood context.\nObserved vs expected information. In practice, the Fisher information \\(\\mathcal{I}(\\theta)\\) (the expected information) is replaced by the observed information \\(\\hat{\\mathcal{I}} = -\\nabla^2 \\ell(\\hat{\\theta})\\), which does not require computing an expectation. Under standard conditions, these converge to the same limit. Efron and Hinkley (1978) showed that the observed information is preferable in many settings because it conditions on the observed data. Ch. 10 develops this distinction in detail.\nWhat “regularity conditions” means. The MLE results above hold under conditions that roughly require: (1) the parameter space is an open set, (2) the support of \\(f(x; \\theta)\\) does not depend on \\(\\theta\\), (3) \\(f\\) is thrice differentiable in \\(\\theta\\), and (4) the Fisher information is positive definite. These are Cramér’s conditions. The most commonly violated condition in practice is (2): the uniform distribution \\(\\text{Uniform}(0, \\theta)\\) has support depending on \\(\\theta\\), so the standard MLE theory does not apply — and indeed, the MLE converges at rate \\(1/n\\) rather than \\(1/\\sqrt{n}\\).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#from-scratch-mle-fitting-a-gamma-distribution",
+    "href": "chapters/appendix-probability-stats.html#from-scratch-mle-fitting-a-gamma-distribution",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.18 From-scratch MLE: fitting a Gamma distribution",
+    "text": "A.18 From-scratch MLE: fitting a Gamma distribution\n\n# Generate Gamma(a=3, scale=2) data\ntrue_a, true_scale = 3.0, 2.0\ndata = stats.gamma.rvs(\n    a=true_a, scale=true_scale,\n    size=500, random_state=rng\n)\n\n# From-scratch MLE using scipy.optimize\nfrom scipy.optimize import minimize\nfrom scipy.special import gammaln, digamma\n\ndef neg_loglik(params, data):\n    \"\"\"Negative log-likelihood for Gamma(a, scale).\"\"\"\n    a, scale = params\n    if a &lt;= 0 or scale &lt;= 0:\n        return np.inf\n    n = len(data)\n    return (\n        -n * a * np.log(1 / scale)\n        + n * gammaln(a)\n        - (a - 1) * np.sum(np.log(data))\n        + np.sum(data) / scale\n    )\n\ndef neg_loglik_grad(params, data):\n    \"\"\"Gradient of negative log-likelihood.\"\"\"\n    a, scale = params\n    n = len(data)\n    da = (\n        -n * np.log(1 / scale)\n        + n * digamma(a)\n        - np.sum(np.log(data))\n    )\n    dscale = (\n        n * a / scale\n        - np.sum(data) / scale**2\n    )\n    return np.array([da, dscale])\n\nresult = minimize(\n    fun=neg_loglik,\n    x0=np.array([1.0, 1.0]),\n    args=(data,),\n    jac=neg_loglik_grad,\n    method='L-BFGS-B',\n    bounds=[(1e-6, None), (1e-6, None)],\n)\n\na_hat, scale_hat = result.x\nprint(f\"From-scratch MLE: a={a_hat:.3f}, \"\n      f\"scale={scale_hat:.3f}\")\n\n# Compare to scipy.stats.gamma.fit\na_scipy, loc_scipy, scale_scipy = stats.gamma.fit(\n    data, floc=0  # fix loc=0 for standard Gamma\n)\nprint(f\"scipy.stats.fit:  a={a_scipy:.3f}, \"\n      f\"scale={scale_scipy:.3f}\")\nprint(f\"True values:      a={true_a:.1f}, \"\n      f\"scale={true_scale:.1f}\")\n\nFrom-scratch MLE: a=2.800, scale=2.161\nscipy.stats.fit:  a=2.800, scale=2.161\nTrue values:      a=3.0, scale=2.0\n\n\n\n# Overlay fitted density on histogram\nx_grid = np.linspace(0, data.max(), 200)\n\nfig, ax = plt.subplots(figsize=(6, 3.5))\nax.hist(data, bins=40, density=True, alpha=0.4,\n        label=\"Data\")\nax.plot(\n    x_grid,\n    stats.gamma.pdf(\n        x_grid, a=a_hat, scale=scale_hat\n    ),\n    label=(f\"MLE fit: $a={a_hat:.2f}$, \"\n           f\"scale$={scale_hat:.2f}$\"),\n    linewidth=1.5,\n)\nax.plot(\n    x_grid,\n    stats.gamma.pdf(\n        x_grid, a=true_a, scale=true_scale\n    ),\n    '--', label=\"True density\", linewidth=1.5,\n)\nax.set_xlabel(\"$x$\")\nax.legend(fontsize=8)\nax.set_title(\"MLE fit vs true Gamma density\")\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#canonical-form",
+    "href": "chapters/appendix-probability-stats.html#canonical-form",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.19 Canonical form",
+    "text": "A.19 Canonical form\nA family of distributions is an exponential family in canonical form if the density can be written as: \\[\nf(x; \\theta, \\phi) = \\exp\\!\\left\\{\n\\frac{x\\theta - b(\\theta)}{\\phi} + c(x, \\phi)\n\\right\\},\n\\tag{A.3}\\] where \\(\\theta\\) is the natural parameter, \\(b(\\theta)\\) is the cumulant function (also called the log-partition function), \\(\\phi\\) is the dispersion parameter, and \\(c(x, \\phi)\\) collects everything that does not depend on \\(\\theta\\).\nThe key property: all the distributional information about \\(\\theta\\) is captured by: \\[\n\\mathbb{E}[X] = b'(\\theta), \\qquad\n\\text{Var}(X) = \\phi \\, b''(\\theta).\n\\tag{A.4}\\]\nThe mean is a function of \\(\\theta\\) alone; the variance factors into a dispersion term and a variance function \\(V(\\mu) = b''(\\theta(\\mu))\\) that depends on the mean. This factoring is the foundation of GLM theory in Ch. 12.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#canonical-table",
+    "href": "chapters/appendix-probability-stats.html#canonical-table",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.20 Canonical table",
+    "text": "A.20 Canonical table\n\n\n\nTable A.4: Exponential family representations. The natural parameter \\(\\theta\\), cumulant function \\(b(\\theta)\\), dispersion \\(\\phi\\), and variance function \\(V(\\mu)\\) for distributions used in Ch. 12.\n\n\n\n\n\n\n\n\n\n\n\n\nDistribution\n\\(\\theta\\)\n\\(b(\\theta)\\)\n\\(\\phi\\)\n\\(V(\\mu) = b''(\\theta)\\)\n\n\n\n\n\\(\\mathcal{N}(\\mu, \\sigma^2)\\)\n\\(\\mu\\)\n\\(\\theta^2/2\\)\n\\(\\sigma^2\\)\n1\n\n\n\\(\\text{Poisson}(\\mu)\\)\n\\(\\log \\mu\\)\n\\(e^\\theta\\)\n1\n\\(\\mu\\)\n\n\n\\(\\text{Binomial}(m, p)\\)\n\\(\\log\\frac{p}{1-p}\\)\n\\(m\\log(1+e^\\theta)\\)\n1\n\\(\\mu(1-\\mu/m)\\)\n\n\n\\(\\text{Gamma}(\\mu, \\nu)\\)\n\\(-1/\\mu\\)\n\\(-\\log(-\\theta)\\)\n\\(1/\\nu\\)\n\\(\\mu^2\\)\n\n\n\\(\\text{Exp}(\\mu)\\)\n\\(-1/\\mu\\)\n\\(-\\log(-\\theta)\\)\n1\n\\(\\mu^2\\)\n\n\n\n\n\n\n\n# Verify E[X] = b'(theta) for Poisson\n# b(theta) = exp(theta), so b'(theta) = exp(theta) = mu\n\nlam = 5.0  # Poisson rate\ntheta = np.log(lam)  # natural parameter\nb_prime = np.exp(theta)\n\nsample = stats.poisson.rvs(mu=lam, size=100_000,\n                           random_state=rng)\n\nprint(f\"Poisson(lambda={lam}):\")\nprint(f\"  b'(theta) = exp(theta) = {b_prime:.1f}\")\nprint(f\"  Sample mean = {sample.mean():.3f}\")\n\n# Verify Var(X) = phi * b''(theta) = 1 * exp(theta) = mu\nb_double_prime = np.exp(theta)\nprint(f\"  phi * b''(theta) = {b_double_prime:.1f}\")\nprint(f\"  Sample var = {sample.var():.3f}\")\n\nPoisson(lambda=5.0):\n  b'(theta) = exp(theta) = 5.0\n  Sample mean = 5.003\n  phi * b''(theta) = 5.0\n  Sample var = 5.022",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#why-exponential-families-matter-for-the-book",
+    "href": "chapters/appendix-probability-stats.html#why-exponential-families-matter-for-the-book",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.21 Why exponential families matter for the book",
+    "text": "A.21 Why exponential families matter for the book\n\nSufficient statistics. The exponential family is the only family with finite-dimensional sufficient statistics (by the Pitman-Koopman-Darmois theorem). This is why MLE reduces to solving a finite system of equations.\nGLMs. Every GLM (Ch. 12) specifies a response distribution from the exponential family and a link function connecting \\(\\mathbb{E}[Y_i]\\) to the linear predictor \\(\\mathbf{x}_i^\\top\n\\boldsymbol{\\beta}\\). The canonical link sets \\(\\theta_i =\n\\mathbf{x}_i^\\top \\boldsymbol{\\beta}\\), giving the log-likelihood a concave, well-behaved form.\nIRLS convergence. Fisher scoring for GLMs with canonical links is equivalent to IRLS, and the concavity of the log-likelihood guarantees convergence — no step-size tuning needed.\nNatural conjugacy. For Bayesian analysis (Ch. 8), exponential families admit conjugate priors of the same exponential form. The posterior update becomes a simple parameter update rather than a general integration problem. This is why Gibbs sampling for exponential-family models is straightforward: the full conditionals have closed forms.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#sufficient-statistics",
+    "href": "chapters/appendix-probability-stats.html#sufficient-statistics",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.22 Sufficient statistics",
+    "text": "A.22 Sufficient statistics\nA statistic \\(T(\\mathbf{X})\\) is sufficient for \\(\\theta\\) if the conditional distribution of \\(\\mathbf{X}\\) given \\(T(\\mathbf{X})\\) does not depend on \\(\\theta\\). Informally: \\(T\\) captures everything in the data that is relevant for inference about \\(\\theta\\).\nFactorization theorem (Neyman). \\(T(\\mathbf{X})\\) is sufficient for \\(\\theta\\) iff the joint density factors as \\[\nf(\\mathbf{x}; \\theta) = g(T(\\mathbf{x}), \\theta) \\cdot h(\\mathbf{x}),\n\\] where \\(h\\) does not depend on \\(\\theta\\). The exponential family (Equation A.3) makes sufficiency immediate: the sufficient statistic is whatever multiplies \\(\\theta\\) inside the exponent.\nExamples:\n\nFor \\(X_1, \\ldots, X_n \\sim \\mathcal{N}(\\mu, \\sigma^2)\\) with \\(\\sigma^2\\) known: \\(T = \\sum X_i\\) (or equivalently \\(\\bar{X}\\)) is sufficient for \\(\\mu\\).\nFor \\(X_1, \\ldots, X_n \\sim \\text{Poisson}(\\lambda)\\): \\(T = \\sum X_i\\) is sufficient for \\(\\lambda\\).\nFor \\(X_1, \\ldots, X_n \\sim \\mathcal{N}(\\mu, \\sigma^2)\\) with both unknown: \\(T = (\\sum X_i, \\sum X_i^2)\\) is jointly sufficient for \\((\\mu, \\sigma^2)\\).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-probability-stats.html#rao-blackwell-theorem",
+    "href": "chapters/appendix-probability-stats.html#rao-blackwell-theorem",
+    "title": "Appendix A — Appendix A: Probability and Mathematical Statistics",
+    "section": "A.23 Rao-Blackwell theorem",
+    "text": "A.23 Rao-Blackwell theorem\nTheorem. If \\(T\\) is sufficient for \\(\\theta\\) and \\(\\tilde{\\theta}\\) is any unbiased estimator of \\(\\theta\\), define \\(\\hat{\\theta} = \\mathbb{E}[\\tilde{\\theta} \\mid T]\\). Then:\n\n\\(\\hat{\\theta}\\) is unbiased.\n\\(\\text{Var}(\\hat{\\theta}) \\le \\text{Var}(\\tilde{\\theta})\\), with equality iff \\(\\tilde{\\theta}\\) is already a function of \\(T\\).\n\nIntuition. Conditioning on a sufficient statistic averages out the irrelevant noise while preserving all the information about \\(\\theta\\). The result can only be less variable.\nConnection to variance reduction (Ch. 7). Rao-Blackwellization in Monte Carlo is exactly this theorem applied to simulation: if you can compute \\(\\mathbb{E}[h(X) \\mid T]\\) analytically for some sufficient (or near-sufficient) statistic \\(T\\), the conditional estimator has lower variance than the raw sample average. Ch. 7 uses this principle for variance reduction in importance sampling and Gibbs sampling.\n\n# Rao-Blackwell for Poisson rate estimation\n# Crude estimator: theta_tilde = X_1 (first observation)\n# Sufficient statistic: T = sum(X_i)\n# RB estimator: E[X_1 | T] = T/n = X_bar\n\nlam_true = 4.0\nn = 20\nn_reps = 10_000\n\ncrude_estimates = np.zeros(n_reps)\nrb_estimates = np.zeros(n_reps)\n\nfor rep in range(n_reps):\n    sample = rng.poisson(lam=lam_true, size=n)\n    crude_estimates[rep] = sample[0]  # just X_1\n    rb_estimates[rep] = sample.mean()  # X_bar = T/n\n\nprint(f\"Estimating lambda = {lam_true}:\")\nprint(f\"  Crude (X_1):  mean={crude_estimates.mean():.3f}\"\n      f\"  var={crude_estimates.var():.3f}\")\nprint(f\"  RB (X_bar):   mean={rb_estimates.mean():.3f}\"\n      f\"  var={rb_estimates.var():.3f}\")\nprint(f\"  Variance ratio: \"\n      f\"{crude_estimates.var() / rb_estimates.var():.1f}x\")\nprint(f\"  (Expected ratio: n = {n})\")\n\nEstimating lambda = 4.0:\n  Crude (X_1):  mean=3.958  var=3.999\n  RB (X_bar):   mean=3.997  var=0.201\n  Variance ratio: 19.9x\n  (Expected ratio: n = 20)\n\n\n\nfig, axes = plt.subplots(1, 2, figsize=(8, 3),\n                         sharex=True, sharey=True)\nbins = np.arange(-0.5, 12.5, 0.5)\n\naxes[0].hist(\n    crude_estimates, bins=bins,\n    density=True, alpha=0.5\n)\naxes[0].axvline(lam_true, color='k', linestyle='--')\naxes[0].set_title(\"Crude: $\\\\tilde{\\\\theta} = X_1$\")\naxes[0].set_xlabel(\"Estimate\")\n\naxes[1].hist(\n    rb_estimates, bins=np.linspace(1, 7, 40),\n    density=True, alpha=0.5\n)\naxes[1].axvline(lam_true, color='k', linestyle='--')\naxes[1].set_title(\n    \"Rao-Blackwell: $\\\\hat{\\\\theta} = \\\\bar{X}$\"\n)\naxes[1].set_xlabel(\"Estimate\")\n\nfig.suptitle(\n    \"Rao-Blackwell reduces variance by \"\n    f\"factor of {n}\",\n    fontsize=11\n)\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix A: Probability and Mathematical Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html",
+    "href": "chapters/appendix-matrix-algebra.html",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "",
+    "text": "Positive Definiteness\nThis appendix collects the matrix algebra results used throughout the book. It is a reference, not a textbook chapter — each result states the fact, gives enough intuition to see why it holds, shows the corresponding NumPy / SciPy call, and points to the chapters where it matters. A reader who already knows these results can skip ahead and return when a chapter cites a specific section.\nA symmetric matrix \\(\\mathbf{A} \\in \\mathbb{R}^{n \\times n}\\) is positive definite (PD) if any of the following equivalent conditions holds:\nReplace “\\(&gt; 0\\)” with “\\(\\geq 0\\)” and “strictly positive” with “nonnegative” to get the definition of positive semi-definite (PSD).\nWhere it arises.\nTesting positive definiteness in code. Two practical strategies:\nA_pd = np.array([[4.0, 2.0], [2.0, 3.0]])\nA_psd = np.array([[1.0, 1.0], [1.0, 1.0]])  # rank 1, PSD not PD\n\ndef is_pd_cholesky(A):\n    \"\"\"Test positive definiteness via Cholesky.\"\"\"\n    try:\n        linalg.cholesky(A, lower=True)\n        return True\n    except linalg.LinAlgError:\n        return False\n\ndef is_pd_eig(A, tol=1e-10):\n    \"\"\"Test positive definiteness via eigenvalues.\"\"\"\n    eigvals = linalg.eigvalsh(A)\n    return bool(np.all(eigvals &gt; tol)), eigvals\n\nprint(\"PD matrix (Cholesky):\", is_pd_cholesky(A_pd))\nprint(\"PSD matrix (Cholesky):\", is_pd_cholesky(A_psd))\n\nflag, vals = is_pd_eig(A_pd)\nprint(f\"PD matrix eigenvalues: {vals.round(4)}, PD={flag}\")\nflag, vals = is_pd_eig(A_psd)\nprint(f\"PSD matrix eigenvalues: {vals.round(4)}, PD={flag}\")\n\nPD matrix (Cholesky): True\nPSD matrix (Cholesky): False\nPD matrix eigenvalues: [1.4384 5.5616], PD=True\nPSD matrix eigenvalues: [0. 2.], PD=False\nThe Cholesky test runs in \\(O(n^3/3)\\) flops — half the cost of an LU factorisation — and is the preferred test in library code. The eigenvalue test costs a full \\(O(n^3)\\) but reveals how close the matrix is to singularity: the ratio \\(\\lambda_{\\max} / \\lambda_{\\min}\\) is the 2-norm condition number (see ?sec-norms below).\nNear-PSD matrices. In practice, covariance estimates are often almost positive semi-definite: a few eigenvalues are tiny negative numbers due to floating-point arithmetic or numerical optimisation. The standard fix is to clip negative eigenvalues to zero (or a small positive value) and reconstruct:\n# Repair a near-PSD matrix\nA_noisy = np.array([\n    [1.0, 0.9, 0.8],\n    [0.9, 1.0, 0.9],\n    [0.8, 0.9, 1.0],\n])\n# Simulate numerical noise making it not quite PD\nA_noisy[0, 2] = 0.81\nA_noisy[2, 0] = 0.81\n\neigvals_raw, Q = linalg.eigh(A_noisy)\nprint(f\"Raw eigenvalues: {eigvals_raw.round(6)}\")\n\n# Clip to positive\neigvals_clipped = np.maximum(eigvals_raw, 1e-10)\nA_fixed = Q @ np.diag(eigvals_clipped) @ Q.T\nprint(f\"Fixed eigenvalues: \"\n      f\"{linalg.eigvalsh(A_fixed).round(6)}\")\nprint(f\"Now PD: {is_pd_cholesky(A_fixed)}\")\n\nRaw eigenvalues: [0.069326 0.19     2.740674]\nFixed eigenvalues: [0.069326 0.19     2.740674]\nNow PD: True\nThis arises frequently in Ch. 14 (mixed model covariance estimation) and Ch. 17 (VAR residual covariance matrices), where iterative algorithms can produce matrices that are numerically but not algebraically indefinite.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#key-scalar-by-vector-results",
+    "href": "chapters/appendix-matrix-algebra.html#key-scalar-by-vector-results",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Key scalar-by-vector results",
+    "text": "Key scalar-by-vector results\n\n\n\n\n\n\n\n\nFunction\nGradient\nUsed in\n\n\n\n\n\\(f(\\mathbf{x}) = \\mathbf{a}^\\top \\mathbf{x}\\)\n\\(\\nabla f = \\mathbf{a}\\)\nLinear terms in log-likelihoods\n\n\n\\(f(\\mathbf{x}) = \\mathbf{x}^\\top \\mathbf{A} \\mathbf{x}\\), \\(\\mathbf{A}\\) symmetric\n\\(\\nabla f = 2\\mathbf{A}\\mathbf{x}\\)\nQuadratic forms (Ch. 2, 11)\n\n\n\\(f(\\mathbf{x}) = \\mathbf{x}^\\top \\mathbf{A} \\mathbf{x}\\), general \\(\\mathbf{A}\\)\n\\(\\nabla f = (\\mathbf{A} + \\mathbf{A}^\\top)\\mathbf{x}\\)\n\n\n\n\\(f(\\boldsymbol{\\beta}) = \\|\\mathbf{y} - \\mathbf{X}\\boldsymbol{\\beta}\\|^2\\)\n\\(\\nabla f = -2\\mathbf{X}^\\top(\\mathbf{y} - \\mathbf{X}\\boldsymbol{\\beta})\\)\nNormal equations (Ch. 11)\n\n\n\nThe Hessian of a scalar function is the matrix of second partial derivatives: \\([\\nabla^2 f]_{ij} = \\partial^2 f / \\partial x_i \\partial\nx_j\\). For the quadratic form \\(f(\\mathbf{x}) = \\mathbf{x}^\\top \\mathbf{A} \\mathbf{x}\\) with symmetric \\(\\mathbf{A}\\), the Hessian is \\(\\nabla^2 f = 2\\mathbf{A}\\) — constant, which is why quadratic functions are the ideal case for Newton’s method (Ch. 2).\nChain rule for vector functions. If \\(f(\\mathbf{x}) =\ng(\\mathbf{h}(\\mathbf{x}))\\) where \\(\\mathbf{h} : \\mathbb{R}^n \\to\n\\mathbb{R}^m\\) and \\(g : \\mathbb{R}^m \\to \\mathbb{R}\\), then\n\\[\n\\nabla_{\\mathbf{x}} f = \\mathbf{J}_h^\\top \\nabla_{\\mathbf{h}} g,\n\\]\nwhere \\(\\mathbf{J}_h\\) is the \\(m \\times n\\) Jacobian of \\(\\mathbf{h}\\). This is the matrix-calculus form of the chain rule and is used throughout Ch. 2 (optimisation) whenever the objective is a composition of simpler functions. The Gauss–Newton method (Ch. 6) is a direct application: the Hessian of \\(\\|\\mathbf{r}(\\boldsymbol{\\theta})\\|^2\\) is approximated as \\(2\\mathbf{J}^\\top\\mathbf{J}\\), dropping the second-derivative terms.\nSecond-order expansion. The Taylor expansion of \\(f\\) about \\(\\mathbf{x}_0\\) gives\n\\[\nf(\\mathbf{x}) \\approx f(\\mathbf{x}_0) + \\nabla f(\\mathbf{x}_0)^\\top\n(\\mathbf{x} - \\mathbf{x}_0) + \\tfrac{1}{2}(\\mathbf{x} -\n\\mathbf{x}_0)^\\top \\nabla^2 f(\\mathbf{x}_0)(\\mathbf{x} - \\mathbf{x}_0).\n\\]\nSetting the gradient of this quadratic to zero gives Newton’s step \\(\\mathbf{x} - \\mathbf{x}_0 = -[\\nabla^2 f(\\mathbf{x}_0)]^{-1}\n\\nabla f(\\mathbf{x}_0)\\) — the foundation of all Newton-type methods in Ch. 2.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#key-matrix-by-matrix-results",
+    "href": "chapters/appendix-matrix-algebra.html#key-matrix-by-matrix-results",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Key matrix-by-matrix results",
+    "text": "Key matrix-by-matrix results\nThese appear in likelihood derivations where the parameter is a matrix (e.g., a covariance matrix):\n\n\n\n\n\n\n\n\nFunction\nDerivative\nUsed in\n\n\n\n\n\\(f(\\mathbf{A}) = \\text{tr}(\\mathbf{A}\\mathbf{B})\\)\n\\(\\partial f / \\partial \\mathbf{A} = \\mathbf{B}^\\top\\)\nREML (Ch. 14)\n\n\n\\(f(\\mathbf{A}) = \\log|\\mathbf{A}|\\)\n\\(\\partial f / \\partial \\mathbf{A} = \\mathbf{A}^{-\\top} = (\\mathbf{A}^{-1})^\\top\\)\nGaussian log-likelihood\n\n\n\\(f(\\mathbf{A}) = \\log|\\mathbf{A}|\\), \\(\\mathbf{A}\\) symmetric\n\\(\\partial f / \\partial \\mathbf{A} = \\mathbf{A}^{-1}\\)\nCovariance estimation\n\n\n\\(f(\\mathbf{A}) = \\mathbf{a}^\\top \\mathbf{A}^{-1} \\mathbf{b}\\)\n\\(\\partial f / \\partial \\mathbf{A} = -\\mathbf{A}^{-\\top}\\mathbf{a}\\mathbf{b}^\\top \\mathbf{A}^{-\\top}\\)\nScore functions (Ch. 10)\n\n\n\n\n# Verify gradient of quadratic form numerically\nA_sym = np.array([[3.0, 1.0], [1.0, 2.0]])\nx = np.array([1.0, 2.0])\n\ndef quad_form(x, A):\n    return x @ A @ x\n\n# Analytic gradient: 2*A*x\ngrad_analytic = 2 * A_sym @ x\n\n# Numerical gradient via finite differences\neps = 1e-7\ngrad_numerical = np.zeros_like(x)\nfor i in range(len(x)):\n    x_plus = x.copy()\n    x_plus[i] += eps\n    x_minus = x.copy()\n    x_minus[i] -= eps\n    grad_numerical[i] = (\n        (quad_form(x_plus, A_sym)\n         - quad_form(x_minus, A_sym))\n        / (2 * eps)\n    )\n\nprint(f\"Analytic gradient:  {grad_analytic}\")\nprint(f\"Numerical gradient: {grad_numerical.round(6)}\")\nprint(f\"Error: {np.max(np.abs(grad_analytic - grad_numerical)):.2e}\")\n\nAnalytic gradient:  [10. 10.]\nNumerical gradient: [10. 10.]\nError: 1.03e-08\n\n\n\n# Verify d/dA log|A| = A^{-1} for symmetric A\nA = np.array([[4.0, 1.0], [1.0, 3.0]])\n\n# Analytic derivative\ndlogdet_analytic = linalg.inv(A)\n\n# Numerical derivative (element-wise)\neps = 1e-7\ndlogdet_numerical = np.zeros_like(A)\nfor i in range(A.shape[0]):\n    for j in range(A.shape[1]):\n        A_plus = A.copy()\n        A_plus[i, j] += eps\n        A_minus = A.copy()\n        A_minus[i, j] -= eps\n        _, ld_plus = np.linalg.slogdet(A_plus)\n        _, ld_minus = np.linalg.slogdet(A_minus)\n        dlogdet_numerical[i, j] = (\n            (ld_plus - ld_minus) / (2 * eps)\n        )\n\nprint(\"Analytic d(log|A|)/dA:\")\nprint(dlogdet_analytic.round(6))\nprint(\"Numerical:\")\nprint(dlogdet_numerical.round(6))\nprint(f\"Max error: \"\n      f\"{np.max(np.abs(dlogdet_analytic - dlogdet_numerical)):.2e}\")\n\nAnalytic d(log|A|)/dA:\n[[ 0.272727 -0.090909]\n [-0.090909  0.363636]]\nNumerical:\n[[ 0.272727 -0.090909]\n [-0.090909  0.363636]]\nMax error: 1.83e-09",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#the-vec-operator-and-the-fundamental-identity",
+    "href": "chapters/appendix-matrix-algebra.html#the-vec-operator-and-the-fundamental-identity",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "The vec operator and the fundamental identity",
+    "text": "The vec operator and the fundamental identity\nThe vec operator stacks the columns of a matrix into a single vector: \\(\\text{vec}(\\mathbf{X})\\) for \\(\\mathbf{X} \\in\n\\mathbb{R}^{m \\times n}\\) is an \\(mn \\times 1\\) vector. The central identity is:\n\\[\n\\text{vec}(\\mathbf{A}\\mathbf{X}\\mathbf{B})\n= (\\mathbf{B}^\\top \\otimes \\mathbf{A})\\,\\text{vec}(\\mathbf{X}).\n\\]\nThis identity converts a matrix equation \\(\\mathbf{A}\\mathbf{X}\\mathbf{B}\n= \\mathbf{C}\\) into a linear system in \\(\\text{vec}(\\mathbf{X})\\), which is how scipy.linalg.solve_sylvester works internally.\nWhere it matters.\n\nVAR models (Ch. 17). The covariance of the vectorised coefficient estimator in a VAR(\\(p\\)) is \\(\\text{Var}(\\text{vec}(\\hat{\\mathbf{B}})) = \\hat{\\boldsymbol{\\Sigma}} \\otimes\n(\\mathbf{Z}\\mathbf{Z}^\\top)^{-1}\\), a Kronecker structure that makes the otherwise \\(Kp \\times Kp\\) covariance matrix tractable.\nMixed models (Ch. 14). When the random-effects covariance has Kronecker structure (e.g., crossed random effects), the marginal covariance of \\(\\mathbf{y}\\) inherits that structure, enabling efficient computation.\n\n\nA = np.array([[1, 2], [3, 4]])\nB = np.array([[5, 6], [7, 8]])\n\nK = np.kron(A, B)\nprint(\"A ⊗ B =\")\nprint(K)\nprint(f\"\\nShape: {K.shape}\")\n\n# Verify (A ⊗ B)^{-1} = A^{-1} ⊗ B^{-1}\nK_inv = linalg.inv(K)\nK_inv_kron = np.kron(linalg.inv(A), linalg.inv(B))\nprint(f\"\\nInverse identity error: \"\n      f\"{np.max(np.abs(K_inv - K_inv_kron)):.2e}\")\n\n# Verify eigenvalue product property\neigA = linalg.eigvals(A)\neigB = linalg.eigvals(B)\neig_products = np.sort(\n    np.outer(eigA, eigB).ravel()\n)\neigK = np.sort(linalg.eigvals(K))\nprint(f\"Eigenvalue product error: \"\n      f\"{np.max(np.abs(eigK - eig_products)):.2e}\")\n\nA ⊗ B =\n[[ 5  6 10 12]\n [ 7  8 14 16]\n [15 18 20 24]\n [21 24 28 32]]\n\nShape: (4, 4)\n\nInverse identity error: 2.93e-14\nEigenvalue product error: 2.84e-14\n\n\n\n# Verify vec(AXB) = (B' ⊗ A) vec(X)\nm, n, p = 3, 2, 4\nA = rng.standard_normal((m, m))\nX = rng.standard_normal((m, n))\nB = rng.standard_normal((n, p))\n\nlhs = (A @ X @ B).ravel(order='F')  # vec is column-major\nrhs = np.kron(B.T, A) @ X.ravel(order='F')\nprint(f\"vec(AXB) = (B' ⊗ A)vec(X) error: \"\n      f\"{np.max(np.abs(lhs - rhs)):.2e}\")\n\nvec(AXB) = (B' ⊗ A)vec(X) error: 8.88e-16",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#trace",
+    "href": "chapters/appendix-matrix-algebra.html#trace",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Trace",
+    "text": "Trace\nThe trace of a square matrix \\(\\mathbf{A}\\) is the sum of its diagonal entries: \\(\\text{tr}(\\mathbf{A}) = \\sum_{i=1}^n a_{ii}\\). Key properties:\n\nCyclic permutation: \\(\\text{tr}(\\mathbf{A}\\mathbf{B}\\mathbf{C})\n= \\text{tr}(\\mathbf{C}\\mathbf{A}\\mathbf{B})\n= \\text{tr}(\\mathbf{B}\\mathbf{C}\\mathbf{A})\\). The special case \\(\\text{tr}(\\mathbf{A}\\mathbf{B}) = \\text{tr}(\\mathbf{B}\\mathbf{A})\\) is used constantly.\nTrace of an outer product: \\(\\text{tr}(\\mathbf{x}\\mathbf{y}^\\top) = \\mathbf{y}^\\top\\mathbf{x}\\).\nTrace as inner product: \\(\\text{tr}(\\mathbf{A}^\\top \\mathbf{B}) = \\sum_{ij} a_{ij} b_{ij}\\) (the Frobenius inner product).\n\nThe trace trick. A quadratic form \\(\\mathbf{x}^\\top \\mathbf{A} \\mathbf{x}\\) is a scalar, so it equals its own trace: \\(\\mathbf{x}^\\top \\mathbf{A} \\mathbf{x} =\n\\text{tr}(\\mathbf{x}^\\top \\mathbf{A} \\mathbf{x}) =\n\\text{tr}(\\mathbf{A} \\mathbf{x} \\mathbf{x}^\\top)\\). Taking expectations:\n\\[\n\\mathbb{E}[\\mathbf{x}^\\top \\mathbf{A} \\mathbf{x}]\n= \\text{tr}\\bigl(\\mathbf{A}\\,\\mathbb{E}[\\mathbf{x}\\mathbf{x}^\\top]\\bigr).\n\\]\nThis identity is the workhorse behind REML derivations (Ch. 14) and the expected value of chi-squared test statistics (Ch. 10).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#determinant",
+    "href": "chapters/appendix-matrix-algebra.html#determinant",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Determinant",
+    "text": "Determinant\nKey determinant properties used in the book:\n\n\\(\\det(\\mathbf{A}\\mathbf{B}) = \\det(\\mathbf{A})\\det(\\mathbf{B})\\)\n\\(\\det(\\mathbf{A}^\\top) = \\det(\\mathbf{A})\\)\n\\(\\det(c\\mathbf{A}) = c^n \\det(\\mathbf{A})\\) for \\(\\mathbf{A} \\in\n\\mathbb{R}^{n \\times n}\\)\n\\(\\det(\\mathbf{A}^{-1}) = 1/\\det(\\mathbf{A})\\)\nFor block-triangular matrices: \\(\\det\\begin{bmatrix}\\mathbf{A} & \\mathbf{B} \\\\ \\mathbf{0} &\n\\mathbf{D}\\end{bmatrix} = \\det(\\mathbf{A})\\det(\\mathbf{D})\\)\n\nThe matrix determinant lemma gives the determinant after a rank-\\(k\\) update:\n\\[\n\\det(\\mathbf{A} + \\mathbf{U}\\mathbf{V}^\\top)\n= \\det(\\mathbf{I}_k + \\mathbf{V}^\\top\\mathbf{A}^{-1}\\mathbf{U})\n  \\cdot \\det(\\mathbf{A}).\n\\]\nThis is the determinant analog of the Woodbury identity and is used whenever a log-likelihood involves \\(\\log|\\mathbf{A} + \\mathbf{U}\\mathbf{V}^\\top|\\) — common in mixed models (Ch. 14) and state-space models (Ch. 16).\n\n# Trace trick: E[x'Ax] = tr(A * E[xx'])\nn_samples = 100_000\nmu = np.zeros(3)\nSigma = np.array([\n    [2.0, 0.5, 0.1],\n    [0.5, 1.5, 0.3],\n    [0.1, 0.3, 1.0],\n])\nL = linalg.cholesky(Sigma, lower=True)\nA_mat = np.array([\n    [1.0, 0.5, 0.0],\n    [0.5, 2.0, 0.5],\n    [0.0, 0.5, 1.5],\n])\n\n# Monte Carlo estimate\nsamples = (L @ rng.standard_normal((3, n_samples))).T\nquad_forms = np.array([\n    x @ A_mat @ x for x in samples\n])\nmc_estimate = quad_forms.mean()\n\n# Trace formula: tr(A @ Sigma)\ntrace_formula = np.trace(A_mat @ Sigma)\n\nprint(f\"E[x'Ax] via Monte Carlo: {mc_estimate:.4f}\")\nprint(f\"tr(A @ Sigma):           {trace_formula:.4f}\")\nprint(f\"Error: {abs(mc_estimate - trace_formula):.4f}\")\n\nE[x'Ax] via Monte Carlo: 7.2936\ntr(A @ Sigma):           7.3000\nError: 0.0064\n\n\n\n# Matrix determinant lemma\nn, k = 5, 2\nA = rng.standard_normal((n, n))\nA = A @ A.T + np.eye(n)\nU = rng.standard_normal((n, k))\nV = rng.standard_normal((n, k))\n\n# Direct\ndet_direct = linalg.det(A + U @ V.T)\n\n# Via lemma\ndet_A = linalg.det(A)\nA_inv = linalg.inv(A)\ndet_correction = linalg.det(\n    np.eye(k) + V.T @ A_inv @ U\n)\ndet_lemma = det_correction * det_A\n\nprint(f\"det(A + UV') direct: {det_direct:.6f}\")\nprint(f\"det(A + UV') lemma:  {det_lemma:.6f}\")\nprint(f\"Error: {abs(det_direct - det_lemma):.2e}\")\n\ndet(A + UV') direct: 1786.328880\ndet(A + UV') lemma:  1786.328880\nError: 4.55e-13",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#norms",
+    "href": "chapters/appendix-matrix-algebra.html#norms",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Norms",
+    "text": "Norms\n\n\n\n\n\n\n\n\nNorm\nDefinition\nNumPy call\n\n\n\n\nFrobenius\n\\(\\|\\mathbf{A}\\|_F = \\sqrt{\\sum_{ij} a_{ij}^2} = \\sqrt{\\text{tr}(\\mathbf{A}^\\top\\mathbf{A})}\\)\nnp.linalg.norm(A, 'fro')\n\n\nSpectral (2-norm)\n\\(\\|\\mathbf{A}\\|_2 = \\sigma_{\\max}(\\mathbf{A})\\)\nnp.linalg.norm(A, 2)\n\n\n1-norm\n\\(\\|\\mathbf{A}\\|_1 = \\max_j \\sum_i |a_{ij}|\\)\nnp.linalg.norm(A, 1)\n\n\n\\(\\infty\\)-norm\n\\(\\|\\mathbf{A}\\|_\\infty = \\max_i \\sum_j |a_{ij}|\\)\nnp.linalg.norm(A, np.inf)\n\n\n\nThe Frobenius norm is the most common in statistical applications (e.g., measuring distance between covariance matrices). The spectral norm governs operator bounds and perturbation theory.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#condition-number",
+    "href": "chapters/appendix-matrix-algebra.html#condition-number",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Condition number",
+    "text": "Condition number\nThe condition number of a nonsingular matrix \\(\\mathbf{A}\\) is\n\\[\n\\kappa(\\mathbf{A}) = \\|\\mathbf{A}\\| \\cdot \\|\\mathbf{A}^{-1}\\|.\n\\]\nIn the 2-norm, \\(\\kappa_2(\\mathbf{A}) = \\sigma_{\\max} / \\sigma_{\\min}\\). The condition number controls how much errors in \\(\\mathbf{b}\\) are amplified when solving \\(\\mathbf{A}\\mathbf{x} = \\mathbf{b}\\):\n\\[\n\\frac{\\|\\delta\\mathbf{x}\\|}{\\|\\mathbf{x}\\|}\n\\leq \\kappa(\\mathbf{A})\\,\n     \\frac{\\|\\delta\\mathbf{b}\\|}{\\|\\mathbf{b}\\|}.\n\\]\nRules of thumb:\n\n\\(\\kappa \\approx 1\\): well-conditioned.\n\\(\\kappa \\approx 10^k\\): expect to lose \\(k\\) digits of accuracy.\n\\(\\kappa &gt; 1/\\epsilon_{\\text{mach}} \\approx 10^{16}\\): numerically singular.\n\nWhere condition number matters:\n\nOptimiser convergence (Ch. 2). Steepest descent on a quadratic converges in \\(O(\\kappa^2 \\log(1/\\epsilon))\\) iterations; Newton’s method is invariant to conditioning. This is why preconditioning matters.\nMulticollinearity (Ch. 11). A large condition number of \\(\\mathbf{X}^\\top\\mathbf{X}\\) signals near-collinear predictors. The variance inflation factor (VIF) is related: each diagonal of \\((\\mathbf{X}^\\top\\mathbf{X})^{-1}\\) blows up when columns are nearly dependent.\nNumerical rank (Ch. 20). Instrumental-variable estimation requires inverting \\(\\mathbf{Z}^\\top\\mathbf{X}\\); weak instruments produce a near-singular matrix with a large condition number.\n\n\n# Condition numbers of common matrices\nhilbert = linalg.hilbert(6)\nidentity = np.eye(6)\ncorr = np.array([\n    [1, 0.99, 0.98],\n    [0.99, 1, 0.99],\n    [0.98, 0.99, 1],\n])\n\nmatrices = {\n    \"Identity(6)\": identity,\n    \"Hilbert(6)\": hilbert,\n    \"Near-collinear corr\": corr,\n}\n\nprint(f\"{'Matrix':&lt;22} {'κ_2':&gt;14} {'log10(κ)':&gt;10}\")\nprint(\"-\" * 48)\nfor name, M in matrices.items():\n    kappa = np.linalg.cond(M)\n    print(f\"{name:&lt;22} {kappa:&gt;14.1f} {np.log10(kappa):&gt;10.1f}\")\n\nMatrix                            κ_2   log10(κ)\n------------------------------------------------\nIdentity(6)                       1.0        0.0\nHilbert(6)                 14951058.6        7.2\nNear-collinear corr             446.5        2.6\n\n\n\n# Demonstrate error amplification\nn = 50\nA_well = np.eye(n) + 0.1 * rng.standard_normal((n, n))\nA_well = A_well @ A_well.T + np.eye(n)\n\nA_ill = linalg.hilbert(n)\n\nx_true = np.ones(n)\n\nfor name, A in [(\"Well-conditioned\", A_well),\n                (\"Ill-conditioned\", A_ill)]:\n    b = A @ x_true\n    # Perturb b by relative error 1e-10\n    b_noisy = b + 1e-10 * rng.standard_normal(n)\n    x_hat = linalg.solve(A, b_noisy)\n    rel_err = (np.linalg.norm(x_hat - x_true)\n               / np.linalg.norm(x_true))\n    kappa = np.linalg.cond(A)\n    print(f\"{name}: κ={kappa:.1e}, \"\n          f\"rel error={rel_err:.1e}\")\n\nWell-conditioned: κ=5.0e+00, rel error=4.4e-11\nIll-conditioned: κ=3.6e+19, rel error=3.7e+08\n\n\nThe Hilbert matrix is the canonical example of extreme ill-conditioning: \\(\\kappa\\) grows exponentially with \\(n\\). The plot below shows this growth and illustrates why even moderate-sized Hilbert systems are unsolvable in double precision.\n\nsizes = np.arange(2, 21)\nkappas = [\n    np.linalg.cond(linalg.hilbert(n))\n    for n in sizes\n]\n\nfig, ax = plt.subplots(figsize=(6, 3.5))\nax.semilogy(sizes, kappas, 'o-', markersize=4)\nax.axhline(\n    1 / np.finfo(float).eps,\n    color='gray', linestyle='--', linewidth=0.8,\n    label=r'$1/\\epsilon_{\\mathrm{mach}}$',\n)\nax.set_xlabel('Matrix dimension $n$')\nax.set_ylabel(r'$\\kappa_2$')\nax.set_title('Condition number of Hilbert matrices')\nax.legend()\nfig.tight_layout()\nplt.show()\n\n\n\n\n\n\n\nFigure B.1: Condition number of the Hilbert matrix grows exponentially with dimension. At n ≈ 12 the condition number reaches machine precision (dashed line), and the system is effectively singular.\n\n\n\n\n\nPractical implication. When you encounter a poorly conditioned matrix in a regression context, the right response is not to add a regularisation term blindly. First diagnose which directions are ill-conditioned (the small singular values of \\(\\mathbf{X}\\) or the eigenvalues of \\(\\mathbf{X}^\\top\\mathbf{X}\\)), then decide whether the collinearity reflects a genuine constraint in the data or a modelling choice. Ch. 11 covers this in detail.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-matrix-algebra.html#frischwaughlovell-theorem",
+    "href": "chapters/appendix-matrix-algebra.html#frischwaughlovell-theorem",
+    "title": "Appendix B — Appendix B: Matrix Algebra for Statistics",
+    "section": "Frisch–Waugh–Lovell theorem",
+    "text": "Frisch–Waugh–Lovell theorem\nThe Frisch–Waugh–Lovell (FWL) theorem states that in the regression of \\(\\mathbf{y}\\) on \\([\\mathbf{X}_1 \\; \\mathbf{X}_2]\\), the coefficient on \\(\\mathbf{X}_2\\) equals the coefficient from regressing the \\(\\mathbf{X}_1\\)-residuals of \\(\\mathbf{y}\\) on the \\(\\mathbf{X}_1\\)-residuals of \\(\\mathbf{X}_2\\):\n\\[\n\\hat{\\boldsymbol{\\beta}}_2\n= \\bigl(\\tilde{\\mathbf{X}}_2^\\top \\tilde{\\mathbf{X}}_2\\bigr)^{-1}\n  \\tilde{\\mathbf{X}}_2^\\top \\tilde{\\mathbf{y}},\n\\]\nwhere \\(\\tilde{\\mathbf{X}}_2 = \\mathbf{M}_1 \\mathbf{X}_2\\) and \\(\\tilde{\\mathbf{y}} = \\mathbf{M}_1 \\mathbf{y}\\), with \\(\\mathbf{M}_1 =\n\\mathbf{I} - \\mathbf{X}_1(\\mathbf{X}_1^\\top\\mathbf{X}_1)^{-1}\\mathbf{X}_1^\\top\\).\nThis result underlies:\n\nPartial regression plots (Ch. 11): plotting \\(\\tilde{\\mathbf{y}}\\) against \\(\\tilde{\\mathbf{X}}_2\\) isolates the effect of \\(\\mathbf{X}_2\\) after removing the influence of \\(\\mathbf{X}_1\\).\nIV estimation (Ch. 20): two-stage least squares can be understood as FWL applied with instruments.\nDID and fixed effects (Ch. 22): absorbing fixed effects is equivalent to projecting out a set of dummy variables via \\(\\mathbf{M}_1\\).\n\n\nn = 200\nX1 = np.column_stack([\n    np.ones(n), rng.standard_normal(n),\n])\nX2 = rng.standard_normal((n, 2))\nbeta_true = np.array([1.0, 0.5, -0.8, 1.2])\nX_full = np.column_stack([X1, X2])\ny = X_full @ beta_true + 0.5 * rng.standard_normal(n)\n\n# Full OLS\nbeta_full = linalg.lstsq(X_full, y)[0]\n\n# FWL: partial out X1\nM1 = np.eye(n) - X1 @ linalg.inv(X1.T @ X1) @ X1.T\nX2_tilde = M1 @ X2\ny_tilde = M1 @ y\nbeta2_fwl = linalg.lstsq(X2_tilde, y_tilde)[0]\n\nprint(\"Full OLS beta_2:\", beta_full[2:].round(6))\nprint(\"FWL beta_2:     \", beta2_fwl.round(6))\nprint(\"Match:\",\n      np.allclose(beta_full[2:], beta2_fwl))\n\nFull OLS beta_2: [-0.731932  1.183668]\nFWL beta_2:      [-0.731932  1.183668]\nMatch: True",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B: Matrix Algebra for Statistics</span>"
+    ]
+  },
+  {
     "objectID": "chapters/appendix-prerequisites.html",
     "href": "chapters/appendix-prerequisites.html",
-    "title": "24  Prerequisites Appendix",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
     "section": "",
-    "text": "Floating Point and Conditioning\nThis appendix is a reference, not a tutorial. It gathers the foundational material assumed by the main chapters in one place, with pointers to where each topic is used.\nEvery computation in this book runs on IEEE 754 double-precision floating point. Key facts:\nprint(f\"Machine epsilon: {np.finfo(float).eps:.2e}\")\nprint(f\"Condition number of Hilbert(5): {np.linalg.cond(linalg.hilbert(5)):.0f}\")\nprint(f\"Condition number of Identity(5): {np.linalg.cond(np.eye(5)):.1f}\")\n\nMachine epsilon: 2.22e-16\nCondition number of Hilbert(5): 476607\nCondition number of Identity(5): 1.0",
+    "text": "NumPy Essentials\nThis appendix is a reference, not a tutorial. It gathers the computational tools assumed by the main chapters in one place, with runnable examples and pointers to where each tool is used. If you know Python but have not worked with NumPy, SciPy, or statsmodels before, read this appendix first — it provides the vocabulary the rest of the book speaks in.\nNumPy is the foundation everything else sits on. Every chapter in this book creates, reshapes, slices, and combines arrays. This section covers the patterns that recur most often.",
     "crumbs": [
-      "<span class='chapter-number'>24</span>  <span class='chapter-title'>Prerequisites Appendix</span>"
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#array-creation",
+    "href": "chapters/appendix-prerequisites.html#array-creation",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.1 Array creation",
+    "text": "C.1 Array creation\nThe most common constructors:\n\n# Zeros, ones, and identity\nprint(\"zeros(3):       \", np.zeros(3))\nprint(\"ones((2,3)):  \\n\", np.ones((2, 3)))\nprint(\"eye(3):        \\n\", np.eye(3))\n\n# Sequences\nprint(\"arange(0, 1, 0.3):\", np.arange(0, 1, 0.3))\nprint(\"linspace(0, 1, 5):\", np.linspace(0, 1, 5))\n\nzeros(3):        [0. 0. 0.]\nones((2,3)):  \n [[1. 1. 1.]\n [1. 1. 1.]]\neye(3):        \n [[1. 0. 0.]\n [0. 1. 0.]\n [0. 0. 1.]]\narange(0, 1, 0.3): [0.  0.3 0.6 0.9]\nlinspace(0, 1, 5): [0.   0.25 0.5  0.75 1.  ]\n\n\narange uses a step size and may or may not include the endpoint (floating-point rounding decides). linspace uses a count and always includes both endpoints — prefer it for grids where exact endpoints matter.\n\n# From existing data\na = np.array([1.0, 2.0, 3.0])\nprint(\"array:    \", a, \"dtype:\", a.dtype)\n\n# Diagonal matrix from a vector\nprint(\"diag([1,2,3]):\\n\", np.diag([1, 2, 3]))\n\n# Repeat and tile\nprint(\"repeat:   \", np.repeat([1, 2], 3))\nprint(\"tile:     \", np.tile([1, 2], 3))\n\narray:     [1. 2. 3.] dtype: float64\ndiag([1,2,3]):\n [[1 0 0]\n [0 2 0]\n [0 0 3]]\nrepeat:    [1 1 1 2 2 2]\ntile:      [1 2 1 2 1 2]",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#indexing-and-slicing",
+    "href": "chapters/appendix-prerequisites.html#indexing-and-slicing",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.2 Indexing and slicing",
+    "text": "C.2 Indexing and slicing\nNumPy arrays support integer indexing, slicing, boolean indexing, and fancy (array) indexing. Slices return views — modifying the slice modifies the original. Fancy indexing returns copies.\n\nX = np.arange(12).reshape(3, 4)\nprint(\"X:\\n\", X)\n\n# Basic slicing (views)\nprint(\"Row 0:      \", X[0])\nprint(\"Col 1:      \", X[:, 1])\nprint(\"Submatrix:\\n\", X[:2, 1:3])\n\n# Boolean indexing (copy)\nmask = X &gt; 5\nprint(\"X[X &gt; 5]:   \", X[mask])\n\n# Fancy indexing (copy)\nrows = np.array([0, 2])\nprint(\"Rows 0,2: \\n\", X[rows])\n\nX:\n [[ 0  1  2  3]\n [ 4  5  6  7]\n [ 8  9 10 11]]\nRow 0:       [0 1 2 3]\nCol 1:       [1 5 9]\nSubmatrix:\n [[1 2]\n [5 6]]\nX[X &gt; 5]:    [ 6  7  8  9 10 11]\nRows 0,2: \n [[ 0  1  2  3]\n [ 8  9 10 11]]",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#broadcasting",
+    "href": "chapters/appendix-prerequisites.html#broadcasting",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.3 Broadcasting",
+    "text": "C.3 Broadcasting\nBroadcasting lets NumPy operate on arrays with different shapes without explicit loops or copies. The rule: dimensions are compared from the right; they are compatible if they are equal or one of them is 1. A missing dimension is treated as 1.\n\n# Scalar broadcast\na = np.array([1, 2, 3])\nprint(\"a + 10:\", a + 10)\n\n# Column vector + row vector -&gt; matrix\ncol = np.array([[1], [2], [3]])      # shape (3, 1)\nrow = np.array([10, 20, 30, 40])     # shape (4,)\nprint(\"col + row:\\n\", col + row)     # shape (3, 4)\n\n# Centering columns of a matrix (subtract column means)\nX = rng.standard_normal((4, 3))\nX_centered = X - X.mean(axis=0)      # (4,3) - (3,) -&gt; (4,3)\nprint(\"Column means after centering:\",\n      X_centered.mean(axis=0).round(15))\n\na + 10: [11 12 13]\ncol + row:\n [[11 21 31 41]\n [12 22 32 42]\n [13 23 33 43]]\nColumn means after centering: [ 0. -0.  0.]\n\n\nBroadcasting is used throughout the book — centering data (Ch. 11), evaluating densities on grids (Ch. 7), and computing pairwise distances (Ch. 19) all rely on it.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#reshape-ravel-and-transpose",
+    "href": "chapters/appendix-prerequisites.html#reshape-ravel-and-transpose",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.4 Reshape, ravel, and transpose",
+    "text": "C.4 Reshape, ravel, and transpose\n\na = np.arange(12)\nprint(\"reshape(3,4):\\n\", a.reshape(3, 4))\nprint(\"reshape(3,-1):\\n\", a.reshape(3, -1))  # infer columns\n\nM = a.reshape(3, 4)\nprint(\"ravel:\", M.ravel())         # back to 1-D (view)\nprint(\"M.T:\\n\", M.T)              # transpose\n\nreshape(3,4):\n [[ 0  1  2  3]\n [ 4  5  6  7]\n [ 8  9 10 11]]\nreshape(3,-1):\n [[ 0  1  2  3]\n [ 4  5  6  7]\n [ 8  9 10 11]]\nravel: [ 0  1  2  3  4  5  6  7  8  9 10 11]\nM.T:\n [[ 0  4  8]\n [ 1  5  9]\n [ 2  6 10]\n [ 3  7 11]]\n\n\nUse -1 in one dimension to let NumPy infer it. ravel() returns a view when possible; flatten() always returns a copy.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#stacking-and-splitting",
+    "href": "chapters/appendix-prerequisites.html#stacking-and-splitting",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.5 Stacking and splitting",
+    "text": "C.5 Stacking and splitting\nCombining arrays is a constant need — assembling design matrices, collecting bootstrap samples, or building block-diagonal structures.\n\na = np.array([1, 2, 3])\nb = np.array([4, 5, 6])\n\n# Vertical and horizontal stacking\nprint(\"vstack:\\n\", np.vstack([a, b]))\nprint(\"hstack: \", np.hstack([a, b]))\n\n# column_stack: treat 1-D arrays as columns\nprint(\"column_stack:\\n\", np.column_stack([a, b]))\n\n# concatenate: general-purpose\nM1 = np.ones((2, 3))\nM2 = np.zeros((2, 3))\nprint(\"concatenate (axis=0):\\n\",\n      np.concatenate([M1, M2], axis=0))\n\nvstack:\n [[1 2 3]\n [4 5 6]]\nhstack:  [1 2 3 4 5 6]\ncolumn_stack:\n [[1 4]\n [2 5]\n [3 6]]\nconcatenate (axis=0):\n [[1. 1. 1.]\n [1. 1. 1.]\n [0. 0. 0.]\n [0. 0. 0.]]\n\n\nnp.column_stack is the most common pattern in this book — it builds the design matrix \\(\\mathbf{X}\\) from individual predictor vectors. np.vstack appears when stacking observation batches.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#useful-functions",
+    "href": "chapters/appendix-prerequisites.html#useful-functions",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.6 Useful functions",
+    "text": "C.6 Useful functions\nSeveral NumPy functions appear often enough to warrant a brief catalog:\n\nx = np.array([-2.5, 0.3, 1.7, 4.2, -0.1])\n\n# where: element-wise conditional\nprint(\"where(x&gt;0, x, 0):\", np.where(x &gt; 0, x, 0))\n\n# clip: bound values\nprint(\"clip(-1, 2):     \", np.clip(x, -1, 2))\n\n# searchsorted: binary search on sorted array\nsorted_a = np.array([1, 3, 5, 7, 9])\nprint(\"searchsorted(4): \", np.searchsorted(sorted_a, 4))\n\n# cumsum and diff\nprint(\"cumsum:          \", np.cumsum([1, 2, 3, 4]))\nprint(\"diff:            \", np.diff([1, 4, 6, 10]))\n\n# einsum: Einstein summation (trace example)\nA = np.array([[1, 2], [3, 4]])\nprint(\"trace via einsum:\", np.einsum('ii', A))\nprint(\"matmul via einsum:\\n\",\n      np.einsum('ij,jk-&gt;ik', A, A))\n\nwhere(x&gt;0, x, 0): [0.  0.3 1.7 4.2 0. ]\nclip(-1, 2):      [-1.   0.3  1.7  2.  -0.1]\nsearchsorted(4):  2\ncumsum:           [ 1  3  6 10]\ndiff:             [3 2 4]\ntrace via einsum: 5\nmatmul via einsum:\n [[ 7 10]\n [15 22]]\n\n\nnp.einsum is the Swiss army knife for tensor contractions. It appears in Ch. 19 for multivariate statistics and in Ch. 14 for mixed-effects computations where explicit loops over groups would be slow.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#views-vs-copies-a-common-trap",
+    "href": "chapters/appendix-prerequisites.html#views-vs-copies-a-common-trap",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.7 Views vs copies: a common trap",
+    "text": "C.7 Views vs copies: a common trap\nUnderstanding when NumPy returns a view (shared memory) vs a copy (independent memory) prevents subtle bugs:\n\na = np.arange(5)\nb = a[1:4]        # slice -&gt; view\nb[0] = 99\nprint(f\"a after modifying slice: {a}\")\n# a is modified because b is a view\n\nc = a[[1, 2, 3]]  # fancy index -&gt; copy\nc[0] = -1\nprint(f\"a after modifying fancy: {a}\")\n# a is NOT modified because c is a copy\n\na after modifying slice: [ 0 99  2  3  4]\na after modifying fancy: [ 0 99  2  3  4]\n\n\nRule of thumb: basic slicing produces views; boolean and fancy indexing produce copies. When in doubt, call .copy() explicitly. This matters in Ch. 9 (bootstrap resampling) where accidentally modifying the original data through a view would corrupt results.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#the-figureaxes-model",
+    "href": "chapters/appendix-prerequisites.html#the-figureaxes-model",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.8 The Figure/Axes model",
+    "text": "C.8 The Figure/Axes model\nMatplotlib distinguishes between the figure (the canvas) and one or more axes (the individual plots). The explicit axes API gives full control:\n\nfig, ax = plt.subplots()\nx = np.linspace(0, 2 * np.pi, 200)\nax.plot(x, np.sin(x), label=\"sin\")\nax.plot(x, np.cos(x), label=\"cos\")\nax.set_xlabel(\"x\")\nax.set_ylabel(\"f(x)\")\nax.set_title(\"Sine and cosine\")\nax.legend()\nplt.show()\n\n\n\n\n\n\n\n\nFor multiple panels, use subplots with rows and columns:\n\nfig, axes = plt.subplots(1, 3, figsize=(10, 3))\nt = np.linspace(0, 4 * np.pi, 300)\nfor i, (func, name) in enumerate([\n    (np.sin, \"sin\"), (np.cos, \"cos\"),\n    (lambda x: np.sin(x) * np.exp(-x / 5), \"damped sin\"),\n]):\n    axes[i].plot(t, func(t))\n    axes[i].set_title(name)\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#common-plot-types-used-in-the-book",
+    "href": "chapters/appendix-prerequisites.html#common-plot-types-used-in-the-book",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.9 Common plot types used in the book",
+    "text": "C.9 Common plot types used in the book\nThe chapters use a small set of plot types repeatedly. Here is a gallery with the calling conventions:\n\nfig, axes = plt.subplots(2, 3, figsize=(12, 7))\n\n# Line plot (convergence traces, Ch. 2-6)\naxes[0, 0].plot(\n    np.arange(20),\n    np.exp(-np.linspace(0, 3, 20)),\n)\naxes[0, 0].set_title(\"Line (convergence)\")\n\n# Scatter plot (residuals, Ch. 11-12)\nxs = rng.standard_normal(50)\nys = 0.8 * xs + 0.3 * rng.standard_normal(50)\naxes[0, 1].scatter(xs, ys, alpha=0.6, s=20)\naxes[0, 1].set_title(\"Scatter (residuals)\")\n\n# Step plot (CDFs, Ch. 9)\ndata = np.sort(rng.standard_normal(30))\naxes[0, 2].step(\n    data,\n    np.linspace(0, 1, 30),\n    where=\"post\",\n)\naxes[0, 2].set_title(\"Step (empirical CDF)\")\n\n# Histogram (distributions, Ch. 7-8)\naxes[1, 0].hist(\n    rng.standard_normal(500),\n    bins=30, density=True, alpha=0.7,\n    edgecolor=\"white\",\n)\naxes[1, 0].set_title(\"Histogram (density)\")\n\n# fill_between (confidence bands, Ch. 11)\nxf = np.linspace(0, 5, 100)\nyf = np.sin(xf)\naxes[1, 1].plot(xf, yf)\naxes[1, 1].fill_between(\n    xf, yf - 0.3, yf + 0.3, alpha=0.2,\n)\naxes[1, 1].set_title(\"fill_between (CI)\")\n\n# Errorbar (parameter estimates, Ch. 10)\nmeans = [1.2, 0.8, 2.1, 1.5]\nerrs = [0.3, 0.2, 0.4, 0.25]\naxes[1, 2].errorbar(\n    range(4), means, yerr=errs,\n    fmt=\"o\", capsize=4,\n)\naxes[1, 2].set_title(\"Errorbar (estimates)\")\n\nfig.tight_layout()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#contour-plots",
+    "href": "chapters/appendix-prerequisites.html#contour-plots",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.10 Contour plots",
+    "text": "C.10 Contour plots\nContour plots visualize objective-function landscapes (Ch. 2–5):\n\nx_grid = np.linspace(-2, 2, 200)\ny_grid = np.linspace(-1, 3, 200)\nXg, Yg = np.meshgrid(x_grid, y_grid)\nZ = (1 - Xg)**2 + 100 * (Yg - Xg**2)**2  # Rosenbrock\n\nfig, ax = plt.subplots(figsize=(7, 5))\ncs = ax.contour(\n    Xg, Yg, np.log10(Z + 1),\n    levels=15, cmap=\"viridis\",\n)\nax.clabel(cs, fontsize=8)\nax.plot(1, 1, \"r*\", markersize=12, label=\"minimum\")\nax.set_xlabel(\"$x_1$\")\nax.set_ylabel(\"$x_2$\")\nax.set_title(\"Rosenbrock log-contours\")\nax.legend()\nplt.show()",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#saving-figures",
+    "href": "chapters/appendix-prerequisites.html#saving-figures",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.11 Saving figures",
+    "text": "C.11 Saving figures\nfig.savefig(\"figure.pdf\")         # vector, for print\nfig.savefig(\"figure.png\")         # raster, for screen\nfig.savefig(\"figure.png\", dpi=300, bbox_inches=\"tight\")\nThe book style sheet sets savefig.dpi: 300 and savefig.bbox: tight by default, so the explicit keyword arguments are rarely needed.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#what-book.mplstyle-sets",
+    "href": "chapters/appendix-prerequisites.html#what-book.mplstyle-sets",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.12 What book.mplstyle sets",
+    "text": "C.12 What book.mplstyle sets\nThe style file configures: serif fonts (Latin Modern Roman / Computer Modern), figure size 8 x 5 at 150 dpi, suppressed top and right spines, an 8-color cycle designed for grayscale readability with alternating solid/dashed/dot-dash/dotted line styles, outward-facing ticks, and frameless legends. Loading it via plt.style.use('assets/book.mplstyle') in each chapter’s import block ensures every figure in the book has a consistent appearance.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#catastrophic-cancellation-in-practice",
+    "href": "chapters/appendix-prerequisites.html#catastrophic-cancellation-in-practice",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.13 Catastrophic cancellation in practice",
+    "text": "C.13 Catastrophic cancellation in practice\n\n# Naive vs stable log-sigmoid\nx_vals = np.array([0.0, 20.0, 50.0, 100.0, 500.0, 710.0])\n\nprint(f\"{'x':&gt;6}  {'naive':&gt;22}  {'stable':&gt;22}\")\nfor xv in x_vals:\n    naive = np.log(1 / (1 + np.exp(-xv)))\n    stable = -np.logaddexp(0, -xv)\n    print(f\"{xv:6.0f}  {naive:22.15e}  {stable:22.15e}\")\n\n     x                   naive                  stable\n     0  -6.931471805599453e-01  -6.931471805599453e-01\n    20  -2.061153694291927e-09  -2.061153620314381e-09\n    50   0.000000000000000e+00  -1.928749847963918e-22\n   100   0.000000000000000e+00  -3.720075976020836e-44\n   500   0.000000000000000e+00  -7.124576406741286e-218\n   710   0.000000000000000e+00  -4.476286225675130e-309\n\n\nAt \\(x = 710\\) the naive version overflows because np.exp(710) exceeds the double range. The stable version handles this correctly. This matters for log-likelihood evaluation in logistic regression (Ch. 12–13).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#condition-number",
+    "href": "chapters/appendix-prerequisites.html#condition-number",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.14 Condition number",
+    "text": "C.14 Condition number\nThe condition number \\(\\kappa(\\mathbf{A}) = \\|\\mathbf{A}\\| \\cdot \\|\\mathbf{A}^{-1}\\|\\) measures how much a linear system \\(\\mathbf{Ax} = \\mathbf{b}\\) amplifies input errors. A system with \\(\\kappa = 10^k\\) loses roughly \\(k\\) digits of accuracy.\n\n# Well-conditioned vs ill-conditioned\nprint(f\"Identity(5):  kappa = \"\n      f\"{np.linalg.cond(np.eye(5)):.1f}\")\nprint(f\"Hilbert(5):   kappa = \"\n      f\"{np.linalg.cond(linalg.hilbert(5)):.0f}\")\nprint(f\"Hilbert(10):  kappa = \"\n      f\"{np.linalg.cond(linalg.hilbert(10)):.2e}\")\nprint(f\"Hilbert(15):  kappa = \"\n      f\"{np.linalg.cond(linalg.hilbert(15)):.2e}\")\n\nIdentity(5):  kappa = 1.0\nHilbert(5):   kappa = 476607\nHilbert(10):  kappa = 1.60e+13\nHilbert(15):  kappa = 4.24e+17\n\n\nThe Hilbert matrix is the classic example of near-singularity. By order 15 the condition number exceeds \\(10^{17}\\), meaning no digits in the solution are reliable. Condition numbers appear in: Ch. 2 (optimizer convergence speed depends on \\(\\kappa\\) of the Hessian), Ch. 11 (multicollinearity diagnosis via VIF, which is a condition-number proxy), and Ch. 20 (weak instruments produce ill-conditioned moment matrices).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#useful-safeguards",
+    "href": "chapters/appendix-prerequisites.html#useful-safeguards",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.15 Useful safeguards",
+    "text": "C.15 Useful safeguards\n\n# log1p and expm1 avoid cancellation near zero\nx_small = 1e-15\nprint(f\"log(1 + x): {np.log(1 + x_small):.6e}\")\nprint(f\"log1p(x):   {np.log1p(x_small):.6e}\")\n\n# logsumexp for stable log-sum-of-exponentials\nfrom scipy.special import logsumexp\nlog_vals = np.array([1000, 1001, 1002])\nprint(f\"\\nlogsumexp:  {logsumexp(log_vals):.6f}\")\n# naive would overflow:\n# np.log(np.sum(np.exp(log_vals)))  -&gt; inf\n\nlog(1 + x): 1.110223e-15\nlog1p(x):   1.000000e-15\n\nlogsumexp:  1002.407606",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
     ]
   },
   {
     "objectID": "chapters/appendix-prerequisites.html#key-decompositions",
     "href": "chapters/appendix-prerequisites.html#key-decompositions",
-    "title": "24  Prerequisites Appendix",
-    "section": "24.1 Key decompositions",
-    "text": "24.1 Key decompositions\n\n\n\n\n\n\n\n\n\nDecomposition\nscipy function\nCost\nUsed in\n\n\n\n\nLU\nlinalg.lu\n\\(O(n^3)\\)\nLinear systems\n\n\nQR\nlinalg.qr\n\\(O(mn^2)\\)\nOLS (Ch. 11)\n\n\nCholesky\nlinalg.cholesky\n\\(O(n^3/3)\\)\nPositive definite systems\n\n\nSVD\nlinalg.svd\n\\(O(mn^2)\\)\nPCA (Ch. 19), pseudoinverse\n\n\nEigendecomposition\nlinalg.eigh\n\\(O(n^3)\\)\nPCA, MANOVA\n\n\n\n\nA = np.array([[4, 2], [2, 3]], dtype=float)\nL = linalg.cholesky(A, lower=True)\nprint(f\"Cholesky: L @ L.T = A? {np.allclose(L @ L.T, A)}\")\n\nU, S, Vt = linalg.svd(A)\nprint(f\"SVD singular values: {S.round(3)}\")\nprint(f\"Condition number: {S[0]/S[1]:.3f}\")\n\nCholesky: L @ L.T = A? True\nSVD singular values: [5.562 1.438]\nCondition number: 3.866\n\n\nReferences: Trefethen and Bau (1997), Golub and Van Loan (2013).",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.16 Key decompositions",
+    "text": "C.16 Key decompositions\n\n\n\n\n\n\n\n\n\nDecomposition\nscipy call\nCost\nUsed in\n\n\n\n\nLU\nlinalg.lu\n\\(O(n^3)\\)\nGeneral linear systems\n\n\nCholesky\nlinalg.cholesky\n\\(O(n^3/3)\\)\nPositive-definite systems (Ch. 8, 14)\n\n\nQR\nlinalg.qr\n\\(O(mn^2)\\)\nOLS via QR (Ch. 11)\n\n\nSVD\nlinalg.svd\n\\(O(mn^2)\\)\nPCA (Ch. 19), pseudoinverse\n\n\nEigendecomposition\nlinalg.eigh\n\\(O(n^3)\\)\nPCA, MANOVA (Ch. 19)",
     "crumbs": [
-      "<span class='chapter-number'>24</span>  <span class='chapter-title'>Prerequisites Appendix</span>"
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#solving-linear-systems",
+    "href": "chapters/appendix-prerequisites.html#solving-linear-systems",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.17 Solving linear systems",
+    "text": "C.17 Solving linear systems\n\nA = np.array([[4.0, 2.0], [2.0, 3.0]])\nb = np.array([1.0, 2.0])\n\n# General solve (uses LU internally)\nx = linalg.solve(A, b)\nprint(f\"solve:    x = {x.round(6)}\")\n\n# Positive-definite solve (uses Cholesky, ~2x faster)\nx_pd = linalg.solve(\n    A, b, assume_a=\"pos\",\n)\nprint(f\"solve PD: x = {x_pd.round(6)}\")\n\n# Verify\nprint(f\"A @ x = {(A @ x).round(6)}, b = {b}\")\n\nsolve:    x = [-0.125  0.75 ]\nsolve PD: x = [-0.125  0.75 ]\nA @ x = [1. 2.], b = [1. 2.]\n\n\nassume_a=\"pos\" tells linalg.solve the matrix is positive definite, so it uses Cholesky instead of LU — halving the flop count. This matters when solving covariance systems repeatedly (Ch. 8, Ch. 14).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#decomposition-examples",
+    "href": "chapters/appendix-prerequisites.html#decomposition-examples",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.18 Decomposition examples",
+    "text": "C.18 Decomposition examples\n\nA = np.array([[4.0, 2.0], [2.0, 3.0]])\n\n# Cholesky\nL = linalg.cholesky(A, lower=True)\nprint(f\"Cholesky: L @ L.T = A? \"\n      f\"{np.allclose(L @ L.T, A)}\")\n\n# SVD\nU, S, Vt = linalg.svd(A)\nprint(f\"SVD singular values: {S.round(3)}\")\nprint(f\"Condition number: {S[0] / S[1]:.3f}\")\n\n# Eigendecomposition (symmetric)\neigvals, eigvecs = linalg.eigh(A)\nprint(f\"Eigenvalues: {eigvals.round(3)}\")\n\nCholesky: L @ L.T = A? True\nSVD singular values: [5.562 1.438]\nCondition number: 3.866\nEigenvalues: [1.438 5.562]\n\n\nUse linalg.eigh (not linalg.eig) for symmetric matrices. It exploits symmetry for better speed and numerical stability, and guarantees real eigenvalues. The general linalg.eig returns complex values even for symmetric input due to rounding.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#when-to-use-scipy.linalg-vs-numpy.linalg",
+    "href": "chapters/appendix-prerequisites.html#when-to-use-scipy.linalg-vs-numpy.linalg",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.19 When to use scipy.linalg vs numpy.linalg",
+    "text": "C.19 When to use scipy.linalg vs numpy.linalg\nnumpy.linalg covers basic operations (solve, eig, svd, norm, cond). scipy.linalg adds Cholesky with lower control, LU factorization, specialized solvers (solve_triangular, solve_banded, cho_solve), matrix functions (expm, logm), and the assume_a parameter for solve. Throughout this book, we import from scipy.linalg exclusively.\nReferences: Trefethen and Bau (1997), Golub and Van Loan (2013).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#minimize-unconstrained-and-constrained",
+    "href": "chapters/appendix-prerequisites.html#minimize-unconstrained-and-constrained",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.20 minimize: unconstrained and constrained",
+    "text": "C.20 minimize: unconstrained and constrained\n\n\n\nMethod\nOrder\nGradient\nHessian\nBest for\nChapter\n\n\n\n\nNelder-Mead\n0\nNo\nNo\nNon-smooth, low-dim\n5\n\n\nPowell\n0\nNo\nNo\nNon-smooth, moderate dim\n5\n\n\nCG\n1\nYes\nNo\nLarge-scale, smooth\n2\n\n\nBFGS\nquasi-2\nYes\nNo\nGeneral smooth, default\n2\n\n\nL-BFGS-B\nquasi-2\nYes\nNo\nLarge-scale with bounds\n4\n\n\nNewton-CG\n2\nYes\nYes/HVP\nModerate-scale, smooth\n2\n\n\ntrust-ncg\n2\nYes\nYes\nSmall-to-moderate, smooth\n2\n\n\ntrust-krylov\n2\nYes\nHVP\nLarge-scale trust-region\n4\n\n\nCOBYLA\n0\nNo\nNo\nConstrained, no gradients\n3\n\n\nSLSQP\n1\nYes\nNo\nConstrained, smooth\n3\n\n\ntrust-constr\n2\nYes\nYes\nConstrained, general\n3\n\n\n\nThe default when method is omitted is BFGS (if unconstrained without bounds), L-BFGS-B (if bounds are provided), or raises an error (if constraints are given). Always spell out method explicitly (STEERING.md §5.5).\n\n# Basic minimize call\nresult = optimize.minimize(\n    fun=lambda x: (x[0] - 1)**2 + (x[1] - 2.5)**2,\n    x0=np.array([0.0, 0.0]),\n    method='BFGS',\n)\nprint(f\"x* = {result.x.round(6)}\")\nprint(f\"f(x*) = {result.fun:.2e}\")\nprint(f\"Converged: {result.success}\")\nprint(f\"Iterations: {result.nit}\")\n\nx* = [1.  2.5]\nf(x*) = 1.97e-15\nConverged: True\nIterations: 2",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#least_squares-vs-curve_fit",
+    "href": "chapters/appendix-prerequisites.html#least_squares-vs-curve_fit",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.21 least_squares vs curve_fit",
+    "text": "C.21 least_squares vs curve_fit\nBoth solve nonlinear least-squares problems (Ch. 6). least_squares is the general interface — you supply the residual vector \\(\\mathbf{r}(\\mathbf{x})\\) and optionally the Jacobian. curve_fit is a convenience wrapper for the common case of fitting a model function \\(y = f(x; \\boldsymbol{\\theta})\\) to data.\n\n# least_squares: full control\ndef residuals(params, x, y):\n    a, b, c = params\n    return y - a * np.exp(-b * x) + c\n\nx_data = np.linspace(0, 4, 50)\ny_data = (2.5 * np.exp(-1.3 * x_data) + 0.5\n          + 0.1 * rng.standard_normal(50))\n\nres = optimize.least_squares(\n    fun=residuals,\n    x0=[1.0, 1.0, 0.0],\n    args=(x_data, y_data),\n    method='trf',\n)\nprint(f\"least_squares: params = {res.x.round(3)}\")\nprint(f\"Cost: {res.cost:.4f}\")\n\nleast_squares: params = [ 2.58   1.397 -0.519]\nCost: 0.2414\n\n\n\n\n\nFeature\nleast_squares\ncurve_fit\n\n\n\n\nInput\nResidual vector\nModel function\n\n\nBounds\nYes\nYes\n\n\nJacobian\nUser-supplied or finite-diff\nAuto (via least_squares)\n\n\nCovariance of params\nManual from Jacobian\nReturned as pcov\n\n\nRobust losses\nloss='huber', 'cauchy', etc.\nNo",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#root-nonlinear-equations",
+    "href": "chapters/appendix-prerequisites.html#root-nonlinear-equations",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.22 root: nonlinear equations",
+    "text": "C.22 root: nonlinear equations\noptimize.root solves \\(\\mathbf{F}(\\mathbf{x}) = \\mathbf{0}\\). For scalar equations use optimize.brentq (bracketing, guaranteed convergence) or optimize.newton (Newton–Raphson). These appear in Ch. 10 for solving score equations and in Ch. 18 for survival function inversion.\n\n# Scalar root-finding: solve x - cos(x) = 0\nroot_val = optimize.brentq(\n    f=lambda x: x - np.cos(x),\n    a=0, b=1,\n)\nprint(f\"brentq: x = {root_val:.10f}\")\nprint(f\"verify: x - cos(x) = \"\n      f\"{root_val - np.cos(root_val):.2e}\")\n\nbrentq: x = 0.7390851332\nverify: x - cos(x) = -7.88e-15",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#the-optimizeresult-object",
+    "href": "chapters/appendix-prerequisites.html#the-optimizeresult-object",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.23 The OptimizeResult object",
+    "text": "C.23 The OptimizeResult object\nAll scipy.optimize functions return an OptimizeResult — a dictionary-like object with standardized fields:\n\n\n\nAttribute\nMeaning\n\n\n\n\n.x\nSolution vector\n\n\n.fun\nObjective value at solution\n\n\n.success\nWhether the optimizer converged\n\n\n.message\nHuman-readable convergence status\n\n\n.nit\nNumber of iterations\n\n\n.nfev\nNumber of function evaluations\n\n\n.jac\nJacobian at solution (if computed)\n\n\n.hess_inv\nInverse Hessian approximation (BFGS)\n\n\n\nAlways check .success and .message before trusting .x. An optimizer that hits the iteration limit returns success=False — the solution may still be close to optimal, but you should not assume so without checking. This is a recurring theme in Ch. 2–6.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#the-frozen-distribution-api",
+    "href": "chapters/appendix-prerequisites.html#the-frozen-distribution-api",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.24 The frozen distribution API",
+    "text": "C.24 The frozen distribution API\nAll distributions in scipy.stats follow the same pattern: create a frozen distribution object, then call methods on it. This is the single most important API pattern in the book.\n\n# Create a frozen distribution\nrv = stats.norm(loc=0, scale=1)\n\n# Core methods (same for every distribution)\nx = np.linspace(-3, 3, 7)\nprint(\"pdf:\", rv.pdf(x).round(4))\nprint(\"cdf:\", rv.cdf(x).round(4))\nprint(\"ppf (quantile):\", rv.ppf([0.025, 0.5, 0.975]).round(4))\nprint(\"mean:\", rv.mean(), \" var:\", rv.var())\nprint(\"interval(0.95):\", rv.interval(0.95))\nprint(\"rvs:\", rv.rvs(size=5, random_state=rng).round(3))\n\npdf: [0.0044 0.054  0.242  0.3989 0.242  0.054  0.0044]\ncdf: [0.0013 0.0228 0.1587 0.5    0.8413 0.9772 0.9987]\nppf (quantile): [-1.96  0.    1.96]\nmean: 0.0  var: 1.0\ninterval(0.95): (np.float64(-1.959963984540054), np.float64(1.959963984540054))\nrvs: [ 0.952 -2.252 -0.827 -0.782 -2.32 ]\n\n\nDiscrete distributions use pmf (probability mass function) instead of pdf:\n\nrv_pois = stats.poisson(mu=5)\nprint(\"pmf(3):\", rv_pois.pmf(3).round(4))\nprint(\"cdf(3):\", rv_pois.cdf(3).round(4))\nprint(\"mean:\", rv_pois.mean(), \" var:\", rv_pois.var())\n\npmf(3): 0.1404\ncdf(3): 0.265\nmean: 5.0  var: 5.0",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#distribution-catalog",
+    "href": "chapters/appendix-prerequisites.html#distribution-catalog",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.25 Distribution catalog",
+    "text": "C.25 Distribution catalog\n\n\n\n\n\n\n\n\n\nDistribution\nscipy call\nShape params\nUsed in\n\n\n\n\nNormal\nnorm(loc, scale)\n—\nThroughout\n\n\nStudent \\(t\\)\nt(df)\ndf\nCh. 10–11\n\n\nChi-squared\nchi2(df)\ndf\nCh. 10\n\n\n\\(F\\)\nf(dfn, dfd)\ndfn, dfd\nCh. 10–11\n\n\nGamma\ngamma(a, scale=s)\na\nCh. 7, 18\n\n\nBeta\nbeta(a, b)\na, b\nCh. 7, 9\n\n\nExponential\nexpon(scale=s)\n—\nCh. 18\n\n\nWeibull\nweibull_min(c, scale=s)\nc\nCh. 18\n\n\nMultivariate normal\nmultivariate_normal(mean, cov)\n—\nCh. 8, 19\n\n\nPoisson\npoisson(mu)\nmu\nCh. 12\n\n\nBinomial\nbinom(n, p)\nn, p\nCh. 12\n\n\n\n\ndistributions = {\n    'Normal(0,1)':    stats.norm(0, 1),\n    'Student t(5)':   stats.t(df=5),\n    'Chi-sq(3)':      stats.chi2(df=3),\n    'F(5,20)':        stats.f(dfn=5, dfd=20),\n    'Gamma(2,1)':     stats.gamma(a=2, scale=1),\n    'Exp(1)':         stats.expon(scale=1),\n}\n\nprint(f\"{'Distribution':&lt;15} {'Mean':&gt;8} {'Var':&gt;8}\"\n      f\" {'95% CI':&gt;22}\")\nfor name, rv in distributions.items():\n    ci = rv.interval(0.95)\n    print(f\"{name:&lt;15} {rv.mean():&gt;8.3f} {rv.var():&gt;8.3f}\"\n          f\" {'({:.2f}, {:.2f})'.format(*ci):&gt;22}\")\n\nDistribution        Mean      Var                 95% CI\nNormal(0,1)        0.000    1.000          (-1.96, 1.96)\nStudent t(5)       0.000    1.667          (-2.57, 2.57)\nChi-sq(3)          3.000    6.000           (0.22, 9.35)\nF(5,20)            1.111    0.710           (0.16, 3.29)\nGamma(2,1)         2.000    2.000           (0.24, 5.57)\nExp(1)             1.000    1.000           (0.03, 3.69)",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#fitting-distributions-to-data",
+    "href": "chapters/appendix-prerequisites.html#fitting-distributions-to-data",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.26 Fitting distributions to data",
+    "text": "C.26 Fitting distributions to data\n\n# Generate data from a gamma distribution\ndata = stats.gamma.rvs(\n    a=2.5, scale=1.5,\n    size=500, random_state=rng,\n)\n\n# MLE fit\na_hat, loc_hat, scale_hat = stats.gamma.fit(\n    data, floc=0,  # fix location to 0\n)\nprint(f\"True:  a=2.500, scale=1.500\")\nprint(f\"MLE:   a={a_hat:.3f}, scale={scale_hat:.3f}\")\n\nTrue:  a=2.500, scale=1.500\nMLE:   a=2.611, scale=1.395\n\n\nfloc=0 fixes the location parameter — standard for distributions that are naturally non-negative. Without it, the optimizer may find a negative location that improves the likelihood but produces a nonsensical model.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#hypothesis-tests-catalog",
+    "href": "chapters/appendix-prerequisites.html#hypothesis-tests-catalog",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.27 Hypothesis tests catalog",
+    "text": "C.27 Hypothesis tests catalog\n\n\n\n\n\n\n\n\nTest\nscipy call\nNull hypothesis\n\n\n\n\nOne-sample \\(t\\)\nttest_1samp(x, mu0)\n\\(\\mu = \\mu_0\\)\n\n\nTwo-sample \\(t\\)\nttest_ind(x, y)\n\\(\\mu_x = \\mu_y\\)\n\n\nWelch \\(t\\)\nttest_ind(x, y, equal_var=False)\n\\(\\mu_x = \\mu_y\\)\n\n\nPaired \\(t\\)\nttest_rel(x, y)\n\\(\\mu_{x-y} = 0\\)\n\n\nChi-squared GOF\nchisquare(obs, exp)\nObserved matches expected\n\n\n\\(F\\)-test (ANOVA)\nf_oneway(*groups)\nAll group means equal\n\n\nPearson \\(r\\)\npearsonr(x, y)\n\\(\\rho = 0\\)\n\n\nSpearman \\(\\rho\\)\nspearmanr(x, y)\nMonotonic independence\n\n\nKS test\nkstest(x, cdf)\n\\(x\\) follows the given CDF\n\n\nShapiro–Wilk\nshapiro(x)\n\\(x\\) is normally distributed\n\n\nMann–Whitney \\(U\\)\nmannwhitneyu(x, y)\nStochastic equality\n\n\nKruskal–Wallis\nkruskal(*groups)\nStochastic equality (\\(k\\) groups)",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#quasi-monte-carlo",
+    "href": "chapters/appendix-prerequisites.html#quasi-monte-carlo",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.28 Quasi-Monte Carlo",
+    "text": "C.28 Quasi-Monte Carlo\nscipy.stats.qmc provides low-discrepancy sequences for numerical integration and space-filling experimental designs (Ch. 7):\n\nfrom scipy.stats import qmc\n\nsampler = qmc.Sobol(d=2, scramble=True, seed=rng)\npoints = sampler.random(64)\nprint(f\"Sobol 64 points in [0,1]^2, \"\n      f\"discrepancy = {qmc.discrepancy(points):.6f}\")\n\nSobol 64 points in [0,1]^2, discrepancy = 0.000156",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
     ]
   },
   {
     "objectID": "chapters/appendix-prerequisites.html#the-t-f-and-chi2-tests",
     "href": "chapters/appendix-prerequisites.html#the-t-f-and-chi2-tests",
-    "title": "24  Prerequisites Appendix",
-    "section": "24.2 The \\(t\\), \\(F\\), and \\(\\chi^2\\) tests",
-    "text": "24.2 The \\(t\\), \\(F\\), and \\(\\chi^2\\) tests\nThese are the building blocks for Wald, score, and LR tests (Ch. 10).\n\n# One-sample t-test\nrng = np.random.default_rng(42)\nx = rng.normal(0.5, 1, 30)  # true mean = 0.5\nt_stat, t_pval = stats.ttest_1samp(x, 0)\nprint(f\"t-test (H0: mu=0): t={t_stat:.3f}, p={t_pval:.4f}\")\n\n# Two-sample t-test\ny = rng.normal(0, 1, 30)\nt2_stat, t2_pval = stats.ttest_ind(x, y, equal_var=False)\nprint(f\"Welch t-test: t={t2_stat:.3f}, p={t2_pval:.4f}\")\n\n# Chi-squared test\nobserved = np.array([45, 35, 20])\nexpected = np.array([40, 40, 20])\nchi2_stat, chi2_pval = stats.chisquare(observed, expected)\nprint(f\"Chi-sq test: stat={chi2_stat:.3f}, p={chi2_pval:.4f}\")\n\nt-test (H0: mu=0): t=3.644, p=0.0010\nWelch t-test: t=1.974, p=0.0532\nChi-sq test: stat=1.250, p=0.5353",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.29 The \\(t\\), \\(F\\), and \\(\\chi^2\\) tests",
+    "text": "C.29 The \\(t\\), \\(F\\), and \\(\\chi^2\\) tests\nThese are the building blocks for Wald, score, and likelihood-ratio tests (Ch. 10).\n\n# One-sample t-test\nx = rng.normal(loc=0.5, scale=1, size=30)\nt_stat, t_pval = stats.ttest_1samp(x, popmean=0)\nprint(f\"t-test (H0: mu=0): t={t_stat:.3f}, \"\n      f\"p={t_pval:.4f}\")\n\n# Two-sample Welch t-test\ny = rng.normal(loc=0, scale=1, size=30)\nt2_stat, t2_pval = stats.ttest_ind(\n    x, y, equal_var=False,\n)\nprint(f\"Welch t-test: t={t2_stat:.3f}, \"\n      f\"p={t2_pval:.4f}\")\n\n# Chi-squared goodness of fit\nobserved = np.array([45, 35, 20])\nexpected = np.array([40, 40, 20])\nchi2_stat, chi2_pval = stats.chisquare(\n    observed, f_exp=expected,\n)\nprint(f\"Chi-sq test: stat={chi2_stat:.3f}, \"\n      f\"p={chi2_pval:.4f}\")\n\nt-test (H0: mu=0): t=1.393, p=0.1742\nWelch t-test: t=1.448, p=0.1531\nChi-sq test: stat=1.250, p=0.5353",
     "crumbs": [
-      "<span class='chapter-number'>24</span>  <span class='chapter-title'>Prerequisites Appendix</span>"
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#one-way-anova-f-test",
+    "href": "chapters/appendix-prerequisites.html#one-way-anova-f-test",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.30 One-way ANOVA (\\(F\\)-test)",
+    "text": "C.30 One-way ANOVA (\\(F\\)-test)\nThe one-way ANOVA tests whether \\(k\\) groups have the same mean. Under the null, the \\(F\\) statistic follows an \\(F_{k-1, N-k}\\) distribution. This is the multivariate generalization of the two-sample \\(t\\)-test and appears as a building block in Ch. 10–11.\n\ngroup_a = rng.normal(loc=5.0, scale=1.0, size=30)\ngroup_b = rng.normal(loc=5.5, scale=1.0, size=30)\ngroup_c = rng.normal(loc=6.0, scale=1.0, size=30)\n\nf_stat, f_pval = stats.f_oneway(\n    group_a, group_b, group_c,\n)\nprint(f\"One-way ANOVA: F={f_stat:.3f}, \"\n      f\"p={f_pval:.4f}\")\n\nOne-way ANOVA: F=6.535, p=0.0023",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#partial-correlation",
+    "href": "chapters/appendix-prerequisites.html#partial-correlation",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.31 Partial correlation",
+    "text": "C.31 Partial correlation\nPartial correlation measures the linear association between two variables after removing the effect of one or more confounders. It is used in Ch. 11 (regression diagnostics) and Ch. 17 (testing for Granger-causal relationships after conditioning on other series).\n\n# Partial correlation of x and y given z\nz_corr = 0.5 * x_corr + 0.5 * rng.standard_normal(100)\n\n# Residualize x and y on z\ndef residualize(var, controls):\n    \"\"\"Residuals from OLS of var on controls.\"\"\"\n    X_ctrl = np.column_stack(controls)\n    X_aug = np.column_stack([np.ones(len(var)), X_ctrl])\n    beta = np.linalg.lstsq(X_aug, var, rcond=None)[0]\n    return var - X_aug @ beta\n\nx_resid = residualize(x_corr, [z_corr])\ny_resid = residualize(y_corr, [z_corr])\n\nr_partial, p_partial = stats.pearsonr(x_resid, y_resid)\nprint(f\"Partial corr (x,y | z): \"\n      f\"r={r_partial:.3f}, p={p_partial:.4f}\")\nprint(f\"Raw Pearson (x,y):      \"\n      f\"r={r:.3f}\")\n\nPartial corr (x,y | z): r=0.851, p=0.0000\nRaw Pearson (x,y):      r=0.933\n\n\nThe partial correlation is typically lower than the raw correlation because the confounder \\(z\\) explains some of the apparent association.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#correlation-matrix",
+    "href": "chapters/appendix-prerequisites.html#correlation-matrix",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.32 Correlation matrix",
+    "text": "C.32 Correlation matrix\n\ndata_corr = np.column_stack([x_corr, y_corr, z_corr])\nR = np.corrcoef(data_corr, rowvar=False)\nprint(\"Correlation matrix:\")\nprint(R.round(3))\n\nCorrelation matrix:\n[[1.    0.933 0.766]\n [0.933 1.    0.729]\n [0.766 0.729 1.   ]]",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#passing-rng-to-library-functions",
+    "href": "chapters/appendix-prerequisites.html#passing-rng-to-library-functions",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.33 Passing rng to library functions",
+    "text": "C.33 Passing rng to library functions\nscipy and statsmodels functions that accept randomness use the random_state parameter:\n\n# scipy.stats distributions\nsamples = stats.norm.rvs(\n    loc=0, scale=1, size=5,\n    random_state=rng,\n)\nprint(f\"scipy.stats.rvs: {samples.round(3)}\")\n\n# scipy.stats.bootstrap (Ch. 9)\ndata_boot = (rng.standard_normal(50),)\nres = stats.bootstrap(\n    data_boot, np.mean,\n    n_resamples=999,\n    random_state=rng,\n    method='percentile',\n)\nprint(f\"Bootstrap CI: ({res.confidence_interval.low:.3f},\"\n      f\" {res.confidence_interval.high:.3f})\")\n\nscipy.stats.rvs: [ 1.129 -0.114 -0.84  -0.824  0.651]\nBootstrap CI: (-0.201, 0.169)",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#the-.fit-results-pattern",
+    "href": "chapters/appendix-prerequisites.html#the-.fit-results-pattern",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.34 The .fit() → results pattern",
+    "text": "C.34 The .fit() → results pattern\nEvery statsmodels model follows the same two-step workflow: construct the model, then call .fit() to obtain a results object. All inference — coefficients, standard errors, confidence intervals, hypothesis tests — lives on the results object.\n\n# Generate data\nn = 100\nx1 = rng.standard_normal(n)\nx2 = rng.standard_normal(n)\ny = 1.5 + 2.0 * x1 - 0.5 * x2 + rng.standard_normal(n)\n\n# Array API: add constant manually\nX = sm.add_constant(np.column_stack([x1, x2]))\nmodel = sm.OLS(endog=y, exog=X)\nresults = model.fit()\nprint(results.summary().tables[1])\n\n==============================================================================\n                 coef    std err          t      P&gt;|t|      [0.025      0.975]\n------------------------------------------------------------------------------\nconst          1.6404      0.099     16.498      0.000       1.443       1.838\nx1             1.9633      0.102     19.326      0.000       1.762       2.165\nx2            -0.4584      0.094     -4.853      0.000      -0.646      -0.271\n==============================================================================",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#from_formula-vs-array-api",
+    "href": "chapters/appendix-prerequisites.html#from_formula-vs-array-api",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.35 from_formula vs array API",
+    "text": "C.35 from_formula vs array API\nStatsmodels supports both an array API (shown above) and a formula API using patsy/formulaic:\n\nimport pandas as pd\n\ndf = pd.DataFrame({'y': y, 'x1': x1, 'x2': x2})\n\n# Formula API: intercept is automatic\nresults_f = sm.OLS.from_formula(\n    'y ~ x1 + x2', data=df,\n).fit()\nprint(f\"Array API params:   \"\n      f\"{results.params.round(3)}\")\nprint(f\"Formula API params: \"\n      f\"{results_f.params.round(3)}\")\n\nArray API params:   [ 1.64   1.963 -0.458]\nFormula API params: Intercept    1.640\nx1           1.963\nx2          -0.458\ndtype: float64\n\n\nThe formula API adds the intercept automatically (~ 1 + is implied). Use y ~ x1 + x2 - 1 to suppress it. The array API requires sm.add_constant() explicitly.\nIn this book, the array API is preferred for transparency — the reader sees exactly what the design matrix \\(\\mathbf{X}\\) contains. The formula API appears in examples where it makes the model specification more readable, particularly for interaction terms and categorical variables.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#the-results-object",
+    "href": "chapters/appendix-prerequisites.html#the-results-object",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.36 The results object",
+    "text": "C.36 The results object\nThe results object carries everything downstream analysis needs:\n\nprint(f\"Coefficients:  {results.params.round(3)}\")\nprint(f\"Std errors:    {results.bse.round(3)}\")\nprint(f\"t-statistics:  {results.tvalues.round(3)}\")\nprint(f\"p-values:      {results.pvalues.round(4)}\")\nprint(f\"R-squared:     {results.rsquared:.4f}\")\nprint(f\"AIC:           {results.aic:.1f}\")\nprint(f\"BIC:           {results.bic:.1f}\")\nprint(f\"Log-likelihood:{results.llf:.1f}\")\nprint(f\"Residuals:     {results.resid[:5].round(3)}\")\n\nCoefficients:  [ 1.64   1.963 -0.458]\nStd errors:    [0.099 0.102 0.094]\nt-statistics:  [16.498 19.326 -4.853]\np-values:      [0. 0. 0.]\nR-squared:     0.8053\nAIC:           285.0\nBIC:           292.8\nLog-likelihood:-139.5\nResiduals:     [0.098 0.103 0.146 0.091 2.21 ]",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#covariance-type-options",
+    "href": "chapters/appendix-prerequisites.html#covariance-type-options",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.37 Covariance type options",
+    "text": "C.37 Covariance type options\nThe default cov_type='nonrobust' assumes homoscedastic, independent errors. This is almost never defensible with real data. Statsmodels provides several robust alternatives:\n\n\n\n\n\n\n\n\ncov_type\nAssumes\nUse when\n\n\n\n\n'nonrobust'\nHomoscedastic, independent\nTextbook exercises only\n\n\n'HC0'\nHeteroscedastic\nWhite’s original estimator\n\n\n'HC1'\nHeteroscedastic\nSmall-sample correction (\\(n/(n-k)\\))\n\n\n'HC3'\nHeteroscedastic\nPreferred for small samples (Ch. 11)\n\n\n'HAC'\nHeteroscedastic + autocorrelated\nTime series (Ch. 15–17)\n\n\n'cluster'\nClustered errors\nGrouped data (Ch. 14)\n\n\n\n\n# Compare standard errors under different assumptions\nfor cov in ['nonrobust', 'HC0', 'HC3']:\n    res = model.fit(cov_type=cov)\n    print(f\"{cov:&gt;12}: SE = {res.bse.round(4)}\")\n\n   nonrobust: SE = [0.0994 0.1016 0.0944]\n         HC0: SE = [0.0981 0.0944 0.0915]\n         HC3: SE = [0.1011 0.0989 0.0963]\n\n\nAlways specify cov_type explicitly. Relying on the default is a common source of overconfident inference. See Ch. 11 for a detailed treatment.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#hypothesis-testing-on-the-results-object",
+    "href": "chapters/appendix-prerequisites.html#hypothesis-testing-on-the-results-object",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.38 Hypothesis testing on the results object",
+    "text": "C.38 Hypothesis testing on the results object\n\n# Wald test: beta_1 = 2 (the true value)\nt_test = results.t_test('x1 = 2')\nprint(f\"t-test (beta_1=2): \"\n      f\"t={float(t_test.tvalue):.3f}, \"\n      f\"p={float(t_test.pvalue):.4f}\")\n\n# F-test: joint test that x1 = 0 and x2 = 0\nf_test = results.f_test('x1 = 0, x2 = 0')\nprint(f\"F-test (all slopes=0): \"\n      f\"F={float(f_test.fvalue):.3f}, \"\n      f\"p={float(f_test.pvalue):.6f}\")\n\n# Confidence intervals\nprint(f\"\\n95% confidence intervals:\\n\"\n      f\"{results.conf_int(alpha=0.05).round(3)}\")\n\nt-test (beta_1=2): t=-0.361, p=0.7185\nF-test (all slopes=0): F=200.567, p=0.000000\n\n95% confidence intervals:\n[[ 1.443  1.838]\n [ 1.762  2.165]\n [-0.646 -0.271]]",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#marginal-effects",
+    "href": "chapters/appendix-prerequisites.html#marginal-effects",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.39 Marginal effects",
+    "text": "C.39 Marginal effects\nFor nonlinear models (Ch. 12–13), coefficients are not directly interpretable as marginal effects. The get_margeff() method computes average marginal effects:\n\n# Logistic regression example\ny_binary = (y &gt; y.mean()).astype(int)\nlogit_model = sm.Logit(endog=y_binary, exog=X)\nlogit_results = logit_model.fit(disp=0)\n\nmfx = logit_results.get_margeff(at='overall')\nprint(mfx.summary())\n\n        Logit Marginal Effects       \n=====================================\nDep. Variable:                      y\nMethod:                          dydx\nAt:                           overall\n==============================================================================\n                dy/dx    std err          z      P&gt;|z|      [0.025      0.975]\n------------------------------------------------------------------------------\nx1             0.3560      0.033     10.729      0.000       0.291       0.421\nx2            -0.0773      0.031     -2.471      0.013      -0.139      -0.016\n==============================================================================\n\n\nThe at='overall' option computes average marginal effects (AME) — the mean of the marginal effect evaluated at each observation. This is the most common choice. at='mean' evaluates at the sample mean of all covariates, which is simpler but potentially misleading for non-representative “average” individuals.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#reading-summary-output",
+    "href": "chapters/appendix-prerequisites.html#reading-summary-output",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.40 Reading summary() output",
+    "text": "C.40 Reading summary() output\nThe summary() method produces three tables. The top table reports model-level statistics (R-squared, F-statistic, AIC, BIC, log-likelihood, Durbin–Watson). The middle table reports per-coefficient results (estimate, standard error, \\(t\\)-statistic, \\(p\\)-value, and 95% confidence interval). The bottom table reports omnibus diagnostics (Omnibus test, Jarque–Bera, skewness, kurtosis, condition number).\nKey quantities to check immediately:\n\nR-squared vs Adjusted R-squared: a large gap signals overfitting. Adjusted R-squared penalizes for the number of predictors.\nF-statistic \\(p\\)-value: tests whether the model as a whole explains more variance than an intercept-only model. A non-significant \\(F\\)-test means none of the predictors matter jointly.\nCondition number: large values (\\(&gt;30\\)) indicate multicollinearity. See Ch. 11 for VIF-based diagnosis.\nDurbin–Watson: values near 2 indicate no autocorrelation in residuals. Values near 0 or 4 indicate positive or negative autocorrelation respectively — a warning sign for cross-sectional models and a modeling choice for time-series models (Ch. 15).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#predictions-and-diagnostics",
+    "href": "chapters/appendix-prerequisites.html#predictions-and-diagnostics",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.41 Predictions and diagnostics",
+    "text": "C.41 Predictions and diagnostics\n\n# Point predictions with confidence intervals\npredictions = results.get_prediction(X[:5])\npred_summary = predictions.summary_frame(alpha=0.05)\nprint(pred_summary[\n    ['mean', 'mean_ci_lower', 'mean_ci_upper']\n].round(3))\n\n    mean  mean_ci_lower  mean_ci_upper\n0  3.409          3.012          3.807\n1 -0.534         -0.826         -0.243\n2 -0.739         -1.107         -0.371\n3  1.577          1.282          1.871\n4  3.134          2.822          3.446",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/appendix-prerequisites.html#the-statsmodels-diagnostic-toolkit",
+    "href": "chapters/appendix-prerequisites.html#the-statsmodels-diagnostic-toolkit",
+    "title": "Appendix C — Appendix C: Python Scientific Computing Reference",
+    "section": "C.42 The statsmodels diagnostic toolkit",
+    "text": "C.42 The statsmodels diagnostic toolkit\nStatsmodels provides diagnostic tests as standalone functions and as methods on results objects:\n\nfrom statsmodels.stats.diagnostic import (\n    het_breuschpagan,\n    acorr_breusch_godfrey,\n)\nfrom statsmodels.stats.stattools import (\n    durbin_watson,\n)\n\n# Breusch-Pagan test for heteroscedasticity\nbp_stat, bp_pval, _, _ = het_breuschpagan(\n    results.resid, results.model.exog,\n)\nprint(f\"Breusch-Pagan: stat={bp_stat:.3f}, \"\n      f\"p={bp_pval:.4f}\")\n\n# Durbin-Watson test for autocorrelation\ndw = durbin_watson(results.resid)\nprint(f\"Durbin-Watson: {dw:.3f} \"\n      f\"(~2 = no autocorrelation)\")\n\nBreusch-Pagan: stat=1.011, p=0.6032\nDurbin-Watson: 2.200 (~2 = no autocorrelation)\n\n\nThese diagnostics are developed fully in Ch. 11 (regression diagnostics) and Ch. 15 (time-series residual diagnostics).",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Appendix C: Python Scientific Computing Reference</span>"
     ]
   }
 ]

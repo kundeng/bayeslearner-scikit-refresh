@@ -598,12 +598,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -1620,7 +1643,7 @@ Figure&nbsp;12.1: Contour plot of the Styblinski-Tang function. The global minim
 <h2 data-number="12.4" class="anchored" data-anchor-id="when-to-stop-budget-allocation"><span class="header-section-number">12.4</span> When to stop: budget allocation</h2>
 <p>Global optimizers lack a reliable stopping criterion. Unlike gradient-based methods, there is no norm of the gradient to test. Two practical rules:</p>
 <ol type="1">
-<li><p><strong>Diminishing returns.</strong> Track the best function value as a function of evaluation count. When the improvement per 1000 evaluations drops below a threshold relative to the initial improvement, stop. The SA convergence plot in <a href="#sec-ch05-scratch" class="quarto-xref"><span class="quarto-unresolved-ref">sec-ch05-scratch</span></a> illustrates this: the curve flattens well before the budget is exhausted.</p></li>
+<li><p><strong>Diminishing returns.</strong> Track the best function value as a function of evaluation count. When the improvement per 1000 evaluations drops below a threshold relative to the initial improvement, stop. The SA convergence plot in <a href="#sec-ch05-scratch" class="quarto-xref"><span>Chapter 11</span></a> illustrates this: the curve flattens well before the budget is exhausted.</p></li>
 <li><p><strong>Multi-start agreement.</strong> Run the optimizer <span class="math inline">\(R\)</span> times with different seeds. If all <span class="math inline">\(R\)</span> runs agree on <span class="math inline">\(f^*\)</span> to within tolerance, declare convergence. If they disagree, the budget is insufficient—either increase it or switch to a method with better guarantees.</p></li>
 </ol>
 <div id="budget-allocation" class="cell" data-execution_count="22">

@@ -618,12 +618,35 @@ window.Quarto = {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Prerequisites Appendix</span></span></a>
+  <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -848,7 +871,7 @@ f(\mathbf{x}_k) - f(\mathbf{x}^*) \leq \frac{L\|\mathbf{x}_0 - \mathbf{x}^*\|^2}
 </div>
 </div>
 <p><em>Proof.</em> The proof has three steps: sufficient decrease, nonexpansion, and a reciprocal recurrence.</p>
-<p><strong>Step 1 (Sufficient decrease).</strong> By the descent lemma (<a href="#eq-descent-lemma" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-descent-lemma</span></a>) with <span class="math inline">\(\mathbf{y} = \mathbf{x}_{k+1} = \mathbf{x}_k - \frac{1}{L}\nabla f_k\)</span>: <span class="math display">\[\begin{align}
+<p><strong>Step 1 (Sufficient decrease).</strong> By the descent lemma (<a href="#eq-descent-lemma" class="quarto-xref">Equation&nbsp;<span>6.1</span></a>) with <span class="math inline">\(\mathbf{y} = \mathbf{x}_{k+1} = \mathbf{x}_k - \frac{1}{L}\nabla f_k\)</span>: <span class="math display">\[\begin{align}
 f(\mathbf{x}_{k+1}) &amp;\leq f(\mathbf{x}_k) - \frac{1}{L}\|\nabla f_k\|^2 + \frac{1}{2L}\|\nabla f_k\|^2
 = f(\mathbf{x}_k) - \frac{1}{2L}\|\nabla f_k\|^2.
 \end{align}\]</span> Let <span class="math inline">\(\delta_k = f(\mathbf{x}_k) - f(\mathbf{x}^*)\)</span>. Then <span class="math inline">\(\delta_{k+1} \leq \delta_k - \frac{1}{2L}\|\nabla f_k\|^2\)</span>.</p>
@@ -961,7 +984,7 @@ Theorem 4.3 (Proximal operator as resolvent)
 <p>The proximal operator satisfies <span class="math inline">\(\operatorname{prox}_{\eta g} = (\mathbf{I} + \eta \partial g)^{-1}\)</span>, where <span class="math inline">\(\partial g\)</span> is the subdifferential of <span class="math inline">\(g\)</span>. That is, <span class="math inline">\(\mathbf{x} = \operatorname{prox}_{\eta g}(\mathbf{v})\)</span> if and only if <span class="math inline">\(\mathbf{v} \in \mathbf{x} + \eta \partial g(\mathbf{x})\)</span>, i.e., <span class="math inline">\(\frac{1}{\eta}(\mathbf{v} - \mathbf{x}) \in \partial g(\mathbf{x})\)</span>.</p>
 </div>
 </div>
-<p><em>Proof.</em> The optimality condition for <a href="#eq-prox" class="quarto-xref">Equation&nbsp;<span class="quarto-unresolved-ref">eq-prox</span></a> is: <span class="math inline">\(\mathbf{0} \in \partial g(\mathbf{x}) + \frac{1}{\eta}(\mathbf{x} - \mathbf{v})\)</span>, i.e., <span class="math inline">\(\frac{1}{\eta}(\mathbf{v} - \mathbf{x}) \in \partial g(\mathbf{x})\)</span>. Rearranging: <span class="math inline">\(\mathbf{v} \in \mathbf{x} + \eta \partial g(\mathbf{x}) = (\mathbf{I} + \eta \partial g)(\mathbf{x})\)</span>. So <span class="math inline">\(\mathbf{x} = (\mathbf{I} + \eta \partial g)^{-1}(\mathbf{v})\)</span>. The inverse exists and is unique because <span class="math inline">\(\mathbf{I} + \eta\partial g\)</span> is strongly monotone when <span class="math inline">\(g\)</span> is convex. <span class="math inline">\(\square\)</span></p>
+<p><em>Proof.</em> The optimality condition for <a href="#eq-prox" class="quarto-xref">Equation&nbsp;<span>6.4</span></a> is: <span class="math inline">\(\mathbf{0} \in \partial g(\mathbf{x}) + \frac{1}{\eta}(\mathbf{x} - \mathbf{v})\)</span>, i.e., <span class="math inline">\(\frac{1}{\eta}(\mathbf{v} - \mathbf{x}) \in \partial g(\mathbf{x})\)</span>. Rearranging: <span class="math inline">\(\mathbf{v} \in \mathbf{x} + \eta \partial g(\mathbf{x}) = (\mathbf{I} + \eta \partial g)(\mathbf{x})\)</span>. So <span class="math inline">\(\mathbf{x} = (\mathbf{I} + \eta \partial g)^{-1}(\mathbf{v})\)</span>. The inverse exists and is unique because <span class="math inline">\(\mathbf{I} + \eta\partial g\)</span> is strongly monotone when <span class="math inline">\(g\)</span> is convex. <span class="math inline">\(\square\)</span></p>
 <p>The resolvent interpretation connects proximal operators to monotone operator theory—the mathematical framework underlying splitting methods like ADMM.</p>
 </section>
 <section id="the-moreau-envelope" class="level2" data-number="6.5">
