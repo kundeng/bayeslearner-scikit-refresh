@@ -160,11 +160,22 @@ print(f"{'LIML':<8} {liml.params.iloc[1]:>8.3f} {liml.std_errors.iloc[1]:>8.3f}"
 print(f"{'GMM':<8} {gmm.params.iloc[1]:>8.3f} {gmm.std_errors.iloc[1]:>8.3f}")
 ```
 
+All three methods give similar estimates here because the instrument
+is strong (first-stage F > 10). The methods differ more when
+instruments are weak or when the model is overidentified (more
+instruments than endogenous variables).
+
 ## Weak instrument diagnostics
+
+A *weak instrument* is one that barely predicts the endogenous
+variable. With a weak instrument, 2SLS is biased toward OLS (the
+very thing we were trying to fix), and confidence intervals have
+wrong coverage. The first-stage F-statistic is the key diagnostic:
+**F < 10 means the instrument is too weak to trust.**
 
 ```{python}
 #| label: weak-iv
-# Weak instrument scenario
+# Create a weak instrument scenario: z barely predicts x
 z_weak = 0.05*x + rng.standard_normal(n)  # barely correlated
 x_weak = 0.05*z_weak + 0.5*u + rng.standard_normal(n)
 y_weak = 1.5*x_weak + u + rng.standard_normal(n)
@@ -210,12 +221,49 @@ print(f"Match: {np.isclose(beta_scratch[1], iv.params.iloc[1], atol=0.01)}")
 
 # Diagnostics {#sec-ch20-diagnostics}
 
-1. **First-stage F:** Must be > 10 (Stock--Yogo). < 10 = weak instruments.
-2. **Sargan/Hansen J-test:** For overidentified models (more instruments
-   than endogenous variables). Tests whether the instruments are valid
-   (exclusion restriction). Non-rejection supports validity.
-3. **Hausman test:** Compares OLS and 2SLS. If they agree, there's no
-   endogeneity (use the more efficient OLS). If they disagree, use 2SLS.
+Three essential diagnostic checks for IV estimation:
+
+## First-stage F-statistic
+
+The most important diagnostic. Tests whether the instrument actually
+predicts the endogenous variable. **Rule of thumb: F > 10 is
+required** (Stock and Yogo, 2005).
+
+```{python}
+#| label: first-stage-check
+# Strong instrument
+print(f"Strong instrument (z → x with coef 0.8):")
+print(f"  First-stage F = {iv.first_stage.diagnostics['f.stat'].iloc[0]:.1f}")
+print(f"  F > 10: instrument is strong ✓")
+
+# Weak instrument
+print(f"\nWeak instrument (z → x with coef 0.05):")
+print(f"  First-stage F = {iv_weak.first_stage.diagnostics['f.stat'].iloc[0]:.1f}")
+print(f"  F < 10: instrument is WEAK ✗ — 2SLS is unreliable")
+```
+
+## Hausman test (endogeneity check)
+
+Compares OLS and 2SLS. If they agree, there is no endogeneity and
+you should use the more efficient OLS. If they disagree, endogeneity
+is present and you need IV.
+
+```{python}
+#| label: hausman
+# Compare OLS and IV estimates
+ols_est = sm.OLS(y, sm.add_constant(x)).fit().params[1]
+iv_est = iv.params.iloc[1]
+print(f"OLS:  {ols_est:.3f}")
+print(f"2SLS: {iv_est:.3f}")
+print(f"Gap:  {abs(ols_est - iv_est):.3f}")
+print(f"If the gap is large → endogeneity is present → use IV")
+```
+
+## Sargan/Hansen J-test
+
+For overidentified models (more instruments than endogenous variables).
+Tests whether the *extra* instruments are valid. A rejection means
+at least one instrument is invalid.
 
 
 # Exercises {#sec-ch20-exercises}
