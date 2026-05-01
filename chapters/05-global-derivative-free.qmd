@@ -336,34 +336,411 @@ inference at all.
 
 # SciPy Implementation {#sec-ch05-scipy}
 
-*To be written in the implementation pass.*
+SciPy provides five global/derivative-free optimizers, all accessed
+through different entry points (not `minimize` for most of them).
+
+```{python}
+#| label: imports-ch5
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import (
+    minimize, differential_evolution, dual_annealing,
+    basinhopping, shgo, direct,
+)
+
+plt.style.use('assets/book.mplstyle')
+rng = np.random.default_rng(42)
+```
+
+## Nelder-Mead (derivative-free local)
+
+```{python}
+#| label: nelder-mead
+# Nelder-Mead: no gradient needed, just function values
+# Good for small problems (p < 10) where gradients are unavailable
+
+def styblinski_tang(x):
+    """Multi-modal test function. Global min at x_i ≈ -2.9035."""
+    return 0.5 * np.sum(x**4 - 16*x**2 + 5*x)
+
+# Start far from the global minimum
+x0 = np.array([3.0, 3.0])
+res_nm = minimize(styblinski_tang, x0, method='Nelder-Mead')
+print(f"Nelder-Mead: x = {res_nm.x.round(4)}, f = {res_nm.fun:.4f}")
+print(f"This is a LOCAL minimum — Nelder-Mead doesn't search globally")
+```
+
+## `differential_evolution` (stochastic global)
+
+```{python}
+#| label: diff-evol
+# Differential evolution: population-based, searches the full domain
+# REQUIRES bounds — it samples uniformly within them
+
+res_de = differential_evolution(
+    styblinski_tang,
+    bounds=[(-5, 5), (-5, 5)],  # search domain
+    seed=42,
+    maxiter=1000,
+    tol=1e-8,
+)
+print(f"Diff. evolution: x = {res_de.x.round(4)}, f = {res_de.fun:.4f}")
+print(f"Global minimum found (x ≈ -2.9035)")
+print(f"Function evaluations: {res_de.nfev}")
+```
+
+## `dual_annealing` (generalized simulated annealing)
+
+```{python}
+#| label: dual-anneal
+res_da = dual_annealing(
+    styblinski_tang,
+    bounds=[(-5, 5), (-5, 5)],
+    seed=42,
+    maxiter=1000,
+)
+print(f"Dual annealing: x = {res_da.x.round(4)}, f = {res_da.fun:.4f}")
+print(f"Function evaluations: {res_da.nfev}")
+```
+
+## `direct` (deterministic global)
+
+```{python}
+#| label: direct-demo
+# DIRECT: deterministic, divides the search space into rectangles
+# Guaranteed to find the global minimum (given enough evaluations)
+
+res_dir = direct(
+    styblinski_tang,
+    bounds=[(-5, 5), (-5, 5)],
+    maxiter=1000,
+)
+print(f"DIRECT: x = {res_dir.x.round(4)}, f = {res_dir.fun:.4f}")
+print(f"Function evaluations: {res_dir.nfev}")
+```
+
+## Method comparison
+
+```{python}
+#| label: fig-method-comp
+#| fig-cap: "Comparison of global optimizers on the Styblinski-Tang function. All find the global minimum, but with very different numbers of function evaluations."
+
+methods = {
+    'Nelder-Mead (local)': res_nm,
+    'Diff. evolution': res_de,
+    'Dual annealing': res_da,
+    'DIRECT': res_dir,
+}
+
+print(f"{'Method':<25} {'f(x)':>10} {'nfev':>8} {'Global?':>8}")
+print("-" * 55)
+for name, res in methods.items():
+    is_global = 'Yes' if res.fun < -78 else 'No'
+    print(f"{name:<25} {res.fun:>10.4f} {res.nfev:>8} {is_global:>8}")
+```
 
 
 # From-Scratch Implementation {#sec-ch05-scratch}
 
-*To be written in the implementation pass.*
+## Simulated annealing
+
+```{python}
+#| label: sa-scratch
+
+def simulated_annealing(f, bounds, n_iters=10000, T0=10.0,
+                         cooling=0.995, seed=42):
+    """Simple simulated annealing.
+
+    Implements Algorithm 5.1 with geometric cooling.
+
+    Parameters
+    ----------
+    f : callable
+        Function to minimize.
+    bounds : list of (low, high) tuples
+        Search domain for each dimension.
+    n_iters : int
+        Number of iterations.
+    T0 : float
+        Initial temperature.
+    cooling : float
+        Temperature decay factor per iteration.
+    """
+    local_rng = np.random.default_rng(seed)
+    d = len(bounds)
+
+    # Initialize randomly within bounds
+    x = np.array([local_rng.uniform(lo, hi) for lo, hi in bounds])
+    f_x = f(x)
+    x_best, f_best = x.copy(), f_x
+    T = T0
+    history = [f_best]
+
+    for k in range(n_iters):
+        # Propose: random step within bounds
+        x_new = x + 0.5 * local_rng.standard_normal(d)
+        # Clip to bounds
+        for j in range(d):
+            x_new[j] = np.clip(x_new[j], bounds[j][0], bounds[j][1])
+
+        f_new = f(x_new)
+        delta = f_new - f_x
+
+        # Accept if better, or with probability exp(-delta/T)
+        if delta < 0 or local_rng.random() < np.exp(-delta / T):
+            x, f_x = x_new, f_new
+            if f_x < f_best:
+                x_best, f_best = x.copy(), f_x
+
+        T *= cooling  # cool down
+        history.append(f_best)
+
+    return x_best, f_best, history
+```
+
+```{python}
+#| label: sa-verify
+x_sa, f_sa, hist_sa = simulated_annealing(
+    styblinski_tang, [(-5, 5), (-5, 5)], n_iters=20000,
+)
+print(f"SA from scratch: x = {x_sa.round(4)}, f = {f_sa:.4f}")
+print(f"scipy dual_annealing: f = {res_da.fun:.4f}")
+```
+
+```{python}
+#| label: fig-sa-convergence
+#| fig-cap: "Simulated annealing convergence: the best-so-far function value decreases as the temperature cools. Early exploration (high T) finds the basin; later exploitation (low T) refines the solution."
+
+fig, ax = plt.subplots()
+ax.plot(hist_sa, linewidth=0.5)
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Best f(x) so far')
+ax.set_title('Simulated annealing convergence')
+plt.show()
+```
 
 
 # Diagnostics {#sec-ch05-diagnostics}
 
-*To be written in the implementation pass.*
+Global optimization diagnostics are fundamentally different from local
+methods: you can never be sure you found the *global* minimum.
+
+## Multi-start comparison
+
+The best practical diagnostic: run the optimizer multiple times from
+different starting points and compare results.
+
+```{python}
+#| label: multistart
+# Run differential_evolution 5 times with different seeds
+results = []
+for seed in range(5):
+    res = differential_evolution(styblinski_tang,
+                                  [(-5, 5), (-5, 5)], seed=seed)
+    results.append(res.fun)
+
+print(f"DE results across 5 seeds: {[f'{r:.4f}' for r in results]}")
+print(f"All agree: {np.std(results) < 0.01}")
+print("If results disagree, the problem has multiple local minima")
+print("and the optimizer is not reliably finding the global one.")
+```
+
+## Nelder-Mead failure detection
+
+```{python}
+#| label: nm-failure
+# Nelder-Mead on a high-dimensional problem: it fails
+def sphere(x):
+    return np.sum(x**2)
+
+for d in [2, 10, 50]:
+    x0 = np.ones(d) * 5
+    res = minimize(sphere, x0, method='Nelder-Mead',
+                   options={'maxiter': 50000})
+    print(f"d={d:>3}: f = {res.fun:.2e}, nfev = {res.nfev:>7}, "
+          f"success = {res.success}")
+
+print("\nNelder-Mead degrades rapidly above d ≈ 10.")
+print("Use BFGS with gradients instead for smooth high-d problems.")
+```
 
 
 # Computational Considerations {#sec-ch05-computation}
 
-*To be written in the implementation pass.*
+| Method | Cost per iteration | Global guarantee | Dimension limit |
+|---|---|---|---|
+| Nelder-Mead | 1-2 f-evals | No | $d \leq 10$ |
+| Diff. evolution | popsize × f-evals | No (stochastic) | $d \leq 100$ |
+| Dual annealing | 1 f-eval + local search | No (stochastic) | $d \leq 100$ |
+| DIRECT | 1+ f-evals per rectangle | Yes (Lipschitz) | $d \leq 5$ |
+| Basin-hopping | Local minimize per step | No (stochastic) | $d \leq 100$ |
+
+**For high dimensions ($d > 100$):** none of these methods work well.
+Use gradient-based methods (Ch. 2-4) with multiple random restarts.
 
 
 # Worked Example {#sec-ch05-example}
 
-*To be written in the worked-example pass.*
+Finding the global minimum of a multi-modal function that models a
+real problem: maximizing the negative log-likelihood of a Gaussian
+mixture model (2 components, 1D).
+
+```{python}
+#| label: worked-gmm
+# Generate data from a 2-component Gaussian mixture
+from scipy.stats import norm as normal
+
+data = np.concatenate([
+    rng.normal(-2, 0.5, 100),
+    rng.normal(3, 1.0, 150),
+])
+
+def neg_log_lik_gmm(params):
+    """Negative log-likelihood for a 2-component Gaussian mixture.
+    params = [pi, mu1, sigma1, mu2, sigma2]
+    """
+    pi, mu1, s1, mu2, s2 = params
+    if s1 <= 0 or s2 <= 0 or pi <= 0 or pi >= 1:
+        return 1e10  # invalid parameters
+    ll = np.sum(np.log(
+        pi * normal.pdf(data, mu1, s1) +
+        (1 - pi) * normal.pdf(data, mu2, s2)
+    ))
+    return -ll
+
+# Global search with differential_evolution
+res_gmm = differential_evolution(
+    neg_log_lik_gmm,
+    bounds=[(0.01, 0.99), (-5, 5), (0.1, 3), (-5, 5), (0.1, 3)],
+    seed=42, maxiter=1000, tol=1e-8,
+)
+pi, mu1, s1, mu2, s2 = res_gmm.x
+print(f"Estimated: pi={pi:.2f}, mu1={mu1:.2f}, s1={s1:.2f}, "
+      f"mu2={mu2:.2f}, s2={s2:.2f}")
+print(f"True:      pi=0.40, mu1=-2.0, s1=0.5, mu2=3.0, s2=1.0")
+```
 
 
 # Exercises {#sec-ch05-exercises}
 
-*To be written in the worked-example pass.*
+**Exercise 5.1** ($\star\star$, diagnostic failure). Run Nelder-Mead
+on the 50-dimensional sphere function $f(\mathbf{x}) = \sum x_i^2$
+starting from $\mathbf{x}_0 = (5, 5, \ldots, 5)$. Does it converge?
+Compare with BFGS (supplying the gradient $2\mathbf{x}$). Why does
+Nelder-Mead fail in high dimensions?
+
+%%
+
+```{python}
+#| label: ex-5-1
+# Already demonstrated above
+print("Nelder-Mead fails in d=50: the simplex has d+1=51 vertices")
+print("and degenerates (collapses to a lower-dimensional subspace).")
+print("BFGS uses gradient information and converges in O(d) iterations.")
+
+res_bfgs = minimize(sphere, np.ones(50)*5, method='BFGS',
+                    jac=lambda x: 2*x)
+print(f"BFGS d=50: f = {res_bfgs.fun:.2e}, nit = {res_bfgs.nit}")
+```
+
+%%
+
+**Exercise 5.2** ($\star\star$, comparison). Compare `differential_evolution`,
+`dual_annealing`, and `direct` on the Styblinski-Tang function in 2D,
+5D, and 10D. Report the function value and number of evaluations.
+Which method scales best with dimension?
+
+%%
+
+```{python}
+#| label: ex-5-2
+def stybT(x): return 0.5*np.sum(x**4 - 16*x**2 + 5*x)
+
+for d in [2, 5, 10]:
+    bounds = [(-5, 5)] * d
+    f_true = d * (-39.16599)  # global min per dimension
+
+    de = differential_evolution(stybT, bounds, seed=42)
+    da = dual_annealing(stybT, bounds, seed=42)
+
+    print(f"d={d}: DE f={de.fun:.2f} (nfev={de.nfev}), "
+          f"DA f={da.fun:.2f} (nfev={da.nfev}), "
+          f"true={f_true:.2f}")
+```
+
+%%
+
+**Exercise 5.3** ($\star\star$, implementation). Implement simulated
+annealing from scratch. Verify on the 2D Styblinski-Tang function.
+Compare geometric cooling ($T_{k+1} = 0.995 T_k$) with logarithmic
+cooling ($T_k = C/\ln(k+2)$). Which finds the global minimum?
+
+%%
+
+```{python}
+#| label: ex-5-3
+# Geometric cooling (already implemented)
+_, f_geom, _ = simulated_annealing(
+    styblinski_tang, [(-5,5),(-5,5)], n_iters=50000, cooling=0.9999)
+
+# Logarithmic cooling (modify the function)
+def sa_log(f, bounds, n_iters=50000, C=50.0, seed=42):
+    lr = np.random.default_rng(seed); d=len(bounds)
+    x=np.array([lr.uniform(lo,hi) for lo,hi in bounds]); fx=f(x)
+    xb,fb=x.copy(),fx
+    for k in range(n_iters):
+        T=C/np.log(k+2)
+        xn=x+0.5*lr.standard_normal(d)
+        for j in range(d): xn[j]=np.clip(xn[j],bounds[j][0],bounds[j][1])
+        fn=f(xn); delta=fn-fx
+        if delta<0 or lr.random()<np.exp(-delta/T): x,fx=xn,fn
+        if fx<fb: xb,fb=x.copy(),fx
+    return fb
+
+f_log = sa_log(styblinski_tang, [(-5,5),(-5,5)])
+print(f"Geometric: f = {f_geom:.4f}")
+print(f"Logarithmic: f = {f_log:.4f}")
+print(f"True global: {styblinski_tang(np.array([-2.9035,-2.9035])):.4f}")
+```
+
+%%
+
+**Exercise 5.4** ($\star\star\star$, conceptual). Explain why no
+derivative-free global optimizer can guarantee finding the global
+minimum in fewer than $O((1/\epsilon)^d)$ function evaluations for
+a Lipschitz function in $d$ dimensions. What does this mean for
+practical global optimization when $d > 10$?
+
+%%
+
+A Lipschitz function with constant $K$ can hide a narrow well of
+depth $\epsilon$ within a ball of radius $\epsilon/K$. To detect this
+well, you must evaluate $f$ at a point within that ball. In $d$
+dimensions, the search domain has volume $(b-a)^d$, and the ball has
+volume proportional to $(\epsilon/K)^d$. You need at least
+$((b-a)K/\epsilon)^d$ evaluations to cover the domain densely enough.
+
+For $d = 10$ with $K = 1$, $\epsilon = 0.01$, and domain $[-5, 5]$:
+you need $(1000)^{10} = 10^{30}$ evaluations. This is the
+*curse of dimensionality* for global optimization --- it is
+fundamentally harder than local optimization in high dimensions.
+
+The practical implication: for $d > 10$, abandon global guarantees.
+Use gradient-based local methods (Ch. 2-4) with multiple random
+restarts, or exploit problem structure (e.g., convexity, separability).
+
+%%
 
 
 # Bibliographic Notes {#sec-ch05-biblio}
 
-*To be written in the worked-example pass.*
+Nelder-Mead: Nelder and Mead (1965). The McKinnon counterexample:
+McKinnon (1998). Differential evolution: Storn and Price (1997).
+Simulated annealing: Kirkpatrick, Gelatt, and Vecchi (1983); Hajek
+(1988) for the logarithmic cooling theory. DIRECT: Jones, Perttunen,
+and Stuckman (1993). Basin-hopping: Wales and Doye (1997). SHGO:
+Endres, Sandrock, and Focke (2018).
+
+For the curse of dimensionality in global optimization: Nemirovski
+and Yudin (1983). For Bayesian optimization (not in scipy but
+increasingly important): Snoek, Larochelle, and Adams (2012).
