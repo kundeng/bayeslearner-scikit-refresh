@@ -1,5 +1,6 @@
 ---
 title: "Getting Started with SciPy"
+number-sections: false
 ---
 
 ```{python}
@@ -176,36 +177,38 @@ If you don't supply `jac`, `minimize` estimates the gradient using
 finite differences --- slower and less accurate. Supplying the
 analytical gradient is always better when available.
 
+Let's visualize what the optimizer does. We can track its progress by
+recording the function value at each iteration using `minimize`'s
+`callback` parameter:
+
 ```{python}
-#| label: fig-rosenbrock
-#| fig-cap: "The Rosenbrock function has a narrow curved valley. The optimizer must navigate from the starting point (red) through the valley to the minimum at (1,1) (green). The path shows the BFGS algorithm's steps."
+#| label: fig-optimization-path
+#| fig-cap: "The optimizer's progress on the Rosenbrock function. Each dot is one iteration. The function value drops steeply at first, then slowly approaches zero as the optimizer navigates the narrow valley."
 
-# Visualize the optimization path
-fig, ax = plt.subplots(figsize=(8, 5))
+# Track f(x) at each iteration
+f_values = []
+def record_progress(xk):
+    """Called by minimize at each iteration."""
+    f_values.append(rosen(xk))
 
-# Contour plot
-x_grid = np.linspace(-2, 2, 200)
-y_grid = np.linspace(-1, 3, 200)
-X, Y = np.meshgrid(x_grid, y_grid)
-Z = (1 - X)**2 + 100*(Y - X**2)**2
+# Run the optimizer with the callback
+minimize(rosen, x0, jac=rosen_der, method='BFGS',
+         callback=record_progress)
 
-ax.contour(X, Y, np.log10(Z + 1), levels=30, cmap='Blues', alpha=0.6)
-
-# Track the optimization path
-path = [x0.copy()]
-def callback(xk):
-    path.append(xk.copy())
-minimize(rosen, x0, jac=rosen_der, method='BFGS', callback=callback)
-path = np.array(path)
-
-ax.plot(path[:, 0], path[:, 1], 'o-', color='C1', markersize=3,
-        linewidth=1, label=f'BFGS path ({len(path)} steps)')
-ax.plot(x0[0], x0[1], 'ro', markersize=10, label='Start')
-ax.plot(1, 1, 'g*', markersize=15, label='Minimum')
-ax.set_xlabel(r'$x_1$'); ax.set_ylabel(r'$x_2$')
-ax.legend()
+# Plot: function value vs iteration number
+fig, ax = plt.subplots()
+ax.plot(range(len(f_values)), f_values, 'o-', markersize=4)
+ax.set_xlabel('Iteration')
+ax.set_ylabel('f(x)')
+ax.set_yscale('log')  # log scale because values span many orders
+ax.set_title(f'BFGS convergence ({len(f_values)} iterations)')
 plt.show()
 ```
+
+The log-scale y-axis reveals the convergence behavior: the function
+value drops rapidly at first (the optimizer finds the valley) then
+decreases more slowly (navigating along the narrow valley floor).
+Chapter 2 explains *why* BFGS behaves this way.
 
 
 # Choosing an Optimization Method {#sec-ch01-methods}
@@ -217,20 +220,31 @@ Rosenbrock function:
 #| label: method-comparison
 x0 = np.array([-1.2, 1.0])
 
-methods = {
-    'Nelder-Mead': dict(),                          # no gradient needed
-    'BFGS':        dict(jac=rosen_der),              # gradient only
-    'L-BFGS-B':    dict(jac=rosen_der),              # gradient, bounded
-    'Newton-CG':   dict(jac=rosen_der, hess='2-point'),  # gradient + Hessian
-}
-
+# Compare four methods on the same problem
 print(f"{'Method':<15} {'Iterations':>10} {'f-evals':>8} {'Success':>8}")
 print("-" * 45)
-for name, kwargs in methods.items():
-    res = minimize(rosen, x0, method=name, **kwargs)
-    print(f"{name:<15} {res.nit:>10} {res.nfev:>8} "
-          f"{str(res.success):>8}")
+
+# Nelder-Mead: no gradient needed — just evaluates f
+res = minimize(rosen, x0, method='Nelder-Mead')
+print(f"{'Nelder-Mead':<15} {res.nit:>10} {res.nfev:>8} {str(res.success):>8}")
+
+# BFGS: uses the gradient to take smarter steps
+res = minimize(rosen, x0, method='BFGS', jac=rosen_der)
+print(f"{'BFGS':<15} {res.nit:>10} {res.nfev:>8} {str(res.success):>8}")
+
+# L-BFGS-B: like BFGS but uses less memory (for large problems)
+res = minimize(rosen, x0, method='L-BFGS-B', jac=rosen_der)
+print(f"{'L-BFGS-B':<15} {res.nit:>10} {res.nfev:>8} {str(res.success):>8}")
+
+# Newton-CG: uses gradient + Hessian (second derivatives)
+res = minimize(rosen, x0, method='Newton-CG', jac=rosen_der,
+               hess='2-point')  # estimate Hessian via finite differences
+print(f"{'Newton-CG':<15} {res.nit:>10} {res.nfev:>8} {str(res.success):>8}")
 ```
+
+Notice that methods using more derivative information (BFGS, Newton-CG)
+generally need fewer iterations than Nelder-Mead, which uses no
+derivatives at all. The tradeoff: gradient computation has a cost too.
 
 **Rules of thumb:**
 
