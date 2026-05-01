@@ -28,256 +28,638 @@ rng = np.random.default_rng(42)
 | $\phi_1, \ldots, \phi_p$ | AR coefficients | `.params` |
 | $\theta_1, \ldots, \theta_q$ | MA coefficients | `.params` |
 | $(p, d, q)$ | ARIMA order | `order=(p,d,q)` |
-| $\rho(k)$ | ACF at lag $k$ | `acf()` |
-| $\alpha(k)$ | PACF at lag $k$ | `pacf()` |
+| $B$ | Backshift operator: $By_t = y_{t-1}$ | |
+| $\rho(k)$ | Autocorrelation at lag $k$ | `acf()` |
+| $\alpha(k)$ | Partial autocorrelation at lag $k$ | `pacf()` |
+| $\varepsilon_t$ | White noise innovation | `.resid` |
 
 
 # Motivation {#sec-ch15-motivation}
 
-Time series data is ordered in time, and nearby observations are
-correlated. Applying standard regression (Chapter 11) to time series
-gives wrong standard errors and misleading inferences because it
-assumes independent errors.
+Everything in Chapters 10--14 assumed independent observations. Time
+series breaks this: today's stock price depends on yesterday's, this
+month's unemployment rate correlates with last month's, a patient's
+blood pressure reading at 3pm is related to the one at 2pm.
 
-This chapter covers the workhorses of univariate time series: AR, MA,
-ARIMA, exponential smoothing, and the Box--Jenkins identification
-workflow. The primary library is `statsmodels.tsa`.
+If you fit an OLS regression to time series data ignoring the temporal
+dependence, your coefficient estimates may be consistent but your
+standard errors will be wrong --- usually too small, leading to
+spurious significance. The methods in this chapter model the temporal
+dependence directly.
+
+**The key idea:** a time series can be decomposed into a predictable
+part (based on its own past) and an unpredictable part (the
+innovation or shock). The AR model says the predictable part is a
+linear function of past values: $y_t = \phi_1 y_{t-1} + \cdots + \phi_p y_{t-p} + \varepsilon_t$.
+The MA model says the predictable part is a linear function of past
+shocks: $y_t = \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}$.
+ARIMA combines both and adds differencing for non-stationary series.
+
+**What this chapter covers:**
+
+- Why stationarity matters and how to test for it
+- The AR, MA, and ARIMA models: what they are, why they work, how
+  to identify the right one
+- The Box--Jenkins workflow: a systematic approach to time series
+  modeling
+- Exponential smoothing as an alternative
+- How `statsmodels.tsa` implements all of this
 
 
 # Mathematical Foundation {#sec-ch15-math}
 
-## Stationarity and why it matters for the API
+## Stationarity: the foundation of everything
 
-A series is *weakly stationary* if its mean and autocovariance don't
-depend on time. `ARIMA(order=(p,0,q))` assumes stationarity. The ADF
-test checks for unit roots; KPSS checks for stationarity. Use both.
+A time series $\{y_t\}$ is *weakly stationary* if:
 
-## ACF and PACF as model identification tools
+1. Its mean $\mu = \mathbb{E}[y_t]$ does not depend on $t$
+2. Its autocovariance $\gamma(k) = \text{Cov}(y_t, y_{t+k})$ depends
+   only on the lag $k$, not on $t$
 
-| Model | ACF pattern | PACF pattern |
+**Why stationarity matters:** If the mean or variance changes over
+time, a model trained on historical data cannot reliably forecast the
+future --- the future may operate under different dynamics. Stationarity
+means the process has stable statistical properties, so patterns
+learned from the past can be projected forward.
+
+**Examples:**
+
+- A series fluctuating around a constant mean with constant variance:
+  **stationary**
+- A series with an upward trend: **not stationary** (mean changes)
+- A random walk $y_t = y_{t-1} + \varepsilon_t$: **not stationary**
+  (variance grows as $t\sigma^2$)
+- Seasonal data with fixed amplitude: **stationary** after removing
+  the seasonal component
+
+**How to make a series stationary:** *Differencing*. If $y_t$ has a
+trend, $\Delta y_t = y_t - y_{t-1}$ may be stationary. If
+$\Delta y_t$ still has a trend, try $\Delta^2 y_t$. The $d$ in
+ARIMA$(p,d,q)$ is the number of differences needed.
+
+## The AR model: today depends on yesterday
+
+The autoregressive model of order $p$, denoted AR$(p)$:
+
+$$
+y_t = c + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \varepsilon_t,
+$$ {#eq-ar}
+
+where $\varepsilon_t \sim \text{WN}(0, \sigma^2)$ (white noise: zero
+mean, constant variance, no autocorrelation).
+
+**Why it works:** Many real processes have inertia --- today's value
+is similar to yesterday's because the underlying system changes
+slowly. The AR model captures this by making $y_t$ a linear function
+of its own past. The coefficients $\phi_1, \ldots, \phi_p$ encode how
+much each past value contributes.
+
+**Stationarity condition:** An AR$(p)$ is stationary when all roots
+of the *characteristic polynomial* $1 - \phi_1 z - \phi_2 z^2 - \cdots - \phi_p z^p = 0$
+lie outside the unit circle. For AR(1), this simplifies to
+$|\phi_1| < 1$.
+
+**Intuition for AR(1):**
+
+- $|\phi| < 1$: Shocks decay geometrically. The series fluctuates
+  around $\mu = c/(1-\phi)$ and keeps returning to it. *Stationary.*
+- $\phi = 1$: Shocks accumulate. The series is a random walk and
+  never returns. *Non-stationary.*
+- $\phi > 1$: Shocks amplify. The series explodes. *Non-stationary.*
+
+**ACF and PACF of AR(p):**
+
+The autocorrelation function (ACF) of an AR$(p)$ decays gradually
+(exponentially for AR(1), or with damped oscillations for AR(2) with
+complex roots). But the *partial* autocorrelation function (PACF)
+cuts off sharply after lag $p$: $\alpha(k) = 0$ for $k > p$.
+
+This is the key identification tool: **a sharp PACF cutoff at lag $p$
+means the data is well-modeled by AR($p$).**
+
+Why does the PACF cut off? The partial autocorrelation at lag $k$
+measures the correlation between $y_t$ and $y_{t-k}$ *after removing*
+the influence of all intermediate lags. In an AR($p$), once you
+account for lags 1 through $p$, lag $p+1$ adds no new information.
+
+## The MA model: today depends on past shocks
+
+The moving average model of order $q$, denoted MA$(q)$:
+
+$$
+y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}.
+$$ {#eq-ma}
+
+**Why it works:** Some processes are driven by shocks that take
+several periods to fully absorb. A policy announcement affects the
+economy over several quarters; a supply disruption takes months to
+work through the system. The MA model captures this: the current
+value is a weighted sum of recent shocks.
+
+**ACF and PACF of MA(q):**
+
+The ACF cuts off sharply at lag $q$: $\rho(k) = 0$ for $k > q$.
+The PACF decays gradually. This is the *mirror image* of the AR
+pattern.
+
+## ARMA and ARIMA
+
+ARMA$(p,q)$ combines both:
+$$
+y_t = c + \sum_{i=1}^p \phi_i y_{t-i} + \varepsilon_t + \sum_{j=1}^q \theta_j \varepsilon_{t-j}.
+$$
+
+Both the ACF and PACF decay gradually --- neither cuts off sharply.
+This makes ARMA harder to identify than pure AR or pure MA.
+
+ARIMA$(p,d,q)$ applies ARMA to the $d$-th difference of the series:
+$(1-B)^d y_t$ follows an ARMA$(p,q)$.
+
+## The Wold decomposition: why this framework is complete
+
+A fundamental theorem: *every* stationary process with finite variance
+can be represented as
+$$
+y_t = \mu + \sum_{j=0}^{\infty} \psi_j \varepsilon_{t-j},
+$$
+where $\varepsilon_t$ is white noise and $\sum \psi_j^2 < \infty$.
+This is the Wold decomposition. It says that MA($\infty$) is the
+universal model for stationary processes --- and ARMA models are
+*parsimonious approximations* to this MA($\infty$).
+
+This is why the ARIMA framework is so powerful: it is not an arbitrary
+modeling choice, but a principled approximation to the most general
+class of stationary processes.
+
+## Unit root testing: why you can't use a $t$-test
+
+To test whether $\phi = 1$ in $y_t = \phi y_{t-1} + \varepsilon_t$
+(i.e., whether the series is a random walk), you might try the
+regression $\Delta y_t = (\phi-1)y_{t-1} + \varepsilon_t$ and test
+$H_0: \phi - 1 = 0$ using a standard $t$-statistic.
+
+**This does not work.** Under $H_0$, the regressor $y_{t-1}$ is a
+random walk --- it is *non-stationary*. The standard OLS theory
+(consistency, asymptotic normality, $t$-distribution) relies on
+stationary regressors. When the regressor is a random walk, the
+$t$-statistic does not converge to a $t$-distribution or even a
+normal. Instead, it converges to a non-standard distribution called
+the Dickey-Fuller distribution, which is skewed to the left.
+
+This is why `adfuller()` uses special critical values, not the
+standard normal quantiles. The 5% critical value for the ADF test is
+approximately $-2.86$ (much more negative than the normal $-1.96$).
+
+The KPSS test has the *opposite* null: it tests $H_0$: the series is
+stationary. Using both tests together gives more information:
+
+| ADF | KPSS | Conclusion |
 |---|---|---|
-| AR($p$) | Exponential decay | Cuts off after lag $p$ |
-| MA($q$) | Cuts off after lag $q$ | Exponential decay |
-| ARMA($p,q$) | Exponential decay | Exponential decay |
+| Rejects | Doesn't reject | Stationary |
+| Doesn't reject | Rejects | Non-stationary → difference |
+| Both reject | | Trend-stationary → detrend |
+| Neither rejects | | Inconclusive |
 
-## The Dickey--Fuller test (intuition)
+## How ARIMA estimation works
 
-Under the unit-root null ($\phi = 1$), the regressor $y_{t-1}$ is
-non-stationary, so the standard $t$-distribution doesn't apply. The
-ADF distribution is shifted left --- this is why `adfuller` uses
-special critical values, not normal quantiles.
+Statsmodels estimates ARIMA parameters by *maximum likelihood*. The
+likelihood of an ARIMA model is computed via the *Kalman filter*
+(Chapter 16): the Kalman filter processes the observations one at a
+time, computing the one-step-ahead prediction error at each step. The
+log-likelihood is the sum of the log-densities of these prediction
+errors (assuming normality).
 
-
-# The Algorithm {#sec-ch15-algorithm}
-
-::: {.callout-note appearance="minimal"}
-## Algorithm 15.1: Box--Jenkins Methodology
-
-1. **Test stationarity:** ADF + KPSS. Difference if needed.
-2. **Identify orders:** ACF/PACF cutoff patterns → choose $p, q$.
-3. **Estimate:** `ARIMA(order=(p,d,q)).fit()`.
-4. **Diagnose:** Ljung--Box on residuals. If not white noise, revise.
-5. **Forecast.**
-:::
+The parameters $(\phi_1, \ldots, \phi_p, \theta_1, \ldots, \theta_q, \sigma^2)$
+are chosen to maximize this log-likelihood, using numerical
+optimization (L-BFGS-B or Newton, Chapter 2).
 
 
-# Statistical Properties {#sec-ch15-stats}
+# The Algorithm and SciPy Implementation {#sec-ch15-algorithm}
 
-ARIMA MLE is asymptotically normal under correct specification. AIC
-and BIC (Chapter 10) select among candidate orders. Exponential
-smoothing is equivalent to a state-space model (Chapter 16).
+## The Box-Jenkins workflow
 
+The Box-Jenkins methodology is a systematic approach to ARIMA modeling:
 
-# Statsmodels Implementation {#sec-ch15-statsmodels}
+**Step 1: Test stationarity.** Plot the series. Run ADF and KPSS tests.
+If non-stationary, difference and re-test.
 
-## Simulating and fitting AR processes
+**Step 2: Identify model order.** Plot ACF and PACF of the (differenced)
+series. Use the cutoff patterns to choose $p$ and $q$:
 
-An AR(2) process generates each observation as a weighted combination
-of the two previous observations plus random noise:
-$y_t = \phi_1 y_{t-1} + \phi_2 y_{t-2} + \varepsilon_t$.
+- PACF cuts off at lag $p$ → AR($p$)
+- ACF cuts off at lag $q$ → MA($q$)
+- Both tail off → ARMA, try small $p$ and $q$
 
-Let's simulate one and then recover the parameters from data:
+**Step 3: Estimate.** Fit `ARIMA(order=(p,d,q))`. Check AIC/BIC for
+model comparison.
+
+**Step 4: Diagnose.** Check that the residuals are white noise (no
+remaining autocorrelation). Use the Ljung-Box test and residual ACF
+plot.
+
+**Step 5: If residuals are not white noise,** revise the model order
+and return to Step 3.
+
+**Step 6: Forecast.**
+
+Let's walk through each step with code.
+
+## Step 1: Simulate and test stationarity
 
 ```{python}
-#| label: ar-demo
-# Simulate AR(2) with known parameters
+#| label: ar-simulate
+# Simulate an AR(2) process with known parameters
+# This gives us data where we KNOW the true model
 n = 300
 phi1, phi2 = 0.6, -0.3  # true AR coefficients
+
 y_ar = np.zeros(n)
 for t in range(2, n):
-    # Each observation = weighted sum of past + noise
-    y_ar[t] = phi1*y_ar[t-1] + phi2*y_ar[t-2] + rng.standard_normal()
-
-# Fit an ARIMA model to recover the parameters
-# order=(p, d, q): p=AR order, d=differencing, q=MA order
-# Since we know it's AR(2), we use order=(2, 0, 0)
-model = ARIMA(y_ar, order=(2, 0, 0)).fit()
-
-# model.params contains: [constant, phi1, phi2, sigma^2]
-print(f"AR(2) fit: phi1={model.params[1]:.3f} (true {phi1}), "
-      f"phi2={model.params[2]:.3f} (true {phi2})")
-print(f"AIC: {model.aic:.1f}")
+    y_ar[t] = phi1 * y_ar[t-1] + phi2 * y_ar[t-2] + rng.standard_normal()
 ```
 
-The fitted coefficients are close to the true values. The small
-discrepancy is expected --- we are estimating from a finite sample.
+```{python}
+#| label: stationarity-test
+# Test stationarity with ADF and KPSS
+adf_result = adfuller(y_ar, autolag='AIC')
+kpss_result = kpss(y_ar, regression='c')
+
+print(f"ADF test (H0: unit root):")
+print(f"  Statistic: {adf_result[0]:.3f}")
+print(f"  p-value:   {adf_result[1]:.4f}")
+print(f"  → {'Reject H0: stationary' if adf_result[1] < 0.05 else 'Cannot reject: may have unit root'}")
+
+print(f"\nKPSS test (H0: stationary):")
+print(f"  Statistic: {kpss_result[0]:.3f}")
+print(f"  p-value:   {kpss_result[1]:.4f}")
+print(f"  → {'Reject H0: non-stationary' if kpss_result[1] < 0.05 else 'Cannot reject: consistent with stationarity'}")
+```
+
+Both tests confirm stationarity: ADF rejects the unit root null, KPSS
+does not reject the stationarity null. We can proceed with $d = 0$.
+
+## Step 2: Identify model order via ACF and PACF
 
 ```{python}
 #| label: fig-acf-pacf
-#| fig-cap: "ACF and PACF of a simulated AR(2). The ACF shows damped oscillation. The PACF cuts off after lag 2, correctly identifying p=2."
+#| fig-cap: "Left: the time series. Center: ACF shows damped oscillation (decaying, not cutting off) — this rules out pure MA. Right: PACF cuts off sharply after lag 2 — this identifies the model as AR(2)."
 
 fig, axes = plt.subplots(1, 3, figsize=(14, 3.5))
+
 axes[0].plot(y_ar[:100], linewidth=0.8)
-axes[0].set_title("AR(2) series")
+axes[0].set_xlabel('Time')
+axes[0].set_title('AR(2) series')
+
 plot_acf(y_ar, lags=20, ax=axes[1], alpha=0.05)
+axes[1].set_title('ACF (decays → AR)')
+
 plot_pacf(y_ar, lags=20, ax=axes[2], alpha=0.05)
+axes[2].set_title('PACF (cuts off at 2 → p=2)')
+
 plt.tight_layout()
 plt.show()
 ```
 
-## Unit root testing
+**Reading the plots:** The ACF decays gradually with damped oscillations
+(the alternating sign comes from $\phi_2 < 0$). The PACF has two
+significant spikes (at lags 1 and 2) and then falls within the
+confidence band. This pattern says: AR(2).
 
-Before fitting an ARIMA model, you must check whether the series is
-*stationary* (constant mean and variance over time). A non-stationary
-series (e.g., a random walk with a trend) needs to be differenced
-first.
-
-The **Augmented Dickey-Fuller (ADF) test** tests the null hypothesis
-that the series has a *unit root* (is non-stationary). A small
-$p$-value means we can reject the null and conclude the series is
-stationary.
+## Step 3: Estimate the model
 
 ```{python}
-#| label: unit-root
-# Test our AR(2) series — should be stationary
-adf = adfuller(y_ar, autolag='AIC')
-print(f"AR(2) series:")
-print(f"  ADF statistic: {adf[0]:.3f}")
-print(f"  p-value:       {adf[1]:.4f}")
-print(f"  → {'Stationary' if adf[1] < 0.05 else 'Non-stationary'}")
+#| label: arima-fit
+# Fit ARIMA(2, 0, 0) = AR(2)
+# order = (p, d, q): p=2 AR terms, d=0 differences, q=0 MA terms
+model = ARIMA(y_ar, order=(2, 0, 0)).fit()
 
-# Compare with a random walk — should be non-stationary
-y_rw = np.cumsum(rng.standard_normal(300))
-adf_rw = adfuller(y_rw, autolag='AIC')
-print(f"\nRandom walk:")
-print(f"  ADF statistic: {adf_rw[0]:.3f}")
-print(f"  p-value:       {adf_rw[1]:.4f}")
-print(f"  → {'Stationary' if adf_rw[1] < 0.05 else 'Non-stationary'}")
+print("ARIMA(2,0,0) results:")
+print(f"  phi1 = {model.params[1]:.4f} (true: {phi1})")
+print(f"  phi2 = {model.params[2]:.4f} (true: {phi2})")
+print(f"  sigma2 = {model.params[3]:.4f} (true: 1.0)")
+print(f"  AIC = {model.aic:.1f}")
+print(f"  BIC = {model.bic:.1f}")
 ```
 
-The AR(2) series is stationary (we can fit ARIMA with $d = 0$). The
-random walk is non-stationary (we need $d = 1$ to difference it first,
-or equivalently, model it as ARIMA(0,1,0)).
+**Understanding the output:**
 
-## Exponential smoothing
+- `params[0]` is the constant (intercept). For a zero-mean process,
+  this should be near 0.
+- `params[1]` and `params[2]` are $\hat{\phi}_1$ and $\hat{\phi}_2$.
+  They are close to the true values (0.6, -0.3) but not exact --- this
+  is estimation from a finite sample.
+- `params[3]` is $\hat{\sigma}^2$, the estimated innovation variance.
+- AIC and BIC are for model comparison: lower is better.
 
-Exponential smoothing is an alternative to ARIMA for forecasting
-series with trend and seasonality. Instead of modeling the
-autocorrelation structure (AR/MA terms), it directly decomposes the
-series into *level*, *trend*, and *seasonal* components, each updated
-by a smoothing parameter.
+## Step 4: Model selection with information criteria
 
-The three smoothing parameters control how quickly the model adapts:
-
-- **alpha** (level): how much weight to give the latest observation
-- **beta** (trend): how quickly the trend changes
-- **gamma** (seasonal): how quickly the seasonal pattern evolves
+How do we know AR(2) is the right model? We can fit several candidates
+and compare AIC/BIC:
 
 ```{python}
-#| label: ets-demo
-# Simulate monthly data with a linear trend and seasonal cycle
-T = 120  # 10 years of monthly data
-trend = np.linspace(100, 150, T)              # upward trend
-seasonal = 10 * np.sin(2*np.pi*np.arange(T)/12)  # 12-month cycle
-y_ets = trend + seasonal + 3*rng.standard_normal(T)  # + noise
+#| label: model-selection
+print(f"{'Order':<12} {'AIC':>8} {'BIC':>8}")
+print("-" * 32)
+best_aic = None
+for p, d, q in [(1,0,0), (2,0,0), (3,0,0), (0,0,1), (0,0,2),
+                 (1,0,1), (2,0,1)]:
+    try:
+        res = ARIMA(y_ar, order=(p, d, q)).fit()
+        marker = " ←" if best_aic is None or res.aic < best_aic else ""
+        if best_aic is None or res.aic < best_aic:
+            best_aic = res.aic
+            best_order = (p, d, q)
+        print(f"({p},{d},{q}){'':<7} {res.aic:>8.1f} {res.bic:>8.1f}{marker}")
+    except Exception:
+        print(f"({p},{d},{q}){'':<7} {'failed':>8}")
 
-# Fit ETS(A,A,A): Additive error, Additive trend, Additive seasonal
-# seasonal_periods=12 tells the model the cycle repeats every 12 points
+print(f"\nBest by AIC: {best_order}")
+print(f"True order:  (2, 0, 0)")
+```
+
+## Step 5: Residual diagnostics
+
+```{python}
+#| label: fig-diagnostics
+#| fig-cap: "Residual diagnostics for the AR(2) model. Top-left: standardized residuals should look like white noise (no patterns). Top-right: residual ACF should have no significant spikes (all within the blue bands). Bottom-left: QQ plot checks normality. Bottom-right: Ljung-Box p-values should all be above 0.05."
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 7))
+
+resid = model.resid
+
+# Standardized residuals — look for patterns
+axes[0,0].plot(resid / resid.std(), linewidth=0.5)
+axes[0,0].axhline(0, color='gray', linewidth=0.5)
+axes[0,0].set_title('Standardized residuals')
+axes[0,0].set_xlabel('Time')
+
+# Residual ACF — should have no significant spikes
+plot_acf(resid, lags=20, ax=axes[0,1], alpha=0.05)
+axes[0,1].set_title('Residual ACF (should be flat)')
+
+# QQ plot — checks normality assumption
+stats.probplot(resid, plot=axes[1,0])
+axes[1,0].set_title('QQ plot (normality check)')
+
+# Ljung-Box test — formal test for residual autocorrelation
+lb = acorr_ljungbox(resid, lags=range(1, 21), return_df=True)
+axes[1,1].scatter(lb.index, lb['lb_pvalue'], s=20)
+axes[1,1].axhline(0.05, color='C1', linestyle='--', alpha=0.5)
+axes[1,1].set_xlabel('Lag')
+axes[1,1].set_ylabel('p-value')
+axes[1,1].set_title('Ljung-Box test (all > 0.05 = good)')
+
+plt.tight_layout()
+plt.show()
+
+print(f"Ljung-Box: all p > 0.05? {(lb['lb_pvalue'] > 0.05).all()}")
+```
+
+**Interpreting the diagnostics:**
+
+- **Standardized residuals:** Should look like random noise with no
+  visible patterns, clusters, or trends. If you see structure, the
+  model is missing something.
+- **Residual ACF:** All spikes should be within the confidence bands
+  (blue shaded region). Significant spikes mean the model hasn't
+  captured all the autocorrelation → increase $p$ or $q$.
+- **QQ plot:** Points should follow the diagonal line. Deviations at
+  the tails indicate non-normal innovations (heavy tails are common
+  in financial data).
+- **Ljung-Box test:** Tests whether the residual autocorrelations are
+  jointly zero. All $p$-values should be > 0.05.
+
+If the diagnostics pass, the model is adequate. If they fail, go back
+to Step 3 and try a different order.
+
+
+# Variations, Diagnostics, and Pitfalls {#sec-ch15-variations}
+
+## Non-stationary series: what happens when you don't difference
+
+```{python}
+#| label: non-stationary-failure
+# Generate a random walk (non-stationary)
+y_rw = np.cumsum(rng.standard_normal(300))
+
+# WRONG: fit AR(1) without differencing
+ar_wrong = ARIMA(y_rw, order=(1, 0, 0)).fit()
+print(f"AR(1) on random walk: phi = {ar_wrong.params[1]:.4f}")
+print(f"This is close to 1 — the 'unit root' we should have detected!")
+print(f"ADF test: p = {adfuller(y_rw)[1]:.4f} → non-stationary!")
+
+# RIGHT: difference first, then fit
+ar_right = ARIMA(y_rw, order=(0, 1, 0)).fit()
+print(f"\nARIMA(0,1,0) = random walk model")
+print(f"ADF on diff(y): p = {adfuller(np.diff(y_rw))[1]:.4f} → stationary!")
+```
+
+**Lesson:** Always test for stationarity *before* fitting. Fitting
+AR(1) to a random walk gives $\hat{\phi} \approx 1$ with misleading
+confidence intervals (because the standard $t$-test doesn't apply for
+near-unit-root processes).
+
+## Seasonal ARIMA (SARIMAX)
+
+Many real-world series have seasonal patterns: ice cream sales peak
+every summer, unemployment rises every January. SARIMAX extends ARIMA
+with seasonal AR and MA terms.
+
+```{python}
+#| label: seasonal-data
+# Simulate monthly data: trend + 12-month seasonal cycle + noise
+T = 144  # 12 years
+trend = np.linspace(100, 150, T)
+seasonal = 20 * np.sin(2 * np.pi * np.arange(T) / 12)
+y_seasonal = trend + seasonal + 5 * rng.standard_normal(T)
+```
+
+```{python}
+#| label: sarimax-fit
+# Fit SARIMAX with seasonal order
+# order=(1,1,1): ARIMA(1,1,1) for the non-seasonal part
+# seasonal_order=(1,0,1,12): seasonal AR(1), seasonal MA(1), period 12
+sarima = SARIMAX(
+    y_seasonal,
+    order=(1, 1, 1),              # non-seasonal: AR(1), d=1, MA(1)
+    seasonal_order=(1, 0, 1, 12), # seasonal: AR(1), D=0, MA(1), period=12
+    enforce_stationarity=True,    # keep AR coefficients in stationarity region
+    enforce_invertibility=True,   # keep MA coefficients in invertibility region
+).fit(disp=0)
+
+print(f"SARIMAX AIC: {sarima.aic:.1f}")
+print(f"\nNon-seasonal AR: {sarima.params[0]:.3f}")
+print(f"Non-seasonal MA: {sarima.params[1]:.3f}")
+print(f"Seasonal AR:     {sarima.params[2]:.3f}")
+print(f"Seasonal MA:     {sarima.params[3]:.3f}")
+```
+
+```{python}
+#| label: fig-forecast
+#| fig-cap: "SARIMAX forecast with 95% prediction intervals. The model captures both the upward trend (via differencing) and the 12-month seasonal cycle. Prediction intervals widen with the forecast horizon — longer-term forecasts are more uncertain."
+
+forecast = sarima.get_forecast(steps=24)
+pred = forecast.predicted_mean
+ci = forecast.conf_int()
+
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(range(T), y_seasonal, color='C0', linewidth=0.8, label='Data')
+ax.plot(range(T, T+24), pred, color='C2', linewidth=1.5, label='Forecast')
+ax.fill_between(range(T, T+24), ci[:, 0], ci[:, 1],
+                alpha=0.2, color='C2', label='95% CI')
+ax.axvline(T, color='gray', linestyle='--', alpha=0.5)
+ax.set_xlabel('Month')
+ax.legend()
+plt.show()
+```
+
+## Exponential smoothing: a different philosophy
+
+Exponential smoothing takes a different approach from ARIMA: instead
+of modeling the autocorrelation structure, it decomposes the series
+into *level*, *trend*, and *seasonal* components, each updated by a
+smoothing parameter.
+
+The three smoothing parameters control adaptivity:
+
+- **alpha** (level): how much weight to give the latest observation
+  vs the past. $\alpha = 0$ means ignore new data; $\alpha = 1$ means
+  ignore all history.
+- **beta** (trend): how quickly the trend can change. Small $\beta$
+  means a stable trend; large $\beta$ allows rapid trend shifts.
+- **gamma** (seasonal): how quickly the seasonal pattern evolves.
+
+```{python}
+#| label: ets-fit
+# ETS(A,A,A): Additive error, Additive trend, Additive seasonal
 ets = ExponentialSmoothing(
-    y_ets,
-    seasonal_periods=12,
-    trend='add',      # additive trend (vs 'mul' for multiplicative)
-    seasonal='add',   # additive seasonality
-).fit(optimized=True)  # optimize the smoothing parameters
+    y_seasonal,
+    seasonal_periods=12,   # the seasonal cycle length
+    trend='add',           # additive trend (linear)
+    seasonal='add',        # additive seasonality
+).fit(optimized=True)      # let statsmodels optimize alpha, beta, gamma
 
 print(f"Smoothing parameters:")
 print(f"  alpha (level):    {ets.params['smoothing_level']:.3f}")
 print(f"  beta  (trend):    {ets.params['smoothing_trend']:.3f}")
 print(f"  gamma (seasonal): {ets.params['smoothing_seasonal']:.3f}")
-print(f"AIC: {ets.aic:.1f}")
-```
-
-```{python}
-#| label: fig-ets-forecast
-#| fig-cap: "ETS fit and 24-month forecast with prediction interval."
-
-forecast = ets.forecast(24)
-fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(range(T), y_ets, color="C0", linewidth=0.8, label="Data")
-ax.plot(range(T), ets.fittedvalues, color="C1", linewidth=1, label="Fitted")
-ax.plot(range(T, T+24), forecast, color="C2", linewidth=1.5, label="Forecast")
-ax.fill_between(range(T, T+24), forecast - 2*np.std(ets.resid),
-                forecast + 2*np.std(ets.resid), alpha=0.2, color="C2")
-ax.axvline(T, color="gray", linestyle="--", alpha=0.5)
-ax.legend(); ax.set_xlabel("Month")
-plt.show()
-```
-
-## SARIMAX (seasonal ARIMA)
-
-```{python}
-#| label: sarimax-demo
-sarima = SARIMAX(
-    y_ets, order=(1, 1, 1), seasonal_order=(1, 0, 1, 12),
-    enforce_stationarity=True, enforce_invertibility=True,
-).fit(disp=0)
+print(f"\nAIC: {ets.aic:.1f}")
 print(f"SARIMAX AIC: {sarima.aic:.1f}")
-print(f"ETS AIC:     {ets.aic:.1f}")
 ```
+
+**When to use ETS vs ARIMA:**
+
+| Criterion | ETS | ARIMA |
+|---|---|---|
+| Philosophy | Decompose into components | Model autocorrelation |
+| Interpretability | Easy (level, trend, seasonal) | Harder (AR/MA coefficients) |
+| Flexibility | Fixed component structure | Data-driven via ACF/PACF |
+| Handling of non-linearity | Multiplicative options | Linear only |
+| Connection to state space | Chapter 16 | Chapter 16 |
+
+In practice, both give similar forecasts for well-behaved series.
+ARIMA is more flexible; ETS is more interpretable.
 
 
 # From-Scratch Implementation {#sec-ch15-scratch}
 
-## AR(p) via Yule--Walker
+## AR(p) via the Yule-Walker equations
+
+The Yule-Walker equations relate the AR coefficients to the
+autocorrelation function. For AR($p$):
+
+$$
+\begin{pmatrix} \gamma(0) & \gamma(1) & \cdots & \gamma(p-1) \\
+\gamma(1) & \gamma(0) & \cdots & \gamma(p-2) \\
+\vdots & & \ddots & \vdots \\
+\gamma(p-1) & \gamma(p-2) & \cdots & \gamma(0) \end{pmatrix}
+\begin{pmatrix} \phi_1 \\ \phi_2 \\ \vdots \\ \phi_p \end{pmatrix}
+= \begin{pmatrix} \gamma(1) \\ \gamma(2) \\ \vdots \\ \gamma(p) \end{pmatrix}
+$$
+
+This is a system of linear equations: estimate the autocovariances
+$\gamma(k)$ from data, build the Toeplitz matrix, and solve.
 
 ```{python}
 #| label: yule-walker
 
 def fit_ar_yule_walker(y, p):
-    """AR(p) via Yule-Walker equations (moment estimator)."""
-    n = len(y); yc = y - y.mean()
-    gamma = np.array([np.sum(yc[:n-k]*yc[k:])/n for k in range(p+1)])
+    """Fit AR(p) using the Yule-Walker equations.
+
+    This is a moment-based estimator (not MLE). It is fast and
+    non-iterative, but less efficient than MLE for finite samples.
+
+    Parameters
+    ----------
+    y : array (T,)
+        Time series data.
+    p : int
+        AR order.
+
+    Returns
+    -------
+    phi : array (p,)
+        Estimated AR coefficients.
+    sigma2 : float
+        Estimated innovation variance.
+    """
+    T = len(y)
+    y_centered = y - y.mean()
+
+    # Estimate autocovariances gamma(0), ..., gamma(p)
+    gamma = np.array([
+        np.sum(y_centered[:T-k] * y_centered[k:]) / T
+        for k in range(p + 1)
+    ])
+
+    # Build the Toeplitz matrix R[i,j] = gamma(|i-j|)
     R = np.array([[gamma[abs(i-j)] for j in range(p)] for i in range(p)])
+
+    # Right-hand side: [gamma(1), ..., gamma(p)]
     r = gamma[1:p+1]
+
+    # Solve: R @ phi = r
     phi = np.linalg.solve(R, r)
+
+    # Innovation variance: gamma(0) - phi' @ r
     sigma2 = gamma[0] - phi @ r
+
     return phi, sigma2
 
-phi_yw, sig2_yw = fit_ar_yule_walker(y_ar, 2)
-print(f"Yule-Walker: phi={phi_yw.round(3)}")
-print(f"ARIMA MLE:   phi={model.params[1:3].round(3)}")
-print(f"True:        phi=[{phi1}, {phi2}]")
+# Verify against ARIMA MLE
+phi_yw, sigma2_yw = fit_ar_yule_walker(y_ar, 2)
+
+print(f"{'Method':<15} {'phi1':>8} {'phi2':>8} {'sigma2':>8}")
+print(f"{'Yule-Walker':<15} {phi_yw[0]:>8.4f} {phi_yw[1]:>8.4f} {sigma2_yw:>8.4f}")
+print(f"{'ARIMA MLE':<15} {model.params[1]:>8.4f} {model.params[2]:>8.4f} {model.params[3]:>8.4f}")
+print(f"{'True':<15} {phi1:>8.4f} {phi2:>8.4f} {'1.0000':>8}")
 ```
 
+Yule-Walker is fast (no iteration) but less efficient than MLE. For
+small samples, the difference can be substantial. For large samples,
+they converge to the same estimates.
 
-# Diagnostics {#sec-ch15-diagnostics}
+## One-step-ahead forecast from scratch
 
 ```{python}
-#| label: fig-diagnostics
-#| fig-cap: "Residual diagnostics for AR(2): standardized residuals, residual ACF, QQ plot, and Ljung-Box p-values."
+#| label: forecast-scratch
+# Given the fitted AR(2), forecast the next 10 values
+phi = np.array([phi1, phi2])  # true parameters
+y_last = y_ar[-2:]  # last two observations
 
-fig, axes = plt.subplots(2, 2, figsize=(10, 7))
-resid = model.resid
-axes[0,0].plot(resid/resid.std(), linewidth=0.5)
-axes[0,0].set_title("Std. residuals")
-plot_acf(resid, lags=20, ax=axes[0,1], alpha=0.05)
-stats.probplot(resid, plot=axes[1,0])
-lb = acorr_ljungbox(resid, lags=range(1,21), return_df=True)
-axes[1,1].scatter(lb.index, lb['lb_pvalue'], s=20)
-axes[1,1].axhline(0.05, color="C1", linestyle="--", alpha=0.5)
-axes[1,1].set_xlabel("Lag"); axes[1,1].set_ylabel("p-value")
-plt.tight_layout()
-plt.show()
+forecasts = []
+for h in range(10):
+    if h == 0:
+        y_hat = phi[0] * y_ar[-1] + phi[1] * y_ar[-2]
+    elif h == 1:
+        y_hat = phi[0] * forecasts[0] + phi[1] * y_ar[-1]
+    else:
+        y_hat = phi[0] * forecasts[h-1] + phi[1] * forecasts[h-2]
+    forecasts.append(y_hat)
+
+print(f"Next 10 forecasts: {np.array(forecasts).round(3)}")
+print(f"Notice: forecasts converge to the mean (0) as h → ∞")
+print(f"This is the mean-reversion property of stationary AR models.")
 ```
 
 
@@ -285,45 +667,82 @@ plt.show()
 
 | Method | Cost | Notes |
 |---|---|---|
-| AR Yule-Walker | $O(Tp + p^3)$ | Non-iterative |
-| ARIMA MLE | $O(T(p+q)^2)$ per iter | Via Kalman filter |
-| ETS | $O(T)$ per eval | Numerical optimization of $\alpha,\beta,\gamma$ |
+| AR Yule-Walker | $O(Tp + p^3)$ | Non-iterative, fast |
+| ARIMA MLE (via Kalman) | $O(T(p+q)^2)$ per iter | 5-20 iterations typical |
+| ETS optimization | $O(T)$ per function eval | Numerical optimization of $\alpha,\beta,\gamma$ |
+| SARIMAX | $O(T \cdot s^2)$ per iter | $s$ = seasonal period; can be slow for large $s$ |
+
+For very long series ($T > 10^5$), the Kalman-filter-based ARIMA MLE
+becomes expensive. Consider the CSS (conditional sum of squares)
+approximation or fast AR estimation via Yule-Walker.
 
 
 # Worked Example {#sec-ch15-example}
 
-```{python}
-#| label: worked-bj
-# Box-Jenkins workflow on seasonal data
-T_w = 144
-y_w = (100 + 2.5*np.arange(T_w) + 30*np.sin(2*np.pi*np.arange(T_w)/12)
-       + 10*rng.standard_normal(T_w))
+The complete Box-Jenkins workflow on a seasonal dataset.
 
-# Step 1: Stationarity
-print(f"ADF on raw: p={adfuller(y_w)[1]:.4f}")
-print(f"ADF on diff: p={adfuller(np.diff(y_w))[1]:.4f}")
+```{python}
+#| label: worked-data
+# Simulated monthly data with trend + seasonality
+T_w = 144
+months = np.arange(T_w)
+y_w = (100 + 2.5 * months
+       + 30 * np.sin(2 * np.pi * months / 12)
+       + 10 * rng.standard_normal(T_w))
+
+print(f"Series length: {T_w} months ({T_w//12} years)")
+print(f"Range: [{y_w.min():.0f}, {y_w.max():.0f}]")
+```
+
+```{python}
+#| label: worked-steps
+# Step 1: Test stationarity
+print("Step 1: Stationarity")
+print(f"  ADF on raw series:    p = {adfuller(y_w)[1]:.4f} → non-stationary")
+print(f"  ADF on differenced:   p = {adfuller(np.diff(y_w))[1]:.4f} → stationary")
+print(f"  → Need d=1 (one round of differencing)")
 
 # Step 2-3: Fit SARIMAX
-sarima_w = SARIMAX(y_w, order=(1,1,1), seasonal_order=(1,0,1,12),
-                    enforce_stationarity=True, enforce_invertibility=True).fit(disp=0)
-print(f"AIC: {sarima_w.aic:.1f}")
+print(f"\nStep 2-3: Fit SARIMAX(1,1,1)(1,0,1,12)")
+sarima_w = SARIMAX(
+    y_w, order=(1, 1, 1), seasonal_order=(1, 0, 1, 12),
+    enforce_stationarity=True, enforce_invertibility=True,
+).fit(disp=0)
+print(f"  AIC: {sarima_w.aic:.1f}")
 
-# Step 4: Diagnostics
+# Step 4: Check residuals
 lb_w = acorr_ljungbox(sarima_w.resid, lags=20, return_df=True)
-print(f"Ljung-Box min p: {lb_w['lb_pvalue'].min():.4f}")
+print(f"\nStep 4: Residual diagnostics")
+print(f"  Ljung-Box: all p > 0.05? {(lb_w['lb_pvalue'] > 0.05).all()}")
+print(f"  Min p-value: {lb_w['lb_pvalue'].min():.4f}")
+
+# Step 5: Forecast
+print(f"\nStep 5: Forecast next 24 months")
+fc_w = sarima_w.get_forecast(24)
+print(f"  Point forecast (month 1): {fc_w.predicted_mean.iloc[0]:.1f}")
+print(f"  95% CI width (month 1):   {fc_w.conf_int().iloc[0, 1] - fc_w.conf_int().iloc[0, 0]:.1f}")
+print(f"  95% CI width (month 24):  {fc_w.conf_int().iloc[23, 1] - fc_w.conf_int().iloc[23, 0]:.1f}")
+print(f"  → CI widens with forecast horizon (more uncertainty)")
 ```
 
 ```{python}
 #| label: fig-worked-forecast
-#| fig-cap: "SARIMA forecast with prediction intervals."
+#| fig-cap: "Complete Box-Jenkins analysis: SARIMAX(1,1,1)(1,0,1,12) fit and 24-month forecast. The model captures both the trend and seasonal pattern. Prediction intervals (shaded) widen with the forecast horizon."
 
-fc = sarima_w.get_forecast(24)
 fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(range(T_w), y_w, color="C0", linewidth=0.8, label="Data")
-ax.plot(range(T_w, T_w+24), fc.predicted_mean, color="C2", linewidth=1.5, label="Forecast")
-ci = fc.conf_int()
-ax.fill_between(range(T_w, T_w+24), ci[:,0], ci[:,1], alpha=0.2, color="C2")
-ax.axvline(T_w, color="gray", linestyle="--", alpha=0.5); ax.legend()
+ax.plot(range(T_w), y_w, color='C0', linewidth=0.8, label='Data')
+ax.plot(range(T_w), sarima_w.fittedvalues, color='C1',
+        linewidth=0.8, alpha=0.7, label='Fitted')
+
+fc_mean = fc_w.predicted_mean
+fc_ci = fc_w.conf_int()
+ax.plot(range(T_w, T_w + 24), fc_mean, color='C2',
+        linewidth=1.5, label='Forecast')
+ax.fill_between(range(T_w, T_w + 24), fc_ci.iloc[:, 0], fc_ci.iloc[:, 1],
+                alpha=0.2, color='C2')
+ax.axvline(T_w, color='gray', linestyle='--', alpha=0.5)
+ax.set_xlabel('Month')
+ax.legend()
 plt.show()
 ```
 
@@ -331,76 +750,142 @@ plt.show()
 # Exercises {#sec-ch15-exercises}
 
 **Exercise 15.1** ($\star\star$, diagnostic failure). Fit AR(1) to a
-random walk without differencing. What's $\hat{\phi}$? Is it near 1?
-What does ADF say about the original vs differenced series?
+random walk ($y_t = y_{t-1} + \varepsilon_t$) without differencing.
+Report $\hat{\phi}$, the ADF test on the raw and differenced series,
+and the residual ACF. Explain why fitting AR to non-stationary data
+gives misleading results.
 
 %%
 
 ```{python}
 #| label: ex-15-1
-y_rw2 = np.cumsum(rng.standard_normal(200))
-ar_wrong = ARIMA(y_rw2, order=(1,0,0)).fit()
-print(f"phi_hat = {ar_wrong.params[1]:.3f} (near 1 = unit root)")
-print(f"ADF raw: p={adfuller(y_rw2)[1]:.4f}")
-print(f"ADF diff: p={adfuller(np.diff(y_rw2))[1]:.4f}")
-print("Always test stationarity before fitting AR/MA.")
+y_rw_ex = np.cumsum(rng.standard_normal(200))
+
+# Wrong: fit without differencing
+ar_wrong = ARIMA(y_rw_ex, order=(1, 0, 0)).fit()
+print(f"phi_hat = {ar_wrong.params[1]:.4f} (near 1 = unit root)")
+print(f"ADF on raw:  p = {adfuller(y_rw_ex)[1]:.4f}")
+print(f"ADF on diff: p = {adfuller(np.diff(y_rw_ex))[1]:.4f}")
+
+# The residual ACF will show remaining autocorrelation
+lb_wrong = acorr_ljungbox(ar_wrong.resid, lags=10, return_df=True)
+print(f"Ljung-Box: all p > 0.05? {(lb_wrong['lb_pvalue'] > 0.05).all()}")
+print(f"\nThe model is WRONG: phi ≈ 1 means it's a near-unit-root model,")
+print(f"and the t-test on phi is invalid because the ADF distribution")
+print(f"should be used instead of the normal distribution.")
 ```
 
 %%
 
+
 **Exercise 15.2** ($\star\star$, comparison). Fit ARIMA with orders
 (1,0,0), (2,0,0), (0,0,1), (1,0,1), (2,0,1) to the AR(2) data.
-Compare AIC/BIC. Does model selection recover the true order?
+Compare AIC and BIC. Does model selection recover the true order?
+Why might AIC and BIC disagree?
 
 %%
 
 ```{python}
 #| label: ex-15-2
 print(f"{'Order':<10} {'AIC':>8} {'BIC':>8}")
-for order in [(1,0,0),(2,0,0),(0,0,1),(1,0,1),(2,0,1)]:
+for order in [(1,0,0), (2,0,0), (0,0,1), (1,0,1), (2,0,1)]:
     r = ARIMA(y_ar, order=order).fit()
     print(f"{str(order):<10} {r.aic:>8.1f} {r.bic:>8.1f}")
+
+print(f"\nBIC penalizes complexity more than AIC (penalty = ln(n)")
+print(f"instead of 2). BIC is more likely to select the true model;")
+print(f"AIC may pick a slightly larger model that fits marginally better.")
 ```
 
 %%
 
-**Exercise 15.3** ($\star\star$, implementation). Show that for AR(1)
-with $\phi=0.8$, the ACF is $\rho(k) = 0.8^k$. Generate 1000
-observations, overlay sample and theoretical ACF.
+
+**Exercise 15.3** ($\star\star$, implementation). Verify that for an
+AR(1) with $\phi = 0.8$, the theoretical ACF is $\rho(k) = 0.8^k$.
+Generate 1000 observations, compute the sample ACF, and overlay both.
+At what lag does the sample ACF first become non-significant?
 
 %%
 
 ```{python}
 #| label: ex-15-3
-T2 = 1000; y2 = np.zeros(T2)
-for t in range(1,T2): y2[t] = 0.8*y2[t-1]+rng.standard_normal()
-s_acf = acf(y2, nlags=20)
-t_acf = [0.8**k for k in range(21)]
+T_ex = 1000
+y_ex = np.zeros(T_ex)
+for t in range(1, T_ex):
+    y_ex[t] = 0.8 * y_ex[t-1] + rng.standard_normal()
+
+sample_acf = acf(y_ex, nlags=20)
+theoretical_acf = [0.8**k for k in range(21)]
+band = 1.96 / np.sqrt(T_ex)
+
 fig, ax = plt.subplots()
-ax.bar(range(21), s_acf, width=0.4, alpha=0.7, label="Sample")
-ax.plot(range(21), t_acf, 'o-', color="C1", markersize=4, label=r"$0.8^k$")
-ax.legend(); plt.show()
+ax.bar(range(21), sample_acf, width=0.4, alpha=0.7,
+       label='Sample ACF', color='C0')
+ax.plot(range(21), theoretical_acf, 'o-', color='C1',
+        markersize=4, label=r'Theory: $\rho(k) = 0.8^k$')
+ax.axhline(band, color='gray', linestyle='--', alpha=0.5)
+ax.axhline(-band, color='gray', linestyle='--', alpha=0.5)
+ax.set_xlabel('Lag k')
+ax.set_ylabel('ACF')
+ax.legend()
+plt.show()
+
+# First non-significant lag
+first_ns = np.where(np.abs(sample_acf[1:]) < band)[0]
+if len(first_ns) > 0:
+    print(f"First non-significant lag: {first_ns[0] + 1}")
 ```
 
-%%
-
-**Exercise 15.4** ($\star\star\star$, conceptual). ADF and KPSS test
-opposite nulls. Explain why using both gives more information. What
-does "ADF doesn't reject, KPSS rejects" mean?
+The theoretical ACF matches the sample ACF closely. The ACF becomes
+non-significant around lag 15-20 (where $0.8^{k} < 1.96/\sqrt{1000}
+\approx 0.06$).
 
 %%
 
-ADF doesn't reject = can't conclude stationarity (but doesn't prove
-unit root — may lack power). KPSS rejects = evidence against
-stationarity. Together: strong evidence of a unit root. This is more
-informative than either test alone because it rules out the ambiguous
-"insufficient evidence" interpretation of a single non-rejection.
+
+**Exercise 15.4** ($\star\star\star$, conceptual). The ADF and KPSS
+tests have opposite null hypotheses. Explain why using both together
+gives more information than either alone. Construct a scenario where
+one test is inconclusive but the combination is decisive.
+
+%%
+
+A single test can only reject or fail to reject its null. Failing to
+reject doesn't mean the null is true --- the test may lack power.
+
+- **ADF alone fails to reject (p = 0.15):** Is the series stationary
+  or just too short for ADF to detect the unit root? Unknown.
+- **Add KPSS: rejects (p = 0.01):** Now we have positive evidence
+  *against* stationarity. Combined with ADF's non-rejection (no
+  evidence against unit root), the conclusion is clear: unit root.
+
+The two tests are informative because they test *different things*:
+ADF tests for evidence OF a unit root; KPSS tests for evidence
+AGAINST stationarity. When they agree (both in the same direction),
+you can be confident. When they disagree, you may have a borderline
+case (near-unit-root or structural break).
 
 %%
 
 
 # Bibliographic Notes {#sec-ch15-biblio}
 
-Box and Jenkins (1970) for the methodology. Dickey and Fuller (1979)
-for ADF. KPSS: Kwiatkowski et al. (1992). ETS taxonomy: Hyndman et al.
-(2002). Hamilton (1994) for the asymptotic theory of unit root tests.
+The Box-Jenkins methodology: Box and Jenkins (1970), updated in Box,
+Jenkins, Reinsel, and Ljung (2015). Still the definitive reference.
+
+The Wold decomposition: Wold (1938). This foundational theorem
+justifies the ARMA framework.
+
+Unit root testing: Dickey and Fuller (1979, 1981) for ADF. The
+non-standard asymptotic theory (functional CLT, Brownian motion limits)
+is in Phillips (1987) and Hamilton (1994), Chapter 17. KPSS:
+Kwiatkowski, Phillips, Schmidt, and Shin (1992).
+
+Exponential smoothing: the ETS framework is from Hyndman et al. (2002).
+The connection to state-space models (Ch. 16): every ETS model can be
+written as a linear Gaussian state-space model, making ETS a special
+case of the Kalman filter.
+
+For a modern computational treatment: Hyndman and Athanasopoulos (2021),
+*Forecasting: Principles and Practice* (R-based, but the concepts
+transfer directly to statsmodels).
