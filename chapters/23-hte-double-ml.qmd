@@ -379,7 +379,8 @@ def dml_interactive(X, D, Y, n_folds=5, seed=42):
 
         # Propensity
         m = LogisticRegressionCV(cv=3, random_state=seed, max_iter=5000,
-                                    l1_ratios=(0,))
+                                    l1_ratios=(0,),
+                                    use_legacy_attributes=False)
         m.fit(X[train_idx], D[train_idx])
 
         # Predict on test fold

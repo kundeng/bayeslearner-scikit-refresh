@@ -27,3 +27,5 @@ Thumbs.db
 
 # Rendered figures (regenerated from code)
 _site/
+
+/.quarto/
