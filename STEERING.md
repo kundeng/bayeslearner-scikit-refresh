@@ -170,19 +170,21 @@ This section may contain short code demonstrations when a theoretical claim is b
 
 Length: 3–8 pages. Shorter is better if the intuition is clear.
 
-### Section 3: The Algorithm
+### Section 3: The Algorithm and SciPy Implementation
 
-The method translated into a step-by-step procedure. Presented as pseudocode using the conventions in §2.8. The pseudocode is complete enough that a reader could implement it from this section alone. Where the algorithm has variants, the main variant is presented first and the alternatives discussed after.
+The method translated into code. This section shows both *how the algorithm works* (step by step, with pseudocode or annotated Python) and *how scipy/statsmodels implements it* (the actual API call, every important parameter explained, what defaults mean and when to override them).
 
-This section contains pseudocode blocks but no Python code.
+This is where theory meets code. The reader should understand what every line does and why the API is designed the way it is. Show the mapping between mathematical notation and function parameters.
 
-Length: 2–5 pages.
+Length: 3–8 pages.
 
-### Section 4: Statistical Properties
+### Section 4: Variations, Diagnostics, and Pitfalls
 
-What the estimator or algorithm converges to, at what rate, under what conditions. Consistency, asymptotic normality, efficiency, breakdown. This section connects the algorithm from Section 3 to the theory from Section 2: "The algorithm converges to the quantity we defined, at the rate we proved, under the assumptions we stated."
+What are the alternatives? When does this method fail? How do you detect failure? What do you do about it?
 
-This section contains no code.
+This is practical knowledge: method variations (e.g., different solvers, different link functions), diagnostic plots and tests, common pitfalls (e.g., convergence failures, misspecified models), and rules of thumb for choosing between options. Not every algorithm is about convergence rates --- some are about choosing the right model, tuning parameters, or recognizing when the output is garbage.
+
+This section is prescriptive: "Check X. If X fails, try Y."
 
 Length: 2–5 pages.
 
