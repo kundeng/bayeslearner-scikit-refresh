@@ -368,15 +368,10 @@ both series before modeling (use VAR in differences).
 
 ```{python}
 #| label: stability
-# Check VAR stability: all eigenvalues of companion matrix inside unit circle
-eigenvalues = np.linalg.eigvals(
-    np.vstack([var_result.coefs[0],
-               np.eye(2, 4)[:, :2] if var_result.k_ar > 1 else np.eye(0)])
-) if var_result.k_ar == 1 else None
-
-# For VAR(1), eigenvalues are just eigenvalues of Phi
+# Check VAR stability: all eigenvalues of the lag-1 coefficient matrix
+# must lie inside the unit circle (|eigenvalue| < 1)
 eigs = np.linalg.eigvals(var_result.coefs[0])
-print(f"Eigenvalues of Phi: {eigs.round(3)}")
+print(f"Eigenvalues of Phi_1: {eigs.round(3)}")
 print(f"|eigenvalues|: {np.abs(eigs).round(3)}")
 print(f"All inside unit circle: {np.all(np.abs(eigs) < 1)} → stable")
 ```
@@ -453,12 +448,13 @@ def fit_var1(y):
 
     return Phi, Sigma
 
-# Verify
+# Verify against statsmodels VAR(1)
 Phi_hat, Sigma_hat = fit_var1(y_var)
+var1_check = VAR(y_var).fit(maxlags=1)
 print(f"From-scratch Phi:")
 print(Phi_hat.round(3))
-print(f"\nstatsmodels Phi:")
-print(var_result.coefs[0].round(3))
+print(f"\nstatsmodels VAR(1) Phi:")
+print(var1_check.coefs[0].round(3))
 print(f"\nTrue Phi:")
 print(Phi)
 ```

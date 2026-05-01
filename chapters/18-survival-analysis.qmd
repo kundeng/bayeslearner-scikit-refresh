@@ -49,47 +49,139 @@ shows how to use them and what they compute.
 
 # Mathematical Foundation {#sec-ch18-math}
 
+## Why censoring changes everything
+
+In standard regression, you observe $(x_i, y_i)$ for every unit. In
+survival analysis, some outcomes are *censored*: you know the event
+hasn't happened yet, but you don't know when it will. For example, a
+patient is still alive when the study ends --- you know they survived
+at least 5 years, but not how much longer.
+
+**Why you can't just drop censored observations:** Censored subjects
+tend to be the ones who survived longest. Dropping them biases the
+sample toward shorter survival times, making the treatment look worse
+than it is.
+
+**Why you can't treat them as events:** That would pretend that the
+patient died at the censoring time, when in fact they were still alive.
+This biases survival times downward.
+
+**The correct approach:** The likelihood contributes differently for
+events and censored observations:
+
+- For an event at time $t_i$: the likelihood contribution is $f(t_i)$
+  (the density --- the probability of the event occurring at exactly
+  this time).
+- For a censored observation at time $c_i$: the contribution is
+  $S(c_i)$ (the survival function --- the probability of surviving
+  at least until the censoring time).
+
+This is the key: censored observations tell you "the event time was
+*at least* this long," and the likelihood encodes this correctly.
+
 ## Survival, hazard, and their relationship
 
+Three functions characterize the time-to-event distribution:
+
 $$
-S(t) = \Pr(T > t) = \exp(-H(t)), \qquad h(t) = -\frac{d}{dt}\ln S(t).
+S(t) = \Pr(T > t), \qquad h(t) = \lim_{\Delta t \to 0}\frac{\Pr(t \leq T < t + \Delta t \mid T \geq t)}{\Delta t}, \qquad H(t) = \int_0^t h(u)\,du.
 $$
 
-The hazard $h(t)$ is the instantaneous risk of the event at time $t$,
-given survival to $t$. The survival function $S(t)$ is the probability
-of surviving past $t$. They are related through the cumulative hazard
-$H(t) = -\ln S(t)$.
+- **Survival function $S(t)$:** The probability of surviving past time
+  $t$. Starts at $S(0) = 1$ and decreases.
+- **Hazard function $h(t)$:** The instantaneous risk of the event at
+  time $t$, given you have survived until $t$. This is NOT a
+  probability (it can exceed 1). Think of it as a rate.
+- **Cumulative hazard $H(t)$:** The accumulated risk up to time $t$.
+
+They are related: $S(t) = \exp(-H(t))$ and $h(t) = -\frac{d}{dt}\ln S(t)$.
+
+**Why the hazard matters:** It is the natural quantity for regression.
+The question "does the drug reduce mortality?" translates to "does the
+drug lower the hazard function?" The Cox model formalizes this.
 
 ## Kaplan--Meier: nonparametric survival estimation
 
-The Kaplan--Meier estimator is a step function:
+The Kaplan--Meier (KM) estimator is the nonparametric MLE of $S(t)$.
+It works by computing the conditional probability of surviving past
+each event time, given you survived to that point:
+
 $$
 \hat{S}(t) = \prod_{t_j \leq t} \left(1 - \frac{d_j}{n_j}\right),
-$$
+$$ {#eq-km}
+
 where $t_j$ are the distinct event times, $d_j$ is the number of
-events at $t_j$, and $n_j$ is the number at risk just before $t_j$.
+events at $t_j$, and $n_j$ is the number *at risk* just before $t_j$.
+
+**Why it is a product of conditional probabilities:** The probability
+of surviving past time $t$ can be decomposed:
+$S(t) = \Pr(T > t_1) \cdot \Pr(T > t_2 \mid T > t_1) \cdots$
+Each factor $(1 - d_j/n_j)$ estimates $\Pr(T > t_j \mid T \geq t_j)$
+--- the conditional probability of surviving past $t_j$ given you made
+it to $t_j$.
+
+**How censoring enters:** Censored subjects are included in the risk
+set $n_j$ as long as they are still under observation. When they are
+censored (between event times), they leave the risk set. This is why
+KM handles censoring correctly: censored subjects contribute to the
+estimate for as long as they are observed, then drop out.
 
 **Greenwood's formula** for the variance:
 $\widehat{\text{Var}}(\hat{S}(t)) = \hat{S}(t)^2 \sum_{t_j \leq t} \frac{d_j}{n_j(n_j - d_j)}$.
+This gives the confidence band around the KM curve.
 
-## Cox proportional hazards
+## Cox proportional hazards: the key idea
 
-The Cox model specifies the hazard as:
+The Cox model separates the effect of covariates from the baseline
+hazard:
+
 $$
 h(t \mid \mathbf{x}) = h_0(t) \exp(\mathbf{x}^\top\boldsymbol{\beta}),
 $$ {#eq-cox}
-where $h_0(t)$ is an unspecified baseline hazard. The key insight:
-$h_0(t)$ cancels in the *partial likelihood*, so $\boldsymbol{\beta}$
-can be estimated without specifying the baseline hazard. This is why
-Cox regression is called "semiparametric."
 
-**The partial likelihood:**
+where $h_0(t)$ is an *unspecified* baseline hazard (a completely free
+function of time).
+
+**What "proportional hazards" means:** The ratio of hazards for two
+individuals with different covariates is *constant over time*:
+$$
+\frac{h(t \mid \mathbf{x}_1)}{h(t \mid \mathbf{x}_2)} = \exp((\mathbf{x}_1 - \mathbf{x}_2)^\top\boldsymbol{\beta}).
+$$
+
+This ratio does not depend on $t$ --- the "proportional" part. If the
+drug halves the hazard at one month, it halves it at every month.
+This is a strong assumption and should be checked (Schoenfeld
+residuals).
+
+**Why the partial likelihood works:** The genius of Cox (1972) is that
+you can estimate $\boldsymbol{\beta}$ without knowing $h_0(t)$. The
+partial likelihood asks: at each event time, given that *someone* in
+the risk set died, what is the probability it was the person who
+actually died?
+
 $$
 \mathcal{L}_P(\boldsymbol{\beta}) = \prod_{i:\delta_i=1} \frac{\exp(\mathbf{x}_i^\top\boldsymbol{\beta})}{\sum_{j \in \mathcal{R}(t_i)} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})},
 $$ {#eq-partial-lik}
-where $\mathcal{R}(t_i)$ is the risk set at time $t_i$ (everyone still
-at risk). Each factor compares the event subject's hazard to the total
-hazard in the risk set.
+
+Each factor is a softmax: the probability that subject $i$ (the one
+who actually died) had the highest hazard among everyone still at risk.
+The baseline hazard $h_0(t)$ appears in both the numerator and
+denominator and *cancels*. This is why Cox regression is
+"semiparametric" --- it makes no assumption about the shape of the
+baseline hazard.
+
+**Interpreting the coefficients:** $\exp(\beta_j)$ is the *hazard ratio*.
+If $\exp(\beta_j) = 0.5$, a one-unit increase in $x_j$ halves the
+hazard (protective). If $\exp(\beta_j) = 2$, it doubles the hazard
+(harmful).
+
+## The log-rank test
+
+The log-rank test compares survival curves between two groups. It
+turns out to be equivalent to the *score test* (Chapter 10) from a
+Cox model with a single binary covariate (group indicator). When the
+log-rank test rejects, it means the two groups have significantly
+different hazard functions.
 
 
 # The Algorithm {#sec-ch18-algorithm}
@@ -283,13 +375,107 @@ print(f"statsmodels:       S={sf.surv_prob[len(sf.surv_prob)//2]:.3f}")
 ```
 
 
-# Diagnostics {#sec-ch18-diagnostics}
+# Variations, Diagnostics, and Pitfalls {#sec-ch18-diagnostics}
 
-1. **Schoenfeld residuals:** Test PH assumption. Plot against time;
-   trend = PH violation.
-2. **Cox-Snell residuals:** Should follow Exp(1) if model is correct.
-3. **Log-log plot:** $\ln(-\ln(\hat{S}(t)))$ vs $\ln(t)$ should be
-   parallel lines for proportional hazards.
+## Checking the proportional hazards assumption
+
+The PH assumption ($h(t|\mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol{\beta})$)
+says the hazard ratio is *constant over time*. If the treatment effect
+wears off, or if it takes time to kick in, PH is violated.
+
+**Schoenfeld residuals** are the diagnostic tool. Each event contributes
+one Schoenfeld residual per covariate. Under PH, these residuals should
+have no trend when plotted against time. A visible trend indicates the
+effect of that covariate changes over time.
+
+```{python}
+#| label: fig-ph-check
+#| fig-cap: "Schoenfeld residuals for the treatment variable. A flat pattern supports the PH assumption. A visible trend (e.g., declining residuals) would indicate that the treatment effect changes over time."
+
+schoenfeld = cox.schoenfeld_residuals
+
+fig, ax = plt.subplots()
+event_times = t_obs_cox[d_cox == 1]
+ax.scatter(event_times, schoenfeld[:, 1], s=10, alpha=0.5)
+ax.axhline(0, color='gray', linewidth=0.5)
+
+# Add LOWESS smooth to detect trends
+from statsmodels.nonparametric.smoothers_lowess import lowess
+smooth = lowess(schoenfeld[:, 1], event_times, frac=0.3)
+ax.plot(smooth[:, 0], smooth[:, 1], color='C1', linewidth=2,
+        label='LOWESS smooth')
+
+ax.set_xlabel('Event time')
+ax.set_ylabel('Schoenfeld residual (treatment)')
+ax.set_title('PH assumption check')
+ax.legend()
+plt.show()
+```
+
+**How to read it:** A flat LOWESS line (near zero) means the treatment
+effect is constant over time → PH holds. A rising or falling line means
+the effect changes → PH is violated → consider a time-varying
+coefficient or stratified Cox model.
+
+## Log-log plot: graphical PH check
+
+Another way to check PH for a categorical variable: plot
+$\ln(-\ln(\hat{S}(t)))$ vs $\ln(t)$ for each group. Under PH, the
+curves should be parallel (constant vertical distance).
+
+```{python}
+#| label: fig-loglog
+#| fig-cap: "Log-log survival plot by group. Parallel curves support the PH assumption. Crossing curves indicate PH violation."
+
+fig, ax = plt.subplots()
+for g, label, color in [(0, 'Control', 'C0'), (1, 'Treated', 'C1')]:
+    mask_g = group == g
+    sf_g = SurvfuncRight(t_obs[mask_g], d[mask_g])
+    # log(-log(S(t))) vs log(t)
+    valid = sf_g.surv_prob > 0
+    ax.step(np.log(sf_g.surv_times[valid]),
+            np.log(-np.log(sf_g.surv_prob[valid])),
+            where='post', label=label, color=color)
+
+ax.set_xlabel('ln(time)')
+ax.set_ylabel('ln(-ln(S(t)))')
+ax.set_title('Log-log plot (parallel = PH holds)')
+ax.legend()
+plt.show()
+```
+
+## When PH fails: what to do
+
+If the PH assumption is violated:
+
+1. **Time-varying coefficients:** Allow $\beta(t)$ to change over time.
+   Statsmodels does not support this directly; use the `lifelines`
+   package (`CoxTimeVaryingFitter`).
+
+2. **Stratified Cox model:** If PH fails for a categorical variable
+   (e.g., gender), stratify by that variable. Each stratum gets its
+   own baseline hazard $h_{0,s}(t)$, but the other coefficients are
+   shared. Use `PHReg` with the `strata` argument.
+
+3. **Accelerated failure time (AFT) models:** Instead of modeling the
+   hazard ratio, model the time ratio directly:
+   $\ln T = \mathbf{x}^\top\boldsymbol{\beta} + \sigma W$. Use
+   `lifelines.WeibullAFTFitter` or `LogNormalAFTFitter`.
+
+## Common pitfalls
+
+1. **Ignoring censoring:** Treating censored observations as events
+   or dropping them biases the analysis. Always use survival methods.
+
+2. **Informative censoring:** The methods assume censoring is
+   *independent* of the event process (non-informative). If patients
+   drop out of a study because they are getting sicker, censoring is
+   informative and the KM estimator is biased.
+
+3. **Ignoring competing risks:** If patients can die from multiple
+   causes, the KM estimator for one cause is biased because it treats
+   deaths from other causes as censoring. Use cause-specific hazards
+   or the Fine-Gray subdistribution hazard.
 
 
 # Computational Considerations {#sec-ch18-computation}
