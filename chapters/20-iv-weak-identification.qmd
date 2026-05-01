@@ -46,29 +46,75 @@ statsmodels does not.
 
 ## The endogeneity problem
 
-Model: $y_i = \mathbf{x}_i^\top\boldsymbol{\beta} + \varepsilon_i$
-where $\mathbb{E}[\varepsilon_i \mid \mathbf{x}_i] \neq 0$.
+In standard regression (Ch. 11), OLS is consistent because
+$\mathbb{E}[\varepsilon \mid \mathbf{X}] = 0$ --- the errors are
+uncorrelated with the regressors. *Endogeneity* is when this fails:
+$\text{Cov}(X, \varepsilon) \neq 0$.
 
-OLS gives $\hat{\beta}_{\text{OLS}} \to \beta + (\mathbb{E}[\mathbf{x}\mathbf{x}^\top])^{-1}\mathbb{E}[\mathbf{x}\varepsilon]$
-— biased by the endogeneity.
+**Why endogeneity is worse than heteroscedasticity:** With
+heteroscedasticity, OLS is still consistent --- you just need robust
+SEs. With endogeneity, OLS is *inconsistent*: the estimate converges
+to the wrong value no matter how large the sample. No variance
+correction fixes this.
 
-## IV identification
+**Three sources of endogeneity:**
 
-An instrument $Z$ satisfies:
-1. **Relevance:** $\text{Cov}(Z, X) \neq 0$ (instrument predicts the endogenous variable)
-2. **Exclusion:** $\text{Cov}(Z, \varepsilon) = 0$ (instrument doesn't directly affect outcome)
+1. **Omitted variables:** An unobserved variable $U$ affects both $X$
+   and $Y$. Example: ability ($U$) affects both education ($X$) and
+   earnings ($Y$). OLS attributes some of ability's effect to education.
 
-Under these conditions, $\beta = \text{Cov}(Z, Y) / \text{Cov}(Z, X)$.
+2. **Simultaneity:** $X$ affects $Y$ and $Y$ affects $X$
+   simultaneously. Example: price and quantity in a market.
+
+3. **Measurement error:** $X$ is measured with noise. The noise in $X$
+   is mechanically correlated with the residual.
+
+In all three cases, $\text{Cov}(X, \varepsilon) \neq 0$, and OLS gives
+$\hat{\beta}_{\text{OLS}} \to \beta + \frac{\text{Cov}(X, \varepsilon)}{\text{Var}(X)}$
+--- biased by the ratio of the endogeneity to the variance of $X$.
+
+## IV identification: the key insight
+
+An *instrument* $Z$ is a variable that:
+
+1. **Relevance:** $\text{Cov}(Z, X) \neq 0$ --- $Z$ predicts $X$.
+   The instrument affects the treatment.
+2. **Exclusion:** $\text{Cov}(Z, \varepsilon) = 0$ --- $Z$ does NOT
+   directly affect $Y$ except through $X$. The instrument has no
+   direct effect on the outcome.
+
+**Why this works:** If $Z$ affects $Y$ only through $X$, then the
+variation in $Y$ that is *caused by $Z$* must be due to $X$'s causal
+effect. The IV estimator isolates this variation:
+
+$$
+\beta_{IV} = \frac{\text{Cov}(Z, Y)}{\text{Cov}(Z, X)}.
+$$
+
+The numerator captures the total effect of $Z$ on $Y$ (which goes
+through $X$). The denominator captures how much $Z$ moves $X$. The
+ratio is the effect of $X$ on $Y$ per unit change in $X$ caused by $Z$.
+
+**Classic example:** The effect of education on earnings. Education is
+endogenous (ability confounds it). Quarter of birth is an instrument:
+it affects when you start school (relevance, because of compulsory
+schooling laws) but plausibly doesn't affect earnings directly
+(exclusion). The IV estimate uses only the variation in education
+caused by birth timing.
 
 ## 2SLS: the two-stage approach
 
-**Stage 1:** Regress $X$ on $Z$ and controls:
-$\hat{X} = \mathbf{Z}(\mathbf{Z}^\top\mathbf{Z})^{-1}\mathbf{Z}^\top X$
+Two-Stage Least Squares operationalizes the IV idea:
 
-**Stage 2:** Regress $Y$ on $\hat{X}$ (the predicted values from stage 1):
-$\hat{\beta}_{2\text{SLS}} = (\hat{\mathbf{X}}^\top\hat{\mathbf{X}})^{-1}\hat{\mathbf{X}}^\top Y$
+**Stage 1:** Regress $X$ on $Z$ (and any controls $\mathbf{W}$):
+$\hat{X} = \hat{\mathbb{E}}[X \mid Z, \mathbf{W}]$. This isolates the
+part of $X$ that is driven by the instrument --- the *exogenous*
+variation.
 
-The predicted $\hat{X}$ contains only the exogenous variation in $X$
+**Stage 2:** Regress $Y$ on $\hat{X}$:
+$\hat{\beta}_{2\text{SLS}} = (\hat{\mathbf{X}}^\top\hat{\mathbf{X}})^{-1}\hat{\mathbf{X}}^\top Y$.
+
+**Why it works:** The predicted $\hat{X}$ contains only the exogenous variation in $X$
 (the part driven by $Z$), so the second-stage regression is consistent.
 
 ## Weak instruments
