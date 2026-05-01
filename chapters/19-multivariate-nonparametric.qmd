@@ -178,6 +178,108 @@ print(f"statsmodels:    {pca.eigenvals[:3].round(2)}")
 ```
 
 
+# Diagnostics {#sec-ch19-diagnostics}
+
+## How many components to keep?
+
+The scree plot (above) shows the "elbow" --- the point where adding
+more components captures diminishing returns. Rules of thumb:
+
+- **Cumulative variance > 80-90%**: keep enough components to explain
+  most of the data
+- **Kaiser criterion**: keep components with eigenvalue > 1 (for
+  standardized data)
+- **Cross-validation**: split data, fit PCA on training, check
+  reconstruction error on test
+
+```{python}
+#| label: pca-diagnostic
+# How many components explain 90% of variance?
+cumvar = np.cumsum(pca.eigenvals) / pca.eigenvals.sum()
+n_90 = np.searchsorted(cumvar, 0.90) + 1
+print(f"Components for 90% variance: {n_90}")
+print(f"Cumulative variance: {cumvar[:5].round(3)}")
+```
+
+## Bandwidth selection for KDE
+
+Silverman's rule (`bw='silverman'`) is the default. For multimodal
+distributions, it may oversmooth. Cross-validation (leave-one-out
+likelihood) gives a data-driven bandwidth but is more expensive.
+
+```{python}
+#| label: bw-comparison
+# Compare bandwidth selectors
+for bw_method in ['silverman', 'scott']:
+    kde_bw = KDEUnivariate(x_kde)
+    kde_bw.fit(kernel='gau', bw=bw_method)
+    print(f"{bw_method}: bw = {kde_bw.bw:.4f}")
+```
+
+
+# Computational Considerations {#sec-ch19-computation}
+
+| Method | Cost | Dimension limit |
+|---|---|---|
+| PCA (via SVD) | $O(\min(np^2, n^2 p))$ | Any (but interpretation degrades) |
+| KDE (1D) | $O(n)$ per evaluation | $d \leq 3$ for visualization |
+| KDE ($d$-dim) | $O(n \cdot d)$ per evaluation | Curse of dim: $d \leq 6$ |
+| LOWESS | $O(n^2)$ | 1D only |
+| Kernel regression | $O(n)$ per prediction | $d \leq 5$ practical |
+
+For high-dimensional KDE ($d > 5$), consider dimensionality reduction
+(PCA) first, then KDE in the reduced space.
+
+
+# Worked Example {#sec-ch19-example}
+
+Exploring the California Housing dataset with PCA and nonparametric
+regression.
+
+```{python}
+#| label: worked-pca
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import StandardScaler
+
+housing = fetch_california_housing()
+X_h = StandardScaler().fit_transform(housing.data)
+
+# PCA on the 8 housing features
+pca_h = smPCA(X_h, ncomp=8, standardize=False)  # already standardized
+cumvar_h = np.cumsum(pca_h.eigenvals) / pca_h.eigenvals.sum()
+
+print("Variance explained by each PC:")
+for i in range(8):
+    print(f"  PC{i+1}: {pca_h.eigenvals[i]/pca_h.eigenvals.sum():.1%} "
+          f"(cumulative: {cumvar_h[i]:.1%})")
+
+n_keep = np.searchsorted(cumvar_h, 0.80) + 1
+print(f"\nKeep {n_keep} components for 80% variance")
+```
+
+```{python}
+#| label: worked-lowess
+# Nonparametric regression: MedInc → house value
+lowess_h = sm.nonparametric.lowess(
+    housing.target, housing.data[:, 0], frac=0.1,
+)
+
+fig, ax = plt.subplots()
+ax.scatter(housing.data[:, 0], housing.target, s=1, alpha=0.1,
+           color="C0")
+ax.plot(lowess_h[:, 0], lowess_h[:, 1], color="C1", linewidth=2,
+        label="LOWESS")
+ax.set_xlabel("Median Income")
+ax.set_ylabel("Median House Value")
+ax.legend()
+plt.show()
+```
+
+The LOWESS curve reveals the nonlinear relationship between income and
+house price: roughly linear up to income ≈ 5, then flattening. This
+nonlinearity would be missed by OLS.
+
+
 # Exercises {#sec-ch19-exercises}
 
 **Exercise 19.1** ($\star\star$, diagnostic failure). Apply KDE with
