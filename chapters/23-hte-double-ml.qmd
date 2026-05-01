@@ -326,6 +326,64 @@ for name, mask in [("x1 < 0", X_w[:, 0] < 0),
 ```
 
 
+# Variations and Extensions {#sec-ch23-variations}
+
+## Beyond the ATE: estimating heterogeneous effects
+
+DML gives you the *average* treatment effect. But the effect may vary
+across the population. Several approaches estimate the *conditional*
+ATE $\tau(\mathbf{x}) = \mathbb{E}[Y(1) - Y(0) \mid \mathbf{X} = \mathbf{x}]$:
+
+**Meta-learners** (frameworks that combine any base ML model):
+
+| Learner | Idea | Pros | Cons |
+|---|---|---|---|
+| **T-learner** | Fit $\hat{\mu}_1$ and $\hat{\mu}_0$ separately, $\hat{\tau} = \hat{\mu}_1 - \hat{\mu}_0$ | Simple | Doesn't share info across groups |
+| **S-learner** | Fit one model $\hat{\mu}(\mathbf{x}, d)$, $\hat{\tau} = \hat{\mu}(\mathbf{x}, 1) - \hat{\mu}(\mathbf{x}, 0)$ | Efficient | Treatment effect may be regularized to zero |
+| **X-learner** | T-learner + imputation + weighting | Good with unequal group sizes | More complex |
+| **R-learner** | Residualize, then regress on $\tilde{D} \cdot \mathbf{X}$ | Uses Neyman orthogonality | Needs good nuisance models |
+| **DR-learner** | AIPW scores as pseudo-outcomes | Doubly robust + CATE | State of the art |
+
+**Causal forests** (Wager and Athey, 2018): A random forest where
+each tree is grown to maximize the *heterogeneity* of treatment effects
+across leaves, rather than minimizing prediction error. The `econml`
+package (not in our `requirements.txt`) implements these.
+
+## When DML fails
+
+1. **Bad nuisance models:** Neyman orthogonality protects against
+   *small* errors. If the nuisance models are terrible (e.g.,
+   intercept-only), DML degrades to naive OLS.
+
+2. **Weak overlap:** If $e(\mathbf{x}) \approx 0$ or $1$ for some
+   $\mathbf{x}$, the residualized treatment $\tilde{D}$ has near-zero
+   variance and the estimate is unstable. Same problem as IPW in
+   Chapter 21.
+
+3. **Model selection for nuisance:** The choice of ML model for $g$
+   and $m$ matters. Lasso works for sparse linear models; random
+   forests work for nonlinear relationships. Cross-validation
+   within the DML procedure helps, but there is no universal best
+   choice.
+
+## Connection to the book's arc
+
+The DML framework connects three threads from the book:
+
+- **Optimization (Ch. 2-5):** The nuisance models are fit by the
+  optimizers you learned in Part II.
+- **M-estimation (Ch. 12):** The influence function representation of
+  AIPW is the efficient influence function for the ATE --- the same
+  object from M-estimation theory.
+- **Causal inference (Ch. 21):** DML + cross-fitting = AIPW with
+  machine learning nuisance models. The double robustness is the same
+  as in Chapter 21.
+
+This is the book's closing arc: optimization → statistical theory →
+causal inference → machine learning, all connected through the
+influence function.
+
+
 # Exercises {#sec-ch23-exercises}
 
 **Exercise 23.1** ($\star\star$, diagnostic failure). Run DML with a
