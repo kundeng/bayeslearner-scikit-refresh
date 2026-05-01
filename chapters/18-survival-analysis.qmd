@@ -396,12 +396,13 @@ schoenfeld = cox.schoenfeld_residuals
 
 fig, ax = plt.subplots()
 event_times = t_obs_cox[d_cox == 1]
-ax.scatter(event_times, schoenfeld[:, 1], s=10, alpha=0.5)
+schoen_trt = schoenfeld[d_cox == 1, 1]  # filter to events only
+ax.scatter(event_times, schoen_trt, s=10, alpha=0.5)
 ax.axhline(0, color='gray', linewidth=0.5)
 
 # Add LOWESS smooth to detect trends
 from statsmodels.nonparametric.smoothers_lowess import lowess
-smooth = lowess(schoenfeld[:, 1], event_times, frac=0.3)
+smooth = lowess(schoen_trt, event_times, frac=0.3)
 ax.plot(smooth[:, 0], smooth[:, 1], color='C1', linewidth=2,
         label='LOWESS smooth')
 

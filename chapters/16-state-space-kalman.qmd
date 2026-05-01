@@ -761,7 +761,11 @@ sar3 = SARIMAX(y3, order=(0,1,1), seasonal_order=(0,1,1,12)).fit(disp=0)
 
 print(f"ETS AIC:     {ets3.aic:.1f}")
 print(f"SARIMAX AIC: {sar3.aic:.1f}")
-print(f"\nBoth capture the same trend + seasonal pattern through")
+print(f"\n(AICs are not directly comparable across model classes —")
+print(f"ETS and SARIMAX compute likelihoods differently.)")
+corr_fitted = np.corrcoef(ets3.fittedvalues, sar3.fittedvalues)[0, 1]
+print(f"\nFitted values correlation: {corr_fitted:.4f}")
+print(f"Both capture the same trend + seasonal pattern through")
 print(f"different parameterizations of the same state-space framework.")
 ```
 
