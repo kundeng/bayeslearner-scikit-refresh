@@ -324,7 +324,18 @@ print(f"HC0 SE match: "
 
 ## The five-check protocol
 
-After every OLS fit, run these checks in order:
+After every OLS fit, run these five diagnostic checks. Each tests one
+of the Gauss-Markov assumptions and tells you what to do if it fails:
+
+| Check | Tests assumption | If FAIL, do |
+|---|---|---|
+| 1. Breusch-Pagan | Homoscedasticity | Use HC1-HC3 robust SEs |
+| 2. Ramsey RESET | Correct specification | Add nonlinear terms or transform |
+| 3. Ljung-Box | No autocorrelation | Use HAC SEs or GLS |
+| 4. VIF | No multicollinearity | Drop redundant predictors |
+| 5. Cook's distance | No extreme influence | Investigate or remove outliers |
+
+Here is the protocol as a reusable function:
 
 ```{python}
 #| label: diagnostic-protocol
