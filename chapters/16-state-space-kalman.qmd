@@ -11,7 +11,6 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.statespace.structural import UnobservedComponents
 from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
 from statsmodels.tsa.regime_switching.markov_regression import MarkovRegression
-from statsmodels.tsa.regime_switching.markov_autoregression import MarkovAutoregression
 from scipy import stats
 
 plt.style.use('assets/book.mplstyle')
@@ -24,230 +23,513 @@ rng = np.random.default_rng(42)
 |--------|---------|-------------|
 | $\boldsymbol{\alpha}_t$ | State vector at time $t$ | |
 | $\mathbf{T}$ | Transition matrix | `transition` |
-| $\mathbf{Z}$ | Observation matrix | `design` |
+| $\mathbf{Z}$ | Observation (design) matrix | `design` |
 | $\mathbf{Q}$ | State noise covariance | `state_cov` |
 | $\mathbf{H}$ | Observation noise covariance | `obs_cov` |
-| $\boldsymbol{\alpha}_{t|t}$ | Filtered state | `.filtered_state` |
-| $\boldsymbol{\alpha}_{t|T}$ | Smoothed state | `.smoothed_state` |
+| $\boldsymbol{\alpha}_{t|t-1}$ | Predicted state (before seeing $y_t$) | |
+| $\boldsymbol{\alpha}_{t|t}$ | Filtered state (after seeing $y_t$) | `.filtered_state` |
+| $\boldsymbol{\alpha}_{t|T}$ | Smoothed state (using all data) | `.smoothed_state` |
+| $\mathbf{K}_t$ | Kalman gain | |
+| $\mathbf{v}_t$ | Prediction error (innovation) | |
 | $S_t$ | Regime indicator (Markov switching) | `.smoothed_marginal_probabilities` |
 
 
 # Motivation {#sec-ch16-motivation}
 
-State-space models are the general framework that subsumes everything
-in Chapter 15: ARIMA, exponential smoothing, structural time series,
-and dynamic factor models are all state-space models with specific
-parameter restrictions. Understanding the state-space form explains
-*how* `statsmodels.tsa` fits these models (via the Kalman filter) and
-*why* the API is designed the way it is.
+Chapter 15 introduced ARIMA and exponential smoothing as separate
+methods. This chapter reveals that they are *both* special cases of
+a single, more general framework: the **state-space model**.
 
-This chapter also covers Markov regime switching — models where the
-parameters change discretely between "regimes" (e.g., expansion vs
-recession in macroeconomics).
+The state-space framework matters for three reasons:
+
+1. **Unification.** ARIMA, exponential smoothing, structural time
+   series (trend + cycle + seasonal), and dynamic factor models are
+   all state-space models with specific parameter restrictions. Once
+   you understand the framework, you understand them all.
+
+2. **The Kalman filter.** All state-space models are estimated via the
+   Kalman filter --- an algorithm that processes observations one at
+   a time, maintaining an estimate of the unobserved "state" and
+   updating it as new data arrives. This is how `statsmodels.tsa`
+   fits every model in Chapter 15 (and this chapter).
+
+3. **Flexibility.** The state-space framework lets you build custom
+   models by specifying how the state evolves and how observations
+   relate to the state. Statsmodels' `MLEModel` class exposes this.
+
+This chapter also covers **Markov regime switching** --- models where
+the parameters change discretely between "regimes" (e.g., bull vs bear
+markets, recession vs expansion). These are a different kind of hidden
+state: discrete rather than continuous.
 
 
 # Mathematical Foundation {#sec-ch16-math}
 
 ## The linear Gaussian state-space model
 
+The state-space model has two equations:
+
+**Transition equation** (how the state evolves):
 $$
 \boldsymbol{\alpha}_{t+1} = \mathbf{T}\boldsymbol{\alpha}_t + \mathbf{R}\boldsymbol{\eta}_t, \quad \boldsymbol{\eta}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{Q})
 $$ {#eq-state}
+
+**Observation equation** (how we observe the state):
 $$
 \mathbf{y}_t = \mathbf{Z}\boldsymbol{\alpha}_t + \boldsymbol{\varepsilon}_t, \quad \boldsymbol{\varepsilon}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{H})
 $$ {#eq-obs}
 
-The *state* $\boldsymbol{\alpha}_t$ evolves according to the transition
-equation. The *observations* $\mathbf{y}_t$ are noisy linear functions
-of the state.
+**What these mean:**
 
-**How ARIMA is a state-space model:** An ARIMA(1,1,1) can be written
-with state $\boldsymbol{\alpha}_t = (y_t, \varepsilon_t)^\top$ and
-appropriate $\mathbf{T}, \mathbf{Z}, \mathbf{Q}$. Statsmodels'
-`SARIMAX` does exactly this internally.
+- $\boldsymbol{\alpha}_t$ is the *state*: the unobserved quantity we
+  want to track (e.g., the "true" level of a noisy signal, the trend,
+  the seasonal component).
+- $\mathbf{y}_t$ is the *observation*: what we actually measure. It
+  is a noisy linear function of the state.
+- $\mathbf{T}$ determines how the state evolves over time.
+- $\mathbf{Z}$ determines how the state maps to observations.
+- $\mathbf{Q}$ is how much the state fluctuates (state noise).
+- $\mathbf{H}$ is how noisy the measurements are (observation noise).
 
-## The Kalman filter (intuition)
+**Example: the local level model.** The simplest state-space model:
+the "state" is the current level of the series, which evolves as a
+random walk, and we observe it with noise.
 
-The Kalman filter computes the *optimal* state estimate at each time
-step, given all observations up to that point. It alternates between:
+$$
+\alpha_{t+1} = \alpha_t + \eta_t, \quad y_t = \alpha_t + \varepsilon_t.
+$$
 
-1. **Predict:** $\boldsymbol{\alpha}_{t|t-1} = \mathbf{T}\boldsymbol{\alpha}_{t-1|t-1}$
-   (use the transition equation to predict the next state)
-2. **Update:** $\boldsymbol{\alpha}_{t|t} = \boldsymbol{\alpha}_{t|t-1} + \mathbf{K}_t(\mathbf{y}_t - \mathbf{Z}\boldsymbol{\alpha}_{t|t-1})$
-   (correct the prediction using the observation error)
+Here $T = Z = 1$, $Q = \sigma^2_\eta$ (state noise), $H = \sigma^2_\varepsilon$
+(observation noise). The Kalman filter estimates $\alpha_t$ (the true
+level) from the noisy observations $y_t$.
 
-The Kalman gain $\mathbf{K}_t$ balances trust in the prediction vs the
-observation: when observation noise is small, $\mathbf{K}_t$ is large
-(trust the data); when state noise is small, $\mathbf{K}_t$ is small
-(trust the model).
+## Why ARIMA and ETS are state-space models
 
-**Why this matters for the API:** The likelihood of a state-space model
-is computed via the *prediction error decomposition*: each observation's
-contribution to the likelihood is the density of
-$\mathbf{y}_t - \mathbf{Z}\boldsymbol{\alpha}_{t|t-1}$ (the prediction
-error). This is what `SARIMAX.fit()` optimizes.
+**ARIMA as state-space:** An ARIMA(1,1,1) model
+$\Delta y_t = \phi \Delta y_{t-1} + \varepsilon_t + \theta \varepsilon_{t-1}$
+can be written in state-space form with state
+$\boldsymbol{\alpha}_t = (\Delta y_t, \varepsilon_t)^\top$ and
+appropriate $\mathbf{T}$ and $\mathbf{Z}$ matrices. This is exactly
+what `statsmodels.tsa.statespace.sarimax.SARIMAX` does internally.
+
+**ETS as state-space:** Holt-Winters exponential smoothing with
+additive components is a state-space model with state
+$\boldsymbol{\alpha}_t = (\ell_t, b_t, s_{t}, \ldots, s_{t-m+1})^\top$
+(level, trend, and $m$ seasonal factors). The smoothing parameters
+$\alpha, \beta, \gamma$ appear in the $\mathbf{T}$ matrix. The
+Kalman filter reduces to the exponential smoothing recursions.
+
+**Why this matters:** Because all these models share the same
+computational engine (the Kalman filter), statsmodels can fit them
+all with a single code path. Understanding the Kalman filter means
+understanding what `SARIMAX.fit()`, `ExponentialSmoothing.fit()`,
+and `UnobservedComponents.fit()` are doing under the hood.
+
+## The Kalman filter: predict, then update
+
+The Kalman filter processes observations sequentially. At each time
+step $t$, it performs two operations:
+
+**Predict:** Use the transition equation to predict the state before
+seeing $y_t$:
+$$
+\boldsymbol{\alpha}_{t|t-1} = \mathbf{T}\boldsymbol{\alpha}_{t-1|t-1}, \quad
+\mathbf{P}_{t|t-1} = \mathbf{T}\mathbf{P}_{t-1|t-1}\mathbf{T}^\top + \mathbf{R}\mathbf{Q}\mathbf{R}^\top.
+$$
+
+**Update:** Incorporate the new observation $y_t$ to correct the
+prediction:
+$$
+\mathbf{v}_t = \mathbf{y}_t - \mathbf{Z}\boldsymbol{\alpha}_{t|t-1} \quad \text{(prediction error)}
+$$
+$$
+\mathbf{F}_t = \mathbf{Z}\mathbf{P}_{t|t-1}\mathbf{Z}^\top + \mathbf{H} \quad \text{(error variance)}
+$$
+$$
+\mathbf{K}_t = \mathbf{P}_{t|t-1}\mathbf{Z}^\top\mathbf{F}_t^{-1} \quad \text{(Kalman gain)}
+$$
+$$
+\boldsymbol{\alpha}_{t|t} = \boldsymbol{\alpha}_{t|t-1} + \mathbf{K}_t\mathbf{v}_t \quad \text{(filtered state)}
+$$
+
+**The Kalman gain $\mathbf{K}_t$** is the key quantity. It balances
+how much to trust the prediction vs the observation:
+
+- **Large state noise ($Q$ large), small observation noise ($H$ small):**
+  The state is unpredictable but observations are accurate.
+  $\mathbf{K}_t \to \mathbf{I}$: trust the data, not the prediction.
+  This corresponds to $\alpha \to 1$ in exponential smoothing.
+
+- **Small state noise ($Q$ small), large observation noise ($H$ large):**
+  The state is stable but observations are noisy.
+  $\mathbf{K}_t \to \mathbf{0}$: trust the prediction, smooth out the noise.
+  This corresponds to $\alpha \to 0$ in exponential smoothing.
+
+**The exponential smoothing parameter $\alpha$ IS the steady-state
+Kalman gain** for a local level model. This is the precise sense in
+which exponential smoothing is a special case of the Kalman filter.
+
+## Why the Kalman filter is optimal
+
+For the linear Gaussian model (@eq-state, @eq-obs), the Kalman filter
+produces the *minimum-variance unbiased* state estimate given all
+observations up to time $t$. That is:
+
+$$
+\boldsymbol{\alpha}_{t|t} = \mathbb{E}[\boldsymbol{\alpha}_t \mid y_1, \ldots, y_t]
+$$
+
+and $\mathbf{P}_{t|t}$ is the conditional covariance. No other linear
+estimator can achieve a smaller mean squared error.
+
+**Why:** The predict-update cycle is equivalent to recursive
+application of Bayes' rule to the Gaussian prior (prediction) and
+Gaussian likelihood (observation). For Gaussians, the Bayesian
+posterior is exact and has a closed-form --- the Kalman filter
+computes this closed form at each step.
+
+## How MLE works for state-space models
+
+The Kalman filter also produces the *likelihood* of the data given the
+model parameters. The prediction error $\mathbf{v}_t$ at each step is
+Gaussian with mean 0 and variance $\mathbf{F}_t$. The log-likelihood
+is:
+
+$$
+\ell = -\frac{1}{2}\sum_{t=1}^T \left[\ln|\mathbf{F}_t| + \mathbf{v}_t^\top \mathbf{F}_t^{-1} \mathbf{v}_t\right]
+$$ {#eq-kalman-ll}
+
+This is the *prediction error decomposition*. Each term is the
+log-density of one observation's prediction error. The parameters
+$(\mathbf{T}, \mathbf{Z}, \mathbf{Q}, \mathbf{H})$ are chosen to
+maximize this log-likelihood, using numerical optimization (L-BFGS-B
+from Chapter 2).
+
+**This is what `SARIMAX.fit()` does:** it runs the Kalman filter for
+a given set of ARIMA parameters, computes @eq-kalman-ll, and uses
+L-BFGS-B to find the parameters that maximize it.
+
+## Smoothing: using the future to improve the past
+
+The Kalman *filter* uses only observations up to time $t$ to estimate
+$\boldsymbol{\alpha}_t$. The Kalman *smoother* uses ALL observations
+$y_1, \ldots, y_T$ to re-estimate every state:
+
+$$
+\boldsymbol{\alpha}_{t|T} = \mathbb{E}[\boldsymbol{\alpha}_t \mid y_1, \ldots, y_T]
+$$
+
+The smoother runs the filter forward, then a backward pass that
+propagates future information back in time. Smoothed estimates are
+always at least as good as filtered estimates (lower MSE) because they
+use more data.
+
+Statsmodels gives both: `.filtered_state` and `.smoothed_state`.
+
+## Markov regime switching
+
+Sometimes the *parameters* of a time series change over time. In a
+Markov switching model, the parameters switch between $K$ discrete
+regimes according to a hidden Markov chain:
+
+$$
+\Pr(S_t = j \mid S_{t-1} = i) = p_{ij}
+$$
+
+At each time $t$, the data follows a regime-specific model:
+$y_t \mid S_t = j \sim \mathcal{N}(\mu_j, \sigma^2_j)$.
+
+**The Hamilton filter** (Hamilton, 1989) estimates the regime
+probabilities: $\Pr(S_t = j \mid y_1, \ldots, y_t)$. It is the
+discrete-state analogue of the Kalman filter.
+
+**Why this matters:** Stock returns have "calm" periods (small
+variance) and "crisis" periods (large variance). GDP growth switches
+between expansion and recession. Regime switching captures these
+structural changes that ARIMA cannot.
 
 
-# The Algorithm {#sec-ch16-algorithm}
+# The Algorithm and SciPy Implementation {#sec-ch16-algorithm}
 
-::: {.callout-note appearance="minimal"}
-## Algorithm 16.1: Kalman Filter
+## The Kalman filter algorithm
 
-**Input:** Observations $\mathbf{y}_1, \ldots, \mathbf{y}_T$, system
-matrices $\mathbf{T}, \mathbf{Z}, \mathbf{Q}, \mathbf{H}$, initial
-state $\boldsymbol{\alpha}_{1|0}, \mathbf{P}_{1|0}$
+```
+Input: observations y_1, ..., y_T; system matrices T, Z, Q, H, R
+       initial state α_{1|0} and covariance P_{1|0}
+Output: filtered states α_{t|t}, prediction errors v_t, log-likelihood
 
-**Output:** Filtered states $\boldsymbol{\alpha}_{t|t}$, log-likelihood
+ℓ = 0
+for t = 1, ..., T:
+    # Prediction error
+    v_t = y_t − Z α_{t|t−1}
+    F_t = Z P_{t|t−1} Z' + H
 
-1. $\ell \leftarrow 0$
-2. **for** $t = 1, \ldots, T$ **do**
-3. $\quad$ **Prediction error:** $\mathbf{v}_t \leftarrow \mathbf{y}_t - \mathbf{Z}\boldsymbol{\alpha}_{t|t-1}$
-4. $\quad$ **Error covariance:** $\mathbf{F}_t \leftarrow \mathbf{Z}\mathbf{P}_{t|t-1}\mathbf{Z}^\top + \mathbf{H}$
-5. $\quad$ **Kalman gain:** $\mathbf{K}_t \leftarrow \mathbf{P}_{t|t-1}\mathbf{Z}^\top\mathbf{F}_t^{-1}$
-6. $\quad$ **Filtered state:** $\boldsymbol{\alpha}_{t|t} \leftarrow \boldsymbol{\alpha}_{t|t-1} + \mathbf{K}_t\mathbf{v}_t$
-7. $\quad$ **Filtered covariance:** $\mathbf{P}_{t|t} \leftarrow (\mathbf{I} - \mathbf{K}_t\mathbf{Z})\mathbf{P}_{t|t-1}$
-8. $\quad$ **Predict next:** $\boldsymbol{\alpha}_{t+1|t} \leftarrow \mathbf{T}\boldsymbol{\alpha}_{t|t}$
-9. $\quad$ $\mathbf{P}_{t+1|t} \leftarrow \mathbf{T}\mathbf{P}_{t|t}\mathbf{T}^\top + \mathbf{R}\mathbf{Q}\mathbf{R}^\top$
-10. $\quad$ $\ell \leftarrow \ell - \frac{1}{2}\left[\ln|\mathbf{F}_t| + \mathbf{v}_t^\top\mathbf{F}_t^{-1}\mathbf{v}_t\right]$
-11. **end for**
-12. **return** $\{\boldsymbol{\alpha}_{t|t}\}$, $\ell$
-:::
+    # Kalman gain
+    K_t = P_{t|t−1} Z' F_t⁻¹
 
+    # Update (filtered) state
+    α_{t|t} = α_{t|t−1} + K_t v_t
+    P_{t|t} = (I − K_t Z) P_{t|t−1}
 
-# Statistical Properties {#sec-ch16-stats}
+    # Predict next state
+    α_{t+1|t} = T α_{t|t}
+    P_{t+1|t} = T P_{t|t} T' + R Q R'
 
-The Kalman filter is *optimal* for linear Gaussian models: the filtered
-state $\boldsymbol{\alpha}_{t|t}$ is the minimum-variance unbiased
-estimator of the state given $\mathbf{y}_1, \ldots, \mathbf{y}_t$.
+    # Log-likelihood contribution
+    ℓ += −0.5 [ln|F_t| + v_t' F_t⁻¹ v_t]
 
-MLE for state-space parameters uses the Kalman filter log-likelihood
-(line 10 of Algorithm 16.1) as the objective, optimized via BFGS or
-L-BFGS-B (Chapter 2). This is what `SARIMAX.fit()` does.
+return {α_{t|t}}, ℓ
+```
 
-
-# Statsmodels Implementation {#sec-ch16-statsmodels}
-
-## Structural time series (`UnobservedComponents`)
+## `UnobservedComponents`: structural time series
 
 `UnobservedComponents` decomposes a time series into interpretable
-parts: a *level* (where the series is now), a *trend* (where it's
-going), and a *cycle* (periodic fluctuations). Each component is
-modeled as a state in the state-space framework and estimated via the
-Kalman filter.
-
-This is the same idea as exponential smoothing (Ch. 15), but
-formulated as a state-space model with explicit noise variances for
-each component.
+parts using a state-space model. Each component (level, trend, cycle,
+seasonal) is a state variable estimated by the Kalman filter.
 
 ```{python}
 #| label: uc-demo
-# Simulate a series with a stochastic level and a cycle
+# Simulate: random walk level + stochastic cycle
 n = 200
-level = np.cumsum(0.3*rng.standard_normal(n))
-cycle = 5*np.sin(2*np.pi*np.arange(n)/50)
-y_uc = level + cycle + rng.standard_normal(n)
+level_true = np.cumsum(0.3 * rng.standard_normal(n))
+cycle_true = 5 * np.sin(2 * np.pi * np.arange(n) / 50)
+y_uc = level_true + cycle_true + rng.standard_normal(n)
 
+# Fit unobserved components model
+# level='local level': the level is a random walk
+# cycle=True: include a stochastic cycle component
+# stochastic_cycle=True: the cycle amplitude and phase can change
 uc = UnobservedComponents(
     y_uc,
-    level='local level',       # random walk level
-    cycle=True,                # stochastic cycle
+    level='local level',
+    cycle=True,
     stochastic_cycle=True,
 ).fit(disp=0)
 
-print(f"Level variance: {uc.params[1]:.4f}")
-print(f"Cycle variance: {uc.params[2]:.4f}")
-print(f"Cycle frequency: {uc.params[3]:.4f} "
-      f"(period ≈ {2*np.pi/uc.params[3]:.1f})")
+print(f"Estimated parameters:")
+print(f"  Observation noise (sigma2_eps): {uc.params[0]:.4f}")
+print(f"  Level noise (sigma2_eta):       {uc.params[1]:.4f}")
+print(f"  Cycle noise:                    {uc.params[2]:.4f}")
+print(f"  Cycle frequency:                {uc.params[3]:.4f}")
+print(f"  Cycle period:                   {2*np.pi/uc.params[3]:.1f} time units")
 ```
 
 ```{python}
-#| label: fig-uc-decomposition
-#| fig-cap: "Unobserved components decomposition: the Kalman smoother separates the observed series into a stochastic trend (level) and a cyclical component."
+#| label: fig-uc
+#| fig-cap: "Unobserved components decomposition. The Kalman smoother separates the noisy observations into a trend (level) and a cyclical component. The smoothed estimates use all data (past and future) and are therefore smoother than the filtered estimates."
 
-fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
-axes[0].plot(y_uc, linewidth=0.5, color="C0")
-axes[0].set_title("Observed")
-axes[1].plot(uc.level.smoothed, linewidth=1, color="C1")
-axes[1].set_title("Smoothed level")
-axes[2].plot(uc.cycle.smoothed, linewidth=1, color="C2")
-axes[2].set_title("Smoothed cycle")
+fig, axes = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
+
+axes[0].plot(y_uc, linewidth=0.5, color='C0', alpha=0.7, label='Observed')
+axes[0].plot(level_true + cycle_true, '--', color='gray',
+             linewidth=0.5, label='True signal')
+axes[0].legend()
+axes[0].set_title('Observed data')
+
+axes[1].plot(uc.level.smoothed, color='C1', linewidth=1.5,
+             label='Smoothed level')
+axes[1].plot(level_true, '--', color='gray', linewidth=0.5,
+             label='True level')
+axes[1].legend()
+axes[1].set_title('Level component')
+
+axes[2].plot(uc.cycle.smoothed, color='C2', linewidth=1.5,
+             label='Smoothed cycle')
+axes[2].plot(cycle_true, '--', color='gray', linewidth=0.5,
+             label='True cycle')
+axes[2].legend()
+axes[2].set_title('Cycle component')
+
 plt.tight_layout()
 plt.show()
 ```
 
-## Markov regime switching
+**What to notice:** The smoothed level tracks the true random walk
+closely, and the smoothed cycle recovers the sinusoidal pattern. The
+Kalman smoother "knows" the cycle because it uses future observations
+to inform past estimates --- that is why the smoothed cycle is cleaner
+than what you'd get from a simple filter.
 
-Sometimes the parameters of a time series *change* over time --- for
-example, stock returns have low-volatility periods (calm markets) and
-high-volatility periods (crises). Markov switching models allow the
-parameters to switch between discrete "regimes" according to a hidden
-Markov chain.
-
-`MarkovRegression` fits a regression where the coefficients (and
-optionally the variance) switch between $K$ regimes. The model
-estimates both the regime-specific parameters and the transition
-probabilities between regimes.
+## `MarkovRegression`: regime switching
 
 ```{python}
 #| label: markov-demo
-# Simulate two-regime data: low-volatility and high-volatility periods
+# Simulate two-regime data
 n_ms = 300
+
+# Generate regime sequence (hidden Markov chain)
 regime = np.zeros(n_ms, dtype=int)
 for t in range(1, n_ms):
     if regime[t-1] == 0:
-        regime[t] = 1 if rng.random() < 0.02 else 0
+        regime[t] = 1 if rng.random() < 0.02 else 0  # rarely switch out of 0
     else:
-        regime[t] = 0 if rng.random() < 0.05 else 1
+        regime[t] = 0 if rng.random() < 0.05 else 1  # switch back more often
 
-y_ms = np.where(regime == 0,
-                rng.normal(0.05, 0.5, n_ms),
-                rng.normal(-0.02, 2.0, n_ms))
+# Regime-specific parameters
+y_ms = np.where(
+    regime == 0,
+    rng.normal(0.05, 0.5, n_ms),   # regime 0: calm, positive mean
+    rng.normal(-0.02, 2.0, n_ms),  # regime 1: volatile, slight negative
+)
 
+# Fit Markov switching model
+# k_regimes=2: two regimes
+# switching_variance=True: each regime has its own variance
 ms = MarkovRegression(
     y_ms, k_regimes=2, trend='c', switching_variance=True,
 ).fit(disp=0)
 
-print(f"Regime 0: mean={ms.params[2]:.3f}, sigma2={ms.params[4]:.3f}")
-print(f"Regime 1: mean={ms.params[3]:.3f}, sigma2={ms.params[5]:.3f}")
+print(f"Regime 0: mean = {ms.params[2]:.3f}, "
+      f"sigma = {np.sqrt(ms.params[4]):.3f}")
+print(f"Regime 1: mean = {ms.params[3]:.3f}, "
+      f"sigma = {np.sqrt(ms.params[5]):.3f}")
 print(f"P(stay in 0): {ms.params[0]:.3f}")
-print(f"P(stay in 1): {1 - ms.params[1]:.3f}")
+print(f"P(stay in 1): {1-ms.params[1]:.3f}")
 ```
 
 ```{python}
-#| label: fig-regime-probs
-#| fig-cap: "Markov switching model: smoothed probabilities of being in the high-volatility regime. The model correctly identifies the regime changes in the simulated data."
+#| label: fig-regime
+#| fig-cap: "Markov switching model applied to two-regime data. Top: the data, colored by true regime. Bottom: the model's estimated probability of being in regime 1 (high volatility). The model correctly identifies most regime switches."
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
-ax1.plot(y_ms, linewidth=0.5, color="C0")
-ax1.set_ylabel("y")
-ax1.set_title("Data")
 
-ax2.fill_between(range(n_ms), ms.smoothed_marginal_probabilities[:, 1],
-                 alpha=0.5, color="C1", label="P(regime 1)")
-ax2.plot(regime, linewidth=0.5, color="C3", alpha=0.5, label="True regime")
-ax2.set_ylabel("Probability")
-ax2.set_xlabel("Time")
+# Data colored by true regime
+colors = np.where(regime == 0, 'C0', 'C1')
+for t in range(n_ms):
+    ax1.plot(t, y_ms[t], '.', color=colors[t], markersize=2)
+ax1.set_ylabel('y')
+ax1.set_title('Data (colored by true regime)')
+
+# Estimated regime probabilities
+ax2.fill_between(range(n_ms),
+                 ms.smoothed_marginal_probabilities[:, 1],
+                 alpha=0.5, color='C1', label='P(regime 1)')
+ax2.plot(regime * 0.9 + 0.05, linewidth=0.5, color='C3',
+         alpha=0.5, label='True regime')
+ax2.set_ylabel('Probability')
+ax2.set_xlabel('Time')
 ax2.legend()
+ax2.set_title('Estimated regime probabilities')
+
 plt.tight_layout()
 plt.show()
 ```
 
+**Interpreting the output:** The model correctly identifies the two
+regimes: regime 0 is calm (mean ≈ 0.05, low variance) and regime 1 is
+volatile (mean ≈ 0, high variance). The transition probabilities show
+that regime 0 is persistent (P(stay) ≈ 0.98) while regime 1 is less
+so (P(stay) ≈ 0.95).
+
+
+# Variations, Diagnostics, and Pitfalls {#sec-ch16-variations}
+
+## Choosing the right structural model
+
+| Model | State | Best for |
+|---|---|---|
+| Local level | Random walk | Noisy signal tracking |
+| Local linear trend | Level + slope | Trend extrapolation |
+| Cycle | Stochastic sinusoid | Business cycles |
+| Seasonal | $m$ seasonal factors | Monthly/quarterly data |
+| Combination | Multiple components | Decomposition |
+
+```{python}
+#| label: model-comparison
+# Compare local level vs local linear trend
+uc_ll = UnobservedComponents(y_uc, level='local level').fit(disp=0)
+uc_llt = UnobservedComponents(y_uc, level='local linear trend').fit(disp=0)
+uc_full = UnobservedComponents(
+    y_uc, level='local level', cycle=True, stochastic_cycle=True,
+).fit(disp=0)
+
+print(f"{'Model':<25} {'AIC':>8} {'BIC':>8}")
+print(f"{'Local level':<25} {uc_ll.aic:>8.1f} {uc_ll.bic:>8.1f}")
+print(f"{'Local linear trend':<25} {uc_llt.aic:>8.1f} {uc_llt.bic:>8.1f}")
+print(f"{'Level + cycle':<25} {uc_full.aic:>8.1f} {uc_full.bic:>8.1f}")
+```
+
+## Diagnostics: standardized prediction errors
+
+For a well-specified state-space model, the prediction errors
+$v_t / \sqrt{F_t}$ should be i.i.d. $\mathcal{N}(0, 1)$. Check this
+with a QQ plot and a Ljung-Box test on the standardized residuals.
+
+```{python}
+#| label: fig-ss-diagnostics
+#| fig-cap: "State-space model diagnostics. Left: standardized prediction errors should look like white noise. Right: QQ plot checks that the errors are approximately normal."
+
+std_resid = uc.standardized_forecasts_error[0]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+ax1.plot(std_resid, linewidth=0.5)
+ax1.axhline(0, color='gray', linewidth=0.5)
+ax1.axhline(2, color='C1', linestyle='--', alpha=0.3)
+ax1.axhline(-2, color='C1', linestyle='--', alpha=0.3)
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Standardized error')
+ax1.set_title('Prediction errors (should be white noise)')
+
+stats.probplot(std_resid, plot=ax2)
+ax2.set_title('QQ plot (should be linear)')
+
+plt.tight_layout()
+plt.show()
+
+# Ljung-Box test
+from statsmodels.stats.diagnostic import acorr_ljungbox
+lb = acorr_ljungbox(std_resid, lags=10, return_df=True)
+print(f"Ljung-Box: all p > 0.05? {(lb['lb_pvalue'] > 0.05).all()}")
+```
+
+## Common pitfalls
+
+1. **Convergence warnings:** State-space MLE is nonconvex. If
+   `fit()` warns about convergence, try different starting values
+   with `start_params` or a different optimizer with `method`.
+
+2. **Negative variance estimates:** Sometimes the optimizer finds
+   $\hat{\sigma}^2 < 0$, which is nonsensical. This usually means
+   the model is overparameterized --- simplify the component structure.
+
+3. **Non-positive-definite Hessian:** The variance-covariance of
+   the parameter estimates is unreliable. This happens at boundary
+   solutions (e.g., a variance component estimated at exactly 0).
+
 
 # From-Scratch Implementation {#sec-ch16-scratch}
 
-## Kalman filter for a local level model
+## Kalman filter for the local level model
 
 ```{python}
 #| label: kalman-scratch
 
 def kalman_local_level(y, sigma2_eta, sigma2_eps):
-    """Kalman filter for local level model.
+    """Kalman filter for the local level model.
 
-    State: alpha_t (the level)
-    Transition: alpha_{t+1} = alpha_t + eta_t
-    Observation: y_t = alpha_t + eps_t
+    State equation:  α_{t+1} = α_t + η_t,  η_t ~ N(0, σ²_η)
+    Observation:     y_t = α_t + ε_t,       ε_t ~ N(0, σ²_ε)
 
-    Implements Algorithm 16.1 for the special case T=Z=1.
+    This is Algorithm 16.1 specialized to T=Z=R=1.
+
+    Parameters
+    ----------
+    y : array (T,)
+        Observations.
+    sigma2_eta : float
+        State noise variance (how much the level fluctuates).
+    sigma2_eps : float
+        Observation noise variance (how noisy the measurements are).
+
+    Returns
+    -------
+    alpha_filt : array (T,)
+        Filtered state estimates.
+    P_filt : array (T,)
+        Filtered state variances.
+    ll : float
+        Log-likelihood.
     """
     T = len(y)
     alpha_filt = np.zeros(T)
@@ -256,37 +538,39 @@ def kalman_local_level(y, sigma2_eta, sigma2_eps):
     P_pred = np.zeros(T)
     ll = 0
 
-    # Initialize (diffuse)
+    # Initialize: diffuse prior (large uncertainty)
     alpha_pred[0] = y[0]
     P_pred[0] = sigma2_eta + sigma2_eps
 
     for t in range(T):
-        # Prediction error
+        # Prediction error: how far off was our prediction?
         v = y[t] - alpha_pred[t]
-        F = P_pred[t] + sigma2_eps
+        F = P_pred[t] + sigma2_eps  # prediction error variance
 
-        # Kalman gain
+        # Kalman gain: how much to trust the new observation
         K = P_pred[t] / F
 
-        # Filtered state
+        # Update: correct the prediction using the observation
         alpha_filt[t] = alpha_pred[t] + K * v
         P_filt[t] = (1 - K) * P_pred[t]
 
-        # Predict next
+        # Predict next step
         if t < T - 1:
-            alpha_pred[t+1] = alpha_filt[t]
-            P_pred[t+1] = P_filt[t] + sigma2_eta
+            alpha_pred[t+1] = alpha_filt[t]        # state doesn't drift
+            P_pred[t+1] = P_filt[t] + sigma2_eta   # but uncertainty grows
 
-        # Log-likelihood
-        ll -= 0.5 * (np.log(F) + v**2 / F)
+        # Log-likelihood: prediction error decomposition
+        ll -= 0.5 * (np.log(2 * np.pi) + np.log(F) + v**2 / F)
 
     return alpha_filt, P_filt, ll
 ```
 
+## Verification against statsmodels
+
 ```{python}
 #| label: kalman-verify
-# Verify against statsmodels
-y_ll = np.cumsum(0.5*rng.standard_normal(100)) + rng.standard_normal(100)
+# Simulate local level data
+y_ll = np.cumsum(0.5 * rng.standard_normal(100)) + rng.standard_normal(100)
 
 # Our implementation
 alpha_ours, P_ours, ll_ours = kalman_local_level(y_ll, 0.25, 1.0)
@@ -296,31 +580,34 @@ uc_verify = UnobservedComponents(y_ll, level='local level').fit(
     start_params=[1.0, 0.25], disp=0,
 )
 
-print(f"Log-likelihood: ours={ll_ours:.2f}, "
-      f"sm={uc_verify.llf:.2f}")
-print(f"Filtered state corr: "
-      f"{np.corrcoef(alpha_ours, uc_verify.level.filtered)[0,1]:.4f}")
+print(f"Log-likelihood:")
+print(f"  From scratch: {ll_ours:.2f}")
+print(f"  statsmodels:  {uc_verify.llf:.2f}")
+print(f"  (Difference is from the constant −T/2 ln(2π) and initialization)")
+print(f"\nFiltered state correlation: "
+      f"{np.corrcoef(alpha_ours, uc_verify.level.filtered)[0,1]:.6f}")
 ```
 
-
-# Diagnostics {#sec-ch16-diagnostics}
-
-## Standardized prediction errors
-
-For a well-specified state-space model, the prediction errors
-$v_t / \sqrt{F_t}$ should be i.i.d. standard normal.
+## Understanding the Kalman gain
 
 ```{python}
-#| label: fig-ss-diagnostics
-#| fig-cap: "Diagnostics for the unobserved components model: standardized prediction errors should be white noise with unit variance."
+#| label: fig-kalman-gain
+#| fig-cap: "The Kalman gain depends on the signal-to-noise ratio. Left: high observation noise → low gain (trust the prediction, smooth the data). Right: high state noise → high gain (trust the data, follow it closely)."
 
-std_resid = uc.standardized_forecasts_error[0]
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-ax1.plot(std_resid, linewidth=0.5)
-ax1.axhline(0, color="gray"); ax1.set_title("Std. prediction errors")
-stats.probplot(std_resid, plot=ax2)
-ax2.set_title("QQ plot")
+for ax, (se, sn, title) in zip(axes, [
+    (0.1, 2.0, 'Noisy obs (σ²_ε=2, σ²_η=0.1)\n→ smooth (low gain)'),
+    (2.0, 0.1, 'Noisy state (σ²_ε=0.1, σ²_η=2)\n→ follow data (high gain)'),
+]):
+    y_demo = np.cumsum(np.sqrt(se) * rng.standard_normal(100))
+    y_demo += np.sqrt(sn) * rng.standard_normal(100)
+    af, _, _ = kalman_local_level(y_demo, se, sn)
+    ax.plot(y_demo, '.', markersize=3, alpha=0.5, label='Observations')
+    ax.plot(af, linewidth=1.5, label='Filtered state')
+    ax.set_title(title, fontsize=9)
+    ax.legend(fontsize=8)
+
 plt.tight_layout()
 plt.show()
 ```
@@ -328,155 +615,210 @@ plt.show()
 
 # Computational Considerations {#sec-ch16-computation}
 
-| Model | Filter cost | Parameters | Notes |
+| Model | Filter cost per step | Total | Memory |
 |---|---|---|---|
-| Local level | $O(T)$ | 2 | Scalar Kalman filter |
-| ARIMA($p$,$d$,$q$) | $O(T(p+q)^2)$ | $p+q+1$ | State dimension = max($p$,$q+1$) |
-| SARIMAX | $O(T \cdot s^2)$ | $p+q+P+Q+1$ | $s$ = seasonal period |
-| Markov switching ($K$ regimes) | $O(TK^2)$ | $K^2 + K \cdot p$ | Hamilton filter |
+| Local level ($m=1$) | $O(1)$ | $O(T)$ | $O(1)$ |
+| ARIMA($p$,$d$,$q$) | $O(m^2)$ where $m = \max(p, q+1)$ | $O(Tm^2)$ | $O(m^2)$ |
+| SARIMAX | $O((m \cdot s)^2)$ where $s =$ seasonal period | $O(T(ms)^2)$ | $O((ms)^2)$ |
+| Markov ($K$ regimes) | $O(K^2)$ (Hamilton filter) | $O(TK^2)$ | $O(K^2)$ |
+
+The Kalman filter is $O(T)$ in the number of observations (each step
+is constant time for a fixed state dimension). The bottleneck for large
+state-space models is the state dimension $m$, not the number of
+observations.
 
 
 # Worked Example {#sec-ch16-example}
 
-Detecting structural breaks in a time series using both UC models and
-Markov switching.
+Detecting a structural break using both UC and Markov switching.
 
 ```{python}
-#| label: worked-comparison
+#| label: worked-data
 # Data with a level shift at t=150
 n_w = 300
 y_shift = np.concatenate([
-    rng.normal(0, 1, 150),
-    rng.normal(3, 1, 150),
+    rng.normal(0, 1, 150),    # regime 0: mean = 0
+    rng.normal(3, 1, 150),    # regime 1: mean = 3
 ])
-
-# UC: local level (will estimate a gradual shift)
-uc_shift = UnobservedComponents(y_shift, level='local level').fit(disp=0)
-
-# MS: two regimes (will estimate an abrupt shift)
-ms_shift = MarkovRegression(y_shift, k_regimes=2, trend='c').fit(disp=0)
-
-print(f"UC level noise: {uc_shift.params[1]:.4f}")
-print(f"MS regime means: {ms_shift.params[2]:.2f}, {ms_shift.params[3]:.2f}")
 ```
 
 ```{python}
-#| label: fig-worked-comparison
-#| fig-cap: "Two approaches to the same level shift. Top: UC smoothed level tracks the shift gradually. Bottom: Markov switching identifies it as a regime change."
+#| label: worked-comparison
+# Approach 1: UC local level (estimates gradual shift)
+uc_shift = UnobservedComponents(y_shift, level='local level').fit(disp=0)
+
+# Approach 2: Markov switching (estimates abrupt shift)
+ms_shift = MarkovRegression(y_shift, k_regimes=2, trend='c').fit(disp=0)
+
+print(f"UC local level: level noise = {uc_shift.params[1]:.4f}")
+print(f"  (Large level noise = the UC model absorbs the shift as")
+print(f"   a gradual random walk, not a sudden jump)")
+print(f"\nMarkov switching:")
+print(f"  Regime 0 mean: {ms_shift.params[2]:.2f}")
+print(f"  Regime 1 mean: {ms_shift.params[3]:.2f}")
+print(f"  (Correctly identifies the two levels)")
+```
+
+```{python}
+#| label: fig-worked
+#| fig-cap: "Two approaches to the same level shift. The UC model (middle) gradually tracks the shift through the stochastic level. The Markov switching model (bottom) identifies it as a regime change, with a sharp transition at t≈150."
 
 fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
-axes[0].plot(y_shift, linewidth=0.5, color="C0")
-axes[0].set_title("Data (level shift at t=150)")
 
-axes[1].plot(uc_shift.level.smoothed, color="C1", linewidth=1.5)
-axes[1].set_title("UC smoothed level")
+axes[0].plot(y_shift, linewidth=0.5, color='C0')
+axes[0].axvline(150, color='gray', linestyle='--', alpha=0.5)
+axes[0].set_title('Data (level shift at t=150)')
+
+axes[1].plot(uc_shift.level.smoothed, color='C1', linewidth=1.5)
+axes[1].axvline(150, color='gray', linestyle='--', alpha=0.5)
+axes[1].set_title('UC smoothed level (gradual)')
 
 axes[2].fill_between(range(n_w),
                      ms_shift.smoothed_marginal_probabilities[:, 1],
-                     alpha=0.5, color="C2")
-axes[2].set_title("MS regime 1 probability")
-axes[2].set_xlabel("Time")
+                     alpha=0.5, color='C2')
+axes[2].axvline(150, color='gray', linestyle='--', alpha=0.5)
+axes[2].set_title('MS: P(regime 1) (abrupt)')
+axes[2].set_xlabel('Time')
+
 plt.tight_layout()
 plt.show()
 ```
+
+**Lesson:** UC and Markov switching capture different kinds of change.
+UC is for gradual, continuous changes (trends, drifts). Markov
+switching is for abrupt, discrete changes (regime shifts). The choice
+depends on your application: if you believe the change was sudden (a
+policy intervention, a financial crisis), use Markov switching. If the
+change was gradual (demographic shifts, technological change), use UC.
 
 
 # Exercises {#sec-ch16-exercises}
 
 **Exercise 16.1** ($\star\star$, diagnostic failure). Fit a local level
-model to data that actually has a deterministic trend
-($y_t = a + bt + \varepsilon_t$). What does the model do? Does the
-smoothed level track the trend? What do the prediction errors look
-like?
+model to data that actually has a deterministic linear trend
+($y_t = 0.1t + \varepsilon_t$). What does the model do? What are the
+residual diagnostics like? What model should you use instead?
 
 %%
 
 ```{python}
 #| label: ex-16-1
-y_det = 0.1*np.arange(200) + rng.standard_normal(200)
+y_det = 0.1 * np.arange(200) + rng.standard_normal(200)
 uc_det = UnobservedComponents(y_det, level='local level').fit(disp=0)
-print(f"Level noise variance: {uc_det.params[1]:.4f}")
-print("The local level model absorbs the deterministic trend into")
-print("the stochastic level — it 'works' but wastes a degree of")
-print("freedom. Use level='local linear trend' instead.")
+
+print(f"Level noise: {uc_det.params[1]:.4f}")
+print(f"Obs noise:   {uc_det.params[0]:.4f}")
+print(f"\nThe local level model absorbs the deterministic trend into")
+print(f"the stochastic level — it 'works' but attributes the trend")
+print(f"to random fluctuations rather than a systematic pattern.")
+print(f"\nBetter model: level='local linear trend', which explicitly")
+print(f"models the slope as a separate state variable.")
+
+uc_llt2 = UnobservedComponents(y_det, level='local linear trend').fit(disp=0)
+print(f"\nLocal linear trend AIC: {uc_llt2.aic:.1f}")
+print(f"Local level AIC:        {uc_det.aic:.1f}")
 ```
 
 %%
 
 **Exercise 16.2** ($\star\star$, implementation). Implement the Kalman
-filter for a local level model from scratch. Verify by comparing the
+filter for the local level model from scratch. Verify by comparing the
 filtered state and log-likelihood against `UnobservedComponents`.
 
 %%
 
 ```{python}
 #| label: ex-16-2
-# Already implemented above — verify on new data
+# Already implemented above
 y_test = np.cumsum(rng.standard_normal(80)) + 0.5*rng.standard_normal(80)
 af, pf, ll = kalman_local_level(y_test, 1.0, 0.25)
 uc_test = UnobservedComponents(y_test, level='local level').fit(
     start_params=[0.25, 1.0], disp=0)
-print(f"LL match: ours={ll:.2f}, sm={uc_test.llf:.2f}")
-print(f"State corr: {np.corrcoef(af, uc_test.level.filtered)[0,1]:.4f}")
+print(f"State correlation: {np.corrcoef(af, uc_test.level.filtered)[0,1]:.6f}")
+print(f"(Should be ≈ 1.0 — both are computing the same filter)")
 ```
 
 %%
 
-**Exercise 16.3** ($\star\star$, comparison). Fit both `SARIMAX` and
-`ExponentialSmoothing` to the same seasonal data. Compare AIC. Show
-that ETS is a special case of the state-space framework.
+**Exercise 16.3** ($\star\star$, comparison). Fit SARIMAX and
+ExponentialSmoothing to the same seasonal data. Compare AIC. Show that
+both are computing the same thing (state-space filtering) with
+different parameterizations.
 
 %%
 
 ```{python}
 #| label: ex-16-3
-T3 = 120
-y3 = (np.linspace(100,140,T3) + 8*np.sin(2*np.pi*np.arange(T3)/12)
-      + 2*rng.standard_normal(T3))
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
+T3 = 120
+y3 = (np.linspace(100, 140, T3) + 8*np.sin(2*np.pi*np.arange(T3)/12)
+      + 2*rng.standard_normal(T3))
+
 ets3 = ExponentialSmoothing(y3, seasonal_periods=12, trend='add',
                             seasonal='add').fit()
 sar3 = SARIMAX(y3, order=(0,1,1), seasonal_order=(0,1,1,12)).fit(disp=0)
+
 print(f"ETS AIC:     {ets3.aic:.1f}")
 print(f"SARIMAX AIC: {sar3.aic:.1f}")
-print("Both capture trend + seasonality; SARIMAX is more flexible.")
+print(f"\nBoth capture the same trend + seasonal pattern through")
+print(f"different parameterizations of the same state-space framework.")
 ```
 
 %%
 
 **Exercise 16.4** ($\star\star\star$, conceptual). The Kalman gain
-$K_t$ balances prediction vs observation. When $\sigma^2_\eta \gg \sigma^2_\varepsilon$ (state noise dominates), what happens to $K_t$?
-When $\sigma^2_\varepsilon \gg \sigma^2_\eta$? Relate this to the
-smoothing parameter $\alpha$ in exponential smoothing.
+$K_t$ depends on the ratio of state noise to observation noise. As
+$\sigma^2_\eta / \sigma^2_\varepsilon \to \infty$, what happens to
+$K_t$? As it $\to 0$? Relate these limits to the exponential
+smoothing parameter $\alpha$.
 
 %%
 
-When $\sigma^2_\eta \gg \sigma^2_\varepsilon$: the state changes rapidly
-and observations are precise. $K_t \to 1$: trust the data, not the
-prediction. This corresponds to $\alpha \to 1$ in exponential smoothing
-(latest observation gets all the weight).
+When $\sigma^2_\eta \gg \sigma^2_\varepsilon$: the state is very
+unpredictable (changes rapidly) and observations are precise. The
+Kalman gain $K_t \to 1$: ignore the prediction, trust the data
+completely. This is $\alpha \to 1$ in exponential smoothing (the
+latest observation gets all the weight).
 
-When $\sigma^2_\varepsilon \gg \sigma^2_\eta$: the state is stable but
-observations are noisy. $K_t \to 0$: trust the prediction, smooth out
-the noise. This corresponds to $\alpha \to 0$ (heavy smoothing, old
-observations retain influence).
+When $\sigma^2_\eta \ll \sigma^2_\varepsilon$: the state is very
+stable (barely changes) but observations are noisy. The Kalman gain
+$K_t \to 0$: ignore the data, trust the prediction (which is
+essentially the previous state). This is $\alpha \to 0$ (heavy
+smoothing, historical observations retain influence).
 
-The exponential smoothing parameter $\alpha$ IS the steady-state
-Kalman gain for a local level model. This is the precise sense in which
-exponential smoothing is a special case of the state-space framework.
+The steady-state Kalman gain for the local level model is:
+$K^* = \frac{-\sigma^2_\varepsilon + \sqrt{\sigma^4_\varepsilon + 4\sigma^2_\eta\sigma^2_\varepsilon}}{2\sigma^2_\varepsilon}$
+
+This equals the exponential smoothing parameter $\alpha$ exactly.
+The "choice" of $\alpha$ in exponential smoothing is really a choice
+of the signal-to-noise ratio in the underlying state-space model.
 
 %%
 
 
 # Bibliographic Notes {#sec-ch16-biblio}
 
-The Kalman filter: Kalman (1960). The state-space representation of
-ARIMA: Harvey (1989). The connection between exponential smoothing and
-state-space models: Hyndman et al. (2008).
+The Kalman filter: Kalman (1960). The connection to recursive Bayesian
+estimation was recognized immediately. The state-space representation
+of time series models: Harvey (1989), which remains the standard
+reference.
 
-Markov switching: Hamilton (1989) for the Hamilton filter and the
-original regime-switching model. The EM algorithm for state-space
-models: Shumway and Stoffer (1982).
+ARIMA in state-space form: Durbin and Koopman (2012) provide the
+canonical treatment. Statsmodels' implementation follows this closely.
+
+The connection between exponential smoothing and state-space models:
+Hyndman et al. (2008). Every ETS model corresponds to a linear
+Gaussian state-space model; the smoothing parameters are functions of
+the noise variances.
+
+Markov switching: Hamilton (1989) introduced the Hamilton filter and
+the regime-switching model. Kim and Nelson (1999) extend it to
+state-space models with regime switching.
+
+The Rauch-Tung-Striebel (RTS) smoother: Rauch, Tung, and Striebel
+(1965). This is the backward pass that produces the smoothed estimates
+$\boldsymbol{\alpha}_{t|T}$.
 
 Statsmodels' state-space framework: Fulton (2015). The implementation
-uses the Cython-compiled Kalman filter from `_statespace.pyx`.
+uses Cython-compiled Kalman filter routines for performance.
