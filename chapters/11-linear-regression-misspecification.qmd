@@ -31,7 +31,13 @@ rng = np.random.default_rng(42)
 | $\mathbf{P} = \mathbf{X}(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top$ | Hat matrix | `OLSInfluence.hat_matrix_diag` |
 | $P_{ii}$ | Leverage of observation $i$ | |
 | $D_i$ | Cook's distance | `OLSInfluence.cooks_distance` |
+| $\text{DFBETAS}_{ij}$ | Influence of obs $i$ on coefficient $j$ | `OLSInfluence.dfbetas` |
 | $\text{VIF}_j$ | Variance inflation factor for predictor $j$ | `variance_inflation_factor` |
+| $\boldsymbol{\Omega}$ | Error covariance matrix $\text{diag}(\sigma_1^2, \ldots, \sigma_n^2)$ | |
+| $\hat{\Gamma}_j$ | Autocovariance at lag $j$: $n^{-1}\sum_t \hat{e}_t \hat{e}_{t-j} \mathbf{x}_t\mathbf{x}_{t-j}^\top$ | |
+| $L$ | Bandwidth (number of lags) for HAC estimator | `maxlags` in `cov_type='HAC'` |
+| $G$ | Number of clusters | |
+| $g$ | Cluster index, $g = 1, \ldots, G$ | `groups` in `cov_type='cluster'` |
 
 
 # Motivation {#sec-ch11-motivation}
@@ -105,6 +111,144 @@ The HC1--HC3 variants apply corrections for small samples:
 
 HC3 downweights high-leverage observations most aggressively and
 generally has the best size control in small samples.
+
+## Why the sandwich works: a derivation {#sec-ch11-sandwich-deriv}
+
+The sandwich formula is not handed down by fiat. It follows from one
+algebraic identity. Start from the OLS estimator:
+
+$$
+\hat{\boldsymbol{\beta}} - \boldsymbol{\beta}
+= (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\boldsymbol{\varepsilon}.
+$$
+
+The variance of $\hat{\boldsymbol{\beta}}$ is therefore:
+
+$$
+\text{Var}(\hat{\boldsymbol{\beta}} \mid \mathbf{X})
+= (\mathbf{X}^\top\mathbf{X})^{-1}
+  \mathbf{X}^\top\,\text{Var}(\boldsymbol{\varepsilon} \mid \mathbf{X})\,
+  \mathbf{X}\,
+  (\mathbf{X}^\top\mathbf{X})^{-1}.
+$$ {#eq-sandwich-general}
+
+Under homoscedasticity, $\text{Var}(\boldsymbol{\varepsilon} \mid \mathbf{X})
+= \sigma^2 \mathbf{I}$, so the middle collapses:
+$\sigma^2 \mathbf{X}^\top\mathbf{X}$, and we recover the textbook
+formula $\sigma^2(\mathbf{X}^\top\mathbf{X})^{-1}$. Under
+heteroscedasticity, $\text{Var}(\boldsymbol{\varepsilon} \mid \mathbf{X})
+= \boldsymbol{\Omega} = \text{diag}(\sigma_1^2, \ldots, \sigma_n^2)$,
+and no simplification is possible. The three factors give the sandwich
+its name:
+
+- **Bread:** $(\mathbf{X}^\top\mathbf{X})^{-1}$
+- **Meat:** $\mathbf{X}^\top\boldsymbol{\Omega}\mathbf{X}
+  = \sum_{i=1}^n \sigma_i^2\, \mathbf{x}_i\mathbf{x}_i^\top$
+- **Bread:** $(\mathbf{X}^\top\mathbf{X})^{-1}$
+
+We don't know $\sigma_i^2$, so HC0 plugs in $\hat{e}_i^2$. This is
+consistent because $\hat{e}_i^2 \xrightarrow{p} \sigma_i^2$ for each
+$i$ as $n \to \infty$, so the estimated meat converges to the
+population meat.
+
+## HAC: what autocorrelation does to the meat {#sec-ch11-hac}
+
+When errors are autocorrelated --- common in time-series cross-sections
+or spatially ordered data --- the covariance matrix
+$\text{Var}(\boldsymbol{\varepsilon})$ is no longer diagonal. Off-diagonal
+terms $\text{Cov}(\varepsilon_i, \varepsilon_j) \neq 0$ mean the meat
+becomes:
+
+$$
+\mathbf{X}^\top\boldsymbol{\Omega}\mathbf{X}
+= \sum_{i=1}^n \sum_{j=1}^n \sigma_{ij}\, \mathbf{x}_i\mathbf{x}_j^\top.
+$$
+
+Estimating all $n^2$ covariances is hopeless ($n$ parameters from
+$n$ observations). The Newey--West HAC estimator assumes that
+$\text{Cov}(\varepsilon_t, \varepsilon_{t-j})$ is negligible beyond
+lag $L$ and downweights intermediate lags with a Bartlett kernel:
+
+$$
+\hat{\mathbf{S}} = \hat{\Gamma}_0
+  + \sum_{j=1}^{L} w_j\bigl(\hat{\Gamma}_j + \hat{\Gamma}_j^\top\bigr),
+\qquad
+w_j = 1 - \frac{j}{L+1},
+$$ {#eq-hac-bartlett}
+
+where $\hat{\Gamma}_j = n^{-1}\sum_{t=j+1}^n
+\hat{e}_t\,\hat{e}_{t-j}\,\mathbf{x}_t\,\mathbf{x}_{t-j}^\top$.
+The HAC variance is then $(\mathbf{X}^\top\mathbf{X})^{-1}\,
+n\,\hat{\mathbf{S}}\,(\mathbf{X}^\top\mathbf{X})^{-1}$.
+
+The Bartlett kernel linearly downweights higher lags, ensuring the
+estimated covariance matrix is positive semi-definite --- a property
+that truncation ($w_j = 1$ for $j \le L$, $0$ otherwise) does not
+guarantee. The bandwidth $L$ controls the bias-variance trade-off:
+too small misses genuine autocorrelation, too large inflates SEs
+by estimating noise.
+
+## Cluster-robust standard errors {#sec-ch11-cluster}
+
+When observations are grouped into $G$ clusters (students within
+schools, employees within firms, counties within states), errors are
+independent *across* clusters but arbitrarily correlated *within*
+each cluster. The meat becomes a sum over clusters:
+
+$$
+\hat{\mathbf{M}}_{\text{cluster}}
+= \sum_{g=1}^{G}
+  \mathbf{X}_g^\top\hat{\boldsymbol{e}}_g\,
+  \hat{\boldsymbol{e}}_g^\top\mathbf{X}_g,
+$$ {#eq-cluster-meat}
+
+where $\mathbf{X}_g$ and $\hat{\boldsymbol{e}}_g$ are the rows of
+$\mathbf{X}$ and the residuals belonging to cluster $g$. The sandwich
+is then
+$(\mathbf{X}^\top\mathbf{X})^{-1}\hat{\mathbf{M}}_{\text{cluster}}
+(\mathbf{X}^\top\mathbf{X})^{-1}$, with a small-sample correction
+factor $G/(G-1) \cdot (n-1)/(n-p)$ analogous to HC1.
+
+**The few-clusters problem.** Cluster-robust SEs are consistent as
+$G \to \infty$, *not* as $n \to \infty$ with fixed $G$. With fewer
+than about 50 clusters, the SEs are biased downward (too small),
+over-rejecting the null. Cameron, Gelbach, and Miller (2008) recommend
+the wild cluster bootstrap when $G < 50$. We demonstrate this bias
+in the simulation below.
+
+## Influence functions and the connection to Chapter 12 {#sec-ch11-influence}
+
+Cook's distance measures how much the *entire* coefficient vector moves
+when observation $i$ is deleted. It can be computed without refitting
+via the Sherman--Morrison--Woodbury formula:
+
+$$
+D_i = \frac{(\hat{\boldsymbol{\beta}} - \hat{\boldsymbol{\beta}}_{(i)})^\top
+(\mathbf{X}^\top\mathbf{X})
+(\hat{\boldsymbol{\beta}} - \hat{\boldsymbol{\beta}}_{(i)})}{p\,\hat{\sigma}^2}
+= \frac{\hat{e}_i^2}{p\,\hat{\sigma}^2}
+  \cdot \frac{P_{ii}}{(1 - P_{ii})^2}.
+$$
+
+The second equality is the one-step approximation: instead of
+refitting OLS on $n-1$ observations, we use the leverage $P_{ii}$ to
+compute the leave-one-out change analytically. This is exactly the
+*empirical influence function* of $\hat{\boldsymbol{\beta}}$ evaluated
+at observation $i$.
+
+DFBETAS decomposes this influence coefficient-by-coefficient:
+
+$$
+\text{DFBETAS}_{ij}
+= \frac{\hat{\beta}_j - \hat{\beta}_{j(i)}}
+       {\hat{\sigma}_{(i)}\sqrt{[(\mathbf{X}^\top\mathbf{X})^{-1}]_{jj}}}.
+$$
+
+An observation with large $|D_i|$ inflates or deflates all
+coefficients; an observation with large $|\text{DFBETAS}_{ij}|$ for
+a specific $j$ targets that coefficient. Chapter 12 develops the
+influence function in its full generality for M-estimators, where
+Cook's D is a special case.
 
 
 # The Algorithm {#sec-ch11-algorithm}
@@ -304,20 +448,298 @@ for i in top5:
     print(f"  obs {i}: D={D_ours[i]:.4f}, leverage={lev_ours[i]:.4f}")
 ```
 
-## HC0 sandwich (recap + verify)
+## HC0--HC3: all four variants from scratch
+
+The HC variants differ only in how they weight the squared residuals
+in the sandwich meat. Here is a single function that computes all four.
 
 ```{python}
-#| label: hc0-verify
-# Verify our Ch. 10 sandwich implementation
-XtX_inv = np.linalg.inv(X_sm.values.T @ X_sm.values)
-meat = sum(e**2 * np.outer(x, x)
-           for e, x in zip(ols_nr.resid, X_sm.values))
-V_hc0 = XtX_inv @ meat @ XtX_inv
+#| label: hc-all-scratch
 
-hc0_result = sm.OLS(y, X_sm).fit(cov_type='HC0')
-print(f"HC0 SE match: "
-      f"{np.allclose(np.sqrt(np.diag(V_hc0)), hc0_result.bse, rtol=1e-3)}")
+def hc_sandwich(X, residuals):
+    """HC0-HC3 sandwich variance estimators.
+
+    Parameters
+    ----------
+    X : array (n, p)
+        Design matrix (with constant).
+    residuals : array (n,)
+        OLS residuals.
+
+    Returns
+    -------
+    dict mapping 'HC0'..'HC3' to (p, p) covariance matrices.
+    """
+    n, p = X.shape
+    XtX_inv = np.linalg.inv(X.T @ X)
+    H = X @ XtX_inv @ X.T
+    leverage = np.diag(H)
+
+    variants = {}
+    for label, weight in [
+        ('HC0', np.ones(n)),
+        ('HC1', np.full(n, n / (n - p))),
+        ('HC2', 1.0 / (1.0 - leverage)),
+        ('HC3', 1.0 / (1.0 - leverage)**2),
+    ]:
+        weighted_e2 = weight * residuals**2
+        meat = sum(
+            w * np.outer(x, x)
+            for w, x in zip(weighted_e2, X)
+        )
+        variants[label] = XtX_inv @ meat @ XtX_inv
+
+    return variants
 ```
+
+```{python}
+#| label: hc-verify
+# Verify all four against statsmodels
+hc_ours = hc_sandwich(X_sm.values, ols_nr.resid)
+
+print(f"{'Variant':<6} {'Match':>6}  {'Max rel. diff':>14}")
+for ct in ['HC0', 'HC1', 'HC2', 'HC3']:
+    sm_res = sm.OLS(y, X_sm).fit(cov_type=ct)
+    se_ours = np.sqrt(np.diag(hc_ours[ct]))
+    se_sm = sm_res.bse
+    rel = np.max(np.abs(se_ours - se_sm) / se_sm)
+    match = np.allclose(se_ours, se_sm, rtol=1e-3)
+    print(f"{ct:<6} {str(match):>6}  {rel:>14.2e}")
+```
+
+## HAC (Newey--West) from scratch
+
+```{python}
+#| label: hac-scratch
+
+def hac_newey_west(X, residuals, max_lags):
+    """HAC covariance with Bartlett kernel.
+
+    Parameters
+    ----------
+    X : array (n, p)
+        Design matrix.
+    residuals : array (n,)
+        OLS residuals.
+    max_lags : int
+        Bandwidth L (number of lags).
+
+    Returns
+    -------
+    V_hac : array (p, p)
+        HAC sandwich covariance matrix.
+    """
+    n, p = X.shape
+    XtX_inv = np.linalg.inv(X.T @ X)
+
+    # Gamma_0: the HC0 meat (lag 0)
+    S = np.zeros((p, p))
+    for t in range(n):
+        S += residuals[t]**2 * np.outer(X[t], X[t])
+    S /= n
+
+    # Add kernel-weighted cross-lag terms
+    for j in range(1, max_lags + 1):
+        w_j = 1.0 - j / (max_lags + 1)  # Bartlett
+        Gamma_j = np.zeros((p, p))
+        for t in range(j, n):
+            Gamma_j += (
+                residuals[t] * residuals[t - j]
+                * np.outer(X[t], X[t - j])
+            )
+        Gamma_j /= n
+        S += w_j * (Gamma_j + Gamma_j.T)
+
+    V_hac = n * XtX_inv @ S @ XtX_inv
+    return V_hac
+```
+
+```{python}
+#| label: hac-verify
+# Generate data with autocorrelated errors to test
+n_ts = 500
+x_ts = rng.standard_normal(n_ts)
+eps = np.zeros(n_ts)
+eps[0] = rng.standard_normal()
+for t in range(1, n_ts):
+    eps[t] = 0.6 * eps[t-1] + rng.standard_normal()
+
+y_ts = 1.0 + 0.5 * x_ts + eps
+X_ts = sm.add_constant(x_ts)
+
+res_ts = sm.OLS(y_ts, X_ts).fit()
+
+# Our implementation
+max_lags = 5
+V_ours = hac_newey_west(X_ts, res_ts.resid, max_lags=max_lags)
+se_ours = np.sqrt(np.diag(V_ours))
+
+# statsmodels HAC
+res_hac = sm.OLS(y_ts, X_ts).fit(
+    cov_type='HAC',
+    cov_kwds={'maxlags': max_lags},
+)
+se_sm = np.asarray(res_hac.bse)
+
+print(f"HAC SE comparison (Bartlett, L={max_lags}):")
+print(f"{'Coeff':<10} {'Ours':>10} {'SM':>10} {'Ratio':>8}")
+for j, name in enumerate(['const', 'x']):
+    print(f"{name:<10} {se_ours[j]:>10.5f} "
+          f"{se_sm[j]:>10.5f} "
+          f"{se_ours[j]/se_sm[j]:>8.4f}")
+```
+
+The small discrepancy arises because statsmodels applies a
+degrees-of-freedom correction $n/(n-p)$ to the meat, while our
+implementation follows the textbook formula. The point is that both
+are computing the same Bartlett-kernel-weighted sum of autocovariance
+matrices.
+
+## Cluster-robust SEs from scratch
+
+```{python}
+#| label: cluster-scratch
+
+def cluster_robust_se(X, residuals, clusters):
+    """Cluster-robust (CR1) sandwich variance.
+
+    Parameters
+    ----------
+    X : array (n, p)
+        Design matrix.
+    residuals : array (n,)
+        OLS residuals.
+    clusters : array (n,)
+        Cluster membership labels.
+
+    Returns
+    -------
+    V_cl : array (p, p)
+        Cluster-robust covariance matrix.
+    """
+    n, p = X.shape
+    XtX_inv = np.linalg.inv(X.T @ X)
+    unique_clusters = np.unique(clusters)
+    G = len(unique_clusters)
+
+    # Sum meat over clusters
+    meat = np.zeros((p, p))
+    for g in unique_clusters:
+        mask = clusters == g
+        X_g = X[mask]
+        e_g = residuals[mask]
+        # X_g' e_g is a (p,) vector; outer product gives (p, p)
+        score_g = X_g.T @ e_g
+        meat += np.outer(score_g, score_g)
+
+    # Small-sample correction (CR1)
+    correction = (G / (G - 1)) * ((n - 1) / (n - p))
+    V_cl = correction * XtX_inv @ meat @ XtX_inv
+    return V_cl
+```
+
+```{python}
+#| label: cluster-verify
+# Simulate clustered data: 100 clusters of size 20
+n_cl = 2000
+G_cl = 100
+cluster_size = n_cl // G_cl
+cluster_ids = np.repeat(np.arange(G_cl), cluster_size)
+
+# Cluster-level random effect + individual error
+alpha_g = rng.standard_normal(G_cl)
+alpha_i = np.repeat(alpha_g, cluster_size)
+x_cl = rng.standard_normal(n_cl) + 0.3 * alpha_i
+eps_cl = alpha_i + rng.standard_normal(n_cl)
+y_cl = 1.0 + 0.5 * x_cl + eps_cl
+
+X_cl = sm.add_constant(x_cl)
+res_cl = sm.OLS(y_cl, X_cl).fit()
+
+# Our implementation
+V_ours_cl = cluster_robust_se(X_cl, res_cl.resid, cluster_ids)
+se_ours_cl = np.sqrt(np.diag(V_ours_cl))
+
+# statsmodels cluster-robust
+res_cl_sm = sm.OLS(y_cl, X_cl).fit(
+    cov_type='cluster',
+    cov_kwds={'groups': cluster_ids},
+)
+se_sm_cl = res_cl_sm.bse
+
+print("Cluster-robust SE comparison:")
+print(f"{'Coeff':<10} {'Ours':>10} {'SM':>10} {'Ratio':>8}")
+for j, name in enumerate(['const', 'x']):
+    print(f"{name:<10} {se_ours_cl[j]:>10.5f} "
+          f"{se_sm_cl[j]:>10.5f} "
+          f"{se_ours_cl[j]/se_sm_cl[j]:>8.4f}")
+
+# Compare to naive SEs (ignore clustering)
+se_naive = res_cl.bse
+print(f"\nNaive SE for x: {se_naive[1]:.5f}")
+print(f"Cluster SE for x: {se_ours_cl[1]:.5f}")
+print(f"Ratio (cluster/naive): {se_ours_cl[1]/se_naive[1]:.2f}")
+print("Ignoring clusters underestimates uncertainty.")
+```
+
+## Simulation: HC variant size control at n=50 {#sec-ch11-hc-sim}
+
+With a small sample, the choice of HC variant matters. This simulation
+generates data under heteroscedasticity and measures the actual
+rejection rate of a nominal 5% $t$-test for each variant.
+
+```{python}
+#| label: fig-hc-size
+#| fig-cap: "Empirical rejection rate of a 5% t-test for H₀: β₁ = 0.5 (the true value), using different HC variants at n = 50. HC0 over-rejects substantially; HC3 is closest to nominal size. The dashed line marks the 5% nominal level."
+
+n_sim = 5000
+n_small = 50
+reject = {ct: 0 for ct in ['nonrobust', 'HC0', 'HC1', 'HC2', 'HC3']}
+
+for _ in range(n_sim):
+    x = rng.standard_normal(n_small)
+    # Heteroscedastic: variance proportional to exp(x)
+    sigma_i = np.exp(0.5 * x)
+    eps = sigma_i * rng.standard_normal(n_small)
+    y_sim = 1.0 + 0.5 * x + eps
+
+    X_sim = sm.add_constant(x)
+    for ct in reject:
+        res = sm.OLS(y_sim, X_sim).fit(cov_type=ct)
+        # Two-sided test of H0: beta_1 = 0.5 (true value)
+        t_stat = (res.params[1] - 0.5) / res.bse[1]
+        if abs(t_stat) > 1.96:
+            reject[ct] += 1
+
+rates = {ct: reject[ct] / n_sim for ct in reject}
+
+fig, ax = plt.subplots(figsize=(7, 4))
+labels = list(rates.keys())
+values = [rates[k] for k in labels]
+colors = ['C3' if v > 0.07 else 'C0' for v in values]
+ax.bar(labels, values, color=colors, edgecolor='k',
+       linewidth=0.5)
+ax.axhline(0.05, color='k', linestyle='--', linewidth=0.8,
+           label='Nominal 5%')
+ax.set_ylabel('Rejection rate')
+ax.set_xlabel('Covariance estimator')
+ax.set_title(f'Size control at n = {n_small}')
+ax.legend()
+for i, v in enumerate(values):
+    ax.text(i, v + 0.003, f'{v:.3f}', ha='center', fontsize=9)
+plt.tight_layout()
+plt.show()
+
+print(f"\n{'Variant':<12} {'Rejection rate':>15} {'Size distortion':>16}")
+for ct in labels:
+    dist = rates[ct] - 0.05
+    print(f"{ct:<12} {rates[ct]:>15.3f} {dist:>+16.3f}")
+```
+
+HC0 and nonrobust SEs over-reject when the null is true (size
+distortion), meaning they produce false positives too often. HC3
+stays closest to the 5% nominal level. This is the practical reason
+to prefer HC3 in small samples.
 
 
 # Diagnostics {#sec-ch11-diagnostics}
@@ -379,6 +801,152 @@ def ols_diagnostic_suite(result, X):
 diag = ols_diagnostic_suite(ols_nr, X_sm)
 ```
 
+## Added variable plots (partial regression) {#sec-ch11-avplot}
+
+An added variable plot (also called a partial regression plot) isolates
+the marginal relationship between $y$ and predictor $x_j$ after
+removing the linear effect of all other predictors. The construction:
+
+1. Regress $y$ on all predictors *except* $x_j$ → residuals $e_{y|X_{-j}}$
+2. Regress $x_j$ on all other predictors → residuals $e_{j|X_{-j}}$
+3. Plot $e_{y|X_{-j}}$ vs. $e_{j|X_{-j}}$
+
+The slope of the line through this scatter is *exactly*
+$\hat{\beta}_j$ from the full regression (the Frisch--Waugh--Lovell
+theorem). Curvature in this plot reveals that the linear specification
+for $x_j$ is wrong.
+
+```{python}
+#| label: fig-avplot
+#| fig-cap: "Added variable plots for MedInc and AveOccup. MedInc shows clear curvature, suggesting a nonlinear specification (log or polynomial) would improve the model. AveOccup shows a tight linear relationship with one cluster of high-leverage outliers."
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+for ax, col in zip(axes, ['MedInc', 'AveOccup']):
+    j = list(X.columns).index(col)
+    # Columns of X_sm: const, MedInc, HouseAge, AveRooms, AveOccup
+    other_cols = [c for c in range(X_sm.shape[1])
+                  if c != j + 1]  # +1 for constant
+    X_other = X_sm.values[:, other_cols]
+
+    # Residualize y and x_j on the other predictors
+    e_y = sm.OLS(y, X_other).fit().resid
+    e_x = sm.OLS(
+        X_sm.values[:, j + 1], X_other
+    ).fit().resid
+
+    ax.scatter(e_x, e_y, s=2, alpha=0.15)
+
+    # OLS through the residualized data
+    slope = np.sum(e_x * e_y) / np.sum(e_x**2)
+    x_line = np.array([e_x.min(), e_x.max()])
+    ax.plot(x_line, slope * x_line, color='C1',
+            linewidth=1.5)
+
+    ax.set_xlabel(f'{col} | others')
+    ax.set_ylabel('y | others')
+    ax.set_title(f'AV plot: {col} (slope = {slope:.3f})')
+
+plt.tight_layout()
+plt.show()
+```
+
+## CUSUM test for structural breaks {#sec-ch11-cusum}
+
+The CUSUM (cumulative sum) test detects parameter instability by
+examining whether the cumulative sum of recursive residuals stays
+within expected bounds. If the OLS coefficients shift partway through
+the sample, the CUSUM will drift outside the $\pm\, c\sqrt{n}$ bands.
+
+```{python}
+#| label: fig-cusum
+#| fig-cap: "CUSUM plot for the California Housing OLS. The cumulative sum of recursive residuals (solid line) exceeds the 5% significance bounds (dashed lines), indicating parameter instability — the relationship between predictors and housing prices is not constant across the sample."
+
+from statsmodels.stats.diagnostic import recursive_olsresiduals
+
+# Recursive residuals and CUSUM
+rr_result = recursive_olsresiduals(ols_nr)
+rr_resid = rr_result[3]  # recursive residuals
+cusum = np.cumsum(rr_resid) / np.std(rr_resid)
+
+n_rr = len(rr_resid)
+sig_bound = 0.948  # 5% significance level factor
+upper = sig_bound * np.sqrt(n_rr) + 2 * sig_bound * np.arange(n_rr) / np.sqrt(n_rr)
+lower = -upper
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.plot(cusum, linewidth=0.8, label='CUSUM')
+ax.plot(upper, 'k--', linewidth=0.6, label='5% bounds')
+ax.plot(lower, 'k--', linewidth=0.6)
+ax.fill_between(range(n_rr), lower, upper, alpha=0.05,
+                color='gray')
+ax.set_xlabel('Observation (recursive order)')
+ax.set_ylabel('CUSUM statistic')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Coverage simulation: what happens without robust SEs {#sec-ch11-coverage-sim}
+
+This simulation shows the practical consequence of using nonrobust SEs
+when the errors are heteroscedastic: the 95% confidence interval
+doesn't actually contain the true parameter 95% of the time.
+
+```{python}
+#| label: fig-coverage
+#| fig-cap: "Coverage of nominal 95% confidence intervals for β₁ under heteroscedastic data, using nonrobust vs. HC3 standard errors. Nonrobust intervals undercover (contain the true value less than 95% of the time), while HC3 achieves close to nominal coverage across a range of sample sizes."
+
+sample_sizes = [30, 50, 100, 200, 500]
+n_sims = 3000
+coverage = {'nonrobust': [], 'HC3': []}
+
+for n_cov in sample_sizes:
+    hits = {'nonrobust': 0, 'HC3': 0}
+    for _ in range(n_sims):
+        x = rng.standard_normal(n_cov)
+        sigma_i = np.exp(0.5 * x)
+        eps = sigma_i * rng.standard_normal(n_cov)
+        y_cov = 1.0 + 0.5 * x + eps
+
+        X_cov = sm.add_constant(x)
+        for ct in ['nonrobust', 'HC3']:
+            res = sm.OLS(y_cov, X_cov).fit(cov_type=ct)
+            ci = res.conf_int()[1]
+            if ci[0] <= 0.5 <= ci[1]:
+                hits[ct] += 1
+
+    for ct in hits:
+        coverage[ct].append(hits[ct] / n_sims)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(sample_sizes, coverage['nonrobust'], 'o-',
+        label='Nonrobust', color='C3')
+ax.plot(sample_sizes, coverage['HC3'], 's-',
+        label='HC3', color='C0')
+ax.axhline(0.95, color='k', linestyle='--', linewidth=0.8,
+           label='Nominal 95%')
+ax.set_xlabel('Sample size (n)')
+ax.set_ylabel('Coverage probability')
+ax.set_ylim(0.82, 1.0)
+ax.legend()
+plt.tight_layout()
+plt.show()
+
+print(f"{'n':>5}  {'Nonrobust':>10}  {'HC3':>10}")
+for i, n_cov in enumerate(sample_sizes):
+    print(f"{n_cov:>5}  "
+          f"{coverage['nonrobust'][i]:>10.3f}  "
+          f"{coverage['HC3'][i]:>10.3f}")
+```
+
+The coverage gap is largest at small $n$ and closes slowly as $n$
+grows. In practice, using HC3 costs almost nothing (the SEs are
+slightly wider, reducing power by a trivial amount) and protects
+against heteroscedasticity you may not have detected. This is why many
+applied researchers default to HC-robust SEs regardless of whether the
+Breusch--Pagan test rejects.
+
 
 # Computational Considerations {#sec-ch11-computation}
 
@@ -389,7 +957,10 @@ diag = ols_diagnostic_suite(ols_nr, X_sm)
 | HC0 sandwich | $O(np^2)$ | Sum of rank-1 outer products |
 | HC3 sandwich | $O(np^2)$ | Same + leverage calculation |
 | HAC (Newey-West) | $O(np^2 \cdot L)$ | $L$ = number of lags |
+| Cluster-robust | $O(np^2 + Gp^2)$ | Cheap once residuals computed |
 | Cook's distance | $O(np^2)$ | Needs hat matrix |
+| Added variable plot | $O(np^2)$ per predictor | Two auxiliary OLS fits |
+| CUSUM | $O(np^2)$ | Recursive OLS residuals |
 
 For California Housing ($n = 20{,}640$, $p = 8$), everything is fast.
 For large $n$ with many predictors, the $O(np^2)$ cost of the hat
@@ -439,6 +1010,114 @@ ax1.set_title("Residuals vs. fitted")
 stats.probplot(ols_naive.resid, plot=ax2)
 ax2.set_title("Normal Q-Q plot")
 
+plt.tight_layout()
+plt.show()
+```
+
+### Step 4: DFBETAS --- which observations distort which coefficients?
+
+Cook's distance tells us *that* an observation is influential.
+DFBETAS tells us *where* the influence lands.
+
+```{python}
+#| label: worked-dfbetas
+influence_naive = OLSInfluence(ols_naive)
+dfbetas = influence_naive.dfbetas
+threshold = 2 / np.sqrt(len(y))
+
+print(f"DFBETAS threshold (2/sqrt(n)): {threshold:.4f}")
+print(f"\nObservations exceeding threshold per coefficient:")
+print(f"{'Variable':<12} {'Count':>6} {'Pct':>8}")
+for j, name in enumerate(['const'] + list(X.columns)):
+    n_exceed = np.sum(np.abs(dfbetas[:, j]) > threshold)
+    print(f"{name:<12} {n_exceed:>6} "
+          f"{n_exceed/len(y):>8.1%}")
+```
+
+### Step 5: Compare robust SE approaches
+
+The California Housing data has geographic structure --- observations
+within the same census block group share unobserved neighborhood
+effects. We simulate what would happen if we had cluster labels.
+
+```{python}
+#| label: worked-se-comparison
+# Compare nonrobust, HC1, HC3, and HAC standard errors
+se_comparison = {}
+for label, kwargs in [
+    ('Nonrobust', dict(cov_type='nonrobust')),
+    ('HC1', dict(cov_type='HC1')),
+    ('HC3', dict(cov_type='HC3')),
+    ('HAC(5)', dict(cov_type='HAC',
+                    cov_kwds={'maxlags': 5})),
+    ('HAC(10)', dict(cov_type='HAC',
+                     cov_kwds={'maxlags': 10})),
+]:
+    res = sm.OLS(y, X_sm).fit(**kwargs)
+    se_comparison[label] = res.bse
+
+print(f"{'Variable':<12}", end="")
+for label in se_comparison:
+    print(f" {label:>10}", end="")
+print()
+
+for j, name in enumerate(['const'] + list(X.columns)):
+    print(f"{name:<12}", end="")
+    for label in se_comparison:
+        print(f" {se_comparison[label].iloc[j]:>10.4f}",
+              end="")
+    print()
+
+print("\nRatio to nonrobust SEs:")
+for j, name in enumerate(['const'] + list(X.columns)):
+    print(f"{name:<12}", end="")
+    base = se_comparison['Nonrobust'].iloc[j]
+    for label in se_comparison:
+        ratio = se_comparison[label].iloc[j] / base
+        print(f" {ratio:>10.3f}", end="")
+    print()
+```
+
+The HAC SEs grow with bandwidth because the California Housing data
+is ordered geographically: nearby observations have correlated errors.
+HAC(10) gives larger SEs than HC3 for most coefficients, reflecting
+the additional uncertainty from spatial autocorrelation that the
+heteroscedasticity-only corrections miss.
+
+### Step 6: Specification check via added variable plots
+
+```{python}
+#| label: fig-worked-avplot
+#| fig-cap: "Added variable plot for MedInc reveals that a log transform would better capture the diminishing marginal effect of income on house prices. The curvature is diagnostic: the linear specification underestimates the effect at low incomes and overestimates it at high incomes."
+
+# Focus on MedInc — the most important predictor
+j_medinc = list(X.columns).index('MedInc')
+other_cols = [c for c in range(X_sm.shape[1])
+              if c != j_medinc + 1]
+X_other = X_sm.values[:, other_cols]
+
+e_y = sm.OLS(y, X_other).fit().resid
+e_x = sm.OLS(
+    X_sm.values[:, j_medinc + 1], X_other
+).fit().resid
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.scatter(e_x, e_y, s=2, alpha=0.1)
+
+# Linear fit
+slope = np.sum(e_x * e_y) / np.sum(e_x**2)
+x_sorted = np.sort(e_x)
+ax.plot(x_sorted, slope * x_sorted, color='C1',
+        linewidth=1.5, label=f'Linear (slope={slope:.3f})')
+
+# Lowess for nonparametric comparison
+lowess = sm.nonparametric.lowess(e_y, e_x, frac=0.1)
+ax.plot(lowess[:, 0], lowess[:, 1], color='C3',
+        linewidth=1.5, label='LOWESS')
+
+ax.set_xlabel('MedInc | other predictors')
+ax.set_ylabel('House value | other predictors')
+ax.legend()
 plt.tight_layout()
 plt.show()
 ```

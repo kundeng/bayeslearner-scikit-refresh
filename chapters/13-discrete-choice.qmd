@@ -86,13 +86,38 @@ where $f = \Lambda'$ (logit) or $f = \phi$ (probit). This marginal
 effect varies with $\mathbf{x}$ --- it is largest at
 $\Pr(y=1) = 0.5$ and approaches zero at the extremes.
 
-## Identification
+## Identification {#sec-ch13-identification}
 
-The scale of $\varepsilon$ is not identified: multiplying $\beta$ and
-$\sigma_\varepsilon$ by the same constant gives the same probability.
-This is why logit assumes $\text{Var}(\varepsilon) = \pi^2/3$ and
-probit assumes $\text{Var}(\varepsilon) = 1$ --- both are normalizations.
-The implication: $\beta_{\text{logit}} \approx 1.6 \cdot \beta_{\text{probit}}$.
+The latent-variable model has two identification problems. Both
+explain API design choices and constrain how you interpret output.
+
+**Location is absorbed by the intercept.** Adding a constant $c$ to
+every $\varepsilon_i$ and subtracting $c$ from $\beta_0$ produces
+the same $\Pr(y^* > 0)$. The normalization
+$\mathbb{E}[\varepsilon] = 0$ pins the location. This is why binary
+choice models should always include an intercept --- omitting it
+conflates the error's location with the decision threshold.
+
+**Scale is not identified.** Multiplying $\boldsymbol{\beta}$ and
+$\sigma_\varepsilon$ by the same constant $c > 0$ leaves
+$$
+\Pr\!\left(\frac{\mathbf{x}^\top\boldsymbol{\beta}}{\sigma} +
+\frac{\varepsilon}{\sigma} > 0\right)
+$$
+unchanged. Only the ratio $\boldsymbol{\beta}/\sigma$ is identified.
+Each link function resolves this by fixing the error scale:
+
+- **Probit:** $\sigma_\varepsilon = 1$ (standard normal).
+- **Logit:** $\sigma_\varepsilon = \pi/\sqrt{3} \approx 1.81$
+  (the standard logistic has variance $\pi^2/3$).
+
+**Practical consequence:** You cannot compare coefficient magnitudes
+across link functions directly. The ratio
+$\beta_{\text{logit}} / \beta_{\text{probit}} \approx 1.6$ (the
+Amemiya 1981 least-squares approximation; the pure variance ratio
+gives $\pi/\sqrt{3} \approx 1.81$). Report AMEs instead of raw
+coefficients --- the link-function derivative absorbs the scale
+difference, making AMEs comparable regardless of the link.
 
 ## Marginal effects
 
@@ -111,6 +136,33 @@ person" is representative. For dummy variables, the marginal effect
 is a discrete change:
 $\Pr(y=1 \mid x_j=1, \mathbf{x}_{-j}) - \Pr(y=1 \mid x_j=0, \mathbf{x}_{-j})$.
 
+**The delta method for AME standard errors.** The AME for predictor
+$j$ is a nonlinear function of $\boldsymbol{\beta}$:
+$$
+\text{AME}_j = \frac{1}{n}\sum_{i=1}^n
+f(\mathbf{x}_i^\top\boldsymbol{\beta}) \cdot \beta_j.
+$$
+Its variance requires the delta method. The Jacobian
+$\mathbf{J} \in \mathbb{R}^{p \times p}$ has entries
+$$
+\frac{\partial\,\text{AME}_j}{\partial \beta_k} = \frac{1}{n}
+\sum_{i=1}^n \left[\mathbb{1}(j=k)\,f(\eta_i) +
+\beta_j\,f'(\eta_i)\,x_{ik}\right],
+$$
+where $\eta_i = \mathbf{x}_i^\top\boldsymbol{\beta}$ and
+$f'(\eta) = f(\eta)(1 - 2\Lambda(\eta))$ for the logistic. The
+first term accounts for the direct effect of $\beta_j$ as a
+multiplier; the second accounts for how changing $\beta_k$ shifts
+every observation along the S-curve. The AME covariance is then
+$$
+\text{Var}(\text{AME}) \approx \mathbf{J}\,\hat{\mathbf{V}}\,
+\mathbf{J}^\top,
+$$
+where $\hat{\mathbf{V}}$ is the estimated covariance of
+$\hat{\boldsymbol{\beta}}$. The from-scratch implementation in
+@sec-ch13-scratch computes this Jacobian element by element and
+verifies it against `get_margeff()`.
+
 ## Count models and zero-inflation
 
 Poisson regression (Chapter 12) assumes $\text{Var}(y) = \mu$. When
@@ -124,6 +176,101 @@ the data has more variance (overdispersion) or more zeros
   from a separate zero-generating process.
 - **Hurdle model:** separates the zero/nonzero decision from the count
   given nonzero. Logit for the hurdle, truncated Poisson for the count.
+
+## Separation and perfect prediction {#sec-ch13-separation}
+
+When a predictor perfectly separates the two outcomes --- every
+observation with $x_j > c$ has $y = 1$ and every observation with
+$x_j \le c$ has $y = 0$ --- the MLE does not exist. The
+log-likelihood is monotonically increasing in $|\beta_j|$, so the
+optimizer drives $\hat{\beta}_j \to \pm\infty$. The optimizer may
+report convergence, but the coefficient and its standard error are
+both enormous and meaningless.
+
+How to detect separation:
+
+1. **Coefficients exceeding 10** (on standardized predictors) are
+   suspicious.
+2. **Standard errors exceeding 100** indicate that the information
+   matrix is nearly singular along that direction.
+3. **Fitted probabilities at machine epsilon** (exactly 0 or 1
+   after rounding) signal that the model is pushing predictions to
+   the boundary.
+
+The standard remedy is **Firth's penalized likelihood** (Firth,
+1993), which adds a Jeffreys-prior penalty
+$\frac{1}{2}\log|\mathcal{I}(\boldsymbol{\beta})|$ to the
+log-likelihood. This regularization keeps coefficients finite even
+under perfect separation. Statsmodels does not implement Firth's
+method; the practical response is to detect separation, then drop
+the offending predictor, combine sparse categories, or use a
+Bayesian logit with weakly informative priors.
+
+## Multinomial logit likelihood {#sec-ch13-mnlogit-math}
+
+With $J$ unordered outcomes, the multinomial logit assigns
+$$
+\Pr(y_i = j \mid \mathbf{x}_i) =
+\frac{\exp(\mathbf{x}_i^\top\boldsymbol{\beta}_j)}
+{\sum_{k=0}^{J-1}
+\exp(\mathbf{x}_i^\top\boldsymbol{\beta}_k)},
+$$
+where $\boldsymbol{\beta}_0 = \mathbf{0}$ for identification (the
+base category absorbs the intercept). The log-likelihood is
+$$
+\ell(\boldsymbol{\beta}_1, \dots, \boldsymbol{\beta}_{J-1}) =
+\sum_{i=1}^n \sum_{j=0}^{J-1} \mathbb{1}(y_i = j)\,
+\log \Pr(y_i = j \mid \mathbf{x}_i).
+$$
+
+The model has $(J-1) \times p$ parameters --- one coefficient
+vector per non-base outcome. This scaling makes MNLogit
+impractical when $J$ is large.
+
+**The IIA property** follows from the probability ratio:
+$$
+\frac{\Pr(y = j)}{\Pr(y = k)} =
+\exp\!\bigl(\mathbf{x}^\top(\boldsymbol{\beta}_j -
+\boldsymbol{\beta}_k)\bigr),
+$$
+which does not depend on any other alternative $\ell \ne j, k$.
+The **Hausman--McFadden test** checks IIA by fitting the model on
+a restricted choice set (dropping one alternative) and testing
+whether the remaining coefficients change significantly. A
+significant test statistic means IIA is violated --- consider
+nested logit or mixed logit, which allow correlated errors across
+alternatives.
+
+## Zero-inflation as a finite mixture {#sec-ch13-zip-math}
+
+The ZIP treats the population as a mixture of two types: a
+"structural zero" group (probability $\pi_i$) that always produces
+$y = 0$, and a "count" group (probability $1 - \pi_i$) that
+follows a Poisson. The likelihood is
+$$
+L = \prod_{i=1}^n
+\bigl[\pi_i + (1-\pi_i)e^{-\mu_i}\bigr]^{\mathbb{1}(y_i=0)}
+\biggl[(1-\pi_i)\frac{\mu_i^{y_i}e^{-\mu_i}}{y_i!}
+\biggr]^{\mathbb{1}(y_i>0)}.
+$$
+
+The EM interpretation makes the structure transparent:
+
+- **E-step:** Compute the posterior probability that each zero is
+  structural:
+  $w_i = \pi_i / [\pi_i + (1-\pi_i)e^{-\mu_i}]$ for $y_i = 0$,
+  and $w_i = 0$ for $y_i > 0$.
+- **M-step:** Re-estimate $\pi_i$ from the $w_i$ weights
+  (inflation model) and $\mu_i$ from the weighted Poisson
+  likelihood (count model).
+
+In statsmodels, `ZeroInflatedPoisson` fits both components
+simultaneously via MLE, not EM. The model takes two sets of
+regressors: `exog` for the count component ($\mu_i$, log link)
+and `exog_infl` for the inflation component ($\pi_i$, logit
+link). These can be different variables --- the factors that
+determine whether a zero is structural need not be the same
+factors that determine the count magnitude.
 
 
 # The Algorithm {#sec-ch13-algorithm}
@@ -148,6 +295,45 @@ gradient (score), which statsmodels computes analytically.
 7. **end for**
 8. **return** AME, SE
 :::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 13.2: Logit MLE via Newton-Raphson
+
+**Input:** Design matrix $\mathbf{X}$, response $\mathbf{y}$,
+initial $\boldsymbol{\beta}_0 = \mathbf{0}$, tolerance $\varepsilon$
+
+**Output:** MLE $\hat{\boldsymbol{\beta}}$
+
+1. **for** $k = 0, 1, 2, \dots$ **do**
+2. $\quad$ $\boldsymbol{\mu} \leftarrow
+   \Lambda(\mathbf{X}\boldsymbol{\beta}_k)$
+   $\triangleright$ predicted probabilities
+3. $\quad$ $\mathbf{g} \leftarrow
+   \mathbf{X}^\top(\mathbf{y} - \boldsymbol{\mu})$
+   $\triangleright$ score
+4. $\quad$ $\mathbf{W} \leftarrow
+   \text{diag}(\boldsymbol{\mu} \odot (1 - \boldsymbol{\mu}))$
+   $\triangleright$ weights
+5. $\quad$ $\mathbf{H} \leftarrow
+   -\mathbf{X}^\top\mathbf{W}\mathbf{X}$
+   $\triangleright$ Hessian
+6. $\quad$ $\boldsymbol{\beta}_{k+1} \leftarrow
+   \boldsymbol{\beta}_k - \mathbf{H}^{-1}\mathbf{g}$
+   $\triangleright$ Newton step
+7. $\quad$ **if** $\|\mathbf{g}\| < \varepsilon$ **then return**
+   $\boldsymbol{\beta}_{k+1}$
+8. **end for**
+:::
+
+The logit log-likelihood is globally concave, so Newton-Raphson
+converges from any starting point (absent separation). The Hessian
+$\mathbf{H} = -\mathbf{X}^\top\mathbf{W}\mathbf{X}$ is negative
+semi-definite because $\mathbf{W}$ has non-negative diagonal entries
+$\mu_i(1-\mu_i)$. This is why logit is computationally easy compared
+to models with non-concave likelihoods. Statsmodels uses
+Newton-Raphson by default for `Logit.fit()`, which is Algorithm 13.2
+with an analytic Hessian (Chapter 2 covers Newton-Raphson in the
+general optimization context).
 
 
 # Statistical Properties {#sec-ch13-stats}
@@ -284,8 +470,220 @@ print(f"\nPredicted probs (first 3 obs):")
 print(pred_probs[:3].round(3))
 ```
 
+## MNLogit: multinomial outcomes
+
+```{python}
+#| label: mnlogit-demo
+# Simulate 3-choice data: transport mode
+n_mn = 600
+x_inc = rng.exponential(50000, n_mn)
+x_dist = rng.exponential(5, n_mn)
+X_mn = np.column_stack([
+    np.log(x_inc / 50000),
+    (x_dist - 5) / 3,
+])
+X_mn_sm = sm.add_constant(X_mn)
+
+# Utilities: bus (base=0), car (1), bike (2)
+V_car = 0.5 + 0.8*X_mn[:, 0] - 0.3*X_mn[:, 1]
+V_bike = -0.2 - 0.1*X_mn[:, 0] + 0.6*X_mn[:, 1]
+denom_mn = 1 + np.exp(V_car) + np.exp(V_bike)
+p_bus = 1 / denom_mn
+p_car = np.exp(V_car) / denom_mn
+p_bike = np.exp(V_bike) / denom_mn
+
+probs_mn = np.column_stack([p_bus, p_car, p_bike])
+y_mode = np.array([
+    rng.choice(3, p=probs_mn[i]) for i in range(n_mn)
+])
+
+mnl_res = MNLogit(y_mode, X_mn_sm).fit(disp=0)
+print("MNLogit (base=0: bus):")
+print(mnl_res.summary().tables[1])
+```
+
+With $J = 3$ outcomes, MNLogit estimates
+$(J-1) \times p = 2 \times 3 = 6$ parameters. Each column of
+coefficients gives the log-odds of that outcome relative to the
+base category. The coefficient on income for "car" is positive:
+higher income increases the log-odds of choosing car over bus.
+
+## Marginal effects: continuous vs discrete variables
+
+```{python}
+#| label: margeff-types
+# Continuous variable: calculus-based AME
+mfx_cont = logit_res.get_margeff(at='overall')
+print("Continuous variable AME:")
+print(mfx_cont.summary())
+
+# Discrete change for a dummy variable
+# What if x1 jumps from 0 to 1 (holding x2 at observed)?
+p_at_0 = logit_res.predict(np.column_stack([
+    np.ones(len(X_sm)),
+    np.zeros(len(X_sm)),
+    X_sm[:, 2],
+]))
+p_at_1 = logit_res.predict(np.column_stack([
+    np.ones(len(X_sm)),
+    np.ones(len(X_sm)),
+    X_sm[:, 2],
+]))
+discrete_eff = (p_at_1 - p_at_0).mean()
+print(f"\nDiscrete change (x1: 0 -> 1): "
+      f"{discrete_eff:.4f}")
+print("For continuous variables, AME approximates "
+      "discrete change at small increments.")
+print("For dummy variables, always use the discrete "
+      "change, not the calculus derivative.")
+```
+
+## Predicted probability comparison
+
+```{python}
+#| label: fig-prob-comparison
+#| fig-cap: "Predicted probabilities from logit, probit, and the linear probability model (LPM). Logit and probit nearly coincide; the LPM diverges at the extremes and can predict outside [0, 1]."
+
+logit_p = logit_res.predict()
+probit_p = probit_res.predict()
+
+# Linear probability model (OLS on binary outcome)
+lpm_res = sm.OLS(y_default, X_sm).fit()
+lpm_p = lpm_res.predict()
+
+fig, ax = plt.subplots()
+order = np.argsort(logit_p)
+ax.plot(
+    logit_p[order], probit_p[order], '.',
+    ms=2, alpha=0.5, label='Probit',
+)
+ax.plot(
+    logit_p[order], lpm_p[order], '.',
+    ms=2, alpha=0.5, label='LPM',
+)
+ax.plot([0, 1], [0, 1], '--', color='gray', alpha=0.5)
+ax.set_xlabel("Logit predicted probability")
+ax.set_ylabel("Alternative model prediction")
+ax.legend(fontsize=9)
+plt.show()
+
+n_outside = np.mean((lpm_p < 0) | (lpm_p > 1))
+print(f"LPM predictions outside [0,1]: "
+      f"{n_outside:.1%}")
+```
+
+The LPM (OLS on a binary outcome) is fast and its coefficients
+are directly interpretable as marginal effects --- but it can
+predict outside $[0, 1]$ and assumes constant marginal effects
+across the entire range of $\mathbf{x}$. Logit and probit avoid
+both problems at the cost of requiring the marginal-effects
+calculation for interpretation.
+
+## ZIP parameter interpretation
+
+```{python}
+#| label: zip-params
+# ZIP separates inflation and count parameters
+print("ZIP model structure:")
+print(zip_res.summary().tables[1])
+n_infl = x_sm.shape[1]
+print(f"\nFirst {n_infl} params: inflation model "
+      "(logit link -> P(structural zero))")
+print(f"Last {n_infl} params: count model "
+      "(log link -> Poisson mean)")
+
+# Predicted inflation probability at x=0
+inflate_logit = zip_res.params[0]
+inflate_p = 1 / (1 + np.exp(-inflate_logit))
+print(f"\nP(structural zero | x=0): "
+      f"{inflate_p:.3f} (true: 0.30)")
+```
+
+The inflation parameters use a logit link: a positive inflation
+intercept means a higher baseline probability of structural zeros.
+The count parameters use a log link, as in standard Poisson. A
+common mistake is interpreting the inflation coefficients on the
+probability scale --- they are on the log-odds scale, just like
+binary logit coefficients.
+
 
 # From-Scratch Implementation {#sec-ch13-scratch}
+
+## Logit MLE via Newton-Raphson
+
+```{python}
+#| label: newton-scratch
+
+def logit_newton(X, y, tol=1e-8, maxiter=25):
+    """Logit MLE via Newton-Raphson.
+
+    Implements Algorithm 13.2. Returns fitted params,
+    log-likelihood trace, and iteration count.
+    """
+    n, p = X.shape
+    beta = np.zeros(p)
+    ll_trace = []
+
+    for k in range(maxiter):
+        eta = X @ beta
+        mu = 1 / (1 + np.exp(-eta))
+
+        # Log-likelihood (numerically stable)
+        ll = np.sum(y * eta - np.logaddexp(0, eta))
+        ll_trace.append(ll)
+
+        # Score and Hessian
+        g = X.T @ (y - mu)
+        W = mu * (1 - mu)
+        H = -(X.T * W) @ X
+
+        # Newton step: solve H @ delta = g
+        delta = np.linalg.solve(H, g)
+        beta = beta - delta
+
+        if np.max(np.abs(g)) < tol:
+            break
+
+    return beta, np.array(ll_trace), k + 1
+```
+
+```{python}
+#| label: newton-verify
+beta_nr, ll_trace, n_iter = logit_newton(
+    X_sm, y_default,
+)
+
+print(f"Newton-Raphson converged in {n_iter} iterations")
+print(f"\n{'':>10} {'N-R':>10} {'statsmodels':>12}")
+for j in range(len(beta_nr)):
+    print(f"beta_{j:<5} {beta_nr[j]:>10.6f} "
+          f"{logit_res.params[j]:>12.6f}")
+print(f"\nMax |diff|: "
+      f"{np.max(np.abs(beta_nr - logit_res.params)):.2e}")
+```
+
+```{python}
+#| label: fig-newton-convergence
+#| fig-cap: "Newton-Raphson convergence for logit. The log-likelihood increases monotonically and stabilizes in 5--6 iterations --- typical for the globally concave logit likelihood."
+
+fig, ax = plt.subplots()
+ax.plot(
+    range(len(ll_trace)), ll_trace,
+    'o-', ms=5, color='C0',
+)
+ax.set_xlabel("Iteration")
+ax.set_ylabel("Log-likelihood")
+plt.show()
+```
+
+Newton-Raphson converges in about 5--6 iterations because the
+logit likelihood is smooth and globally concave. The concavity
+guarantees that every Newton step increases the log-likelihood
+(absent numerical issues), which is why statsmodels uses
+Newton-Raphson as the default solver for `Logit.fit()`. For
+comparison, BFGS (a quasi-Newton method that approximates the
+Hessian) typically needs more iterations but avoids the
+$O(p^3)$ cost of solving the Newton system at each step.
 
 ## Marginal effects via the delta method
 
@@ -366,6 +764,129 @@ ax.set_xlabel("Mean predicted probability")
 ax.set_ylabel("Observed proportion")
 ax.set_title("Calibration plot")
 plt.show()
+```
+
+## Hosmer-Lemeshow goodness-of-fit test
+
+The calibration plot above is visual. The Hosmer-Lemeshow test
+formalizes it: group observations into deciles of predicted
+probability, then test whether the observed and expected counts
+differ more than chance. The test statistic follows an approximate
+$\chi^2_{G-2}$ distribution under the null of good fit.
+
+```{python}
+#| label: hosmer-lemeshow
+# Hosmer-Lemeshow test (from scratch)
+sorted_idx = np.argsort(pred_prob)
+groups = np.array_split(sorted_idx, 10)
+
+hl_stat = 0.0
+print(f"{'Group':>5} {'n':>5} {'Obs':>5} {'Exp':>7} "
+      f"{'Obs%':>6} {'Exp%':>6}")
+for g_idx, g in enumerate(groups):
+    n_g = len(g)
+    obs_g = y_default[g].sum()
+    exp_g = pred_prob[g].sum()
+    obs_pct = obs_g / n_g
+    exp_pct = exp_g / n_g
+    print(f"{g_idx+1:>5} {n_g:>5} {obs_g:>5} {exp_g:>7.1f} "
+          f"{obs_pct:>6.3f} {exp_pct:>6.3f}")
+    # HL chi-squared contribution
+    if exp_g > 0 and exp_g < n_g:
+        hl_stat += (
+            (obs_g - exp_g)**2
+            / (exp_g * (1 - exp_g / n_g))
+        )
+
+hl_pval = 1 - stats.chi2.cdf(hl_stat, df=8)
+print(f"\nHL statistic: {hl_stat:.2f}, "
+      f"p-value: {hl_pval:.4f}")
+if hl_pval > 0.05:
+    print("No evidence of poor fit (fail to reject H0)")
+else:
+    print("Model may be miscalibrated (reject H0)")
+```
+
+## ROC curve and classification accuracy
+
+```{python}
+#| label: fig-roc
+#| fig-cap: "ROC curve for the logit model. The AUC summarizes discriminative ability: 0.5 = random guessing, 1.0 = perfect separation."
+
+# ROC curve from scratch (no sklearn needed)
+order_roc = np.argsort(-pred_prob)
+y_sorted = y_default[order_roc]
+tpr = np.cumsum(y_sorted) / y_sorted.sum()
+fpr = (
+    np.cumsum(1 - y_sorted)
+    / (1 - y_sorted).sum()
+)
+# Prepend origin
+tpr = np.concatenate([[0], tpr])
+fpr = np.concatenate([[0], fpr])
+auc = np.trapz(tpr, fpr)
+
+fig, ax = plt.subplots()
+ax.plot(fpr, tpr, color='C0', linewidth=1.5)
+ax.plot([0, 1], [0, 1], '--', color='gray', alpha=0.5)
+ax.set_xlabel("False positive rate")
+ax.set_ylabel("True positive rate")
+ax.set_title(f"ROC curve (AUC = {auc:.3f})")
+ax.set_aspect('equal')
+plt.show()
+```
+
+## Overdispersion test for Poisson
+
+When fitting a Poisson model, the key assumption
+$\text{Var}(y) = \mu$ should be checked. The Pearson dispersion
+statistic is the simplest diagnostic: values substantially above
+1.0 indicate overdispersion.
+
+```{python}
+#| label: overdispersion-test
+mu_hat = pois_res.predict()
+pearson_resid = (y_zip - mu_hat) / np.sqrt(mu_hat)
+dispersion = (
+    np.sum(pearson_resid**2)
+    / (len(y_zip) - x_sm.shape[1])
+)
+print(f"Pearson dispersion: {dispersion:.2f}")
+print(f"(should be ~1 if Poisson is correct)")
+if dispersion > 1.5:
+    print("Overdispersion detected: consider NegBin "
+          "or ZIP")
+```
+
+## Separation detection
+
+```{python}
+#| label: separation-detection
+# Near-perfect separation: model will converge
+# but coefficients are enormous
+n_sep = 200
+x_sep = rng.standard_normal((n_sep, 1))
+# Almost perfect: flip 3 obs near boundary
+y_sep = (x_sep[:, 0] > 0).astype(int)
+near_boundary = np.argsort(np.abs(x_sep[:, 0]))[:3]
+y_sep[near_boundary] = 1 - y_sep[near_boundary]
+
+x_sep_sm = sm.add_constant(x_sep)
+sep_res = Logit(y_sep, x_sep_sm).fit(
+    disp=0, maxiter=100,
+)
+
+print("Near-perfect separation diagnostics:")
+print(f"  Coefficient: {sep_res.params[1]:>8.1f}")
+print(f"  Std error:   {sep_res.bse[1]:>8.1f}")
+print(f"  Max pred:    {sep_res.predict().max():.6f}")
+print(f"  Min pred:    {sep_res.predict().min():.6f}")
+print("\nCompare to well-separated logit:")
+print(f"  Coefficient: {logit_res.params[1]:>8.4f}")
+print(f"  Std error:   {logit_res.bse[1]:>8.4f}")
+print("\nRed flags: coefficient magnitude >> 5, "
+      "SE >> 10,")
+print("predicted probs at 0 or 1.")
 ```
 
 ## Vuong test for non-nested model comparison
@@ -653,14 +1174,23 @@ mixed logit relax IIA.
 # Bibliographic Notes {#sec-ch13-biblio}
 
 The latent-variable derivation of logit and probit is in McFadden
-(1974). The multinomial logit and IIA: McFadden (1974), Hausman and
-McFadden (1984) for the test. Marginal effects and the delta method:
-Cameron and Trivedi (2005), Chapter 14.
+(1974). The multinomial logit and IIA: McFadden (1974); the
+Hausman--McFadden test for IIA violations: Hausman and McFadden
+(1984). Marginal effects and the delta method: Cameron and Trivedi
+(2005), Chapter 14. Amemiya (1981) derives the $\approx 1.6$
+coefficient ratio between logit and probit.
+
+Separation and perfect prediction: Albert and Anderson (1984)
+characterize when logit MLE exists; Firth (1993) introduces the
+penalized-likelihood solution. Heinze and Schemper (2002) provide
+practical guidance on detecting and handling separation.
 
 Count models: Cameron and Trivedi (1998) is the definitive reference.
 Zero-inflated models: Lambert (1992). Hurdle models: Mullahy (1986).
-The Vuong test for non-nested comparison: Vuong (1989).
+The Vuong test for non-nested comparison: Vuong (1989); see also
+Wilson (2015) for caveats on its use with zero-inflated models.
 
 Ordered choice models: McKelvey and Zavoina (1975). The `OrderedModel`
 in statsmodels follows the standard parameterization with threshold
-cutpoints.
+cutpoints. For the Hosmer-Lemeshow test: Hosmer and Lemeshow (2000),
+Chapter 5. ROC analysis for binary classifiers: Fawcett (2006).

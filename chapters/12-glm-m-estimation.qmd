@@ -84,6 +84,47 @@ $S(\boldsymbol{\beta}) = \mathbf{X}^\top(\mathbf{y} - \boldsymbol{\mu})$.
 | Gamma | $-\ln(-\theta)$ | Inverse: $1/\mu$ | $\mu^2$ |
 | Negative Binomial | $-r\ln(1-e^\theta)$ | Log | $\mu + \mu^2/r$ |
 
+### Why the cumulant function determines everything
+
+The cumulant function $b(\theta)$ is not just bookkeeping --- it
+encodes the mean and variance of the distribution. Differentiating
+the log-normalizing constant:
+
+$$
+\mathbb{E}[Y] = b'(\theta), \qquad
+\text{Var}(Y) = \phi \, b''(\theta).
+$$
+
+The first identity follows from setting $\partial/\partial\theta$ of
+$\int f(y;\theta,\phi)\,dy = 1$ and recognizing the resulting
+integral as $\mathbb{E}[Y]$. The second follows from differentiating
+again (the variance is the curvature of $b$).
+
+**Verify for Poisson.** The Poisson cumulant function is
+$b(\theta) = e^\theta$. Then $b'(\theta) = e^\theta = \mu$ (the mean)
+and $b''(\theta) = e^\theta = \mu$ (the variance). So
+$\text{Var}(Y) = \phi \cdot \mu$ with $\phi = 1$ --- the variance
+*equals* the mean, the defining property of Poisson data. If your
+data shows $\text{Var}(Y) > \mu$, the Poisson assumption is wrong
+and you need negative binomial or quasi-Poisson (see
+@sec-ch12-diagnostics).
+
+This also explains why the canonical link simplifies the score
+equation. When $g(\mu) = \theta$ (canonical link), the chain rule
+collapses and the score becomes:
+
+$$
+S(\boldsymbol{\beta}) = \frac{1}{\phi}\mathbf{X}^\top
+(\mathbf{y} - \boldsymbol{\mu}).
+$$
+
+This is the residual vector $(\mathbf{y} - \boldsymbol{\mu})$
+projected onto the column space of $\mathbf{X}$ --- exactly the
+same form as the OLS score. Setting $S = \mathbf{0}$ says:
+the residuals are orthogonal to every predictor. The canonical link
+makes the GLM score look like linear regression's normal equations,
+which is why `statsmodels` uses canonical links as defaults.
+
 ## IRLS: how statsmodels fits GLMs
 
 GLM fitting uses Iteratively Reweighted Least Squares (IRLS), which
@@ -102,6 +143,35 @@ least squares." The connection to Chapter 2: IRLS is Newton's method on
 the negative log-likelihood, using the expected information instead of
 the observed information. Each iteration costs $O(np^2)$, the same as
 OLS.
+
+### Fisher scoring vs. Newton's method
+
+Newton's method uses the observed Hessian
+$\nabla^2 \ell(\boldsymbol{\beta})$, which depends on the particular
+$y$ values. Fisher scoring replaces it with the *expected* Hessian
+$-\mathcal{I}(\boldsymbol{\beta}) = -\mathbb{E}[\nabla^2 \ell]
+= -\mathbf{X}^\top\mathbf{W}\mathbf{X}$.
+
+The weight matrix $\mathbf{W}$ depends on $\boldsymbol{\mu}$ but
+not on $\mathbf{y}$. This has two consequences:
+
+1. **Guaranteed positive definiteness.** Since $w_i > 0$ for all
+   $\mu_i$ in the support, $\mathbf{X}^\top\mathbf{W}\mathbf{X}$ is
+   always positive definite (assuming $\mathbf{X}$ has full rank).
+   Newton's observed Hessian can be indefinite away from the MLE,
+   causing the iteration to diverge. Fisher scoring never has this
+   problem --- the curvature estimate is always a bowl.
+
+2. **Stability.** The expected information is a smooth function of
+   $\boldsymbol{\mu}$, not of individual residuals. A single unusual
+   $y_i$ can make the observed Hessian erratic; the expected Hessian
+   just sees the current fitted means. This is why IRLS converges
+   reliably even when Newton might oscillate.
+
+For canonical links, Fisher scoring and Newton coincide --- the
+observed and expected information are equal. For non-canonical
+links (e.g., identity link with Poisson), they differ, and Fisher
+scoring is the safer choice.
 
 ## M-estimation: the unifying framework
 
@@ -141,10 +211,49 @@ $$
 \frac{\hat{\theta}((1-\epsilon)F + \epsilon \delta_{(x_0, y_0)}) - \hat{\theta}(F)}{\epsilon}.
 $$
 
-For OLS, the influence function is unbounded: a single outlier can
-move the estimate arbitrarily far. Robust M-estimators (Huber, Tukey
-biweight) bound the influence function by replacing the quadratic loss
-with a loss that grows more slowly in the tails.
+For OLS, the influence function is
+$\text{IF}(z) = (\mathbb{E}[\mathbf{x}\mathbf{x}^\top])^{-1}
+\mathbf{x}(y - \mathbf{x}^\top\boldsymbol{\beta})$ --- unbounded in
+$y$. A single outlier with a large residual can move the estimate
+arbitrarily far because the IF grows linearly with the residual.
+
+For Huber's M-estimator, the IF clips the residual contribution at
+$\pm c$ (the tuning constant), so
+$|\text{IF}| \leq c \cdot \|(\mathbb{E}[\mathbf{x}\mathbf{x}^\top])^{-1}
+\mathbf{x}\|$. The influence is *bounded* but never zero --- every
+observation has some pull on the estimate.
+
+For Tukey's biweight, the IF is zero whenever $|r| > c$. Observations
+with large residuals have *no influence at all* on the estimate ---
+they are completely ignored. This makes Tukey more robust than Huber
+but less efficient when the data truly is normal, because it discards
+information from legitimate large residuals.
+
+The connection to Chapter 11: Cook's distance is the discrete analogue
+of the influence function. Cook's $D_i$ measures the actual change in
+$\hat{\boldsymbol{\beta}}$ when observation $i$ is deleted; the IF
+measures the infinitesimal change as you contaminate the distribution
+at that point. For large $n$, they tell the same story.
+
+### Breakdown point {#sec-ch12-breakdown}
+
+The breakdown point is the largest fraction of contaminated
+observations an estimator can tolerate before the estimate becomes
+arbitrarily wrong.
+
+| Estimator | Breakdown point | Why |
+|---|---|---|
+| OLS | $0\%$ ($1/n$) | One outlier can pull $\hat{\beta} \to \infty$ |
+| Median | $50\%$ | Up to half the data can be corrupted |
+| Huber M | Depends on $c$ | Lower $c$ = more robust, still $< 50\%$ |
+| Tukey biweight | Up to $50\%$ | Zero-influence on large residuals |
+
+OLS has the worst possible breakdown: a single point $(x_0, y_0)$
+with $y_0 \to \infty$ sends $\hat{\boldsymbol{\beta}} \to \infty$.
+Robust M-estimators trade efficiency (at the normal model) for a
+higher breakdown point. The MM-estimator (not in statsmodels' `RLM`,
+but available in R's `lmrob`) achieves 50% breakdown *and* high
+efficiency --- a strictly better tradeoff.
 
 ## Quantile regression: the check loss
 
@@ -157,10 +266,30 @@ $$
 $$
 
 This is an M-estimator with $\psi_\tau(u) = \tau - \mathbb{1}(u < 0)$
---- the subgradient of the check loss. Unlike OLS (which estimates the
-conditional mean), quantile regression is robust to outliers and
-provides a complete picture of how predictors affect the distribution,
-not just its center.
+--- the subgradient of the check loss.
+
+At the minimum, the subgradient condition requires:
+
+$$
+\sum_{i=1}^n \left(\tau - \mathbb{1}(r_i < 0)\right) \mathbf{x}_i
+= \mathbf{0},
+$$
+
+where $r_i = y_i - \mathbf{x}_i^\top\hat{\boldsymbol{\beta}}$. Read
+this as a weighted balance condition: positive residuals contribute
+weight $\tau$ and negative residuals contribute weight $-(1-\tau)$.
+At $\tau = 0.5$ (the median), positive and negative residuals are
+weighted equally --- half the residuals should be above and half
+below, which is the definition of the median.
+
+The check loss is convex but not differentiable at $u = 0$ (it has a
+kink). This means gradient-based methods cannot be used directly;
+statsmodels' `QuantReg` solves the linear program with an
+interior-point method instead.
+
+Unlike OLS (which estimates the conditional mean), quantile regression
+is robust to outliers and provides a complete picture of how
+predictors affect the distribution, not just its center.
 
 
 # The Algorithm {#sec-ch12-algorithm}
@@ -243,6 +372,41 @@ print(f"AIC: {glm_pois.aic:.2f}")
 - `cov_type='nonrobust'`: model-based covariance. Use `'HC1'` for
   heteroscedasticity-robust (just like OLS).
 
+## Gamma GLM: positive continuous data
+
+When the response is positive and right-skewed --- insurance claim
+amounts, hospital lengths of stay, reaction times --- the Gamma
+family is the natural choice. The variance is proportional to
+$\mu^2$ (the coefficient of variation is constant), which matches
+many real-world positive-valued data.
+
+```{python}
+#| label: gamma-glm
+# Simulate positive continuous data (e.g., claim amounts)
+n_gam = 500
+X_gam = rng.standard_normal((n_gam, 2))
+mu_gam = np.exp(3.0 + 0.4*X_gam[:, 0] - 0.2*X_gam[:, 1])
+# Gamma: shape=5, scale=mu/5 => mean=mu, var=mu^2/5
+y_gam = rng.gamma(shape=5, scale=mu_gam / 5)
+
+X_gam_sm = sm.add_constant(X_gam)
+glm_gamma = sm.GLM(
+    y_gam, X_gam_sm,
+    family=Gamma(link=sm.families.links.Log()),
+).fit()
+
+print(glm_gamma.summary().tables[1])
+print(f"\nDispersion (1/shape): {glm_gamma.scale:.3f}")
+print(f"True 1/shape:         {1/5:.3f}")
+```
+
+The canonical link for Gamma is the inverse ($g(\mu) = 1/\mu$),
+but the log link is more common in practice: it ensures $\mu > 0$
+and gives coefficients that are multiplicative on the original
+scale (a one-unit increase in $x_1$ multiplies the mean by
+$e^{\beta_1}$). Statsmodels estimates the dispersion $\phi = 1/k$
+(where $k$ is the shape parameter) from the Pearson statistic.
+
 ## Robust regression: `RLM`
 
 ```{python}
@@ -270,6 +434,33 @@ OLS is pulled toward the outliers. Huber downweights them. Tukey
 biweight completely ignores them (bounded influence). The tradeoff:
 Tukey is more robust but has lower efficiency under the normal model.
 
+### Tuning the robustness--efficiency tradeoff
+
+The Huber tuning constant $t$ controls where the loss transitions
+from quadratic to linear. Statsmodels defaults to $t = 1.345$, which
+gives 95% asymptotic efficiency relative to OLS when the data is
+truly normal. Lower $t$ means more robustness but lower efficiency.
+
+```{python}
+#| label: huber-tuning
+# Compare Huber tuning constants
+print(f"{'t':>6} {'beta_1':>8} {'beta_2':>8} {'SE(b1)':>8}")
+print(f"{'True':>6} {'2.000':>8} {'-1.000':>8} {'':>8}")
+for t in [1.0, 1.345, 2.0]:
+    res = sm.RLM(
+        y_outlier, X_sm,
+        M=sm.robust.norms.HuberT(t=t),
+    ).fit()
+    print(f"{t:>6.3f} {res.params[1]:>8.3f} "
+          f"{res.params[2]:>8.3f} {res.bse[1]:>8.4f}")
+```
+
+| Tuning constant | Efficiency (normal) | Use case |
+|---|---|---|
+| $t = 1.0$ | ~89% | Suspected heavy contamination |
+| $t = 1.345$ | 95% (default) | General-purpose robust fit |
+| $t = 2.0$ | ~98% | Mild outlier protection |
+
 ## Quantile regression
 
 ```{python}
@@ -286,8 +477,45 @@ print(f"\nOLS:   {sm.OLS(y_clean, X_sm).fit().params.round(3)}")
 
 The intercept changes across quantiles (the conditional distribution
 shifts); the slopes are roughly constant (homoscedastic data has
-parallel quantile lines). With heteroscedastic data, the slopes would
-differ.
+parallel quantile lines). With heteroscedastic data, the slopes
+differ --- this is where quantile regression earns its keep.
+
+## Quantile regression with heteroscedastic data
+
+```{python}
+#| label: fig-quantreg-hetero
+#| fig-cap: "Quantile regression reveals heteroscedasticity that OLS hides. The fan shape in the data means the effect of x₁ is larger at higher quantiles --- the spread grows with x₁. OLS (dashed) captures only the mean effect."
+
+n_het = 400
+x1_het = rng.uniform(0, 5, n_het)
+# Variance grows with x1 (heteroscedastic)
+y_het = 1 + 2 * x1_het + (0.5 + 0.8*x1_het) * rng.standard_normal(n_het)
+X_het = sm.add_constant(x1_het)
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.scatter(x1_het, y_het, s=8, alpha=0.3, color="gray")
+
+ols_het = sm.OLS(y_het, X_het).fit()
+xs = np.linspace(0, 5, 100)
+ax.plot(xs, ols_het.params[0] + ols_het.params[1]*xs,
+        '--k', linewidth=1.5, label="OLS mean")
+
+for tau in [0.10, 0.25, 0.50, 0.75, 0.90]:
+    qr = sm.QuantReg(y_het, X_het).fit(q=tau)
+    ax.plot(xs, qr.params[0] + qr.params[1]*xs,
+            linewidth=1, label=f"τ={tau:.2f}")
+
+ax.set_xlabel("$x_1$")
+ax.set_ylabel("$y$")
+ax.legend(fontsize=8, ncol=2)
+plt.tight_layout()
+plt.show()
+```
+
+The slopes fan out: at $\tau = 0.10$ the slope is smaller than at
+$\tau = 0.90$. OLS averages over this heterogeneity. If you only
+report OLS, you miss that the effect of $x_1$ is much larger in the
+upper tail of the distribution.
 
 
 # From-Scratch Implementation {#sec-ch12-scratch}
@@ -334,6 +562,103 @@ print(f"statsmodels:  {glm_pois.params.round(4)}, "
 print(f"Match: {np.allclose(res_ours['params'], glm_pois.params, atol=1e-3)}")
 ```
 
+## Huber M-estimator via IRLS
+
+Huber's estimator uses IRLS too, but with a different weight
+function. Where the residual exceeds $\pm c$, the loss switches
+from quadratic to linear, producing a bounded $\psi$ function.
+
+```{python}
+#| label: huber-scratch
+
+def irls_huber(X, y, c=1.345, tol=1e-8, maxiter=50):
+    """Huber M-estimator via IRLS.
+
+    At each step, reweight observations by how close their
+    residuals are to the Huber threshold c.
+    """
+    n, p = X.shape
+    beta = np.linalg.lstsq(X, y, rcond=None)[0]  # OLS start
+
+    for k in range(maxiter):
+        r = y - X @ beta
+        # MAD scale estimate (robust sigma)
+        s = np.median(np.abs(r - np.median(r))) / 0.6745
+        r_scaled = r / max(s, 1e-10)
+
+        # Huber weights: 1 if |r| <= c, else c/|r|
+        w = np.where(
+            np.abs(r_scaled) <= c,
+            np.ones(n),
+            c / np.abs(r_scaled),
+        )
+        W = np.diag(w)
+        beta_new = np.linalg.solve(
+            X.T @ W @ X, X.T @ W @ y,
+        )
+
+        if np.max(np.abs(beta_new - beta)) < tol:
+            beta = beta_new
+            break
+        beta = beta_new
+
+    return {'params': beta, 'scale': s, 'weights': w, 'nit': k}
+```
+
+```{python}
+#| label: huber-verify
+res_hub = irls_huber(X_sm, y_outlier)
+print(f"From-scratch: {res_hub['params'].round(4)}")
+print(f"statsmodels:  {rlm_huber.params.round(4)}")
+print(f"Match: {np.allclose(res_hub['params'], rlm_huber.params, atol=0.05)}")
+```
+
+The key insight: the Huber weights are exactly 1 for observations
+inside the threshold (treated as OLS) and shrink toward 0 for
+outliers. This is the operational meaning of "bounded influence"
+--- outliers get downweighted, not discarded.
+
+## Sandwich covariance from scratch
+
+The sandwich covariance (@eq-m-sandwich) is the universal standard
+error for M-estimators. Let's verify it for the Poisson GLM.
+
+```{python}
+#| label: sandwich-scratch
+# Poisson GLM sandwich covariance from scratch
+mu_hat = np.exp(X_sm @ glm_pois.params)
+# Score contributions (psi_i = x_i * (y_i - mu_i))
+psi = X_sm * (y_counts - mu_hat)[:, None]
+
+# Bread: -E[d psi/d beta] = X'WX where W=diag(mu)
+W_hat = np.diag(mu_hat)
+bread = X_sm.T @ W_hat @ X_sm / n
+bread_inv = np.linalg.inv(bread)
+
+# Meat: (1/n) sum psi_i psi_i'
+meat = psi.T @ psi / n
+
+# Sandwich: bread^-1 meat bread^-1 / n
+V_sandwich = bread_inv @ meat @ bread_inv / n
+
+# Compare to statsmodels HC0
+glm_hc = sm.GLM(
+    y_counts, X_sm, family=Poisson(),
+).fit(cov_type='HC0')
+
+print("Sandwich SE (from scratch):",
+      np.sqrt(np.diag(V_sandwich)).round(5))
+print("Sandwich SE (statsmodels): ",
+      glm_hc.bse.round(5))
+print("Model SE   (statsmodels): ",
+      glm_pois.bse.round(5))
+```
+
+When the model is correctly specified, the sandwich SEs and model
+SEs should be similar. A large discrepancy signals
+misspecification --- the bread and meat disagree, just as
+Exercise 12.4 explains.
+
 
 # Diagnostics {#sec-ch12-diagnostics}
 
@@ -374,6 +699,125 @@ if pearson_disp > 1.5:
     print(f"  Poisson SE: {glm_pois.bse.round(4)}")
     print(f"  Quasi SE:   {glm_quasi.bse.round(4)}")
 ```
+
+## Deviance vs. Pearson residuals
+
+GLMs have two natural residual types, and using the wrong one can
+hide problems.
+
+| Residual | Formula | Best for |
+|---|---|---|
+| Pearson | $(y_i - \hat\mu_i) / \sqrt{V(\hat\mu_i)}$ | Detecting mean misspecification |
+| Deviance | $\text{sign}(y_i - \hat\mu_i)\sqrt{d_i}$ | QQ plots, approximate normality |
+
+Pearson residuals are the raw residual divided by the model's
+predicted standard deviation. They detect violations of the
+mean-variance relationship but can be highly skewed for Poisson
+data with small counts.
+
+Deviance residuals are constructed so that $\sum d_i$ equals the
+model deviance. They are closer to normal than Pearson residuals
+for most GLMs, making them the better choice for QQ plots.
+
+```{python}
+#| label: fig-resid-comparison
+#| fig-cap: "Pearson vs. deviance residuals for the Poisson GLM. Deviance residuals (right) are closer to normal, especially in the tails. Pearson residuals (left) show right-skewness typical of count data."
+
+pear_resid = glm_pois.resid_pearson
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+stats.probplot(pear_resid, plot=ax1)
+ax1.set_title("Pearson residuals")
+stats.probplot(dev_resid, plot=ax2)
+ax2.set_title("Deviance residuals")
+plt.tight_layout()
+plt.show()
+```
+
+## Link function diagnostic
+
+Choosing the wrong link function is a form of misspecification
+that residual plots can detect. Compare the log link (canonical
+for Poisson) against the identity link on count data.
+
+```{python}
+#| label: fig-link-diagnostic
+#| fig-cap: "Residuals vs. fitted values under two link functions for count data. The log link (left) shows no pattern; the identity link (right) shows curvature, indicating misspecification."
+
+from statsmodels.genmod.families import links as glinks
+
+glm_log = sm.GLM(
+    y_counts, X_sm, family=Poisson(),
+).fit()
+glm_ident = sm.GLM(
+    y_counts, X_sm,
+    family=Poisson(link=glinks.Identity()),
+).fit()
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+ax1.scatter(glm_log.mu, glm_log.resid_deviance,
+            s=5, alpha=0.3)
+ax1.axhline(0, color="gray", linewidth=0.5)
+ax1.set_xlabel(r"$\hat{\mu}$")
+ax1.set_ylabel("Deviance residual")
+ax1.set_title("Log link (canonical)")
+
+ax2.scatter(glm_ident.mu, glm_ident.resid_deviance,
+            s=5, alpha=0.3)
+ax2.axhline(0, color="gray", linewidth=0.5)
+ax2.set_xlabel(r"$\hat{\mu}$")
+ax2.set_ylabel("Deviance residual")
+ax2.set_title("Identity link")
+
+plt.tight_layout()
+plt.show()
+```
+
+The curvature in the identity-link residuals means the linear
+predictor is not the right transformation of $\mu$. The log link
+removes this curvature because the true data-generating process
+uses an exponential mean function.
+
+## Quantile process plot
+
+A quantile process plot shows how regression coefficients change
+across quantiles $\tau \in (0, 1)$. It is the signature diagnostic
+for quantile regression --- flat lines mean OLS is sufficient;
+non-flat lines reveal heterogeneous effects.
+
+```{python}
+#| label: fig-qr-process
+#| fig-cap: "Quantile process plot for heteroscedastic data. The slope of x₁ increases with τ: higher quantiles have steeper slopes, confirming that the effect of x₁ on the spread (not just the mean) is real. The dashed line is the OLS estimate."
+
+taus = np.arange(0.05, 0.96, 0.05)
+slopes = []
+slope_ci_lo = []
+slope_ci_hi = []
+for tau in taus:
+    qr = sm.QuantReg(y_het, X_het).fit(q=tau)
+    slopes.append(qr.params[1])
+    ci = qr.conf_int()[1]
+    slope_ci_lo.append(ci[0])
+    slope_ci_hi.append(ci[1])
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(taus, slopes, 'o-', markersize=3, linewidth=1)
+ax.fill_between(taus, slope_ci_lo, slope_ci_hi,
+                alpha=0.2)
+ax.axhline(ols_het.params[1], ls='--', color='gray',
+           linewidth=1, label="OLS")
+ax.set_xlabel(r"Quantile $\tau$")
+ax.set_ylabel(r"Slope $\hat{\beta}_1(\tau)$")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+The upward trend in the coefficient confirms heteroscedasticity:
+the effect of $x_1$ is roughly 1.5 at $\tau = 0.10$ but over 2.5
+at $\tau = 0.90$. OLS averages these into a single number and
+misses the story.
 
 ## When to use which M-estimator
 

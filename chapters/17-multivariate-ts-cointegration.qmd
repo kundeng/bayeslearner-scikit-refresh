@@ -174,6 +174,146 @@ $H_0: r \leq 1$ vs $H_1: r > 1$; etc. It uses the *trace statistic*
 or *maximum eigenvalue statistic*, which have non-standard
 distributions (like the ADF test in Chapter 15).
 
+## VAR stability via the companion matrix
+
+A VAR($p$) can always be rewritten as a VAR(1) in a higher-dimensional
+state vector. Stack $p$ lags into a single $Kp$-dimensional vector
+$\boldsymbol{\xi}_t = (\mathbf{y}_t^\top, \mathbf{y}_{t-1}^\top,
+\ldots, \mathbf{y}_{t-p+1}^\top)^\top$. Then
+
+$$
+\boldsymbol{\xi}_t = \mathbf{F}\boldsymbol{\xi}_{t-1} + \mathbf{v}_t,
+$$
+
+where the **companion matrix** $\mathbf{F}$ is
+
+$$
+\mathbf{F} =
+\begin{pmatrix}
+\boldsymbol{\Phi}_1 & \boldsymbol{\Phi}_2 & \cdots & \boldsymbol{\Phi}_{p-1} & \boldsymbol{\Phi}_p \\
+\mathbf{I}_K & \mathbf{0} & \cdots & \mathbf{0} & \mathbf{0} \\
+\mathbf{0} & \mathbf{I}_K & \cdots & \mathbf{0} & \mathbf{0} \\
+\vdots & & \ddots & & \vdots \\
+\mathbf{0} & \mathbf{0} & \cdots & \mathbf{I}_K & \mathbf{0}
+\end{pmatrix},
+$$
+
+and $\mathbf{v}_t = (\mathbf{u}_t^\top, \mathbf{0}^\top, \ldots,
+\mathbf{0}^\top)^\top$. The VAR($p$) is stationary if and only if all
+eigenvalues of $\mathbf{F}$ lie strictly inside the unit circle. For a
+VAR(1), the companion matrix is simply $\boldsymbol{\Phi}_1$ itself, so
+the stationarity condition reduces to checking the eigenvalues of the
+single coefficient matrix.
+
+**Why this matters for diagnostics:** Statsmodels computes the companion
+eigenvalues internally, but understanding the construction lets you
+diagnose instabilities. An eigenvalue near 1 means a near-unit root
+in the system --- the VAR behaves almost like a non-stationary process,
+and forecasts will have very slow decay.
+
+## Wold representation: from VAR to impulse responses
+
+Every stationary VAR has an MA($\infty$) representation (the
+**Wold decomposition**):
+
+$$
+\mathbf{y}_t = \boldsymbol{\mu} + \sum_{s=0}^{\infty} \boldsymbol{\Psi}_s \mathbf{u}_{t-s},
+$$
+
+where $\boldsymbol{\Psi}_0 = \mathbf{I}_K$ and the subsequent
+coefficient matrices are computed recursively:
+
+$$
+\boldsymbol{\Psi}_s = \sum_{j=1}^{\min(s,p)} \boldsymbol{\Phi}_j \boldsymbol{\Psi}_{s-j}, \quad s = 1, 2, \ldots
+$$ {#eq-psi-recursion}
+
+The matrix $\boldsymbol{\Psi}_s$ has a direct interpretation: element
+$(j,k)$ of $\boldsymbol{\Psi}_s$ is the impulse response --- the
+effect on variable $j$ at time $t+s$ of a one-unit shock to variable
+$k$ at time $t$. This recursive formula is how statsmodels computes
+IRFs internally: no matrix inversion, just a forward recursion from
+the estimated $\boldsymbol{\Phi}_j$ matrices.
+
+## Forecast error variance decomposition (FEVD)
+
+The Wold representation also tells us how much of the $h$-step-ahead
+forecast uncertainty in variable $j$ is attributable to shocks from
+variable $k$. The $h$-step forecast error is
+
+$$
+\mathbf{y}_{t+h} - \hat{\mathbf{y}}_{t+h|t} = \sum_{s=0}^{h-1} \boldsymbol{\Psi}_s \mathbf{u}_{t+h-s}.
+$$
+
+After orthogonalizing innovations via a Cholesky decomposition
+$\boldsymbol{\Sigma}_u = \mathbf{P}\mathbf{P}^\top$ (so that
+$\boldsymbol{\varepsilon}_t = \mathbf{P}^{-1}\mathbf{u}_t$ has
+identity covariance), define $\boldsymbol{\Theta}_s =
+\boldsymbol{\Psi}_s \mathbf{P}$. The share of variable $j$'s forecast
+variance at horizon $h$ due to shocks from variable $k$ is
+
+$$
+\text{FEVD}_{jk}(h) = \frac{\sum_{s=0}^{h-1} \Theta_{jk,s}^2}{\sum_{s=0}^{h-1} \sum_{m=1}^{K} \Theta_{jm,s}^2}.
+$$
+
+At horizon $h = 1$, forecast variance is dominated by own shocks. As
+$h \to \infty$, the FEVD converges to the *unconditional* variance
+decomposition --- this tells you which shocks are most important for
+long-run variability.
+
+## Engle--Granger two-step vs Johansen
+
+Two approaches test for cointegration. They differ in scope and
+efficiency:
+
+**Engle--Granger two-step:**
+
+1. Regress $y_{1t}$ on $y_{2t}$ by OLS (in levels). Save
+   residuals $\hat{e}_t = y_{1t} - \hat{\beta} y_{2t}$.
+2. Test $\hat{e}_t$ for stationarity using an ADF test (with
+   special critical values --- the Engle--Granger table, not the
+   standard ADF table, because the residuals are estimated).
+
+If the residuals are stationary, the series are cointegrated.
+Simple, transparent, and easy to implement. But it has limitations:
+
+- It assumes **at most one** cointegrating vector. With $K > 2$
+  variables, there may be $r > 1$ cointegrating relationships, and the
+  two-step method cannot find them.
+- The result depends on **normalization**: regressing $y_1$ on $y_2$
+  may give a different answer than regressing $y_2$ on $y_1$.
+- It has **efficiency loss** because the cointegrating vector is
+  estimated in the first step and treated as known in the second.
+
+**Johansen's method** (reduced-rank regression) handles all of these:
+it tests for the rank $r$ directly, finds all $r$ cointegrating
+vectors simultaneously, and is asymptotically efficient. Use
+Engle--Granger for quick exploratory checks with two variables;
+use Johansen for anything serious.
+
+## Structural VAR and the identification problem
+
+The orthogonalized IRFs from the Cholesky decomposition impose a
+**recursive causal ordering**: the first variable in the system can
+affect all others contemporaneously, the second can affect all but the
+first, and so on. This is the structural identification assumption,
+and changing the variable ordering changes the results.
+
+Formally, the structural shocks $\boldsymbol{\varepsilon}_t$ satisfy
+$\mathbf{u}_t = \mathbf{P}\boldsymbol{\varepsilon}_t$, where
+$\mathbf{P}$ is the lower-triangular Cholesky factor of
+$\boldsymbol{\Sigma}_u$. The $(j,k)$ entry of $\mathbf{P}$, for
+$j > k$, represents the contemporaneous effect of a structural shock
+to variable $k$ on variable $j$.
+
+**Why ordering matters:** In a two-variable system with interest rates
+($r_t$) and GDP ($y_t$), ordering $r$ first means interest rate shocks
+affect GDP contemporaneously but GDP shocks cannot affect interest
+rates within the same period. Ordering $y$ first reverses this. If the
+two orderings give similar IRFs, identification is robust. If they
+diverge, you need economic theory to justify the ordering --- or
+alternative identification strategies (sign restrictions, external
+instruments) that are beyond our scope.
+
 
 # The Algorithm and SciPy Implementation {#sec-ch17-algorithm}
 
@@ -196,6 +336,41 @@ print(f"True Phi matrix:")
 print(Phi)
 print(f"\nShape: {y_var.shape} (T={T} observations, K=2 variables)")
 ```
+
+## Step 1b: Verify stability via companion eigenvalues
+
+For a VAR(1), the companion matrix is $\boldsymbol{\Phi}_1$ itself.
+Stationarity requires all eigenvalues inside the unit circle.
+
+```{python}
+#| label: companion-eigenvalues
+# For VAR(1), companion matrix = Phi
+eigs_true = np.linalg.eigvals(Phi)
+print(f"Eigenvalues of Phi: {eigs_true.round(4)}")
+print(f"|eigenvalues|:      {np.abs(eigs_true).round(4)}")
+print(f"All inside unit circle: {np.all(np.abs(eigs_true) < 1)}")
+
+# For a VAR(p), build the companion matrix explicitly
+# Example: refit as VAR(2) and check companion eigenvalues
+var2_check = VAR(y_var).fit(maxlags=2)
+K = 2
+p = 2
+F = np.zeros((K * p, K * p))
+F[:K, :] = np.hstack(var2_check.coefs)  # first row block
+F[K:, :K] = np.eye(K)                    # identity below
+
+eigs_companion = np.linalg.eigvals(F)
+print(f"\nCompanion matrix eigenvalues (VAR(2)):")
+for ev in eigs_companion:
+    print(f"  {ev:.4f}  |λ| = {abs(ev):.4f}")
+print(f"All inside unit circle: "
+      f"{np.all(np.abs(eigs_companion) < 1)}")
+```
+
+**Why the companion trick matters:** For a VAR(2) with $K = 5$, you
+have two $5 \times 5$ coefficient matrices. Checking stability means
+building the $10 \times 10$ companion and computing its eigenvalues
+--- not checking each $\boldsymbol{\Phi}_i$ separately.
 
 ## Step 2: Select lag order and fit
 
@@ -332,6 +507,159 @@ print(f"equilibrium, y1 adjusts down by {vecm.alpha[0,0]:.3f} per period")
 print(f"and y2 adjusts up by {vecm.alpha[1,0]:.3f} per period.")
 ```
 
+## Step 6: Forecast error variance decomposition
+
+FEVD decomposes the forecast uncertainty of each variable into
+contributions from each shock source. It answers: at horizon $h$, how
+much of the forecast variance of $y_1$ is due to shocks from $y_2$?
+
+```{python}
+#| label: fevd
+fevd = var_result.fevd(periods=20)
+
+# fevd.decomp is a dict: key=variable index, value=(periods, K)
+print(f"FEVD of y1 at selected horizons:")
+print(f"  {'Horizon':>7} {'Own (y1)':>10} {'Cross (y2)':>12}")
+for h in [1, 5, 10, 20]:
+    print(f"  {h:>7} {fevd.decomp[0][h-1, 0]:>10.3f} "
+          f"{fevd.decomp[0][h-1, 1]:>12.3f}")
+
+print(f"\nFEVD of y2 at selected horizons:")
+print(f"  {'Horizon':>7} {'Cross (y1)':>12} {'Own (y2)':>10}")
+for h in [1, 5, 10, 20]:
+    print(f"  {h:>7} {fevd.decomp[1][h-1, 0]:>12.3f} "
+          f"{fevd.decomp[1][h-1, 1]:>10.3f}")
+```
+
+At short horizons, own shocks dominate. As the horizon grows, the
+cross-variable contributions increase --- reflecting the dynamic
+interdependence captured by the off-diagonal elements of
+$\boldsymbol{\Phi}$.
+
+## Step 7: Structural VAR and Cholesky ordering
+
+The Cholesky decomposition of $\boldsymbol{\Sigma}_u$ orthogonalizes
+the innovations. The ordering of variables determines the causal
+structure imposed.
+
+```{python}
+#| label: svar-cholesky
+# Original ordering: y1 first, y2 second
+# y1 can affect y2 contemporaneously, but not vice versa
+irf_orth = var_result.irf(periods=20)
+print("Orthogonalized IRF (y1 ordered first):")
+print(f"  Shock y1 → y2 at h=0: "
+      f"{irf_orth.orth_irfs[0, 1, 0]:.4f}")
+print(f"  Shock y2 → y1 at h=0: "
+      f"{irf_orth.orth_irfs[0, 0, 1]:.4f} (forced to 0)")
+
+# Reverse ordering: swap columns of the data
+y_var_rev = y_var[:, ::-1]
+var_rev = VAR(y_var_rev).fit(maxlags=2)
+irf_rev = var_rev.irf(periods=20)
+print(f"\nReversed ordering (y2 first):")
+print(f"  Shock y2 → y1 at h=0: "
+      f"{irf_rev.orth_irfs[0, 1, 0]:.4f}")
+print(f"  Shock y1 → y2 at h=0: "
+      f"{irf_rev.orth_irfs[0, 0, 1]:.4f} (forced to 0)")
+```
+
+```{python}
+#| label: fig-cholesky-compare
+#| fig-cap: "Effect of Cholesky ordering on orthogonalized IRFs. Solid lines: y1 ordered first. Dashed lines: y2 ordered first. When the orderings give similar results, the identification is robust."
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+# Shock to y1 -> effect on y2 (original ordering)
+axes[0].plot(irf_orth.orth_irfs[:, 1, 0],
+             color='C0', linewidth=1.5, label='y1 first')
+# Same cross-effect in reversed ordering
+# In reversed data, shock to "new y2" (=original y1) -> "new y1" (=original y2)
+axes[0].plot(irf_rev.orth_irfs[:, 0, 1],
+             color='C1', linewidth=1.5, linestyle='--',
+             label='y2 first')
+axes[0].axhline(0, color='gray', linewidth=0.5)
+axes[0].set_title('Shock to y1 → effect on y2')
+axes[0].set_xlabel('Periods after shock')
+axes[0].legend(fontsize=9)
+
+# Shock to y2 -> effect on y1 (original ordering)
+axes[1].plot(irf_orth.orth_irfs[:, 0, 1],
+             color='C0', linewidth=1.5, label='y1 first')
+axes[1].plot(irf_rev.orth_irfs[:, 1, 0],
+             color='C1', linewidth=1.5, linestyle='--',
+             label='y2 first')
+axes[1].axhline(0, color='gray', linewidth=0.5)
+axes[1].set_title('Shock to y2 → effect on y1')
+axes[1].set_xlabel('Periods after shock')
+axes[1].legend(fontsize=9)
+
+plt.tight_layout()
+plt.show()
+```
+
+When the innovation correlation $\boldsymbol{\Sigma}_u$ is nearly
+diagonal (innovations are nearly uncorrelated), the ordering barely
+matters. When innovations are highly correlated, the ordering matters
+a lot --- and you need theory to pick it.
+
+## Step 8: Engle--Granger two-step cointegration test
+
+The simplest cointegration test: regress one I(1) variable on another,
+then test whether the residuals are stationary.
+
+```{python}
+#| label: engle-granger-two-step
+# Step 1: OLS regression in levels
+ols_eg = sm.OLS(y1_ci, sm.add_constant(y2_ci)).fit()
+eg_resid = ols_eg.resid
+print(f"Engle-Granger Step 1:")
+print(f"  y1 = {ols_eg.params[0]:.3f} + "
+      f"{ols_eg.params[1]:.3f} * y2 + residuals")
+print(f"  Estimated cointegrating coefficient: "
+      f"{ols_eg.params[1]:.3f} (true = 0.5)")
+
+# Step 2: ADF test on residuals
+# NB: must use Engle-Granger critical values, not standard ADF
+adf_stat, adf_p, _, _, adf_cv, _ = adfuller(eg_resid)
+print(f"\nEngle-Granger Step 2 (ADF on residuals):")
+print(f"  ADF statistic: {adf_stat:.3f}")
+print(f"  p-value: {adf_p:.4f}")
+print(f"  {'Reject → cointegrated' if adf_p < 0.05 else 'Fail to reject → no cointegration'}")
+
+# Caveat: regressing y2 on y1 can give different results
+ols_rev = sm.OLS(y2_ci, sm.add_constant(y1_ci)).fit()
+adf_rev = adfuller(ols_rev.resid)
+print(f"\nReversed regression y2 on y1:")
+print(f"  ADF p-value: {adf_rev[1]:.4f}")
+print(f"  Normalization matters — Johansen avoids this issue.")
+```
+
+## Step 9: VECM forecasting
+
+Once the VECM is fitted, forecasts incorporate both the short-run
+dynamics ($\boldsymbol{\Gamma}_i$) and the error correction term
+($\boldsymbol{\alpha}\boldsymbol{\beta}^\top\mathbf{y}_{t-1}$).
+
+```{python}
+#| label: vecm-forecast
+# Forecast 20 steps ahead with the VECM
+h_fcast = 20
+fcast = vecm.predict(steps=h_fcast)
+
+print(f"VECM forecast (next {h_fcast} periods):")
+print(f"  {'Step':>4} {'y1 (consumption)':>18} {'y2 (income)':>14}")
+for step in [1, 5, 10, 20]:
+    print(f"  {step:>4} {fcast[step-1, 0]:>18.3f} "
+          f"{fcast[step-1, 1]:>14.3f}")
+
+print(f"\nLast observed values:")
+print(f"  y1 = {y_ci[-1, 0]:.3f},  y2 = {y_ci[-1, 1]:.3f}")
+print(f"\nThe VECM forecast reverts toward the long-run equilibrium.")
+print(f"If the spread is currently above its mean, y1 drifts down")
+print(f"and y2 drifts up until the equilibrium is restored.")
+```
+
 
 # Variations, Diagnostics, and Pitfalls {#sec-ch17-variations}
 
@@ -385,6 +713,137 @@ pt = var_result.test_whiteness(nlags=10)
 print(f"Portmanteau test: stat = {pt.test_statistic:.2f}, "
       f"p = {pt.pvalue:.4f}")
 print(f"{'Residuals are white noise ✓' if pt.pvalue > 0.05 else 'Residual autocorrelation detected ✗'}")
+```
+
+## Residual cross-correlation matrix
+
+Beyond the portmanteau test, inspecting the cross-correlation
+structure of residuals reveals whether specific variable pairs have
+residual dependence that the VAR failed to capture.
+
+```{python}
+#| label: cross-corr
+resid = var_result.resid
+corr_mat = np.corrcoef(resid.T)
+print(f"Residual cross-correlation matrix:")
+print(np.array2string(corr_mat, precision=3, suppress_small=True))
+print(f"\nOff-diagonal values near zero indicate the VAR captured")
+print(f"the contemporaneous dependence structure adequately.")
+print(f"|corr(u1, u2)| = {abs(corr_mat[0, 1]):.3f}")
+```
+
+## Stability roots plot
+
+Plotting the companion matrix eigenvalues in the complex plane gives
+an immediate visual check: all roots must lie inside the unit circle.
+Roots near the boundary signal near-non-stationarity.
+
+```{python}
+#| label: fig-stability-roots
+#| fig-cap: "Companion matrix eigenvalues (dots) plotted in the complex plane. The unit circle (dashed) is the stability boundary. All eigenvalues inside the circle confirm the VAR is stationary."
+
+# Build companion matrix for the fitted VAR
+K_fit = var_result.neqs
+p_fit = var_result.k_ar
+F_fit = np.zeros((K_fit * p_fit, K_fit * p_fit))
+F_fit[:K_fit, :] = np.hstack(var_result.coefs)
+if p_fit > 1:
+    F_fit[K_fit:, :K_fit * (p_fit - 1)] = np.eye(
+        K_fit * (p_fit - 1)
+    )
+eigs_fit = np.linalg.eigvals(F_fit)
+
+fig, ax = plt.subplots(figsize=(5, 5))
+theta = np.linspace(0, 2 * np.pi, 200)
+ax.plot(np.cos(theta), np.sin(theta),
+        color='gray', linewidth=1, linestyle='--',
+        label='Unit circle')
+ax.scatter(eigs_fit.real, eigs_fit.imag,
+           color='C0', s=60, zorder=5,
+           label='Eigenvalues')
+ax.set_xlabel('Real')
+ax.set_ylabel('Imaginary')
+ax.set_aspect('equal')
+ax.legend(fontsize=9)
+ax.set_title('Companion matrix eigenvalues')
+plt.tight_layout()
+plt.show()
+```
+
+## Multivariate normality test
+
+The Jarque--Bera test generalizes to the multivariate case. Under
+the null of multivariate normality, the test statistic follows a
+$\chi^2$ distribution.
+
+```{python}
+#| label: mv-normality
+# Multivariate Jarque-Bera: test each equation's residuals
+K_res = resid.shape[1]
+print(f"Residual normality tests (univariate JB per equation):")
+for k in range(K_res):
+    jb_stat, jb_p = stats.jarque_bera(resid[:, k])
+    label = 'Normal' if jb_p > 0.05 else 'Non-normal'
+    print(f"  y{k+1}: JB = {jb_stat:.2f}, "
+          f"p = {jb_p:.4f} → {label}")
+
+# Joint test: multivariate skewness and kurtosis
+n_res = resid.shape[0]
+S = np.cov(resid.T)
+S_inv = np.linalg.inv(S)
+z = resid @ np.linalg.cholesky(S_inv).T
+skew_vals = np.mean(z ** 3, axis=0)
+kurt_vals = np.mean(z ** 4, axis=0)
+mv_stat = (n_res / 6) * np.sum(skew_vals ** 2) + \
+          (n_res / 24) * np.sum((kurt_vals - 3) ** 2)
+mv_p = 1 - stats.chi2.cdf(mv_stat, 2 * K_res)
+print(f"\nMultivariate JB (joint): stat = {mv_stat:.2f}, "
+      f"p = {mv_p:.4f}")
+```
+
+Non-normality does not invalidate the VAR coefficient estimates (OLS
+is consistent regardless), but it affects the confidence intervals
+on IRFs and the coverage of bootstrap intervals.
+
+## Forecast evaluation: VAR vs univariate ARIMA
+
+A VAR is worth the extra parameters only if it forecasts better than
+simple univariate models. Compare out-of-sample RMSE.
+
+```{python}
+#| label: forecast-eval
+from statsmodels.tsa.arima.model import ARIMA
+
+# Hold out last 50 observations
+n_hold = 50
+y_train = y_var[:-n_hold]
+y_test = y_var[-n_hold:]
+
+# VAR forecast
+var_train = VAR(y_train).fit(maxlags=2)
+var_fcast = var_train.forecast(y_train[-2:], steps=n_hold)
+rmse_var = np.sqrt(
+    np.mean((y_test - var_fcast) ** 2, axis=0)
+)
+
+# Univariate ARIMA(1,0,0) for each variable
+rmse_arima = np.zeros(2)
+for k in range(2):
+    arima_fit = ARIMA(y_train[:, k], order=(1, 0, 0)).fit()
+    arima_fcast = arima_fit.forecast(steps=n_hold)
+    rmse_arima[k] = np.sqrt(
+        np.mean((y_test[:, k] - arima_fcast) ** 2)
+    )
+
+print(f"Out-of-sample RMSE (h=1 to {n_hold}):")
+print(f"  {'':>4} {'VAR':>8} {'ARIMA':>8} {'VAR wins?':>10}")
+for k in range(2):
+    wins = 'Yes' if rmse_var[k] < rmse_arima[k] else 'No'
+    print(f"  y{k+1}: {rmse_var[k]:>8.3f} "
+          f"{rmse_arima[k]:>8.3f} {wins:>10}")
+print(f"\nVAR should win when cross-variable dynamics are strong.")
+print(f"If ARIMA wins, the VAR may be overfitting or the")
+print(f"cross-variable effects are too weak to help.")
 ```
 
 ## Common mistakes
@@ -459,6 +918,119 @@ print(f"\nTrue Phi:")
 print(Phi)
 ```
 
+## Impulse response functions from scratch
+
+The IRF follows directly from the Wold recursion
+(@eq-psi-recursion). Starting from $\boldsymbol{\Psi}_0 = \mathbf{I}$,
+each subsequent matrix is computed from the VAR coefficients.
+
+```{python}
+#| label: irf-scratch
+
+def irf_from_scratch(Phi_list, n_periods):
+    """Compute IRF matrices via the Wold recursion.
+
+    Parameters
+    ----------
+    Phi_list : list of arrays, each (K, K)
+        VAR coefficient matrices [Phi_1, ..., Phi_p].
+    n_periods : int
+        Number of periods for the IRF.
+
+    Returns
+    -------
+    Psi : array (n_periods + 1, K, K)
+        IRF matrices. Psi[h] is the response at horizon h.
+    """
+    p = len(Phi_list)
+    K = Phi_list[0].shape[0]
+    Psi = np.zeros((n_periods + 1, K, K))
+    Psi[0] = np.eye(K)
+
+    for s in range(1, n_periods + 1):
+        for j in range(1, min(s, p) + 1):
+            Psi[s] += Phi_list[j - 1] @ Psi[s - j]
+
+    return Psi
+
+# Compute from scratch using the fitted VAR coefficients
+Phi_list = [var_result.coefs[i]
+            for i in range(var_result.k_ar)]
+Psi_ours = irf_from_scratch(Phi_list, n_periods=20)
+
+# Compare against statsmodels
+irf_sm = var_result.irf(periods=20)
+max_diff = np.max(np.abs(Psi_ours - irf_sm.irfs))
+print(f"Max difference (from-scratch vs statsmodels): "
+      f"{max_diff:.2e}")
+print(f"Match: {max_diff < 1e-10}")
+
+# Show a few values
+print(f"\nIRF at h=0 (should be identity):")
+print(Psi_ours[0].round(3))
+print(f"\nIRF at h=5 (from scratch):")
+print(Psi_ours[5].round(4))
+print(f"IRF at h=5 (statsmodels):")
+print(irf_sm.irfs[5].round(4))
+```
+
+## Engle--Granger cointegration test from scratch
+
+The two-step procedure is straightforward to implement: OLS on
+levels, then ADF on residuals.
+
+```{python}
+#| label: eg-scratch
+
+def engle_granger_test(y1, y2):
+    """Engle-Granger two-step cointegration test.
+
+    Step 1: OLS regression y1 = a + b*y2 + e.
+    Step 2: ADF test on residuals e.
+
+    Parameters
+    ----------
+    y1, y2 : array (T,)
+        Two time series to test for cointegration.
+
+    Returns
+    -------
+    dict with keys: beta, adf_stat, adf_pvalue, resid.
+    """
+    # Step 1: OLS by hand
+    X = np.column_stack([np.ones(len(y2)), y2])
+    beta = np.linalg.lstsq(X, y1, rcond=None)[0]
+    resid_eg = y1 - X @ beta
+
+    # Step 2: ADF on residuals
+    adf_result = adfuller(resid_eg, autolag='AIC')
+
+    return {
+        'intercept': beta[0],
+        'beta': beta[1],
+        'adf_stat': adf_result[0],
+        'adf_pvalue': adf_result[1],
+        'resid': resid_eg,
+    }
+
+# Test on the cointegrated series
+eg = engle_granger_test(y1_ci, y2_ci)
+print(f"From-scratch Engle-Granger:")
+print(f"  y1 = {eg['intercept']:.3f} + "
+      f"{eg['beta']:.3f} * y2")
+print(f"  ADF on residuals: stat = {eg['adf_stat']:.3f}, "
+      f"p = {eg['adf_pvalue']:.4f}")
+coint_label = 'Cointegrated' if eg['adf_pvalue'] < 0.05 \
+    else 'Not cointegrated'
+print(f"  Conclusion: {coint_label}")
+
+# Compare with statsmodels OLS + ADF
+print(f"\nstatsmodels OLS coefficient: "
+      f"{ols_eg.params[1]:.3f}")
+print(f"From-scratch coefficient:   {eg['beta']:.3f}")
+print(f"Match: {abs(eg['beta'] - ols_eg.params[1]) < 1e-10}")
+```
+
 
 # Computational Considerations {#sec-ch17-computation}
 
@@ -503,6 +1075,118 @@ if r_w > 0:
     print(f"\nAdjustment speeds: {vecm_w.alpha.ravel().round(3)}")
     print(f"Negative α for consumption: when consumption is 'too high'")
     print(f"relative to income, it adjusts downward.")
+```
+
+### Full Johansen procedure walkthrough
+
+The Johansen output has several components. Let's read each one.
+
+```{python}
+#| label: johansen-walkthrough
+# Detailed Johansen output
+print(f"Johansen trace test (detailed):")
+print(f"  {'H0':>5} {'Trace':>8} {'90% CV':>8} "
+      f"{'95% CV':>8} {'99% CV':>8}")
+for i in range(2):
+    h0 = f"r≤{i}"
+    print(f"  {h0:>5} {joh_w.lr1[i]:>8.2f} "
+          f"{joh_w.cvt[i, 0]:>8.2f} "
+          f"{joh_w.cvt[i, 1]:>8.2f} "
+          f"{joh_w.cvt[i, 2]:>8.2f}")
+
+print(f"\nMax-eigenvalue test:")
+print(f"  {'H0':>5} {'MaxEig':>8} {'90% CV':>8} "
+      f"{'95% CV':>8} {'99% CV':>8}")
+for i in range(2):
+    h0 = f"r≤{i}"
+    print(f"  {h0:>5} {joh_w.lr2[i]:>8.2f} "
+          f"{joh_w.cvt[i, 0]:>8.2f} "
+          f"{joh_w.cvt[i, 1]:>8.2f} "
+          f"{joh_w.cvt[i, 2]:>8.2f}")
+
+print(f"\nEigenvalues: {joh_w.eig.round(4)}")
+print(f"Cointegrating vectors (columns of eigvecs):")
+print(joh_w.evec.round(3))
+```
+
+**Reading the trace test:** Start at $r = 0$. If the trace statistic
+exceeds the critical value, reject $H_0: r = 0$ and move to
+$H_0: r \leq 1$. Continue until you fail to reject. The last rejected
+rank is $r$.
+
+### Error correction interpretation
+
+The VECM decomposes dynamics into two parts: the error correction
+term ($\boldsymbol{\alpha}\boldsymbol{\beta}^\top\mathbf{y}_{t-1}$)
+that pulls variables back to equilibrium, and the short-run dynamics
+($\boldsymbol{\Gamma}_i \Delta\mathbf{y}_{t-i}$) that capture
+transient adjustments.
+
+```{python}
+#| label: error-correction-interp
+if r_w > 0:
+    beta_w = vecm_w.beta.ravel()
+    alpha_w = vecm_w.alpha.ravel()
+
+    # Compute the equilibrium error at each time point
+    eq_error = y_w[:-1] @ beta_w
+    half_life = np.log(2) / max(abs(alpha_w[0]), 1e-10)
+
+    print(f"Error correction mechanics:")
+    print(f"  Equilibrium: {beta_w[0]:.3f} * consumption "
+          f"+ {beta_w[1]:.3f} * income = 0")
+    print(f"\n  Adjustment speeds (α):")
+    print(f"    Consumption: {alpha_w[0]:+.4f}")
+    print(f"    Income:      {alpha_w[1]:+.4f}")
+    print(f"\n  Half-life of adjustment: "
+          f"{half_life:.1f} periods")
+    print(f"\n  When consumption is 'too high' relative to")
+    print(f"  income (positive equilibrium error):")
+    if alpha_w[0] < 0:
+        print(f"    → consumption adjusts DOWN "
+              f"(α = {alpha_w[0]:.3f})")
+    if alpha_w[1] > 0:
+        print(f"    → income adjusts UP "
+              f"(α = {alpha_w[1]:.3f})")
+```
+
+### VECM forecast vs VAR in differences
+
+Forecasting with the VECM preserves the long-run equilibrium
+relationship. A VAR in differences cannot: it models changes only
+and loses the level information.
+
+```{python}
+#| label: fig-vecm-forecast
+#| fig-cap: "VECM forecasts for consumption and income. The forecast respects the cointegrating relationship: the spread between consumption and income reverts toward its long-run mean."
+
+if r_w > 0:
+    h_w = 30
+    fcast_w = vecm_w.predict(steps=h_w)
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+    # Plot last 50 observations + forecast
+    n_hist = 50
+    t_hist = np.arange(T_w - n_hist, T_w)
+    t_fcast = np.arange(T_w, T_w + h_w)
+
+    labels = ['Consumption', 'Income']
+    for k in range(2):
+        axes[k].plot(t_hist, y_w[-n_hist:, k],
+                     color='C0', linewidth=1.5,
+                     label='Observed')
+        axes[k].plot(t_fcast, fcast_w[:, k],
+                     color='C1', linewidth=1.5,
+                     linestyle='--', label='VECM forecast')
+        axes[k].axvline(T_w, color='gray',
+                        linewidth=0.5, linestyle=':')
+        axes[k].set_title(labels[k])
+        axes[k].set_xlabel('Time')
+        axes[k].legend(fontsize=9)
+
+    plt.tight_layout()
+    plt.show()
 ```
 
 
@@ -604,7 +1288,8 @@ periods. A trader uses this to size positions and set stop-losses.
 # Bibliographic Notes {#sec-ch17-biblio}
 
 VAR: Sims (1980) introduced the methodology to macroeconomics.
-Lütkepohl (2005) is the definitive textbook.
+Lütkepohl (2005) is the definitive textbook and covers the companion
+matrix formulation, Wold representation, and FEVD in detail.
 
 Granger causality: Granger (1969). It is a test of prediction, not
 causation --- Granger himself was careful about this distinction.
@@ -616,9 +1301,14 @@ walk on another.
 Cointegration: Engle and Granger (1987) for the two-step procedure
 (regress levels, test residuals for stationarity). Johansen (1991) for
 the reduced-rank regression approach and the trace/eigenvalue tests.
+Hamilton (1994, Ch. 19--20) provides an accessible treatment of both.
 
 VECM: Engle and Granger (1987) proved the Granger Representation
-Theorem: cointegrated variables have a VECM representation.
+Theorem: cointegrated variables have a VECM representation. Johansen
+(1995) is the canonical reference for the reduced-rank regression
+estimator and the asymptotic theory of trace and max-eigenvalue tests.
 
 For the structural identification problem in VAR (Cholesky ordering,
-sign restrictions, etc.): Kilian and Lütkepohl (2017).
+sign restrictions, etc.): Kilian and Lütkepohl (2017). Christiano,
+Eichenbaum, and Evans (1999) is the classic application of Cholesky-
+identified SVAR to monetary policy.

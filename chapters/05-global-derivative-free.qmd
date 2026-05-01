@@ -232,9 +232,48 @@ iterates converge to $(0, 0)$ with $f = 0 \neq f^*$. The simplex
 collapses to a line segment and the method stalls.
 :::
 
-This counterexample is not academic: Nelder--Mead failures occur in
-practice whenever the simplex degenerates (flattens into a
-lower-dimensional subspace). Scipy's implementation includes
+We can reproduce this failure directly:
+
+```{python}
+#| label: mckinnon-counterexample
+def mckinnon(x):
+    """McKinnon's (1998) counterexample for NM."""
+    theta, phi, tau = 6.0, 60.0, 2.0
+    if x[0] <= 0:
+        return (theta * phi * abs(x[0])**tau
+                + x[1] + x[1]**2)
+    return (theta * abs(x[0])**tau
+            + x[1] + x[1]**2)
+
+# McKinnon's specific starting simplex
+v0 = np.array([0.0, 0.0])
+v1 = np.array([1.0, 1.0])
+v2 = np.array([(1 + np.sqrt(33)) / 8,
+               (1 - np.sqrt(33)) / 8])
+simplex0 = np.array([v0, v1, v2])
+
+res_mck = minimize(
+    mckinnon, v0, method='Nelder-Mead',
+    options={
+        'initial_simplex': simplex0,
+        'xatol': 1e-12,
+        'fatol': 1e-12,
+        'maxiter': 10000,
+        'adaptive': False,  # standard NM coefficients
+    },
+)
+print(f"NM converges to: {res_mck.x.round(6)}")
+print(f"f(NM result) = {res_mck.fun:.6f}")
+print(f"True minimum:  [0, -0.5]")
+print(f"f(true min)  = "
+      f"{mckinnon(np.array([0., -0.5])):.6f}")
+print(f"NM found it: {res_mck.fun < -0.2}")
+```
+
+The simplex collapses to a line along the $x_2$ axis, and the method
+stalls at a non-optimal point. This failure is not academic:
+whenever the simplex degenerates (flattens into a lower-dimensional
+subspace), the same pathology can occur. Scipy's implementation includes
 *adaptive* parameters (scaling the reflection, expansion, and
 contraction coefficients with dimension) that reduce but do not
 eliminate this failure mode.
@@ -301,6 +340,49 @@ $\alpha_c = 1/2$ (contraction), $\alpha_s = 1/2$ (shrinkage)
 18. $\quad$ **end if**
 19. **until** $\text{diam}(\mathcal{S}_k) < \epsilon$ **or** $\max_i |f(\mathbf{v}_i) - f(\mathbf{v}_0)| < \epsilon$
 :::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 5.3: Differential Evolution (DE/rand/1/bin)
+
+**Input:** $f$, bounds $\Omega$, population size $N_{\text{pop}}$,
+mutation factor $F \in (0, 2)$, crossover probability
+$\text{CR} \in [0, 1]$
+
+**Output:** Approximate global minimizer $\mathbf{x}^*$
+
+1. Initialize $\{\mathbf{x}_1, \ldots, \mathbf{x}_{N_{\text{pop}}}\}$ uniformly in $\Omega$
+2. **for** generation $k = 0, 1, 2, \ldots$ **do**
+3. $\quad$ **for** $i = 1, \ldots, N_{\text{pop}}$ **do**
+4. $\quad\quad$ Select distinct $r_1, r_2, r_3 \in \{1, \ldots, N_{\text{pop}}\} \setminus \{i\}$
+5. $\quad\quad$ $\mathbf{v}_i \leftarrow \mathbf{x}_{r_1} + F(\mathbf{x}_{r_2} - \mathbf{x}_{r_3})$ $\triangleright$ mutation
+6. $\quad\quad$ $j_{\text{rand}} \sim \text{Uniform}\{1, \ldots, p\}$
+7. $\quad\quad$ **for** $j = 1, \ldots, p$ **do**
+8. $\quad\quad\quad$ **if** $\text{Uniform}(0,1) < \text{CR}$ **or** $j = j_{\text{rand}}$ **then**
+9. $\quad\quad\quad\quad$ $u_{ij} \leftarrow v_{ij}$ $\triangleright$ take from mutant
+10. $\quad\quad\quad$ **else**
+11. $\quad\quad\quad\quad$ $u_{ij} \leftarrow x_{ij}$ $\triangleright$ keep from parent
+12. $\quad\quad$ **end for** $\triangleright$ binomial crossover
+13. $\quad\quad$ **if** $f(\mathbf{u}_i) \leq f(\mathbf{x}_i)$ **then**
+14. $\quad\quad\quad$ $\mathbf{x}_i \leftarrow \mathbf{u}_i$ $\triangleright$ greedy selection
+15. $\quad$ **end for**
+16. **end for**
+17. **return** $\arg\min_{\mathbf{x}_i} f(\mathbf{x}_i)$
+:::
+
+Differential evolution is a population-based method: it maintains
+$N_{\text{pop}}$ candidate solutions and evolves them using mutation
+(a weighted difference of two random members), crossover (mixing the
+mutant with the current member), and greedy selection (keeping the
+better of the two). Unlike simulated annealing, DE never accepts a
+worse solution---improvement is driven entirely by the mutation and
+crossover operators exploring different regions of the landscape.
+
+The key parameters are $F$ (mutation scale, typically $0.5$--$1.0$)
+and $\text{CR}$ (crossover probability, typically $0.5$--$0.9$).
+Scipy's defaults ($F = 0.5 + \text{random jitter}$,
+$\text{CR} = 0.7$) work well for most problems. The population size
+defaults to $15 \times p$, which is generous for low-dimensional
+problems but necessary for high-dimensional ones.
 
 
 # Statistical Properties {#sec-ch05-stats}
@@ -419,6 +501,87 @@ print(f"DIRECT: x = {res_dir.x.round(4)}, f = {res_dir.fun:.4f}")
 print(f"Function evaluations: {res_dir.nfev}")
 ```
 
+## `shgo` (simplicial homology global optimization)
+
+`shgo` partitions the domain into simplices and uses topological
+methods to identify all local minima. Unlike DE and SA, it can
+return *every* local minimum found, not just the best one.
+
+```{python}
+#| label: shgo-demo
+res_shgo = shgo(
+    styblinski_tang,
+    bounds=[(-5, 5), (-5, 5)],
+)
+print(f"SHGO: x = {res_shgo.x.round(4)}, "
+      f"f = {res_shgo.fun:.4f}")
+print(f"Function evaluations: {res_shgo.nfev}")
+print(f"Local minima found: {len(res_shgo.xl)}")
+```
+
+## `basinhopping` (stochastic local-restart)
+
+Basin-hopping applies simulated annealing at the *basin* level:
+perturb the current point randomly, run a local optimizer to the
+nearest minimum, then accept or reject using a Metropolis criterion.
+It combines SA's exploration with the precision of a local solver.
+Wales and Doye (1997) introduced it for molecular energy landscapes,
+where each basin corresponds to a distinct molecular configuration.
+
+```{python}
+#| label: basinhopping-demo
+# Basin-hopping needs a starting point (not bounds),
+# but we pass bounds to the local minimizer
+res_bh = basinhopping(
+    styblinski_tang,
+    x0=np.array([3.0, 3.0]),
+    minimizer_kwargs={
+        'method': 'L-BFGS-B',
+        'bounds': [(-5, 5), (-5, 5)],
+    },
+    niter=100,
+    seed=42,
+)
+print(f"Basin-hopping: x = {res_bh.x.round(4)}, "
+      f"f = {res_bh.fun:.4f}")
+print(f"Function evaluations: {res_bh.nfev}")
+```
+
+## Monitoring convergence with callbacks
+
+All scipy global optimizers accept a `callback` argument for
+monitoring progress. Differential evolution passes the best
+solution and a convergence metric at each generation:
+
+```{python}
+#| label: fig-de-callback
+#| fig-cap: "Differential evolution convergence tracked via callback. The convergence metric measures the fractional spread of the population; when it drops below `tol`, the algorithm terminates."
+
+convergence_log = []
+
+def de_callback(xk, convergence):
+    """Record convergence at each DE generation."""
+    convergence_log.append(convergence)
+    return False  # True would stop early
+
+_ = differential_evolution(
+    styblinski_tang,
+    bounds=[(-5, 5), (-5, 5)],
+    seed=42,
+    callback=de_callback,
+    maxiter=200,
+    tol=1e-10,  # tight, so we see full curve
+)
+
+fig, ax = plt.subplots()
+ax.plot(convergence_log)
+ax.set_xlabel('Generation')
+ax.set_ylabel('Convergence metric')
+ax.set_title('DE convergence via callback')
+ax.set_yscale('log')
+plt.show()
+```
+
 ## Method comparison
 
 ```{python}
@@ -430,13 +593,17 @@ methods = {
     'Diff. evolution': res_de,
     'Dual annealing': res_da,
     'DIRECT': res_dir,
+    'SHGO': res_shgo,
+    'Basin-hopping': res_bh,
 }
 
-print(f"{'Method':<25} {'f(x)':>10} {'nfev':>8} {'Global?':>8}")
-print("-" * 55)
+print(f"{'Method':<22} {'f(x)':>10} "
+      f"{'nfev':>8} {'Global?':>8}")
+print("-" * 52)
 for name, res in methods.items():
     is_global = 'Yes' if res.fun < -78 else 'No'
-    print(f"{name:<25} {res.fun:>10.4f} {res.nfev:>8} {is_global:>8}")
+    print(f"{name:<22} {res.fun:>10.4f} "
+          f"{res.nfev:>8} {is_global:>8}")
 ```
 
 
@@ -519,6 +686,207 @@ ax.set_title('Simulated annealing convergence')
 plt.show()
 ```
 
+## Nelder--Mead simplex
+
+```{python}
+#| label: nm-scratch
+def nelder_mead_scratch(
+    f, x0, maxiter=1000, tol=1e-8,
+    alpha=1.0, gamma=2.0, rho=0.5, sigma=0.5,
+):
+    """Nelder-Mead simplex, implementing Algorithm 5.2.
+
+    Parameters
+    ----------
+    f : callable
+        Function to minimize.
+    x0 : ndarray
+        Starting point (shape (d,)).
+    alpha, gamma, rho, sigma : float
+        Reflection, expansion, contraction, shrinkage
+        coefficients.
+
+    Returns
+    -------
+    x_best : ndarray
+        Best vertex found.
+    f_best : float
+        Function value at x_best.
+    n_evals : int
+        Total function evaluations used.
+    """
+    d = len(x0)
+    # Build initial simplex: x0 + unit steps
+    simplex = np.zeros((d + 1, d))
+    simplex[0] = x0
+    for i in range(d):
+        simplex[i + 1] = x0.copy()
+        simplex[i + 1, i] += 1.0
+
+    f_vals = np.array([f(v) for v in simplex])
+    n_evals = d + 1
+
+    for k in range(maxiter):
+        # Sort by function value
+        order = np.argsort(f_vals)
+        simplex = simplex[order]
+        f_vals = f_vals[order]
+
+        # Convergence: function values agree
+        if np.max(np.abs(f_vals - f_vals[0])) < tol:
+            break
+
+        # Centroid of best d vertices
+        centroid = np.mean(simplex[:-1], axis=0)
+
+        # Reflect worst vertex through centroid
+        xr = centroid + alpha * (centroid - simplex[-1])
+        fr = f(xr)
+        n_evals += 1
+
+        if f_vals[0] <= fr < f_vals[-2]:
+            # Accept reflection
+            simplex[-1] = xr
+            f_vals[-1] = fr
+        elif fr < f_vals[0]:
+            # Try expansion
+            xe = centroid + gamma * (xr - centroid)
+            fe = f(xe)
+            n_evals += 1
+            if fe < fr:
+                simplex[-1] = xe
+                f_vals[-1] = fe
+            else:
+                simplex[-1] = xr
+                f_vals[-1] = fr
+        else:
+            # Contract toward centroid
+            xc = (centroid
+                  + rho * (simplex[-1] - centroid))
+            fc = f(xc)
+            n_evals += 1
+            if fc < f_vals[-1]:
+                simplex[-1] = xc
+                f_vals[-1] = fc
+            else:
+                # Shrink all vertices toward best
+                for i in range(1, d + 1):
+                    simplex[i] = (
+                        simplex[0]
+                        + sigma
+                        * (simplex[i] - simplex[0])
+                    )
+                    f_vals[i] = f(simplex[i])
+                n_evals += d
+
+    return simplex[0], f_vals[0], n_evals
+```
+
+```{python}
+#| label: nm-verify
+x_nm_s, f_nm_s, nev = nelder_mead_scratch(
+    styblinski_tang, np.array([3.0, 3.0]),
+)
+print(f"NM from scratch: x = {x_nm_s.round(4)}, "
+      f"f = {f_nm_s:.4f} ({nev} evals)")
+print(f"scipy NM:        x = {res_nm.x.round(4)}, "
+      f"f = {res_nm.fun:.4f}")
+print(f"Both find the same local minimum")
+```
+
+## Differential evolution
+
+```{python}
+#| label: de-scratch
+def de_scratch(
+    f, bounds, popsize=15, F=0.8, CR=0.7,
+    maxiter=1000, tol=1e-8, seed=42,
+):
+    """Differential evolution (DE/rand/1/bin).
+
+    Implements Algorithm 5.3.
+
+    Parameters
+    ----------
+    f : callable
+        Function to minimize.
+    bounds : list of (low, high)
+        Search domain for each dimension.
+    popsize : int
+        Population size.
+    F : float
+        Mutation scale factor (typically 0.5--1.0).
+    CR : float
+        Crossover probability (typically 0.5--0.9).
+
+    Returns
+    -------
+    x_best : ndarray
+        Best member of final population.
+    f_best : float
+        Function value at x_best.
+    n_gens : int
+        Number of generations completed.
+    """
+    local_rng = np.random.default_rng(seed)
+    d = len(bounds)
+    lo = np.array([b[0] for b in bounds])
+    hi = np.array([b[1] for b in bounds])
+
+    # Initialize population uniformly in bounds
+    pop = local_rng.uniform(
+        lo, hi, size=(popsize, d),
+    )
+    fitness = np.array([f(x) for x in pop])
+
+    for gen in range(maxiter):
+        for i in range(popsize):
+            # Select 3 distinct others for mutation
+            idxs = [j for j in range(popsize)
+                    if j != i]
+            a, b, c = local_rng.choice(
+                idxs, size=3, replace=False,
+            )
+
+            # Mutation: DE/rand/1
+            mutant = pop[a] + F * (pop[b] - pop[c])
+            mutant = np.clip(mutant, lo, hi)
+
+            # Binomial crossover
+            trial = pop[i].copy()
+            j_rand = local_rng.integers(d)
+            for j in range(d):
+                if (local_rng.random() < CR
+                        or j == j_rand):
+                    trial[j] = mutant[j]
+
+            # Greedy selection: keep if better
+            f_trial = f(trial)
+            if f_trial <= fitness[i]:
+                pop[i] = trial
+                fitness[i] = f_trial
+
+        # Stop if population has converged
+        if np.std(fitness) < tol:
+            break
+
+    best = np.argmin(fitness)
+    return pop[best], fitness[best], gen + 1
+```
+
+```{python}
+#| label: de-verify
+x_de_s, f_de_s, gens = de_scratch(
+    styblinski_tang,
+    bounds=[(-5, 5), (-5, 5)],
+    maxiter=500,
+)
+print(f"DE from scratch: x = {x_de_s.round(4)}, "
+      f"f = {f_de_s:.4f} ({gens} generations)")
+print(f"scipy DE:        x = {res_de.x.round(4)}, "
+      f"f = {res_de.fun:.4f}")
+```
+
 
 # Diagnostics {#sec-ch05-diagnostics}
 
@@ -564,15 +932,98 @@ print("\nNelder-Mead degrades rapidly above d ≈ 10.")
 print("Use BFGS with gradients instead for smooth high-d problems.")
 ```
 
+## Landscape visualization
+
+Visualizing the objective---when the problem is 2D or can be
+projected to 2D---is the single most informative diagnostic. It
+reveals how many local minima exist, how deep they are, and whether
+a local optimizer is likely to find the global minimum from a
+given starting point.
+
+```{python}
+#| label: fig-landscape
+#| fig-cap: "Contour plot of the Styblinski-Tang function. The global minimum (star) is surrounded by local minima. White crosses show where Nelder-Mead converges from three different starting points --- most lead to suboptimal basins."
+
+x_grid = np.linspace(-5, 5, 200)
+y_grid = np.linspace(-5, 5, 200)
+X_g, Y_g = np.meshgrid(x_grid, y_grid)
+# Vectorized evaluation avoids a Python loop
+Z = 0.5 * (X_g**4 - 16*X_g**2 + 5*X_g
+            + Y_g**4 - 16*Y_g**2 + 5*Y_g)
+
+fig, ax = plt.subplots()
+cs = ax.contourf(
+    X_g, Y_g, Z, levels=30, cmap='viridis',
+)
+fig.colorbar(cs, ax=ax, label='$f(x)$')
+# Mark global minimum
+ax.plot(-2.9035, -2.9035, 'r*', markersize=15,
+        label='Global minimum')
+# Show where NM lands from 3 starting points
+starts = [np.array([3., 3.]),
+          np.array([-3., 3.]),
+          np.array([3., -3.])]
+for x0_trial in starts:
+    r = minimize(
+        styblinski_tang, x0_trial,
+        method='Nelder-Mead',
+    )
+    ax.plot(r.x[0], r.x[1], 'wx', markersize=8)
+ax.set_xlabel('$x_1$')
+ax.set_ylabel('$x_2$')
+ax.legend(loc='upper right')
+plt.show()
+```
+
+## When to stop: budget allocation
+
+Global optimizers lack a reliable stopping criterion. Unlike
+gradient-based methods, there is no norm of the gradient to test.
+Two practical rules:
+
+1. **Diminishing returns.** Track the best function value as a
+   function of evaluation count. When the improvement per 1000
+   evaluations drops below a threshold relative to the initial
+   improvement, stop. The SA convergence plot in
+   @sec-ch05-scratch illustrates this: the curve flattens well
+   before the budget is exhausted.
+
+2. **Multi-start agreement.** Run the optimizer $R$ times with
+   different seeds. If all $R$ runs agree on $f^*$ to within
+   tolerance, declare convergence. If they disagree, the budget
+   is insufficient---either increase it or switch to a method
+   with better guarantees.
+
+```{python}
+#| label: budget-allocation
+# How many evaluations are enough?
+# Run DE with increasing budgets and check agreement
+budgets = [100, 500, 1000, 5000]
+for budget in budgets:
+    vals = []
+    for seed in range(10):
+        r = differential_evolution(
+            styblinski_tang,
+            bounds=[(-5, 5), (-5, 5)],
+            seed=seed, maxiter=budget,
+        )
+        vals.append(r.fun)
+    spread = np.std(vals)
+    print(f"Budget {budget:>5}: best = {min(vals):.4f}"
+          f", std = {spread:.4f}"
+          f", converged = {spread < 0.01}")
+```
+
 
 # Computational Considerations {#sec-ch05-computation}
 
 | Method | Cost per iteration | Global guarantee | Dimension limit |
 |---|---|---|---|
-| Nelder-Mead | 1-2 f-evals | No | $d \leq 10$ |
-| Diff. evolution | popsize × f-evals | No (stochastic) | $d \leq 100$ |
+| Nelder-Mead | 1--2 f-evals | No | $d \leq 10$ |
+| Diff. evolution | popsize $\times$ f-evals | No (stochastic) | $d \leq 100$ |
 | Dual annealing | 1 f-eval + local search | No (stochastic) | $d \leq 100$ |
 | DIRECT | 1+ f-evals per rectangle | Yes (Lipschitz) | $d \leq 5$ |
+| SHGO | Simplex sampling + local | Yes (Lipschitz) | $d \leq 10$ |
 | Basin-hopping | Local minimize per step | No (stochastic) | $d \leq 100$ |
 
 **For high dimensions ($d > 100$):** none of these methods work well.
@@ -735,12 +1186,28 @@ restarts, or exploit problem structure (e.g., convexity, separability).
 # Bibliographic Notes {#sec-ch05-biblio}
 
 Nelder-Mead: Nelder and Mead (1965). The McKinnon counterexample:
-McKinnon (1998). Differential evolution: Storn and Price (1997).
+McKinnon (1998), "Convergence of the Nelder--Mead simplex method to
+a nonstationary point," *SIAM J. Optim.* Scipy's adaptive variant
+scales the NM coefficients with dimension following Gao and Han
+(2012). Differential evolution: Storn and Price (1997), "Differential
+evolution---a simple and efficient heuristic for global optimization
+over continuous spaces," *J. Global Optim.* The DE/rand/1/bin variant
+implemented in this chapter is the most common; Price, Storn, and
+Lampinen (2005) catalog the full family.
+
 Simulated annealing: Kirkpatrick, Gelatt, and Vecchi (1983); Hajek
-(1988) for the logarithmic cooling theory. DIRECT: Jones, Perttunen,
-and Stuckman (1993). Basin-hopping: Wales and Doye (1997). SHGO:
-Endres, Sandrock, and Focke (2018).
+(1988) for the necessary and sufficient condition on the cooling
+schedule (logarithmic cooling). Dual annealing as implemented in
+scipy follows Xiang et al. (1997), combining classical SA with a
+local search phase. DIRECT: Jones, Perttunen, and Stuckman (1993);
+the convergence proof follows Finkel and Kelley (2006) for the
+potentially optimal rectangle framework. Basin-hopping: Wales and
+Doye (1997), originally developed for molecular energy landscapes.
+SHGO: Endres, Sandrock, and Focke (2018), "A simplicial homology
+algorithm for Lipschitz optimisation," *J. Global Optim.*
 
 For the curse of dimensionality in global optimization: Nemirovski
-and Yudin (1983). For Bayesian optimization (not in scipy but
-increasingly important): Snoek, Larochelle, and Adams (2012).
+and Yudin (1983). The $O((1/\epsilon)^d)$ lower bound for Lipschitz
+global optimization is sharp. For Bayesian optimization (not in
+scipy but increasingly important): Snoek, Larochelle, and Adams
+(2012); for a textbook treatment, Garnett (2023).

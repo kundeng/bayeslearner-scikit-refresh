@@ -86,6 +86,57 @@ $O(\|\hat{g} - g_0\|)$. For $n^{-1/4}$-rate estimators, this is
 $O(n^{-1})$, which is negligible relative to the $n^{-1/2}$ sampling
 error. The bias vanishes.
 
+### The Taylor expansion in detail
+
+Let's see exactly how orthogonality kills the first-order bias. Write
+the nuisance parameters as a single vector
+$\eta = (g, m)$ with true value $\eta_0 = (g_0, m_0)$. The DML moment
+for the partially linear model is:
+
+$$
+\psi(\tau; \eta) = (Y - D\tau - g(\mathbf{X}))(D - m(\mathbf{X})).
+$$
+
+At the truth, $\mathbb{E}[\psi(\tau_0; \eta_0)] = 0$ defines $\tau_0$.
+When we plug in estimated $\hat{\eta}$, we get a bias term. Taylor
+expand $\mathbb{E}[\psi(\tau_0; \hat{\eta})]$ around $\eta_0$:
+
+$$
+\mathbb{E}[\psi(\tau_0; \hat{\eta})]
+  = \underbrace{\mathbb{E}[\psi(\tau_0; \eta_0)]}_{= 0}
+  + \underbrace{\partial_\eta \mathbb{E}[\psi(\tau_0; \eta_0)]}_{\text{Gateaux derivative}} \cdot (\hat{\eta} - \eta_0)
+  + O(\|\hat{\eta} - \eta_0\|^2).
+$$
+
+The Gateaux derivative has two components. Perturbing in the $g$
+direction:
+
+$$
+\frac{\partial}{\partial g} \mathbb{E}[(Y - D\tau_0 - g)(D - m_0)]
+= -\mathbb{E}[D - m_0(\mathbf{X})] = 0,
+$$
+
+because $m_0(\mathbf{X}) = \mathbb{E}[D \mid \mathbf{X}]$ by
+definition. Perturbing in the $m$ direction:
+
+$$
+\frac{\partial}{\partial m} \mathbb{E}[(Y - D\tau_0 - g_0)(D - m)]
+= -\mathbb{E}[Y - D\tau_0 - g_0(\mathbf{X})] = -\mathbb{E}[U] = 0,
+$$
+
+because $U$ is mean-zero by the model. Both derivatives vanish ---
+this is Neyman orthogonality. The first-order term in the Taylor
+expansion is exactly zero, so the bias from plugging in $\hat{\eta}$
+is second-order: $O(\|\hat{g} - g_0\| \cdot \|\hat{m} - m_0\|)$.
+For ML estimators with $n^{-1/4}$ rates, this product is $O(n^{-1/2})$
+--- negligible relative to sampling noise.
+
+**Contrast with the naive moment.** The "obvious" moment
+$\mathbb{E}[(Y - D\tau - g)(1)] = 0$ is *not* orthogonal: its
+derivative in $g$ is $-1$, so errors in $\hat{g}$ create first-order
+bias. The residualization trick --- projecting out $m(\mathbf{X})$ ---
+is precisely what buys orthogonality.
+
 In practice, DML for the partially linear model reduces to:
 
 1. Residualize $Y$ on $\mathbf{X}$: $\tilde{Y} = Y - \hat{g}(\mathbf{X})$
@@ -99,6 +150,84 @@ into $K$ folds. For each fold, estimate $\hat{g}$ and $\hat{m}$ on
 the other $K-1$ folds, then compute residuals on the held-out fold.
 This ensures the nuisance predictions are independent of the
 observations they're evaluated on.
+
+**Why cross-fitting is needed: the Donsker condition.** Classical
+semiparametric theory requires nuisance estimators to lie in a
+*Donsker class* --- a function class with bounded complexity, measured
+by its entropy integral. Linear models and kernel smoothers satisfy
+Donsker conditions. But ML estimators (Lasso with data-driven penalty,
+random forests, neural networks) do *not*: their complexity grows with
+$n$, violating the entropy bounds. Without Donsker, the empirical
+process $\frac{1}{n}\sum_i \psi(\tau; \hat{\eta})$ does not converge
+uniformly, and the CLT for the estimator breaks down.
+
+Cross-fitting sidesteps Donsker entirely. Because $\hat{\eta}^{(-k)}$
+is trained on folds $\neq k$ and evaluated on fold $k$, the nuisance
+estimate is *fixed* (non-random) conditional on the evaluation fold.
+The empirical process reduces to a simple average of independent terms,
+and the CLT holds without entropy conditions. This is the key insight
+that makes DML compatible with arbitrary ML learners.
+
+**Practical implication:** $K = 5$ is standard. Smaller $K$ wastes
+data in the nuisance estimation; larger $K$ increases computation with
+diminishing returns. Unlike cross-validation (which averages
+predictions), cross-fitting *concatenates* held-out residuals to form
+a single full-sample estimate.
+
+## Semiparametric efficiency bound
+
+The DML estimator is not just consistent --- it is *efficient*. Under
+the conditions above, the asymptotic variance $V$ in
+
+$$
+\sqrt{n}(\hat{\tau} - \tau_0) \xrightarrow{d} \mathcal{N}(0, V)
+$$
+
+achieves the *semiparametric efficiency bound* (Hahn, 1998). This
+means: among all regular estimators that do not restrict $g_0$ and
+$m_0$ to parametric families, no estimator has smaller asymptotic
+variance than DML.
+
+For the partially linear model, the efficient variance is:
+
+$$
+V = \frac{\mathbb{E}[U^2 V^2]}{\left(\mathbb{E}[V^2]\right)^2},
+$$
+
+where $U = Y - D\tau_0 - g_0(\mathbf{X})$ and
+$V = D - m_0(\mathbf{X})$. This is estimated by
+$\hat{V} = \frac{\frac{1}{n}\sum_i \hat{U}_i^2 \hat{V}_i^2}{(\frac{1}{n}\sum_i \hat{V}_i^2)^2}$,
+which is the heteroscedasticity-robust sandwich variance from
+Chapter 12's influence function theory.
+
+## DML for the interactive model
+
+The partially linear model assumes a *constant* treatment effect
+$\tau$. A different model allows the effect to vary:
+
+$$
+Y = g_0(\mathbf{X}) + D \cdot \tau_0(\mathbf{X}) + U,
+\qquad D = m_0(\mathbf{X}) + V.
+$$
+
+Here $\tau_0(\mathbf{X})$ is the CATE. For the *average* treatment
+effect $\tau = \mathbb{E}[\tau_0(\mathbf{X})]$, the efficient score is
+the doubly robust (AIPW) score from Chapter 21:
+
+$$
+\psi = \mu_1(\mathbf{X}) - \mu_0(\mathbf{X})
+  + \frac{D(Y - \mu_1(\mathbf{X}))}{e(\mathbf{X})}
+  - \frac{(1 - D)(Y - \mu_0(\mathbf{X}))}{1 - e(\mathbf{X})}
+  - \tau,
+$$
+
+where $\mu_d(\mathbf{x}) = \mathbb{E}[Y \mid D = d, \mathbf{X} = \mathbf{x}]$
+and $e(\mathbf{x}) = P(D = 1 \mid \mathbf{X} = \mathbf{x})$ is the
+propensity score. This is exactly AIPW (Chapter 21), but with
+cross-fitted nuisance estimates. The cross-fitting is what upgrades
+AIPW from requiring parametric nuisance models to accepting any ML
+learner. The ATE is then $\hat{\tau} = \frac{1}{n}\sum_i \hat{\psi}_i$,
+and the variance is estimated by $\hat{V} = \frac{1}{n}\text{Var}(\hat{\psi}_i)$.
 
 
 # The Algorithm {#sec-ch23-algorithm}
@@ -252,10 +381,26 @@ $$
 $$
 
 where $V$ is the semiparametric efficiency bound. The key requirements:
-(1) the nuisance estimators converge at rate $o(n^{-1/4})$ in $L^2$
-norm, and (2) cross-fitting eliminates the Donsker condition. Lasso,
-random forests, and neural networks all satisfy (1) under sparsity or
-smoothness conditions.
+
+1. **Nuisance rate condition:** the estimators $\hat{g}$ and $\hat{m}$
+   converge at rate $o(n^{-1/4})$ in $L^2$ norm. Their *product* of
+   errors must be $o(n^{-1/2})$. Lasso (under sparsity), random
+   forests (under smoothness), and neural networks (under
+   compositional structure) all satisfy this.
+2. **Cross-fitting eliminates Donsker:** as discussed in
+   @sec-ch23-math, cross-fitting removes the need for the nuisance
+   function class to have bounded entropy. This is what makes DML
+   compatible with adaptive ML methods.
+3. **Overlap:** $e(\mathbf{x})$ must be bounded away from 0 and 1.
+   Without overlap, the residualized treatment $\tilde{D}$ has
+   near-zero variance and the estimator is unstable.
+
+The efficiency bound $V$ equals the variance of the efficient
+influence function (Chapter 12). No regular estimator --- one whose
+distribution changes smoothly with the data-generating process --- can
+achieve smaller asymptotic variance. DML attains this bound, making it
+the best you can do without restricting the nuisance functions to a
+parametric family.
 
 
 # Diagnostics {#sec-ch23-diagnostics}
@@ -282,6 +427,156 @@ ax2.set_title("IF distribution")
 plt.tight_layout()
 plt.show()
 ```
+
+## Sensitivity to number of folds
+
+The choice of $K$ affects both bias and variance. With too few folds,
+each nuisance model trains on a small subset; with too many, the
+computational cost rises with diminishing returns. The DML estimate
+should be stable across reasonable $K$.
+
+```{python}
+#| label: fig-k-sensitivity
+#| fig-cap: "DML estimate and 95% CI as a function of the number of cross-fitting folds K. The estimate stabilizes quickly; K=5 is a sensible default."
+
+ks = [2, 3, 5, 8, 10, 15, 20]
+tau_by_k = []
+se_by_k = []
+for k in ks:
+    res = double_ml(X, D, Y, n_folds=k, seed=42)
+    tau_by_k.append(res['tau'])
+    se_by_k.append(res['se'])
+
+tau_by_k = np.array(tau_by_k)
+se_by_k = np.array(se_by_k)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.errorbar(ks, tau_by_k, yerr=1.96 * se_by_k,
+            fmt='o-', capsize=4, color="C0")
+ax.axhline(tau_true, color="C3", linestyle="--",
+           label=f"True τ = {tau_true}")
+ax.set_xlabel("Number of folds (K)")
+ax.set_ylabel(r"$\hat{\tau}$")
+ax.set_title("DML sensitivity to K")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Nuisance model quality
+
+DML's guarantees require nuisance models that are *reasonable* --- not
+perfect, but not terrible. The $R^2$ of the outcome model $\hat{g}$
+and the propensity model $\hat{m}$ on held-out folds is the simplest
+diagnostic.
+
+```{python}
+#| label: nuisance-quality
+# Collect cross-fitted predictions to assess nuisance quality
+n_q = len(Y)
+Y_hat_cf = np.zeros(n_q)
+D_hat_cf = np.zeros(n_q)
+
+kf_q = KFold(n_splits=5, shuffle=True, random_state=42)
+for train_idx, test_idx in kf_q.split(X):
+    g_q = LassoCV(cv=3, random_state=42, max_iter=5000)
+    g_q.fit(X[train_idx], Y[train_idx])
+    Y_hat_cf[test_idx] = g_q.predict(X[test_idx])
+
+    m_q = LogisticRegressionCV(
+        cv=3, random_state=42, max_iter=5000,
+        l1_ratios=(0,), use_legacy_attributes=False
+    )
+    m_q.fit(X[train_idx], D[train_idx])
+    D_hat_cf[test_idx] = m_q.predict_proba(
+        X[test_idx]
+    )[:, 1]
+
+r2_outcome = 1 - np.var(Y - Y_hat_cf) / np.var(Y)
+r2_propensity = 1 - np.mean(
+    (D - D_hat_cf)**2
+) / np.var(D)
+
+print(f"Outcome model R² (cross-fitted):    {r2_outcome:.3f}")
+print(f"Propensity model R² (cross-fitted): {r2_propensity:.3f}")
+print(f"\nRule of thumb: R² > 0.1 for both models.")
+print(f"Very low R² means nuisance residualization is weak")
+print(f"and DML may behave like naive OLS.")
+```
+
+## Overlap diagnostic
+
+Weak overlap --- propensity scores near 0 or 1 --- makes the
+residualized treatment $\tilde{D}$ near-zero, inflating variance and
+creating instability. A histogram of $\hat{e}(\mathbf{X})$ by
+treatment group reveals overlap violations.
+
+```{python}
+#| label: fig-overlap
+#| fig-cap: "Overlap diagnostic: distribution of estimated propensity scores by treatment group. Good overlap means substantial density away from 0 and 1 in both groups."
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.hist(D_hat_cf[D == 1], bins=30, alpha=0.5,
+        density=True, label="Treated (D=1)", color="C0")
+ax.hist(D_hat_cf[D == 0], bins=30, alpha=0.5,
+        density=True, label="Control (D=0)", color="C1")
+ax.set_xlabel(r"$\hat{e}(\mathbf{X})$")
+ax.set_ylabel("Density")
+ax.set_title("Propensity score overlap")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Influence function outlier detection
+
+The influence function $\hat{\psi}_i = \tilde{D}_i(\tilde{Y}_i -
+\hat{\tau}\tilde{D}_i)$ measures each observation's contribution to
+the ATE estimate. Outliers in $\hat{\psi}$ deserve investigation ---
+they may indicate data errors, extreme propensity scores, or
+model misspecification.
+
+```{python}
+#| label: fig-if-outliers
+#| fig-cap: "Influence function values vs observation index. Observations beyond 3 standard deviations (dashed lines) are flagged as potential outliers."
+
+psi_vals = dml_result['D_tilde'] * (
+    dml_result['Y_tilde']
+    - dml_result['tau'] * dml_result['D_tilde']
+)
+psi_mean = psi_vals.mean()
+psi_std = psi_vals.std()
+threshold = 3 * psi_std
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.scatter(np.arange(len(psi_vals)), psi_vals,
+           s=3, alpha=0.3, color="C0")
+ax.axhline(psi_mean + threshold, color="C3",
+           linestyle="--", alpha=0.7,
+           label=f"±3σ ({threshold:.2f})")
+ax.axhline(psi_mean - threshold, color="C3",
+           linestyle="--", alpha=0.7)
+n_outliers = np.sum(np.abs(psi_vals - psi_mean) > threshold)
+ax.set_xlabel("Observation index")
+ax.set_ylabel("Influence function value")
+ax.set_title(
+    f"IF outlier detection ({n_outliers} flagged)"
+)
+ax.legend()
+plt.tight_layout()
+plt.show()
+
+print(f"Flagged {n_outliers} observations with "
+      f"|ψ| > 3σ = {threshold:.3f}")
+```
+
+| Diagnostic | What to check | Red flag |
+|---|---|---|
+| Fold sensitivity | $\hat{\tau}$ varies > 1 SE across $K$ | Unstable nuisance fits |
+| Outcome $R^2$ | Cross-fitted $R^2$ of $\hat{g}$ | $R^2 < 0.1$: weak residualization |
+| Propensity $R^2$ | Cross-fitted $R^2$ of $\hat{m}$ | $R^2 < 0.05$: no selection signal |
+| Overlap | $\hat{e}(\mathbf{x})$ bunched near 0 or 1 | Positivity violation |
+| IF outliers | $|\hat{\psi}_i| > 3\sigma$ | Extreme leverage on estimate |
 
 
 # Worked Example {#sec-ch23-example}
@@ -325,6 +620,162 @@ for name, mask in [("x1 < 0", X_w[:, 0] < 0),
     print(f"{name}: DML={dml_sub['tau']:.3f}, true={true_sub:.3f}")
 ```
 
+## CATE estimation: T-learner
+
+The T-learner fits separate outcome models for treated and control,
+then differences them. This is the simplest meta-learner for
+heterogeneous effects.
+
+```{python}
+#| label: worked-tlearner
+from sklearn.linear_model import Ridge
+
+def t_learner(X, D, Y):
+    """T-learner: separate models per treatment arm."""
+    mu1 = Ridge(alpha=1.0).fit(X[D == 1], Y[D == 1])
+    mu0 = Ridge(alpha=1.0).fit(X[D == 0], Y[D == 0])
+    return mu1.predict(X) - mu0.predict(X)
+
+cate_t = t_learner(X_w, D_w, Y_w)
+```
+
+## CATE estimation: R-learner
+
+The R-learner uses Neyman orthogonality for CATE estimation. It
+first residualizes $Y$ and $D$ on $\mathbf{X}$ (as in DML), then
+minimizes $\sum_i (\tilde{Y}_i - \tau(\mathbf{X}_i) \tilde{D}_i)^2$
+over a function class for $\tau$.
+
+```{python}
+#| label: worked-rlearner
+def r_learner(X, D, Y, n_folds=5, seed=42):
+    """R-learner CATE via residualized regression."""
+    n = len(Y)
+    Y_res = np.zeros(n)
+    D_res = np.zeros(n)
+
+    kf = KFold(n_splits=n_folds, shuffle=True,
+               random_state=seed)
+
+    # Step 1: cross-fitted residuals
+    for train_idx, test_idx in kf.split(X):
+        g = LassoCV(cv=3, random_state=seed,
+                    max_iter=5000)
+        g.fit(X[train_idx], Y[train_idx])
+        Y_res[test_idx] = (
+            Y[test_idx] - g.predict(X[test_idx])
+        )
+
+        m = LogisticRegressionCV(
+            cv=3, random_state=seed,
+            max_iter=5000, l1_ratios=(0,),
+            use_legacy_attributes=False
+        )
+        m.fit(X[train_idx], D[train_idx])
+        D_res[test_idx] = (
+            D[test_idx]
+            - m.predict_proba(X[test_idx])[:, 1]
+        )
+
+    # Step 2: weighted regression of pseudo-outcome
+    # on X to learn tau(X)
+    pseudo_y = Y_res / np.where(
+        np.abs(D_res) > 0.01, D_res, 0.01
+    )
+    weights = D_res**2
+    tau_model = Ridge(alpha=1.0)
+    tau_model.fit(X, pseudo_y,
+                  sample_weight=weights)
+    return tau_model.predict(X)
+
+cate_r = r_learner(X_w, D_w, Y_w)
+```
+
+## Comparing CATE estimators
+
+```{python}
+#| label: fig-cate-comparison
+#| fig-cap: "Estimated CATE vs true CATE for the T-learner and R-learner. Each point is one observation; the diagonal is perfect estimation. The R-learner's orthogonalization reduces confounding bias."
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+lims = [tau_x.min() - 0.5, tau_x.max() + 0.5]
+
+ax1.scatter(tau_x, cate_t, s=3, alpha=0.2, color="C0")
+ax1.plot(lims, lims, 'k--', linewidth=1, alpha=0.5)
+ax1.set_xlabel("True CATE")
+ax1.set_ylabel("Estimated CATE")
+ax1.set_title("T-learner")
+ax1.set_xlim(lims); ax1.set_ylim(lims)
+
+ax2.scatter(tau_x, cate_r, s=3, alpha=0.2, color="C1")
+ax2.plot(lims, lims, 'k--', linewidth=1, alpha=0.5)
+ax2.set_xlabel("True CATE")
+ax2.set_ylabel("Estimated CATE")
+ax2.set_title("R-learner")
+ax2.set_xlim(lims); ax2.set_ylim(lims)
+
+plt.tight_layout()
+plt.show()
+
+rmse_t = np.sqrt(np.mean((cate_t - tau_x)**2))
+rmse_r = np.sqrt(np.mean((cate_r - tau_x)**2))
+print(f"T-learner CATE RMSE: {rmse_t:.3f}")
+print(f"R-learner CATE RMSE: {rmse_r:.3f}")
+```
+
+## Subgroup analysis with confidence intervals
+
+A common practical step: estimate the ATE within subgroups defined by
+a covariate. DML provides valid confidence intervals for each subgroup.
+
+```{python}
+#| label: fig-subgroup-ci
+#| fig-cap: "Subgroup ATEs with 95% confidence intervals. The true effect is τ(x) = 2 + x₁, so subgroups with higher x₁ show larger effects."
+
+x1 = X_w[:, 0]
+quintiles = np.percentile(x1, [20, 40, 60, 80])
+bins_q = np.concatenate([[-np.inf], quintiles, [np.inf]])
+labels_q = [f"Q{i+1}" for i in range(5)]
+
+subgroup_results = []
+for i in range(5):
+    mask = (x1 >= bins_q[i]) & (x1 < bins_q[i + 1])
+    res = double_ml(X_w[mask], D_w[mask], Y_w[mask])
+    subgroup_results.append({
+        'label': labels_q[i],
+        'tau': res['tau'],
+        'se': res['se'],
+        'true': tau_x[mask].mean(),
+        'x1_mean': x1[mask].mean(),
+    })
+
+fig, ax = plt.subplots(figsize=(7, 4))
+positions = np.arange(5)
+taus_s = [r['tau'] for r in subgroup_results]
+ses_s = [r['se'] for r in subgroup_results]
+trues_s = [r['true'] for r in subgroup_results]
+
+ax.errorbar(positions, taus_s,
+            yerr=1.96 * np.array(ses_s),
+            fmt='o', capsize=5, color="C0",
+            label="DML estimate ± 95% CI")
+ax.scatter(positions, trues_s, marker='x', s=80,
+           color="C3", zorder=5,
+           label="True subgroup ATE")
+ax.set_xticks(positions)
+ax.set_xticklabels(
+    [f"{r['label']}\n(x̄₁={r['x1_mean']:.1f})"
+     for r in subgroup_results]
+)
+ax.set_xlabel("Subgroup (quintiles of x₁)")
+ax.set_ylabel("ATE")
+ax.set_title("Subgroup treatment effects")
+ax.legend(loc="upper left")
+plt.tight_layout()
+plt.show()
+```
+
 
 # Variations and Extensions {#sec-ch23-variations}
 
@@ -334,7 +785,10 @@ DML gives you the *average* treatment effect. But the effect may vary
 across the population. Several approaches estimate the *conditional*
 ATE $\tau(\mathbf{x}) = \mathbb{E}[Y(1) - Y(0) \mid \mathbf{X} = \mathbf{x}]$:
 
-**Meta-learners** (frameworks that combine any base ML model):
+**Meta-learners** are frameworks that wrap any base ML model to
+estimate heterogeneous effects. Each makes different trade-offs between
+simplicity, statistical efficiency, and robustness to model
+misspecification.
 
 | Learner | Idea | Pros | Cons |
 |---|---|---|---|
@@ -343,6 +797,193 @@ ATE $\tau(\mathbf{x}) = \mathbb{E}[Y(1) - Y(0) \mid \mathbf{X} = \mathbf{x}]$:
 | **X-learner** | T-learner + imputation + weighting | Good with unequal group sizes | More complex |
 | **R-learner** | Residualize, then regress on $\tilde{D} \cdot \mathbf{X}$ | Uses Neyman orthogonality | Needs good nuisance models |
 | **DR-learner** | AIPW scores as pseudo-outcomes | Doubly robust + CATE | State of the art |
+
+### From-scratch implementations
+
+We implement all five meta-learners and compare them on the worked
+example data (where $\tau(\mathbf{x}) = 2 + x_1$). Each takes the
+same inputs and returns a vector of CATE estimates.
+
+**S-learner.** Fit a single model with treatment as a feature.
+$\hat{\tau}(\mathbf{x}) = \hat{\mu}(\mathbf{x}, 1) - \hat{\mu}(\mathbf{x}, 0)$.
+The risk: regularization shrinks the treatment coefficient toward
+zero, biasing the CATE toward zero.
+
+```{python}
+#| label: s-learner
+def s_learner(X, D, Y):
+    """S-learner: one model, treatment as feature."""
+    # Augment X with treatment indicator
+    XD = np.column_stack([X, D])
+    mu = Ridge(alpha=1.0).fit(XD, Y)
+    # CATE = mu(x, 1) - mu(x, 0)
+    X1 = np.column_stack([X, np.ones(len(X))])
+    X0 = np.column_stack([X, np.zeros(len(X))])
+    return mu.predict(X1) - mu.predict(X0)
+
+cate_s = s_learner(X_w, D_w, Y_w)
+```
+
+**X-learner.** Start with a T-learner, then impute the missing
+potential outcome for each unit and weight by propensity.
+
+$$
+\hat{\tau}(\mathbf{x}) = e(\mathbf{x})\hat{\tau}_0(\mathbf{x})
+  + (1 - e(\mathbf{x}))\hat{\tau}_1(\mathbf{x}),
+$$
+
+where $\hat{\tau}_1$ is trained on treated units' imputed effects
+$Y_i - \hat{\mu}_0(\mathbf{X}_i)$ and $\hat{\tau}_0$ on control
+units' imputed effects $\hat{\mu}_1(\mathbf{X}_i) - Y_i$.
+
+```{python}
+#| label: x-learner
+def x_learner(X, D, Y, seed=42):
+    """X-learner: T-learner + imputation + weighting."""
+    # Step 1: T-learner base models
+    mu1 = Ridge(alpha=1.0).fit(X[D == 1], Y[D == 1])
+    mu0 = Ridge(alpha=1.0).fit(X[D == 0], Y[D == 0])
+
+    # Step 2: imputed individual treatment effects
+    # Treated: observed Y - predicted control
+    tau1_imp = Y[D == 1] - mu0.predict(X[D == 1])
+    # Control: predicted treated - observed Y
+    tau0_imp = mu1.predict(X[D == 0]) - Y[D == 0]
+
+    # Step 3: regress imputed effects on X
+    tau1_model = Ridge(alpha=1.0).fit(
+        X[D == 1], tau1_imp
+    )
+    tau0_model = Ridge(alpha=1.0).fit(
+        X[D == 0], tau0_imp
+    )
+
+    # Step 4: propensity-weighted combination
+    e_model = LogisticRegressionCV(
+        cv=3, random_state=seed, max_iter=5000,
+        l1_ratios=(0,), use_legacy_attributes=False
+    )
+    e_model.fit(X, D)
+    e_hat = e_model.predict_proba(X)[:, 1]
+
+    # Weight by propensity: more weight to the arm
+    # with more data for that region of X
+    return (e_hat * tau0_model.predict(X)
+            + (1 - e_hat) * tau1_model.predict(X))
+
+cate_x = x_learner(X_w, D_w, Y_w)
+```
+
+**DR-learner.** Use cross-fitted AIPW pseudo-outcomes as the
+"target" for a second-stage regression. This is doubly robust:
+consistent if either the outcome or propensity model is correct.
+
+$$
+\tilde{\psi}_i = \hat{\mu}_1(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i)
+  + \frac{D_i(Y_i - \hat{\mu}_1(\mathbf{X}_i))}{\hat{e}(\mathbf{X}_i)}
+  - \frac{(1-D_i)(Y_i - \hat{\mu}_0(\mathbf{X}_i))}{1-\hat{e}(\mathbf{X}_i)}.
+$$
+
+Then regress $\tilde{\psi}_i$ on $\mathbf{X}_i$ to learn
+$\tau(\mathbf{x})$.
+
+```{python}
+#| label: dr-learner
+def dr_learner(X, D, Y, n_folds=5, seed=42):
+    """DR-learner: AIPW pseudo-outcomes + CATE model."""
+    n = len(Y)
+    pseudo = np.zeros(n)
+    kf = KFold(n_splits=n_folds, shuffle=True,
+               random_state=seed)
+
+    # Step 1: cross-fitted AIPW pseudo-outcomes
+    for train_idx, test_idx in kf.split(X):
+        mu1 = LassoCV(cv=3, random_state=seed,
+                      max_iter=5000)
+        mu0 = LassoCV(cv=3, random_state=seed,
+                      max_iter=5000)
+        mu1.fit(X[train_idx][D[train_idx] == 1],
+                Y[train_idx][D[train_idx] == 1])
+        mu0.fit(X[train_idx][D[train_idx] == 0],
+                Y[train_idx][D[train_idx] == 0])
+
+        e_m = LogisticRegressionCV(
+            cv=3, random_state=seed,
+            max_iter=5000, l1_ratios=(0,),
+            use_legacy_attributes=False
+        )
+        e_m.fit(X[train_idx], D[train_idx])
+
+        m1 = mu1.predict(X[test_idx])
+        m0 = mu0.predict(X[test_idx])
+        e = np.clip(
+            e_m.predict_proba(X[test_idx])[:, 1],
+            0.01, 0.99
+        )
+        d = D[test_idx]
+        y = Y[test_idx]
+
+        pseudo[test_idx] = (
+            m1 - m0
+            + d * (y - m1) / e
+            - (1 - d) * (y - m0) / (1 - e)
+        )
+
+    # Step 2: regress pseudo-outcomes on X
+    tau_model = Ridge(alpha=1.0).fit(X, pseudo)
+    return tau_model.predict(X)
+
+cate_dr = dr_learner(X_w, D_w, Y_w)
+```
+
+### Comparing all meta-learners
+
+```{python}
+#| label: fig-metalearner-comparison
+#| fig-cap: "RMSE of five meta-learners for CATE estimation. The DR-learner and R-learner, which use orthogonalization, tend to outperform the simpler T- and S-learners."
+
+learner_names = ["T", "S", "X", "R", "DR"]
+cate_estimates = [cate_t, cate_s, cate_x,
+                  cate_r, cate_dr]
+rmses = [np.sqrt(np.mean((c - tau_x)**2))
+         for c in cate_estimates]
+
+fig, ax = plt.subplots(figsize=(7, 4))
+bars = ax.bar(learner_names, rmses, color=[
+    "C0", "C1", "C2", "C3", "C4"
+])
+ax.set_xlabel("Meta-learner")
+ax.set_ylabel("CATE RMSE")
+ax.set_title("Meta-learner comparison")
+
+# Annotate bars with RMSE values
+for bar, rmse in zip(bars, rmses):
+    ax.text(bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.01,
+            f"{rmse:.3f}", ha='center', va='bottom',
+            fontsize=9)
+
+plt.tight_layout()
+plt.show()
+```
+
+**When each learner works best:**
+
+- **T-learner:** When treatment and control have very different
+  outcome functions. Fails when the effect is small relative to
+  the main effect, because two noisy estimates are subtracted.
+- **S-learner:** When the treatment effect is smooth and the main
+  effect dominates. Fails when regularization shrinks the treatment
+  coefficient to zero.
+- **X-learner:** When group sizes are very unbalanced (e.g., 90%
+  control, 10% treated). The propensity weighting adapts to the
+  imbalance.
+- **R-learner:** When confounding is strong and nuisance models are
+  good. The orthogonalization removes first-order confounding bias.
+  Fails when $\tilde{D}$ is near zero (weak instruments analog).
+- **DR-learner:** The most robust choice. Doubly robust (consistent
+  if either outcome or propensity model is correct) and uses
+  cross-fitting. Current state of the art for CATE estimation.
 
 **Causal forests** (Wager and Athey, 2018): A random forest where
 each tree is grown to maximize the *heterogeneity* of treatment effects

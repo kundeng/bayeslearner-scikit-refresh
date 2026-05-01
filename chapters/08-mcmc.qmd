@@ -12,6 +12,24 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
+```{python}
+#| label: utilities
+#| echo: false
+
+def effective_sample_size(chain):
+    """Estimate ESS from a 1D chain via autocorrelation."""
+    n = len(chain)
+    chain_centered = chain - chain.mean()
+    fft = np.fft.fft(chain_centered, n=2*n)
+    acf = np.fft.ifft(fft * np.conj(fft))[:n].real
+    acf /= acf[0]
+    neg_idx = np.where(acf < 0)[0]
+    if len(neg_idx) > 0:
+        acf = acf[:neg_idx[0]]
+    tau_int = 1 + 2 * np.sum(acf[1:])
+    return n / tau_int, tau_int
+```
+
 ## Notation for this chapter
 
 | Symbol | Meaning |
@@ -133,6 +151,33 @@ HMC suppresses random-walk behavior: instead of diffusing, it
 *travels* through the target. The cost is that it requires the gradient
 $\nabla \log \pi$, which vanilla MH does not.
 
+**The leapfrog integrator.** Hamiltonian dynamics are governed by
+$\dot{\mathbf{x}} = \mathbf{M}^{-1}\mathbf{p}$ and
+$\dot{\mathbf{p}} = -\nabla U(\mathbf{x}) = \nabla \log \pi(\mathbf{x})$.
+The leapfrog (Störmer--Verlet) integrator discretizes these with step
+size $\epsilon$:
+
+$$
+\begin{aligned}
+\mathbf{p}_{t+\epsilon/2} &= \mathbf{p}_t + \tfrac{\epsilon}{2}\, \nabla \log \pi(\mathbf{x}_t) \\
+\mathbf{x}_{t+\epsilon} &= \mathbf{x}_t + \epsilon\, \mathbf{M}^{-1}\mathbf{p}_{t+\epsilon/2} \\
+\mathbf{p}_{t+\epsilon} &= \mathbf{p}_{t+\epsilon/2} + \tfrac{\epsilon}{2}\, \nabla \log \pi(\mathbf{x}_{t+\epsilon})
+\end{aligned}
+$$ {#eq-leapfrog}
+
+Three properties make leapfrog the right choice for MCMC. First, it is
+*symplectic*: it preserves the phase-space volume element
+$d\mathbf{x}\, d\mathbf{p}$, so the MH correction needs no Jacobian
+term. Second, it is *time-reversible*: negating $\mathbf{p}$ and
+running the integrator backward recovers the starting point, which
+guarantees detailed balance. Third, the energy error is
+$O(\epsilon^2)$ per step and *bounded* over long trajectories --- it
+does not accumulate --- so the MH acceptance rate stays high even for
+$L$ leapfrog steps. After $L$ steps, the proposed point
+$(\mathbf{x}', \mathbf{p}')$ is accepted or rejected with the standard
+MH probability using the Hamiltonian $H = U(\mathbf{x}) + \frac{1}{2}\mathbf{p}^\top \mathbf{M}^{-1}\mathbf{p}$
+as the log-density.
+
 The NUTS algorithm (Hoffman and Gelman, 2014) automates the trajectory
 length, eliminating HMC's most sensitive tuning parameter. NUTS is the
 default sampler in PyMC and Stan.
@@ -172,6 +217,35 @@ initial $\mathbf{x}_0$, number of samples $N$
 5. **end for**
 :::
 
+::: {.callout-note appearance="minimal"}
+## Algorithm 8.3: Slice Sampling
+
+**Input:** Target $\pi$ (unnormalized), initial $x_0$, step-out width
+$w$, number of samples $N$
+
+**Output:** Chain $x_0, x_1, \ldots, x_N$
+
+1. **for** $t = 0, 1, \ldots, N-1$ **do**
+2. $\quad$ $u \sim \text{Uniform}(0,\, \pi(x_t))$ $\triangleright$ draw vertical level
+3. $\quad$ $\text{Define slice } S = \{x : \pi(x) > u\}$
+4. $\quad$ Find interval $[L, R]$ containing $x_t$ via stepping out by $w$
+5. $\quad$ **repeat**
+6. $\quad\quad$ $x' \sim \text{Uniform}(L, R)$
+7. $\quad\quad$ **if** $\pi(x') > u$ **then** $x_{t+1} \leftarrow x'$; **break**
+8. $\quad\quad$ **else** shrink $[L, R]$ toward $x_t$
+9. $\quad$ **end repeat**
+10. **end for**
+:::
+
+Slice sampling is attractive because it requires *no tuning of a
+proposal distribution*. The width $w$ affects efficiency but not
+correctness --- even a poor $w$ produces valid samples, just slowly.
+The algorithm automatically adapts to the local scale of the target:
+in wide regions, the slice is wide and steps are large; in narrow
+regions, the shrinking procedure contracts the interval. This makes
+slice sampling a useful default when you have no good intuition for the
+proposal variance, which is exactly when random-walk MH struggles most.
+
 
 # Statistical Properties {#sec-ch08-stats}
 
@@ -187,10 +261,31 @@ $\tau_{\text{int}} = 1 + 2\sum \rho_k$ is the *integrated autocorrelation
 time*: each MCMC sample is worth $1/\tau_{\text{int}}$ independent
 samples.
 
+This is the Kipnis--Varadhan CLT for stationary, ergodic Markov chains
+(Kipnis and Varadhan, 1986). The key condition is that the chain is
+*reversible* (satisfies detailed balance) and that
+$h \in L^2(\pi)$ --- i.e., the function you are averaging has finite
+variance under the target. Unlike the classical CLT, no independence is
+needed; the autocorrelation structure is absorbed into $\sigma^2_{\text{MCMC}}$.
+The practical consequence: MCMC estimators have the same $1/\sqrt{N}$
+convergence rate as independent Monte Carlo, but the constant is worse
+by a factor of $\sqrt{\tau_{\text{int}}}$.
+
 **Effective sample size:** $n_{\text{eff}} = N / \tau_{\text{int}}$.
 If your chain has $N = 10{,}000$ samples but $\tau_{\text{int}} = 100$,
 your effective sample size is 100 --- and your standard error is
 $\sigma / \sqrt{100}$, not $\sigma / \sqrt{10{,}000}$.
+
+**Geometric ergodicity** is the regularity condition that makes the CLT
+practically reliable. A chain is geometrically ergodic if it forgets
+its starting point at an exponential rate:
+$\|T^n(x, \cdot) - \pi(\cdot)\|_{\text{TV}} \leq M(x)\, r^n$ for some
+$r < 1$. For the random-walk MH algorithm on a log-concave target (a
+common case in Bayesian inference), geometric ergodicity holds whenever
+the proposal has lighter tails than the target (Roberts and Tweedie,
+1996). This is one reason Gaussian proposals work well for targets with
+at least exponentially decaying tails, and fail for heavy-tailed targets
+like the Cauchy.
 
 
 # From-Scratch Implementation {#sec-ch08-scratch}
@@ -283,6 +378,190 @@ def gibbs_bivariate_normal(mu, Sigma, n_samples, seed=42):
     return samples
 ```
 
+## Slice sampler
+
+```{python}
+#| label: slice-scratch
+
+def slice_sampler(log_target, x0, w, n_samples, seed=42):
+    """Univariate slice sampler (Algorithm 8.3).
+
+    Uses stepping-out to find the slice interval
+    and shrinking to sample from it.
+
+    Parameters
+    ----------
+    log_target : callable
+        Log of target density (unnormalized OK).
+    x0 : float
+        Starting point.
+    w : float
+        Step-out width (controls initial interval size).
+    n_samples : int
+        Number of samples to draw.
+
+    Returns
+    -------
+    samples : array of shape (n_samples,)
+    """
+    local_rng = np.random.default_rng(seed)
+    samples = np.zeros(n_samples)
+    samples[0] = x0
+
+    for t in range(1, n_samples):
+        x = samples[t - 1]
+        lp_x = log_target(x)
+
+        # Draw the vertical level (log scale)
+        log_u = lp_x + np.log(local_rng.random())
+
+        # Step out to find interval [L, R]
+        L = x - w * local_rng.random()
+        R = L + w
+        while log_target(L) > log_u:
+            L -= w
+        while log_target(R) > log_u:
+            R += w
+
+        # Shrink and sample
+        while True:
+            x_prop = L + local_rng.random() * (R - L)
+            if log_target(x_prop) > log_u:
+                samples[t] = x_prop
+                break
+            # Shrink toward current point
+            if x_prop < x:
+                L = x_prop
+            else:
+                R = x_prop
+
+    return samples
+```
+
+```{python}
+#| label: slice-demo
+# Test: sample from a mixture of two Gaussians
+def log_mixture(x):
+    """Log-density of 0.3 * N(-3, 1) + 0.7 * N(2, 0.5^2)."""
+    return np.logaddexp(
+        np.log(0.3) + stats.norm.logpdf(x, loc=-3, scale=1),
+        np.log(0.7) + stats.norm.logpdf(x, loc=2, scale=0.5),
+    )
+
+slice_samples = slice_sampler(
+    log_mixture, x0=0.0, w=1.0, n_samples=20_000,
+)
+print(f"Slice sampler: mean={slice_samples[2000:].mean():.3f}, "
+      f"std={slice_samples[2000:].std():.3f}")
+```
+
+The slice sampler handles this bimodal target without any proposal
+tuning --- the step-out width $w = 1$ works because the shrinking
+procedure adapts. A random-walk MH with the wrong proposal variance
+would either get stuck in one mode or reject most proposals.
+
+## Hamiltonian Monte Carlo
+
+```{python}
+#| label: hmc-scratch
+
+def hmc(log_target, grad_log_target, x0, epsilon, L,
+        n_samples, seed=42):
+    """Hamiltonian Monte Carlo with leapfrog integrator.
+
+    Implements the leapfrog discretization of Hamilton's
+    equations (@eq-leapfrog) with an MH correction.
+
+    Parameters
+    ----------
+    log_target : callable
+        Log of target density (unnormalized OK).
+    grad_log_target : callable
+        Gradient of log target.
+    x0 : array
+        Starting point.
+    epsilon : float
+        Leapfrog step size.
+    L : int
+        Number of leapfrog steps per proposal.
+    n_samples : int
+        Number of samples to draw.
+
+    Returns
+    -------
+    dict with keys: samples, acceptance_rate, n_grad
+    """
+    local_rng = np.random.default_rng(seed)
+    d = len(x0)
+    samples = np.zeros((n_samples, d))
+    samples[0] = x0
+    n_accept = 0
+    n_grad = 0
+
+    for t in range(1, n_samples):
+        x = samples[t - 1].copy()
+        p = local_rng.standard_normal(d)
+
+        # Current Hamiltonian
+        H_current = -log_target(x) + 0.5 * p @ p
+
+        # Leapfrog integration
+        x_new = x.copy()
+        p_new = p.copy()
+        p_new += 0.5 * epsilon * grad_log_target(x_new)
+        n_grad += 1
+        for _ in range(L - 1):
+            x_new += epsilon * p_new
+            p_new += epsilon * grad_log_target(x_new)
+            n_grad += 1
+        x_new += epsilon * p_new
+        p_new += 0.5 * epsilon * grad_log_target(x_new)
+        n_grad += 1
+
+        # MH correction (exact for perfect integration)
+        H_proposed = -log_target(x_new) + 0.5 * p_new @ p_new
+        if np.log(local_rng.random()) < H_current - H_proposed:
+            samples[t] = x_new
+            n_accept += 1
+        else:
+            samples[t] = x
+
+    return {
+        'samples': samples,
+        'acceptance_rate': n_accept / (n_samples - 1),
+        'n_grad': n_grad,
+    }
+```
+
+```{python}
+#| label: hmc-vs-mh
+# Compare HMC to MH on a correlated 2D Gaussian
+cov = np.array([[1.0, 0.9], [0.9, 1.0]])
+cov_inv = np.linalg.inv(cov)
+log_corr = lambda x: -0.5 * x @ cov_inv @ x
+grad_log_corr = lambda x: -cov_inv @ x
+
+res_hmc = hmc(log_corr, grad_log_corr, np.zeros(2),
+              epsilon=0.15, L=20, n_samples=5000)
+res_mh_corr = metropolis_hastings(
+    log_corr, np.zeros(2), 0.5, 5000,
+)
+
+print(f"{'Method':<6} {'Acc':>6} {'Std(x1)':>8}")
+print(f"{'MH':<6} {res_mh_corr['acceptance_rate']:>6.3f} "
+      f"{res_mh_corr['samples'][500:, 0].std():>8.3f}")
+print(f"{'HMC':<6} {res_hmc['acceptance_rate']:>6.3f} "
+      f"{res_hmc['samples'][500:, 0].std():>8.3f}")
+print(f"\nTrue std(x1) = {np.sqrt(cov[0,0]):.3f}")
+print(f"HMC gradient evaluations: {res_hmc['n_grad']}")
+```
+
+The correlated target exposes MH's weakness: when $\rho = 0.9$, the
+random walk must navigate a narrow ellipse by diffusion. HMC follows
+the gradient along the ellipse, producing near-independent samples.
+This advantage grows with dimension --- in $d = 100$ with moderate
+correlations, MH is essentially useless while HMC remains practical.
+
 ## Demonstration: sampling a banana-shaped distribution
 
 ```{python}
@@ -358,6 +637,48 @@ plt.tight_layout()
 plt.show()
 ```
 
+## Proposal tuning: the 0.234 rule
+
+The optimal acceptance rate for a Gaussian random-walk proposal on a
+$d$-dimensional target is approximately 0.234 (Roberts, Gelman, and
+Gilks, 1997). The theory assumes the target is a product of identical
+univariate distributions as $d \to \infty$, but the rule works
+surprisingly well in practice for moderate $d$ and non-product targets.
+The optimal proposal standard deviation scales as $\sigma_{\text{opt}} \approx 2.38 / \sqrt{d}$
+times the marginal standard deviation of the target.
+
+```{python}
+#| label: fig-tuning-curve
+#| fig-cap: "Acceptance rate vs. ESS for the banana target across a range of proposal standard deviations. ESS peaks near the 0.234 acceptance rate (dashed line). Both extremes — too narrow (high acceptance, no exploration) and too wide (low acceptance, no movement) — produce low ESS."
+
+sigmas_scan = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
+acc_rates, ess_vals = [], []
+
+for s in sigmas_scan:
+    r = metropolis_hastings(
+        log_banana, np.zeros(2), s, 20_000,
+    )
+    acc_rates.append(r['acceptance_rate'])
+    e, _ = effective_sample_size(r['samples'][2000:, 0])
+    ess_vals.append(e)
+
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.plot(acc_rates, ess_vals, 'o-', color="C0")
+ax.axvline(0.234, color="gray", linestyle="--",
+           linewidth=1, alpha=0.6, label="0.234 rule")
+ax.set_xlabel("Acceptance rate")
+ax.set_ylabel("ESS")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+In practice, tune during burn-in: if acceptance is above 40%, increase
+$\sigma$; if below 15%, decrease it. Adaptive MCMC algorithms (Haario,
+Saksman, and Tamminen, 2001) automate this by estimating the target
+covariance from the chain's history and adjusting the proposal. PyMC's
+NUTS does something similar for the step size $\epsilon$.
+
 ## Autocorrelation and effective sample size
 
 ```{python}
@@ -382,6 +703,44 @@ for res, label in [(res_good, "Well-tuned"), (res_bad, "Poorly-tuned")]:
     ess, tau = effective_sample_size(res['samples'][1000:, 0])
     print(f"{label}: ESS={ess:.0f}, τ_int={tau:.1f}, "
           f"ESS/N={ess/9000:.3f}")
+```
+
+## Autocorrelation plots
+
+The ESS number tells you *how much* autocorrelation there is. The
+autocorrelation plot tells you *where* it comes from --- whether the
+chain has a few highly correlated lags (fixable by thinning) or long-
+range dependence (a sign the sampler is struggling).
+
+```{python}
+#| label: fig-acf
+#| fig-cap: "Autocorrelation function for the banana target. The well-tuned chain (σ=2.0) decorrelates within ~20 lags. The poorly-tuned chain (σ=0.1) has autocorrelation above 0.5 at lag 200 — it needs 10× more samples to get the same ESS."
+
+def autocorrelation(chain, max_lag=200):
+    """Compute normalized autocorrelation via FFT."""
+    n = len(chain)
+    chain_centered = chain - chain.mean()
+    fft = np.fft.fft(chain_centered, n=2 * n)
+    acf = np.fft.ifft(fft * np.conj(fft))[:n].real
+    acf /= acf[0]
+    return acf[:min(max_lag, n)]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.5))
+for ax, res, label in [
+    (ax1, res_good, r"Well-tuned ($\sigma$=2.0)"),
+    (ax2, res_bad, r"Poorly-tuned ($\sigma$=0.1)"),
+]:
+    acf = autocorrelation(res['samples'][1000:, 0])
+    ax.bar(range(len(acf)), acf, width=1, color="C0",
+           alpha=0.7, edgecolor="none")
+    ax.axhline(0, color="black", linewidth=0.5)
+    ax.set_xlabel("Lag")
+    ax.set_ylabel("Autocorrelation")
+    ax.set_title(label)
+    ax.set_xlim(0, 200)
+
+plt.tight_layout()
+plt.show()
 ```
 
 ## The $\hat{R}$ diagnostic
@@ -434,6 +793,50 @@ rhat = gelman_rubin(chains)
 print(f"R-hat = {rhat:.4f} (target: < 1.01)")
 ```
 
+## Rank plots
+
+Trace plots are useful but subjective --- two analysts can disagree
+about whether a trace looks "hairy enough." Rank plots (Vehtari et al.,
+2021) replace subjective visual inspection with a uniform-distribution
+check. The idea: pool all chains, replace each sample with its rank,
+then plot a histogram of ranks *per chain*. If the chains have
+converged to the same distribution, the ranks within each chain should
+be approximately uniform.
+
+```{python}
+#| label: fig-rank-plot
+#| fig-cap: "Rank plots for four chains on the banana target. Each chain's rank histogram is approximately uniform, confirming convergence. A non-converged chain would show rank concentration (e.g., one chain consistently producing the lowest or highest values)."
+
+fig, axes = plt.subplots(1, 4, figsize=(12, 2.5))
+
+# Pool and rank
+all_values = np.concatenate(chains)
+n_total = len(all_values)
+# Assign ranks to each chain's samples
+chain_len = len(chains[0])
+pooled_ranks = np.argsort(np.argsort(all_values))
+
+for i, ax in enumerate(axes):
+    rank_i = pooled_ranks[i * chain_len:(i + 1) * chain_len]
+    ax.hist(rank_i, bins=20, density=True, alpha=0.7,
+            color=f"C{i}", edgecolor="none")
+    ax.axhline(1.0 / n_total * 20, color="black",
+               linestyle="--", linewidth=0.8, alpha=0.5)
+    ax.set_title(f"Chain {i+1}")
+    ax.set_xlabel("Rank")
+    if i == 0:
+        ax.set_ylabel("Density")
+
+plt.tight_layout()
+plt.show()
+```
+
+The dashed line shows the expected density under uniformity. Deviations
+from the line --- particularly one chain consistently concentrated at
+high or low ranks --- indicate convergence failure that trace plots
+might miss, especially when chains have different variances but similar
+means.
+
 ## The diagnostic checklist
 
 After running MCMC, check in this order:
@@ -442,6 +845,101 @@ After running MCMC, check in this order:
 2. **$\hat{R}$.** Run multiple chains. $\hat{R} > 1.01$ = not converged.
 3. **ESS.** Effective sample size < 100 per parameter = don't trust the estimates.
 4. **Acceptance rate.** ~23% for random-walk MH, ~65% for HMC.
+
+
+## When MCMC fails {#sec-ch08-failures}
+
+The diagnostic checklist catches most problems, but some failure modes
+deserve explicit treatment because they are common, subtle, and often
+misdiagnosed.
+
+**Multimodality.** If the target has well-separated modes, a single
+chain will typically get trapped in one mode and never visit the others.
+$\hat{R}$ across multiple chains may look fine if all chains happen to
+start in the same mode; it catches the problem only when chains start
+in *different* modes and fail to merge. The tell: run chains from
+dispersed starting points and check whether the posterior means agree.
+If they do not, you have a multimodality problem.
+
+```{python}
+#| label: fig-multimodal-trap
+#| fig-cap: "Two chains targeting a bimodal mixture, started on opposite sides. Neither chain crosses the gap between modes — each produces a valid-looking trace plot for its own mode, but the combined posterior is wrong. This is a failure that single-chain diagnostics cannot detect."
+
+def log_bimodal(x):
+    """Log-density of well-separated bimodal target."""
+    return np.logaddexp(
+        stats.norm.logpdf(x[0], loc=-5, scale=0.8)
+        + stats.norm.logpdf(x[1], loc=0, scale=1),
+        stats.norm.logpdf(x[0], loc=5, scale=0.8)
+        + stats.norm.logpdf(x[1], loc=0, scale=1),
+    )
+
+chain_left = metropolis_hastings(
+    log_bimodal, np.array([-5.0, 0.0]), 1.0, 8000,
+    seed=42,
+)
+chain_right = metropolis_hastings(
+    log_bimodal, np.array([5.0, 0.0]), 1.0, 8000,
+    seed=99,
+)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.5))
+ax1.plot(chain_left['samples'][:, 0], linewidth=0.3,
+         color="C0", label="Chain 1 (start=-5)")
+ax1.plot(chain_right['samples'][:, 0], linewidth=0.3,
+         color="C1", label="Chain 2 (start=+5)")
+ax1.set_xlabel("Iteration")
+ax1.set_ylabel(r"$x_1$")
+ax1.legend(fontsize=8)
+ax1.set_title("Trace: chains trapped in modes")
+
+ax2.hist(chain_left['samples'][1000:, 0], bins=40,
+         density=True, alpha=0.5, color="C0",
+         label="Chain 1")
+ax2.hist(chain_right['samples'][1000:, 0], bins=40,
+         density=True, alpha=0.5, color="C1",
+         label="Chain 2")
+ax2.set_xlabel(r"$x_1$")
+ax2.set_title("Marginals: each sees one mode")
+ax2.legend(fontsize=8)
+plt.tight_layout()
+plt.show()
+
+rhat_multi = gelman_rubin([
+    chain_left['samples'][1000:, 0],
+    chain_right['samples'][1000:, 0],
+])
+print(f"R-hat = {rhat_multi:.4f} — correctly detects "
+      f"non-convergence")
+```
+
+Remedies for multimodality include parallel tempering (run chains at
+different "temperatures" and swap), replica exchange, and --- in
+practice --- reparameterizing the model to eliminate the modes.
+
+**High posterior correlation.** When parameters are strongly correlated
+under the posterior, Gibbs sampling and random-walk MH slow down
+dramatically. The integrated autocorrelation time scales with the
+condition number of the posterior covariance:
+$\tau_{\text{int}} \propto \kappa(\boldsymbol{\Sigma})$. Exercise 8.4
+demonstrates this for the bivariate normal. The fix is either HMC
+(which uses the gradient to follow the correlation structure) or
+reparameterization to decorrelate the posterior (e.g., centering a
+hierarchical model).
+
+**HMC divergences.** When the leapfrog integrator encounters a region
+of high curvature --- a narrow funnel, a sharp ridge --- the step size
+$\epsilon$ is too large to track the dynamics accurately. The
+Hamiltonian error explodes, the proposal is rejected, and the sampler
+cannot explore that region. In NUTS implementations (PyMC, Stan),
+these are reported as *divergent transitions*. Even a handful of
+divergences invalidates the posterior: the sampler is systematically
+avoiding a region of parameter space, biasing all estimates.
+
+The diagnostic: count divergent transitions. Any divergence in a
+production run requires action --- reduce the step size (at a
+computational cost), reparameterize, or use a non-centered
+parameterization for hierarchical models.
 
 
 # Computational Considerations {#sec-ch08-computation}
@@ -806,10 +1304,26 @@ Roberts, Gelman, and Gilks (1997). The Gelman--Rubin $\hat{R}$
 diagnostic is from Gelman and Rubin (1992); the improved version
 using rank-normalization is from Vehtari et al. (2021).
 
+Slice sampling was introduced by Neal (2003), who showed it avoids the
+proposal-tuning problem that plagues random-walk MH. The stepping-out
+and shrinking procedures we implement are from Neal's original paper.
+
+The MCMC CLT for reversible chains is due to Kipnis and Varadhan
+(1986). The geometric ergodicity conditions for random-walk MH on
+log-concave targets are from Roberts and Tweedie (1996). For a
+comprehensive treatment of Markov chain convergence, see Meyn and
+Tweedie (2009).
+
 Hamiltonian Monte Carlo was introduced to statistics by Neal (2011),
 building on the hybrid Monte Carlo of Duane et al. (1987) from
 lattice QCD. The No-U-Turn Sampler (NUTS) is from Hoffman and Gelman
-(2014).
+(2014). Betancourt (2017) provides an excellent conceptual introduction
+to HMC that emphasizes the geometric intuition behind divergences and
+the role of the mass matrix.
+
+Rank-normalized $\hat{R}$ and rank plots are from Vehtari, Gelman,
+Simpson, Carpenter, and Bürkner (2021), who also introduced the split-
+$\hat{R}$ diagnostic that is now the default in ArviZ and Stan.
 
 For production MCMC in Python: PyMC (Salvatier, Wiecki, and Fonnesbeck,
 2016) and NumPyro (Phan, Pradhan, and Jankowiak, 2019). Both use NUTS

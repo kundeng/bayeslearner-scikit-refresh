@@ -71,6 +71,25 @@ $$
 \sqrt{n}(\hat{\boldsymbol{\theta}}_n - \boldsymbol{\theta}_0) \xrightarrow{d} \mathcal{N}\!\left(\mathbf{0}, \mathcal{I}(\boldsymbol{\theta}_0)^{-1}\right).
 $$ {#eq-mle-asymptotic}
 
+The "standard regularity conditions" above are Cramér's conditions.
+They appear whenever you read "under regularity" in a likelihood
+chapter. The ones that bite in practice:
+
+1. **Identifiability.** $\boldsymbol{\theta}_1 \neq \boldsymbol{\theta}_2
+   \Rightarrow f(\cdot; \boldsymbol{\theta}_1) \neq
+   f(\cdot; \boldsymbol{\theta}_2)$. Violated in mixture models with
+   label switching.
+2. **Common support.** The support of $f(y; \boldsymbol{\theta})$ does
+   not depend on $\boldsymbol{\theta}$. Violated for
+   $\text{Uniform}(0, \theta)$ --- the MLE $\hat{\theta} = y_{(n)}$
+   is consistent but not asymptotically normal.
+3. **Interior of parameter space.** $\boldsymbol{\theta}_0$ is not on
+   the boundary. Violated when testing variance components $= 0$
+   (see Chernoff's theorem below).
+4. **Three times differentiable** with dominated third derivative.
+   This ensures the Taylor expansion underlying all three tests is
+   valid.
+
 **Intuition:** the MLE is approximately a sample mean of the scores
 (by the score equation $\sum_i \nabla \log f(y_i; \hat{\theta}) = 0$),
 and sample means are asymptotically normal by the CLT. The variance
@@ -81,9 +100,31 @@ $$
 \mathcal{I}(\boldsymbol{\theta}) = \text{Var}_\theta[S(\boldsymbol{\theta})] = -\mathbb{E}_\theta[\nabla^2 \ell(\boldsymbol{\theta})].
 $$ {#eq-info-equality}
 
+**Why the two sides are equal** (proof sketch). For a single
+observation, differentiate
+$\int f(y; \theta)\, dy = 1$ once to get
+$\mathbb{E}[\nabla \log f] = 0$ (the score has mean zero).
+Differentiate again:
+$$
+0 = \mathbb{E}\!\left[\nabla^2 \log f\right]
+  + \mathbb{E}\!\left[(\nabla \log f)(\nabla \log f)^\top\right].
+$$
+The first term is $-\mathcal{I}$ (expected Hessian); the second is
+$\text{Var}[S]$ (since $\mathbb{E}[S] = 0$). Rearranging gives
+@eq-info-equality. The interchange of differentiation and integration
+is where Cramér's dominance condition does its work.
+
 This equality holds under the true model. Under misspecification (the
 model is wrong), the two sides differ, and the sandwich estimator
-(@eq-sandwich) is needed.
+(@eq-sandwich) is needed. Define $\mathbf{A} = -\mathbb{E}[\nabla^2
+\ell]$ (the expected Hessian) and $\mathbf{B} = \text{Var}[S]$ (the
+outer-product-of-scores). Under correct specification, $\mathbf{A} =
+\mathbf{B}$. Under misspecification, the asymptotic variance of
+$\hat{\boldsymbol{\theta}}$ becomes
+$\mathbf{A}^{-1}\mathbf{B}\mathbf{A}^{-1}$ --- the sandwich. The
+Wald test built on $\mathbf{A}^{-1}$ alone (the model-based variance)
+has incorrect size; the robust Wald test built on the sandwich
+restores it. This is why `cov_type='HC1'` matters.
 
 ## The three test statistics
 
@@ -171,6 +212,30 @@ $$ {#eq-aic-bic}
   is consistent: it selects the true model (if it is in the candidate
   set) with probability $\to 1$.
 
+## Vuong's test for non-nested models
+
+The LR test requires nested models (one is a special case of the
+other). For non-nested models --- say, a Poisson versus a negative
+binomial for count data, or a logit versus a probit --- the difference
+in log-likelihoods $\ell_A - \ell_B$ is not $\chi^2$ under the null.
+Vuong (1989) proposed a test based on the observation-level
+log-likelihood ratios:
+
+$$
+m_i = \log f_A(y_i; \hat{\boldsymbol{\theta}}_A)
+     - \log f_B(y_i; \hat{\boldsymbol{\theta}}_B),
+\qquad
+V = \frac{\bar{m}}{\hat{\sigma}_m / \sqrt{n}},
+$$
+
+where $\bar{m}$ is the sample mean of the $m_i$ and $\hat{\sigma}_m$
+is their sample standard deviation. Under $H_0$ (the models are
+equally close to the truth in KL divergence), $V \xrightarrow{d}
+\mathcal{N}(0, 1)$. Large positive $V$ favors model $A$; large
+negative favors $B$. Vuong's test is the non-nested analogue of the
+LR test, and it is available in `linearmodels` and straightforward to
+compute from scratch.
+
 
 # The Algorithm {#sec-ch10-algorithm}
 
@@ -205,6 +270,24 @@ restricted log-likelihood $\ell(\tilde{\boldsymbol{\theta}})$
 2. $p \leftarrow 1 - F_{\chi^2_q}(\Lambda)$
 3. **return** $\Lambda$, $p$
 :::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 10.3: Score Test
+
+**Input:** Restricted MLE $\tilde{\boldsymbol{\theta}}$, full-model
+score $S(\tilde{\boldsymbol{\theta}})$, information matrix
+$\mathcal{I}(\tilde{\boldsymbol{\theta}})$
+
+**Output:** Score statistic $S_{\text{score}}$, $p$-value
+
+1. $S_{\text{score}} \leftarrow S(\tilde{\boldsymbol{\theta}})^\top \mathcal{I}(\tilde{\boldsymbol{\theta}})^{-1} S(\tilde{\boldsymbol{\theta}})$
+2. $p \leftarrow 1 - F_{\chi^2_q}(S_{\text{score}})$
+3. **return** $S_{\text{score}}$, $p$
+:::
+
+The score test's advantage is that you only need the restricted fit.
+The gradient of the full model at the restricted estimates tells you
+whether there is "pressure" to move toward the unrestricted MLE.
 
 
 # Statistical Properties {#sec-ch10-stats}
@@ -308,7 +391,45 @@ print(f"p-value:     {f_result.pvalue:.4f}")
 print(f"df:          ({f_result.df_num:.0f}, {f_result.df_denom:.0f})")
 ```
 
-## Likelihood-ratio test
+## The `wald_test` and `wald_test_terms` API
+
+The summary table tests each parameter individually. For joint
+hypotheses, `wald_test` accepts an $R$ matrix directly, and
+`wald_test_terms` tests terms by name:
+
+```{python}
+#| label: wald-api
+# wald_test: pass R matrix and r vector directly
+R_mat = np.zeros((1, X_sm.shape[1]))
+R_mat[0, 2] = 1  # test beta_1 = 0
+wt = ols_robust.wald_test(R_mat, scalar=True)
+print(f"wald_test (single):  chi2={wt.statistic:.4f}, "
+      f"p={wt.pvalue:.4f}")
+
+# Joint test: beta_1 = 0 AND beta_2 = 0
+R_joint = np.zeros((2, X_sm.shape[1]))
+R_joint[0, 2] = 1
+R_joint[1, 3] = 1
+wt_joint = ols_robust.wald_test(R_joint, scalar=True)
+print(f"wald_test (joint):   chi2={wt_joint.statistic:.4f}, "
+      f"p={wt_joint.pvalue:.4f}")
+
+# wald_test_terms: test by term name (column index)
+wt_terms = ols_robust.wald_test_terms(
+    skip_single=False,
+    scalar=True,
+)
+print(f"\nwald_test_terms (all terms):")
+print(wt_terms.summary_frame())
+```
+
+`wald_test` is the workhorse: it takes a restriction matrix $R$ and
+computes the $\chi^2$ or $F$ statistic using the model's (possibly
+robust) covariance. `wald_test_terms` is convenience --- it builds
+the $R$ matrices for you and tests each term individually and
+jointly.
+
+## Likelihood-ratio test with `compare_lr_test`
 
 ```{python}
 #| label: lr-test
@@ -323,6 +444,22 @@ print(f"LR p-value:   {lr_pval:.4f}")
 print(f"Wald p-value:  {ols_full.pvalues[2]:.4f}")
 print(f"\nBoth test beta_1=0. LR uses both fits; Wald uses only the full fit.")
 ```
+
+The manual computation above is what `compare_lr_test` automates:
+
+```{python}
+#| label: compare-lr-api
+# compare_lr_test returns (LR stat, p-value, df)
+lr_result = ols_full.compare_lr_test(ols_restricted)
+print(f"compare_lr_test: LR={lr_result[0]:.4f}, "
+      f"p={lr_result[1]:.4f}, df={lr_result[2]}")
+print(f"Manual:          LR={lr_stat:.4f}, "
+      f"p={lr_pval:.4f}")
+```
+
+`compare_lr_test` computes the same $2(\ell_{\text{full}} -
+\ell_{\text{restricted}})$ statistic. The restricted model must be
+nested within the full model --- the method does not check this.
 
 ## AIC and BIC
 
@@ -347,6 +484,61 @@ print("True model has p=2 predictors (plus intercept)")
 AIC and BIC often agree. When they disagree, AIC picks the larger
 model (optimizes prediction) and BIC picks the smaller one (selects
 the true model). For large $n$, BIC's heavier penalty dominates.
+
+## Profile likelihood and confidence intervals
+
+The Wald confidence interval $\hat{\theta}_j \pm z_{\alpha/2}
+\hat{\text{se}}_j$ is a quadratic approximation to the likelihood.
+The profile likelihood interval inverts the LR test: it includes all
+$\theta_0$ for which $2[\ell(\hat{\boldsymbol{\theta}}) -
+\ell_{\text{profile}}(\theta_0)] \leq \chi^2_{1,\alpha}$, where
+$\ell_{\text{profile}}(\theta_0)$ maximizes $\ell$ over all other
+parameters with $\theta_j$ fixed at $\theta_0$.
+
+For symmetric, well-behaved likelihoods, Wald and profile intervals
+nearly coincide. For skewed or curved likelihoods --- common in
+logistic regression with sparse data --- the profile interval respects
+the likelihood shape and has better coverage.
+
+```{python}
+#| label: profile-likelihood
+# Profile likelihood for beta_0 (intercept)
+beta_hat = ols_full.params[0]
+se_hat = ols_full.bse[0]
+llf_full = ols_full.llf
+
+# Compute profile log-likelihood over a grid
+grid = np.linspace(
+    beta_hat - 3 * se_hat,
+    beta_hat + 3 * se_hat,
+    80,
+)
+profile_llf = np.zeros_like(grid)
+X_nc = X_sm[:, 1:]
+
+for i, b0 in enumerate(grid):
+    # Fix intercept at b0, refit remaining params
+    r = sm.OLS(y - b0, X_nc).fit()
+    profile_llf[i] = (
+        -len(y) / 2 * np.log(2 * np.pi * r.scale)
+        - np.sum(r.resid**2) / (2 * r.scale)
+    )
+
+# Wald CI
+wald_lo = beta_hat - 1.96 * se_hat
+wald_hi = beta_hat + 1.96 * se_hat
+
+# Profile CI: where 2*(llf_max - profile) <= chi2(0.95, 1)
+cutoff = stats.chi2.ppf(0.95, df=1)
+in_ci = 2 * (llf_full - profile_llf) <= cutoff
+prof_lo = grid[in_ci].min()
+prof_hi = grid[in_ci].max()
+
+print(f"Wald 95% CI:    [{wald_lo:.3f}, {wald_hi:.3f}]")
+print(f"Profile 95% CI: [{prof_lo:.3f}, {prof_hi:.3f}]")
+print("For OLS the two nearly coincide (Gaussian "
+      "likelihood is quadratic).")
+```
 
 
 # From-Scratch Implementation {#sec-ch10-scratch}
@@ -456,6 +648,130 @@ The three statistics test the same hypothesis but will generally
 differ in finite samples. Under $H_0$, all three are approximately
 $\chi^2_1$.
 
+## Trinity from scratch: logistic regression
+
+OLS likelihoods are quadratic, so the three tests are nearly
+identical by construction. Logistic regression reveals the
+differences. We compute all three statistics from scratch for a
+single coefficient test, then show how the gap between them shrinks
+with sample size.
+
+```{python}
+#| label: logistic-trinity
+def logistic_trinity(X, y, test_col):
+    """Compute Wald, LR, and score statistics for H0: beta_j=0.
+
+    All three tests from scratch on a logistic regression.
+
+    Parameters
+    ----------
+    X : array (n, p)
+        Design matrix (with intercept).
+    y : array (n,)
+        Binary response.
+    test_col : int
+        Column index to test.
+
+    Returns
+    -------
+    wald, lr, score : float
+        Test statistics.
+    """
+    # Unrestricted fit
+    full = sm.Logit(y, X).fit(disp=0)
+
+    # Restricted fit (drop test_col)
+    keep = [j for j in range(X.shape[1]) if j != test_col]
+    restr = sm.Logit(y, X[:, keep]).fit(disp=0)
+
+    # --- Wald ---
+    wald = (full.params[test_col] / full.bse[test_col])**2
+
+    # --- LR ---
+    lr = 2 * (full.llf - restr.llf)
+
+    # --- Score: gradient of full model at restricted MLE ---
+    # Pad restricted params with 0 at test_col
+    params_r = np.insert(restr.params, test_col, 0.0)
+    score_vec = full.model.score(params_r)
+    # Use expected information at restricted params
+    hess = -full.model.hessian(params_r)
+    info_inv = np.linalg.inv(hess)
+    score_stat = score_vec @ info_inv @ score_vec
+
+    return wald, lr, score_stat
+```
+
+```{python}
+#| label: logistic-trinity-compare
+# Small vs large sample: trinity convergence
+print(f"{'n':>6}  {'Wald':>8}  {'LR':>8}  {'Score':>8}  "
+      f"{'max gap':>8}")
+
+for n_trial in [30, 100, 500, 2000]:
+    trial_rng = np.random.default_rng(42)
+    X_trial = trial_rng.standard_normal((n_trial, 2))
+    # True beta_1 = 0 (null is true for col 2)
+    prob = 1 / (1 + np.exp(-(0.5 + 0.8 * X_trial[:, 0])))
+    y_trial = trial_rng.binomial(1, prob)
+    X_trial_sm = sm.add_constant(X_trial)
+
+    w, l, s = logistic_trinity(X_trial_sm, y_trial,
+                                test_col=2)
+    gap = max(w, l, s) - min(w, l, s)
+    print(f"{n_trial:>6}  {w:>8.3f}  {l:>8.3f}  "
+          f"{s:>8.3f}  {gap:>8.3f}")
+
+print("\nThe three converge as n grows. "
+      "At n=30, the gap can be substantial.")
+```
+
+## Verifying the information matrix equality
+
+The IME (@eq-info-equality) says that the variance of the score
+equals the negative expected Hessian under the true model. We verify
+this empirically for a logistic regression: compute the score at
+the true parameters for many samples, check that its empirical
+covariance matches the average Hessian.
+
+```{python}
+#| label: ime-verify
+# True parameters for logistic model
+beta_true_logit = np.array([0.5, 1.0, -0.5])
+n_ime = 500
+n_reps = 2000
+
+scores = np.zeros((n_reps, 3))
+hessians = np.zeros((n_reps, 3, 3))
+
+for rep in range(n_reps):
+    rep_rng = np.random.default_rng(rep)
+    X_ime = rep_rng.standard_normal((n_ime, 2))
+    X_ime = sm.add_constant(X_ime)
+    p_ime = 1 / (1 + np.exp(-X_ime @ beta_true_logit))
+    y_ime = rep_rng.binomial(1, p_ime)
+
+    model = sm.Logit(y_ime, X_ime)
+    # Score at true parameters
+    scores[rep] = model.score(beta_true_logit)
+    # Negative Hessian at true parameters
+    hessians[rep] = -model.hessian(beta_true_logit)
+
+# Variance of score (empirical)
+var_score = np.cov(scores.T)
+# Mean of negative Hessian
+mean_neg_hess = hessians.mean(axis=0)
+
+print("Var(score) [empirical, diagonal]:")
+print(f"  {np.diag(var_score).round(2)}")
+print("E[-Hessian] [diagonal]:")
+print(f"  {np.diag(mean_neg_hess).round(2)}")
+print(f"\nRatio (should be ~1.0):")
+ratios = np.diag(var_score) / np.diag(mean_neg_hess)
+print(f"  {ratios.round(3)}")
+print("IME holds: both sides of Eq. (10.2) agree.")
+```
+
 
 # Diagnostics {#sec-ch10-diagnostics}
 
@@ -471,6 +787,73 @@ $\chi^2_1$.
 3. **Near-boundary parameters.** When the true parameter is near the
    boundary of the parameter space, the Wald test's quadratic
    approximation to the likelihood is poor.
+
+4. **Hauck-Donner effect.** In logistic regression with rare events
+   or perfect/quasi-separation, the MLE $\hat{\beta}_j$ diverges
+   toward $\pm\infty$ while the SE diverges faster. The Wald
+   statistic $z = \hat{\beta}/\hat{\text{se}}$ *decreases* as the
+   evidence for the effect *increases* --- the $p$-value gets
+   larger when it should get smaller. This is the Hauck-Donner
+   effect (Hauck and Donner, 1977). The LR and score tests do not
+   suffer from this because they do not rely on the SE.
+
+```{python}
+#| label: hauck-donner
+# Demonstrate Hauck-Donner: near-separation in logistic
+hd_rng = np.random.default_rng(42)
+n_hd = 100
+x_hd = hd_rng.standard_normal(n_hd)
+# Strong separation: large true coefficient
+y_hd = (x_hd > 0).astype(float)
+# Add a tiny bit of noise to prevent exact separation
+flip_idx = hd_rng.choice(n_hd, size=3, replace=False)
+y_hd[flip_idx] = 1 - y_hd[flip_idx]
+
+X_hd = sm.add_constant(x_hd)
+logit_hd = sm.Logit(y_hd, X_hd).fit(disp=0)
+
+# Wald
+wald_z = logit_hd.tvalues[1]
+wald_p = logit_hd.pvalues[1]
+
+# LR
+logit_r = sm.Logit(y_hd, np.ones((n_hd, 1))).fit(disp=0)
+lr_hd = 2 * (logit_hd.llf - logit_r.llf)
+lr_p_hd = 1 - stats.chi2.cdf(lr_hd, df=1)
+
+print(f"beta_hat = {logit_hd.params[1]:.2f}, "
+      f"SE = {logit_hd.bse[1]:.2f}")
+print(f"Wald z = {wald_z:.3f}, p = {wald_p:.4f}")
+print(f"LR stat = {lr_hd:.3f}, p = {lr_p_hd:.4f}")
+print("\nLR correctly reports strong evidence; "
+      "Wald is unreliable due to SE inflation.")
+```
+
+**Rule of thumb:** When a logistic regression coefficient is large
+($|\hat{\beta}| > 3$), check whether Wald and LR agree. If the Wald
+$p$-value is *larger* than the LR $p$-value, the Hauck-Donner effect
+is likely in play. Use the LR test.
+
+## LR test workflow for nested models
+
+The LR test is the standard tool for comparing nested models. The
+workflow:
+
+1. Fit both models (full and restricted).
+2. Check that the restricted model is genuinely nested --- every
+   parameter in the restricted model must also be in the full model.
+3. Compute $\Lambda = 2(\ell_{\text{full}} - \ell_{\text{restricted}})$.
+4. Compare to $\chi^2_q$ where $q$ is the difference in the number
+   of estimated parameters.
+
+When the trinity disagrees --- which model-comparison strategy should
+you trust? For nested models, the ordering is typically
+$W \geq \Lambda \geq S_{\text{score}}$. Monte Carlo evidence
+consistently shows the LR test has the best finite-sample size
+(rejection rate closest to nominal $\alpha$). The Wald test
+over-rejects; the score test under-rejects. For the summary table
+of a single model, you are stuck with Wald. For model comparison,
+prefer LR.
 
 ## Comparing the three tests
 
@@ -799,6 +1182,18 @@ AIC is from Akaike (1973). The KL divergence interpretation is
 developed in Burnham and Anderson (2002). BIC is from Schwarz (1978);
 the Laplace approximation interpretation is in Kass and Raftery (1995).
 
+The Hauck-Donner effect (where the Wald statistic decreases as the
+true coefficient increases) is from Hauck and Donner (1977). For an
+accessible modern treatment, see Heinze and Schemper (2002) on Firth's
+penalized likelihood as a remedy for separation.
+
 Chernoff's theorem for boundary parameters is from Chernoff (1954).
 Its application to variance components in mixed models is in Self and
-Liang (1987). Vuong's test for non-nested models is from Vuong (1989).
+Liang (1987). Vuong's test for non-nested models is from Vuong (1989);
+the test is extended to GMM settings by Rivers and Vuong (2002).
+
+The profile likelihood and its use for confidence intervals is
+developed in Barndorff-Nielsen and Cox (1994). The profile interval
+has better coverage than the Wald interval when the likelihood is
+asymmetric, a situation common in logistic regression with sparse
+data; see Venzon and Moolgavkar (1988).

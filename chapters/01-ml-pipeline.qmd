@@ -404,6 +404,84 @@ plt.tight_layout()
 plt.show()
 ```
 
+The gamma and beta distributions appear throughout the book. The
+gamma models waiting times and positive-valued quantities like
+variances; the beta models proportions and probabilities. Both use
+the same frozen-object API:
+
+```{python}
+#| label: gamma-beta
+# Gamma: shape a, scale s. Mean = a*s, Var = a*s^2.
+gamma_rv = stats.gamma(a=2.0, scale=1.5)
+print(f"Gamma(a=2, scale=1.5):")
+print(f"  Mean = {gamma_rv.mean():.2f}, "
+      f"Var = {gamma_rv.var():.2f}")
+print(f"  P(X > 5) = {gamma_rv.sf(5):.4f}")
+
+# Beta: shape parameters a, b. Supported on [0, 1].
+beta_rv = stats.beta(a=2, b=5)
+print(f"\nBeta(a=2, b=5):")
+print(f"  Mean = {beta_rv.mean():.3f}, "
+      f"Var = {beta_rv.var():.4f}")
+print(f"  P(X < 0.5) = {beta_rv.cdf(0.5):.4f}")
+```
+
+**Fitting distributions to data.** The `.fit()` method estimates
+distribution parameters from data via maximum likelihood. This is
+the statistical inverse of `.rvs()`: where `.rvs()` generates data
+from known parameters, `.fit()` recovers parameters from observed
+data.
+
+```{python}
+#| label: stats-fit
+# Generate data from a known gamma distribution
+gamma_data = stats.gamma.rvs(
+    a=2.5, scale=1.8, size=500, random_state=rng
+)
+
+# Fit: estimate shape and scale from data
+a_hat, loc_hat, scale_hat = stats.gamma.fit(
+    gamma_data, floc=0
+)
+print(f"True:      a=2.50, scale=1.80")
+print(f"Estimated: a={a_hat:.2f}, scale={scale_hat:.2f}")
+# floc=0 fixes the location parameter at zero.
+# Without it, .fit() estimates a 3-parameter model
+# (shape, location, scale) when you usually want two.
+```
+
+**Hypothesis testing.** `scipy.stats` also provides hypothesis
+tests. The most common: the two-sample $t$-test, which tests
+whether two groups have the same mean.
+
+```{python}
+#| label: hypothesis-test
+# Two groups with different means
+group_a = rng.normal(loc=5.0, scale=1.5, size=50)
+group_b = rng.normal(loc=5.8, scale=1.5, size=50)
+
+# Two-sample t-test (assumes equal variance)
+stat, pval = stats.ttest_ind(group_a, group_b)
+print(f"t-statistic: {stat:.3f}")
+print(f"p-value:     {pval:.4f}")
+
+# Welch's t-test (does not assume equal variance)
+stat_w, pval_w = stats.ttest_ind(
+    group_a, group_b, equal_var=False
+)
+print(f"\nWelch's t:   {stat_w:.3f}")
+print(f"Welch's p:   {pval_w:.4f}")
+```
+
+The test returns a statistic and a two-sided $p$-value. A small
+$p$-value (below your significance level, typically 0.05) means
+the data are unlikely under the null hypothesis of equal means.
+Welch's variant (`equal_var=False`) is generally safer --- it does
+not assume the two groups share the same variance. Every test in
+`scipy.stats` follows this pattern: call a function, get back a
+statistic and a $p$-value. Chapter 10 develops the theory behind
+these tests.
+
 
 # Linear Algebra: `scipy.linalg` {#sec-ch01-linalg}
 
@@ -433,9 +511,62 @@ print(f"\nSingular values: {s.round(4)}")
 print(f"Condition number: {s[0]/s[1]:.2f}")
 ```
 
-**When to use `scipy.linalg` vs `numpy.linalg`:** scipy's versions
-are generally faster (they use optimized LAPACK routines) and have
-more options. This book uses `scipy.linalg` throughout.
+**When to use `scipy.linalg` vs `numpy.linalg`:** Both wrap LAPACK,
+but `scipy.linalg` is the superset. It includes everything in
+`numpy.linalg` plus decompositions that NumPy omits (LU, Schur, QZ,
+matrix functions like `expm` and `logm`). scipy's versions also
+expose more LAPACK options --- for instance, `linalg.solve` accepts
+an `assume_a` parameter that tells the solver the matrix is
+symmetric or positive definite, enabling a faster code path:
+
+```{python}
+#| label: linalg-posdef
+# Exploit matrix structure for faster solves
+A_spd = np.array([[4, 2], [2, 3]], dtype=float)
+b_vec = np.array([1, 2], dtype=float)
+
+x_general = linalg.solve(A_spd, b_vec)
+x_fast = linalg.solve(A_spd, b_vec, assume_a='pos')
+print(f"General solve: {x_general}")
+print(f"PD solve:      {x_fast}")
+print(f"Match: {np.allclose(x_general, x_fast)}")
+```
+
+**Checking positive definiteness.** A matrix $\mathbf{A}$ is
+positive definite if $\mathbf{x}^\top \mathbf{A} \mathbf{x} > 0$
+for all nonzero $\mathbf{x}$. This property appears throughout
+the book: covariance matrices must be positive definite, the
+Hessian at a minimum is positive definite, and Cholesky
+decomposition requires it. The simplest check: try Cholesky and
+see if it succeeds.
+
+```{python}
+#| label: posdef-check
+def is_positive_definite(M):
+    """Check via Cholesky: succeeds iff M is PD."""
+    try:
+        linalg.cholesky(M, lower=True)
+        return True
+    except linalg.LinAlgError:
+        return False
+
+print(f"[[4,2],[2,3]] PD? "
+      f"{is_positive_definite(A_spd)}")
+
+A_sing = np.array([[1, 1], [1, 1]], dtype=float)
+print(f"[[1,1],[1,1]] PD? "
+      f"{is_positive_definite(A_sing)}")
+
+# Eigenvalues confirm: all positive ↔ PD
+eigvals = linalg.eigvalsh(A_spd)
+print(f"\nEigenvalues of A_spd: {eigvals.round(4)}")
+print("All positive → positive definite")
+```
+
+When you compute a covariance matrix from data, numerical issues
+can make it slightly non-positive-definite. Chapter 2 shows how
+this breaks BFGS, and Chapter 16 shows how the Kalman filter
+handles it. This book uses `scipy.linalg` throughout.
 
 
 # From SciPy to Statsmodels {#sec-ch01-statsmodels}
@@ -475,6 +606,30 @@ ols = sm.OLS(y, X).fit()
 # [0.025, 0.975] = 95% confidence interval
 print(ols.summary().tables[1])
 ```
+
+The summary output deserves a careful read. Each row is one
+coefficient; the columns tell you everything about that estimate:
+
+- **coef**: the point estimate $\hat{\beta}_j$. This is the
+  predicted change in $y$ for a one-unit increase in $x_j$,
+  holding all other predictors fixed.
+- **std err**: the standard error of the estimate. Smaller values
+  mean a more precise estimate. Computed from the diagonal of
+  $(\mathbf{X}^\top \mathbf{X})^{-1} \hat{\sigma}^2$.
+- **t**: the Wald statistic, $t = \hat{\beta}_j / \text{SE}$.
+  Large absolute values provide evidence that the coefficient
+  differs from zero.
+- **P>|t|**: the two-sided $p$-value. Below 0.05 means the
+  coefficient is statistically significant at the 5% level ---
+  the data provide evidence against
+  $H_0\colon \beta_j = 0$.
+- **[0.025  0.975]**: the 95% confidence interval. If this
+  interval excludes zero, the coefficient is significant
+  (consistent with the $p$-value column).
+
+The first row (`const`) is the intercept. Our true intercept was
+2, and the estimate should be close. The remaining rows correspond
+to $x_1$ (true coefficient 3) and $x_2$ (true coefficient $-1.5$).
 
 **What statsmodels adds over plain scipy:**
 
@@ -600,29 +755,104 @@ print(f"scipy:    coef = {result.x[:-1].round(4)}")
 print(f"Match: {np.allclose(lr_sk.coef_.ravel(), result.x[:-1], atol=1e-3)}")
 ```
 
-The coefficients match because sklearn *is* calling scipy. The
-algorithm is L-BFGS-B --- a limited-memory quasi-Newton method
-developed in Chapter 4.
+The coefficients match because sklearn *is* calling scipy.
+
+**The connection in detail.** When you call
+`LogisticRegression(solver='lbfgs').fit(X, y)`, sklearn:
+
+1. Constructs the negative log-likelihood and its gradient from
+   your data.
+2. Passes both to `scipy.optimize.minimize` with
+   `method='L-BFGS-B'` --- a limited-memory version of BFGS that
+   stores only a few vectors instead of the full Hessian
+   approximation (Chapter 4).
+3. Receives the `OptimizeResult` and extracts `result.x` as the
+   fitted coefficients.
+
+The `C` parameter controls regularization: it adds a penalty
+$\frac{1}{2C}\|\boldsymbol{\beta}\|^2$ to the objective. Setting
+`C=1e15` (as above) effectively removes the penalty, making
+sklearn's result match plain maximum likelihood.
+
+This pattern --- a high-level library calling `scipy.optimize`
+internally --- repeats throughout scientific Python. Statsmodels
+does the same for its MLE-based models (GLMs, ARIMA, mixed
+effects). When convergence fails in any of these libraries, the
+fix usually lives at the scipy level: better starting values, a
+different optimizer, or tighter tolerances. The algorithm is
+L-BFGS-B --- a limited-memory quasi-Newton method developed in
+Chapter 4.
 
 
 # The Roadmap {#sec-ch01-roadmap}
 
-Now that you have seen the key scipy tools, here is what each chapter
-of the book develops:
+Now that you have seen the key scipy tools, here is where the book
+goes from here. Each chapter takes one method, develops the
+mathematics, re-implements the algorithm from scratch, and shows
+the diagnostics that the documentation never mentions.
 
-| SciPy function | What it does | Chapter |
-|---|---|---|
-| `minimize(method='BFGS')` | Smooth unconstrained optimization | Ch. 2 |
-| `minimize(method='SLSQP')` | Constrained optimization | Ch. 3 |
-| `minimize(method='L-BFGS-B')` | Large-scale optimization | Ch. 4 |
-| `differential_evolution` | Global optimization | Ch. 5 |
-| `least_squares`, `curve_fit` | Nonlinear least squares | Ch. 6 |
-| `scipy.stats.qmc` | Quasi-Monte Carlo | Ch. 7 |
-| `scipy.stats.bootstrap` | Bootstrap inference | Ch. 9 |
-| `statsmodels.OLS` | Linear regression + diagnostics | Ch. 10--11 |
-| `statsmodels.GLM` | Generalized linear models | Ch. 12 |
-| `statsmodels.tsa.ARIMA` | Time series modeling | Ch. 15 |
-| `linearmodels.IV2SLS` | Instrumental variables | Ch. 20 |
+**Part II --- Optimization** builds the engine under `.fit()`:
+
+- **Ch. 2** derives BFGS and trust-region methods --- the
+  algorithms behind `minimize(method='BFGS')`.
+- **Ch. 3** adds constraints via KKT conditions, SQP, and
+  interior-point methods (`method='SLSQP'`, `'trust-constr'`).
+- **Ch. 4** scales up with proximal methods, ADMM, and coordinate
+  descent for composite objectives like the Lasso.
+- **Ch. 5** tackles global and derivative-free optimization:
+  `differential_evolution`, simulated annealing, and why
+  Nelder--Mead has no convergence guarantee.
+- **Ch. 6** develops nonlinear least squares --- Gauss--Newton and
+  Levenberg--Marquardt, the algorithms inside `curve_fit`.
+
+**Part III --- Monte Carlo** turns randomness into inference:
+
+- **Ch. 7** covers Monte Carlo integration, importance sampling,
+  and variance reduction via `scipy.stats.qmc`.
+- **Ch. 8** develops MCMC from scratch: Metropolis--Hastings,
+  Gibbs sampling, and Hamiltonian Monte Carlo diagnostics.
+- **Ch. 9** builds bootstrap confidence intervals and permutation
+  tests using `scipy.stats.bootstrap`, including failure modes.
+
+**Part IV --- Likelihood Inference** is the statistical core:
+
+- **Ch. 10** derives the Wald, score, and likelihood-ratio tests
+  --- the inferential trinity reused in every later chapter.
+- **Ch. 11** dissects linear regression under misspecification:
+  sandwich variance, robust standard errors, and diagnostics.
+- **Ch. 12** unifies GLMs, robust regression, and quantile
+  regression under the M-estimation framework.
+- **Ch. 13** covers discrete-choice models: logit, probit,
+  multinomial, and count data with zero inflation.
+- **Ch. 14** handles clustered data via mixed-effects models and
+  GEE, comparing conditional and marginal approaches.
+
+**Part V --- Time Series** models temporal dependence:
+
+- **Ch. 15** develops ARIMA and Box--Jenkins methodology, with the
+  full Dickey--Fuller unit-root asymptotic theory.
+- **Ch. 16** derives Kalman filter recursions for state-space
+  models and adds Markov regime switching.
+- **Ch. 17** extends to VAR systems, cointegration, and the
+  Johansen procedure for multivariate time series.
+
+**Part VI --- Specialized Models** addresses specific structures:
+
+- **Ch. 18** builds survival analysis: Kaplan--Meier, Cox partial
+  likelihood, and censoring diagnostics.
+- **Ch. 19** covers PCA, factor analysis, kernel density
+  estimation, and local polynomial regression.
+- **Ch. 20** develops instrumental variables, GMM, and the weak-
+  instrument pathologies that break standard inference.
+
+**Part VII --- Causal Inference** closes the book:
+
+- **Ch. 21** formalizes the potential-outcomes framework with IPW,
+  AIPW, and the double-robustness theorem.
+- **Ch. 22** covers quasi-experimental designs: regression
+  discontinuity, difference-in-differences, synthetic control.
+- **Ch. 23** introduces heterogeneous treatment effects and
+  double machine learning via Neyman orthogonality.
 
 
 # Exercises {#sec-ch01-exercises}

@@ -78,19 +78,133 @@ $\mathbf{b}_i$) is:
 $\mathbf{y}_i \sim \mathcal{N}(\mathbf{X}_i\boldsymbol{\beta}, \mathbf{V}_i)$,
 where $\mathbf{V}_i = \mathbf{Z}_i\mathbf{D}\mathbf{Z}_i^\top + \sigma^2\mathbf{I}$.
 
+### REML: correcting the variance bias {#sec-ch14-reml}
+
 **REML (Restricted Maximum Likelihood)** estimates the variance
 parameters $(\mathbf{D}, \sigma^2)$ by maximizing a modified likelihood
-that removes the fixed effects. Intuition: ML estimation of variance
-is biased downward (it divides by $n$, not $n - p$); REML corrects
-this, just as dividing by $n - 1$ corrects the sample variance.
-Statsmodels uses REML by default (`reml=True`).
+that removes the fixed effects.
 
-**BLUP (Best Linear Unbiased Predictor):** The random effects
-$\hat{\mathbf{b}}_i$ are not estimated by MLE---they are *predicted*
-as the conditional mean $\mathbb{E}[\mathbf{b}_i \mid \mathbf{y}_i]$.
-This shrinks the cluster-specific estimates toward the population mean,
-more so for clusters with few observations. This shrinkage is a
-feature, not a bug: it reduces MSE.
+The ML log-likelihood for the marginal model
+$\mathbf{y}_i \sim \mathcal{N}(\mathbf{X}_i\boldsymbol{\beta}, \mathbf{V}_i)$
+is:
+
+$$
+\ell_{\text{ML}} = -\frac{1}{2}\sum_{i=1}^G \left[
+\log|\mathbf{V}_i|
++ (\mathbf{y}_i - \mathbf{X}_i\boldsymbol{\beta})^\top
+  \mathbf{V}_i^{-1}
+  (\mathbf{y}_i - \mathbf{X}_i\boldsymbol{\beta})
+\right].
+$$ {#eq-ml-lmm}
+
+ML estimates $\boldsymbol{\beta}$ and the variance components
+$(\mathbf{D}, \sigma^2)$ jointly. The problem: optimizing over
+$\boldsymbol{\beta}$ and variances simultaneously biases the variance
+estimates downward---the matrix analog of dividing by $n$ instead
+of $n - p$.
+
+REML eliminates $\boldsymbol{\beta}$ before estimating variances.
+Project $\mathbf{y}$ into the $(n - p)$-dimensional space orthogonal
+to $\mathbf{X}$ via any full-rank matrix $\mathbf{A}$ satisfying
+$\mathbf{A}^\top\mathbf{X} = \mathbf{0}$. Then
+$\mathbf{A}^\top\mathbf{y} \sim \mathcal{N}(\mathbf{0},
+\mathbf{A}^\top\mathbf{V}\mathbf{A})$, and the REML log-likelihood
+is:
+
+$$
+\ell_{\text{REML}} = \ell_{\text{ML}}
+- \frac{1}{2}\log\left|
+  \sum_{i=1}^G \mathbf{X}_i^\top
+  \mathbf{V}_i^{-1}\mathbf{X}_i
+\right|.
+$$ {#eq-reml}
+
+The extra term accounts for the $p$ degrees of freedom consumed by
+estimating $\boldsymbol{\beta}$. For balanced one-way ANOVA with
+$G$ groups of size $m$, ML divides by $G$; REML divides by $G - 1$.
+This correction is negligible for large $G$ but substantial when
+$G$ is small---exactly the regime where variance estimation matters
+most. Statsmodels defaults to `reml=True` for this reason.
+
+**Practical consequence:** REML likelihoods are valid for comparing
+models with different variance structures but the *same* fixed
+effects. To compare models with different fixed effects (e.g.,
+adding a covariate), you must use ML (`reml=False`), as the REML
+likelihoods are not comparable across different $\mathbf{X}$
+matrices.
+
+### BLUP: predicting the random effects {#sec-ch14-blup}
+
+The random effects $\hat{\mathbf{b}}_i$ are not estimated by MLE---they
+are *predicted* as the conditional mean
+$\mathbb{E}[\mathbf{b}_i \mid \mathbf{y}_i]$. Under the joint
+normality of $(\mathbf{b}_i, \mathbf{y}_i)$, this conditional
+expectation has a closed form. Write the joint distribution:
+
+$$
+\begin{pmatrix} \mathbf{b}_i \\ \mathbf{y}_i \end{pmatrix}
+\sim \mathcal{N}\!\left(
+\begin{pmatrix} \mathbf{0} \\
+  \mathbf{X}_i\boldsymbol{\beta} \end{pmatrix},
+\begin{pmatrix} \mathbf{D} &
+  \mathbf{D}\mathbf{Z}_i^\top \\
+  \mathbf{Z}_i\mathbf{D} & \mathbf{V}_i \end{pmatrix}
+\right).
+$$ {#eq-joint}
+
+Applying the standard formula for the conditional mean of a
+multivariate normal gives the BLUP:
+
+$$
+\hat{\mathbf{b}}_i
+= \mathbf{D}\mathbf{Z}_i^\top\mathbf{V}_i^{-1}
+  (\mathbf{y}_i - \mathbf{X}_i\hat{\boldsymbol{\beta}}).
+$$ {#eq-blup}
+
+For the random-intercept model ($\mathbf{Z}_i = \mathbf{1}$,
+$\mathbf{D} = \sigma^2_b$), @eq-blup simplifies to a scalar
+shrinkage estimator:
+
+$$
+\hat{b}_i
+= \underbrace{\frac{\sigma^2_b}{\sigma^2_b
+  + \sigma^2_e / n_i}}_{\lambda_i}\;\bar{r}_i,
+$$ {#eq-shrinkage}
+
+where $\bar{r}_i = n_i^{-1}\sum_j(y_{ij}
+- \mathbf{x}_{ij}^\top\hat{\boldsymbol{\beta}})$ is the cluster
+mean residual. The BLUP is a *weighted average* of the OLS cluster
+estimate $\bar{r}_i$ and the prior mean zero, with the weight
+$\lambda_i$ determined by the signal-to-noise ratio:
+
+- $\lambda_i \to 1$ when $n_i$ is large or
+  $\sigma^2_b \gg \sigma^2_e$: the cluster has enough data to speak
+  for itself.
+- $\lambda_i \to 0$ when $n_i$ is small or
+  $\sigma^2_e \gg \sigma^2_b$: the cluster estimate is noisy, so the
+  BLUP shrinks toward zero.
+
+This is structurally identical to a Bayesian posterior mean under a
+$\mathcal{N}(0, \sigma^2_b)$ prior. The shrinkage factor $\lambda_i$
+is the ratio of signal variance to total variance---an ICC computed
+at the cluster level.
+
+**Why shrinkage helps:** Consider estimating the average test score
+for each of 100 schools. A school with 500 students has a reliable
+sample mean. A school with 5 students has a noisy one. The BLUP
+"borrows strength" from the population: it barely adjusts the large
+school's estimate but pulls the small school's estimate strongly
+toward the population mean. This reduces overall prediction error.
+
+**When to use mixed models vs GEE:**
+
+| Question | Mixed model | GEE |
+|---|---|---|
+| "What is the effect for a typical individual?" | Yes (subject-specific) | No |
+| "What is the population-average effect?" | Not directly | Yes |
+| "I need cluster-specific predictions" | Yes (BLUPs) | No |
+| "I don't trust my correlation structure" | Must specify correctly | Robust to misspecification |
+| "My outcome is binary/count" | Coefficients differ from GEE | Simpler interpretation |
 
 ## GEE: the marginal approach
 
@@ -112,6 +226,46 @@ when the working correlation is wrong*. The sandwich covariance
 corrects for the misspecification. This robustness is why GEE is
 popular in practice---you don't need to know the true correlation
 structure, just a reasonable working guess.
+
+## The sandwich variance {#sec-ch14-sandwich}
+
+GEE uses a sandwich (Huber--White) covariance estimator that provides
+valid inference even when the working correlation is misspecified.
+Define the model-based and empirical components:
+
+$$
+\mathbf{B} = \sum_{i=1}^G \mathbf{X}_i^\top
+  \mathbf{V}_i^{-1}\mathbf{X}_i,
+\qquad
+\mathbf{M} = \sum_{i=1}^G \mathbf{X}_i^\top
+  \mathbf{V}_i^{-1}
+  (\mathbf{y}_i - \boldsymbol{\mu}_i)
+  (\mathbf{y}_i - \boldsymbol{\mu}_i)^\top
+  \mathbf{V}_i^{-1}\mathbf{X}_i.
+$$ {#eq-sandwich-components}
+
+The sandwich covariance is:
+
+$$
+\widehat{\text{Var}}(\hat{\boldsymbol{\beta}})
+= \mathbf{B}^{-1}\mathbf{M}\mathbf{B}^{-1}.
+$$ {#eq-sandwich}
+
+**Why this works when the working correlation is wrong:**
+$\mathbf{B}$ depends on the assumed working covariance $\mathbf{V}_i$,
+which may be misspecified. But $\mathbf{M}$ uses the *actual*
+residuals $(\mathbf{y}_i - \boldsymbol{\mu}_i)$ to capture the true
+variability. If the working correlation were correct,
+$\mathbf{M} \to \mathbf{B}$ and the sandwich collapses to the
+model-based variance $\mathbf{B}^{-1}$---the usual GLS result.
+When the working correlation is wrong, $\mathbf{M} \neq \mathbf{B}$,
+and the sandwich corrects for the discrepancy.
+
+The cost of this robustness: the sandwich estimator requires
+$G \to \infty$ for consistency (each cluster contributes one
+"observation" to $\mathbf{M}$). With few clusters ($G < 30$), the
+sandwich underestimates variability and coverage drops below
+nominal. We demonstrate this failure in @sec-ch14-diagnostics.
 
 
 # The Algorithm {#sec-ch14-algorithm}
@@ -157,6 +311,74 @@ working correlation. But the *efficiency* depends on how close the
 working correlation is to the truth. Exchangeable is often good
 enough; independence (ignoring clustering) gives valid inference but
 wider CIs.
+
+## Marginal ≠ conditional: a simulation {#sec-ch14-attenuation}
+
+For linear models, MixedLM and GEE give the same $\hat{\boldsymbol{\beta}}$.
+For nonlinear models, they estimate different quantities.
+The reason is Jensen's inequality: for a nonlinear function $g$
+and a random variable $b$,
+$\mathbb{E}[g(\eta + b)] \neq g(\eta + \mathbb{E}[b])$.
+
+In a logistic GLMM, the subject-specific probability is
+$p(x, b) = \text{logit}^{-1}(\beta x + b)$. The population-average
+probability $\bar{p}(x) = \mathbb{E}_b[\text{logit}^{-1}(\beta x + b)]$
+is *flatter* than the subject-specific curve because the S-shaped
+logistic function is averaged over a spread of intercepts. A flatter
+curve means a smaller effective slope.
+
+The Zeger--Liang--Albert (1988) approximation gives:
+$\beta_{\text{GEE}} \approx \beta_{\text{GLMM}} / \sqrt{1 + c^2\sigma^2_b}$,
+where $c^2 = 16\sqrt{3}/(15\pi) \approx 0.588$.
+
+```{python}
+#| label: marginal-vs-conditional
+# Simulate logistic GLMM to show attenuation
+from statsmodels.genmod.families import Binomial
+
+n_groups_sim, n_obs_sim = 200, 20
+sigma_b_true = 1.0
+beta_true = 1.0
+
+group_sim = np.repeat(np.arange(n_groups_sim), n_obs_sim)
+b_sim = sigma_b_true * rng.standard_normal(n_groups_sim)
+x_sim = rng.standard_normal(n_groups_sim * n_obs_sim)
+
+eta = beta_true * x_sim + b_sim[group_sim]
+prob = 1 / (1 + np.exp(-eta))
+y_sim = rng.binomial(1, prob)
+
+df_sim = pd.DataFrame({
+    'y': y_sim, 'x': x_sim,
+    'group': group_sim,
+})
+
+# GEE (marginal)
+gee_logit = GEE.from_formula(
+    'y ~ x', groups='group', data=df_sim,
+    family=Binomial(),
+    cov_struct=Exchangeable(),
+).fit()
+
+c2 = 16 * np.sqrt(3) / (15 * np.pi)
+approx = beta_true / np.sqrt(1 + c2 * sigma_b_true**2)
+
+print(f"True conditional (GLMM) beta: {beta_true:.3f}")
+print(f"GEE estimate (marginal):      "
+      f"{gee_logit.params['x']:.3f}")
+print(f"Zeger-Liang-Albert approx:    {approx:.3f}")
+print(f"\nAttenuation factor:           "
+      f"{gee_logit.params['x']/beta_true:.3f}")
+print(f"The marginal beta is always smaller —")
+print(f"averaging over random effects flattens "
+      f"the dose-response curve.")
+```
+
+The attenuation grows with $\sigma^2_b$: larger between-cluster
+variation means more averaging, which flattens the marginal curve
+further. This is not a bias---GEE and the GLMM are estimating
+*different* parameters. The choice between them is a modeling
+decision about which parameter answers your scientific question.
 
 
 # Statsmodels Implementation {#sec-ch14-statsmodels}
@@ -204,9 +426,21 @@ print(f"ICC: {mlm.cov_re.iloc[0,0]/(mlm.cov_re.iloc[0,0]+mlm.scale):.3f}")
 
 - `groups`: cluster variable (school, patient, etc.)
 - `re_formula='~1'` (default): random intercept only
-- `re_formula='~x'`: random slope on `x` (adds cluster-level slope variation)
+- `re_formula='~x'`: random slope on `x` (adds cluster-level
+  slope variation). Use this when the effect of `x` plausibly
+  varies across clusters---e.g., treatment response varies by
+  patient, or the time trend differs across sites. The model
+  estimates a $2 \times 2$ covariance matrix $\mathbf{D}$ for
+  the intercept--slope pair.
 - `reml=True` (default): REML estimation for variance components
-- `reml=False`: ML estimation (needed for LR tests of fixed effects)
+- `reml=False`: ML estimation (needed for LR tests comparing
+  models with different fixed effects)
+
+**New cluster prediction:** BLUPs for clusters *in the training
+data* use @eq-blup. For a *new* cluster not seen during fitting,
+$\hat{\mathbf{b}}_{\text{new}} = \mathbf{0}$---the prediction
+reverts to the population average. This is by design: with no
+data from the new cluster, the best prediction is the prior mean.
 
 ## `GEE`: marginal model
 
@@ -339,6 +573,171 @@ print(f"{'sigma2_e':>14} {res_ours['sigma2_e']:>14.3f} "
       f"{mlm.scale:>14.3f}")
 ```
 
+## BLUP from scratch
+
+The from-scratch EM above already computes BLUPs in its E-step.
+Here we verify the shrinkage formula @eq-shrinkage against
+statsmodels' `.random_effects`.
+
+```{python}
+#| label: blup-scratch
+sigma2_b_hat = res_ours['sigma2_b']
+sigma2_e_hat = res_ours['sigma2_e']
+beta_hat = res_ours['beta']
+
+blup_scratch = np.zeros(n_schools)
+for g in range(n_schools):
+    mask = groups_arr == g
+    n_g = mask.sum()
+    resid_g = y_score[mask] - X_arr[mask] @ beta_hat
+    lam = sigma2_b_hat / (sigma2_b_hat + sigma2_e_hat / n_g)
+    blup_scratch[g] = lam * resid_g.mean()
+
+# Compare to statsmodels
+re_sm = mlm.random_effects
+blup_sm = np.array([re_sm[g].iloc[0] for g in re_sm])
+
+print("BLUP verification (first 8 schools):")
+print(f"{'School':>7} {'Scratch':>10} {'statsmodels':>12} "
+      f"{'Shrinkage':>10}")
+for g in range(8):
+    mask = groups_arr == g
+    n_g = mask.sum()
+    lam = sigma2_b_hat / (
+        sigma2_b_hat + sigma2_e_hat / n_g
+    )
+    print(f"{g:>7} {blup_scratch[g]:>10.4f} "
+          f"{blup_sm[g]:>12.4f} {lam:>10.4f}")
+```
+
+## GEE from scratch
+
+One pass of the iteratively reweighted GEE, computing the sandwich
+covariance by hand.
+
+```{python}
+#| label: gee-scratch
+def gee_one_pass(y, X, groups, rho=0.0):
+    """One-step GEE with exchangeable correlation.
+
+    Implements Algorithm 14.1 for a single iteration
+    starting from OLS, with identity link and constant
+    variance (Gaussian GEE).
+
+    Parameters
+    ----------
+    y : array (n,)
+    X : array (n, p) — design matrix with intercept
+    groups : array (n,) — cluster labels
+    rho : float — exchangeable correlation parameter
+
+    Returns
+    -------
+    dict with beta, sandwich_se, model_se
+    """
+    unique_g = np.unique(groups)
+    G = len(unique_g)
+    p = X.shape[1]
+
+    # Step 1: initialize from OLS
+    beta = np.linalg.solve(X.T @ X, X.T @ y)
+    resid = y - X @ beta
+
+    # Estimate sigma^2 from pooled residuals
+    sigma2 = np.sum(resid**2) / (len(y) - p)
+
+    # Step 2: build sandwich components
+    B = np.zeros((p, p))  # bread
+    M = np.zeros((p, p))  # meat
+    beta_new_num = np.zeros(p)
+
+    for g in unique_g:
+        mask = groups == g
+        Xi = X[mask]
+        yi = y[mask]
+        ni = mask.sum()
+
+        # Working covariance: sigma^2 * [(1-rho)I + rho*11']
+        R = (1 - rho) * np.eye(ni) + rho * np.ones(
+            (ni, ni)
+        )
+        Vi = sigma2 * R
+        Vi_inv = np.linalg.inv(Vi)
+
+        # Bread
+        B += Xi.T @ Vi_inv @ Xi
+
+        # GEE update (modified Fisher scoring)
+        ri = yi - Xi @ beta
+        beta_new_num += Xi.T @ Vi_inv @ yi
+
+        # Meat (using actual residuals)
+        M += Xi.T @ Vi_inv @ np.outer(ri, ri) \
+            @ Vi_inv @ Xi
+
+    # Updated beta (one GEE step)
+    beta_gee = np.linalg.solve(B, beta_new_num)
+
+    # Recompute meat with updated residuals
+    M2 = np.zeros((p, p))
+    for g in unique_g:
+        mask = groups == g
+        Xi = X[mask]
+        ri = y[mask] - Xi @ beta_gee
+        ni = mask.sum()
+        R = (1 - rho) * np.eye(ni) + rho * np.ones(
+            (ni, ni)
+        )
+        Vi_inv = np.linalg.inv(sigma2 * R)
+        M2 += Xi.T @ Vi_inv @ np.outer(ri, ri) \
+            @ Vi_inv @ Xi
+
+    B_inv = np.linalg.inv(B)
+    sandwich_cov = B_inv @ M2 @ B_inv
+    model_cov = B_inv
+
+    return {
+        'beta': beta_gee,
+        'sandwich_se': np.sqrt(np.diag(sandwich_cov)),
+        'model_se': np.sqrt(np.diag(model_cov)),
+    }
+```
+
+```{python}
+#| label: gee-verify
+# Fit with rho estimated from statsmodels
+gee_exch = GEE.from_formula(
+    'score ~ aptitude + class_size',
+    groups='school', data=df,
+    cov_struct=Exchangeable(),
+).fit()
+
+# Extract estimated rho
+rho_hat = gee_exch.cov_struct.summary()
+print(f"Estimated exchangeable rho:\n{rho_hat}\n")
+
+# Our from-scratch version
+res_gee = gee_one_pass(
+    y_score, X_arr, groups_arr, rho=0.1
+)
+
+print(f"{'':>14} {'Scratch':>10} {'statsmodels':>12}")
+for j, name in enumerate(
+    ['Intercept', 'aptitude', 'class_size']
+):
+    print(f"{name:>14} {res_gee['beta'][j]:>10.3f} "
+          f"{gee_exch.params.iloc[j]:>12.3f}")
+
+print(f"\nSandwich vs model-based SE:")
+print(f"{'':>14} {'Sandwich':>10} {'Model':>10}")
+for j, name in enumerate(
+    ['Intercept', 'aptitude', 'class_size']
+):
+    print(f"{name:>14} "
+          f"{res_gee['sandwich_se'][j]:>10.3f} "
+          f"{res_gee['model_se'][j]:>10.3f}")
+```
+
 
 # Diagnostics {#sec-ch14-diagnostics}
 
@@ -387,21 +786,156 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Comparing working correlations
+## Level-2 residual diagnostics
+
+The random effects themselves are diagnostic targets. Plotting
+$\hat{b}_i$ against cluster-level covariates detects misspecified
+level-2 models (e.g., a missing cluster-level predictor).
+
+```{python}
+#| label: fig-level2-resid
+#| fig-cap: "Level-2 residual diagnostics. Left: predicted random intercepts vs mean class size per school. A trend here would suggest class size effects not captured by the fixed effects. Right: random intercepts vs school size (number of students). Smaller schools show more shrinkage toward zero."
+
+# Compute school-level covariates
+school_means = df.groupby('school').agg(
+    mean_class=('class_size', 'mean'),
+    n_students=('score', 'count'),
+).reset_index()
+
+re_vals = np.array([
+    mlm.random_effects[g].iloc[0]
+    for g in range(n_schools)
+])
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+ax1.scatter(school_means['mean_class'], re_vals,
+            s=20, alpha=0.7)
+ax1.axhline(0, color="gray", ls="--", alpha=0.5)
+ax1.set_xlabel("Mean class size")
+ax1.set_ylabel("Random intercept")
+ax1.set_title("RE vs cluster-level covariate")
+
+ax2.scatter(school_means['n_students'], re_vals,
+            s=20, alpha=0.7)
+ax2.axhline(0, color="gray", ls="--", alpha=0.5)
+ax2.set_xlabel("Students per school")
+ax2.set_ylabel("Random intercept")
+ax2.set_title("RE vs cluster size")
+
+plt.tight_layout()
+plt.show()
+```
+
+## Comparing working correlations (QIC)
+
+The Quasi-likelihood under the Independence model Criterion (QIC)
+extends AIC to GEE. Lower QIC indicates a better working correlation.
+Unlike AIC for likelihood-based models, QIC uses the quasi-likelihood
+evaluated under independence, which makes values comparable across
+different working correlations.
 
 ```{python}
 #| label: corr-comparison
-print(f"{'Structure':<16} {'QIC':>8} {'Params':>8}")
+print(f"{'Structure':<16} {'QIC':>10} {'QICu':>10}")
 for name, struct in [
     ('Independence', Independence()),
     ('Exchangeable', Exchangeable()),
+    ('AR(1)', Autoregressive()),
 ]:
     res = GEE.from_formula(
         'score ~ aptitude + class_size', groups='school',
         data=df, cov_struct=struct,
     ).fit()
-    # QIC (Quasi-likelihood under Independence model Criterion)
-    print(f"{name:<16} {res.qic()[0]:>8.1f} {len(res.params):>8}")
+    qic, qicu = res.qic()
+    print(f"{name:<16} {qic:>10.1f} {qicu:>10.1f}")
+
+print("\nQIC = quasi-likelihood model fit criterion")
+print("QICu = quasi-likelihood model selection (for "
+      "choosing covariates under independence)")
+print("Lower is better for both.")
+```
+
+## The few-clusters problem {#sec-ch14-few-clusters}
+
+The sandwich estimator is a large-$G$ result. With few clusters,
+it underestimates variability and confidence intervals are too
+narrow. This simulation demonstrates the coverage failure.
+
+```{python}
+#| label: few-clusters-sim
+def gee_coverage_sim(n_groups, n_per, n_sims=500):
+    """Simulate GEE coverage for varying G."""
+    covers = 0
+    for _ in range(n_sims):
+        grp = np.repeat(np.arange(n_groups), n_per)
+        b = rng.standard_normal(n_groups)
+        x = rng.standard_normal(n_groups * n_per)
+        y = 2 + 3*x + b[grp] + rng.standard_normal(
+            n_groups * n_per
+        )
+        d = pd.DataFrame({
+            'y': y, 'x': x, 'g': grp,
+        })
+        try:
+            r = GEE.from_formula(
+                'y ~ x', groups='g', data=d,
+                cov_struct=Exchangeable(),
+            ).fit(maxiter=50)
+            ci = r.conf_int().loc['x']
+            if ci.iloc[0] <= 3.0 <= ci.iloc[1]:
+                covers += 1
+        except Exception:
+            pass
+    return covers / n_sims
+
+print(f"{'Groups G':>10} {'Coverage':>10}  (nominal=95%)")
+for G in [10, 20, 30, 50, 100]:
+    cov = gee_coverage_sim(G, 10, n_sims=400)
+    flag = " <-- poor" if cov < 0.90 else ""
+    print(f"{G:>10} {cov:>10.1%}{flag}")
+
+print("\nWith G < 30, sandwich coverage drops below 90%.")
+print("Use bias-corrected sandwich (e.g., Fay-Graubard)")
+print("or small-sample corrections when G is small.")
+```
+
+## Likelihood ratio test for random effects
+
+To test whether random effects are needed at all
+($H_0: \sigma^2_b = 0$), compare ML fits with and without the
+random effect. Use ML, not REML, because the fixed-effects
+structure must be the same for both models.
+
+```{python}
+#| label: lr-test-re
+# Fit with ML (not REML) for LR test
+mlm_ml = MixedLM.from_formula(
+    'score ~ aptitude + class_size',
+    groups='school', data=df,
+).fit(reml=False)
+
+# Null model: OLS (no random effects)
+ols_null = sm.OLS.from_formula(
+    'score ~ aptitude + class_size', data=df,
+).fit()
+
+# LR statistic
+lr_stat = 2 * (mlm_ml.llf - ols_null.llf)
+
+# Under H0, the LR test is on the boundary of the
+# parameter space (sigma2_b >= 0), so the null
+# distribution is 0.5*chi2(0) + 0.5*chi2(1)
+# (mixture, not standard chi2(1))
+p_value = 0.5 * stats.chi2.sf(lr_stat, df=1)
+
+print(f"LR statistic: {lr_stat:.2f}")
+print(f"p-value (boundary correction): {p_value:.2e}")
+print(f"\nNote: standard chi2(1) p-value would be "
+      f"{stats.chi2.sf(lr_stat, df=1):.2e}")
+print("The boundary-corrected test uses a 50:50 mixture")
+print("of chi2(0) and chi2(1) because sigma2_b >= 0")
+print("places H0 on the boundary of the parameter space.")
 ```
 
 
@@ -473,6 +1007,130 @@ for var in ['age', 'treatment', 'visit']:
 
 print(f"\nRandom effects covariance:")
 print(mlm_bp.cov_re.round(3))
+```
+
+## Model comparison: random intercept vs random slope
+
+Does adding a random slope on `visit` improve the model? Compare
+a random-intercept-only model to the random-intercept-plus-slope
+model using a likelihood ratio test (with ML, not REML).
+
+```{python}
+#| label: worked-comparison
+# Random intercept only (ML for LR test)
+mlm_ri = MixedLM.from_formula(
+    'bp ~ age + treatment + visit',
+    groups='patient',
+    data=df_bp,
+).fit(reml=False)
+
+# Random intercept + slope (ML)
+mlm_rs = MixedLM.from_formula(
+    'bp ~ age + treatment + visit',
+    groups='patient',
+    re_formula='~visit',
+    data=df_bp,
+).fit(reml=False)
+
+lr = 2 * (mlm_rs.llf - mlm_ri.llf)
+# df = 2: one extra variance (slope) + one covariance
+p_val = stats.chi2.sf(lr, df=2)
+
+print(f"Random intercept only  — log-lik: "
+      f"{mlm_ri.llf:.1f}")
+print(f"Random int + slope     — log-lik: "
+      f"{mlm_rs.llf:.1f}")
+print(f"LR statistic: {lr:.2f},  p = {p_val:.4f}")
+print(f"\nRandom slope variance: "
+      f"{mlm_bp.cov_re.iloc[1,1]:.4f}")
+print(f"Int-slope correlation: "
+      f"{mlm_bp.cov_re.iloc[0,1] / np.sqrt(mlm_bp.cov_re.iloc[0,0] * mlm_bp.cov_re.iloc[1,1]):.3f}")
+```
+
+## Prediction plots: individual trajectories
+
+The random slope model captures patient-specific rates of change.
+Plotting predicted trajectories for a sample of patients shows
+the shrinkage in action: patients with few or noisy observations
+have trajectories pulled toward the population average.
+
+```{python}
+#| label: fig-trajectories
+#| fig-cap: "Individual BP trajectories. Gray lines: observed data for 15 sampled patients. Colored lines: model-predicted trajectories using BLUPs. Dashed black: population-average trajectory (fixed effects only). The model smooths noisy individual trajectories toward the population trend."
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+# Population-average trajectory
+visit_grid = np.arange(n_visits)
+mean_age = df_bp['age'].mean()
+pop_pred = (mlm_bp.fe_params['Intercept']
+            + mlm_bp.fe_params['age'] * mean_age
+            + mlm_bp.fe_params['visit'] * visit_grid)
+
+# Sample 15 patients for clarity
+sample_ids = rng.choice(
+    n_patients, size=15, replace=False
+)
+sample_ids.sort()
+
+for pid in sample_ids:
+    mask = df_bp['patient'] == pid
+    ax.plot(df_bp.loc[mask, 'visit'],
+            df_bp.loc[mask, 'bp'],
+            color='gray', alpha=0.3, lw=0.8)
+
+    # BLUP prediction
+    re_i = mlm_bp.random_effects[pid]
+    b0 = re_i.iloc[0]  # random intercept
+    b1 = re_i.iloc[1] if len(re_i) > 1 else 0
+    age_i = df_bp.loc[mask, 'age'].iloc[0]
+    trt_i = df_bp.loc[mask, 'treatment'].iloc[0]
+    pred_i = (mlm_bp.fe_params['Intercept']
+              + mlm_bp.fe_params['age'] * age_i
+              + mlm_bp.fe_params['treatment'] * trt_i
+              + (mlm_bp.fe_params['visit'] + b1)
+              * visit_grid + b0)
+    ax.plot(visit_grid, pred_i, alpha=0.6, lw=1.2)
+
+ax.plot(visit_grid, pop_pred, 'k--', lw=2,
+        label='Population average')
+ax.set_xlabel("Visit")
+ax.set_ylabel("Blood pressure (mmHg)")
+ax.legend()
+ax.set_title("Individual trajectories with BLUPs")
+
+plt.tight_layout()
+plt.show()
+```
+
+## GEE vs MixedLM: coefficient interpretation
+
+```{python}
+#| label: worked-interpretation
+print("="*56)
+print(f"{'Coefficient comparison':^56}")
+print("="*56)
+print(f"{'':>14} {'MixedLM':>10} {'SE':>7} "
+      f"{'GEE':>10} {'SE':>7}")
+print("-"*56)
+for var in ['Intercept', 'age', 'treatment', 'visit']:
+    print(
+        f"{var:>14} "
+        f"{mlm_bp.fe_params[var]:>10.3f} "
+        f"{mlm_bp.bse[var]:>7.3f} "
+        f"{gee_bp.params[var]:>10.3f} "
+        f"{gee_bp.bse[var]:>7.3f}"
+    )
+print("-"*56)
+print("\nFor this linear model, estimates agree.")
+print("MixedLM gives conditional (within-patient) effects;")
+print("GEE gives population-average (marginal) effects.")
+print("Both are valid — the right choice depends on the")
+print("scientific question:")
+print("  - 'How does BP change for a specific patient?'")
+print("    → MixedLM (conditional)")
+print("  - 'How does BP differ across the population?'")
+print("    → GEE (marginal)")
 ```
 
 

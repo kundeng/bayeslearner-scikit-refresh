@@ -11,7 +11,12 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.statespace.structural import UnobservedComponents
 from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
 from statsmodels.tsa.regime_switching.markov_regression import MarkovRegression
+from statsmodels.tsa.regime_switching.markov_autoregression import (
+    MarkovAutoregression,
+)
+from statsmodels.tsa.statespace.mlemodel import MLEModel
 from scipy import stats
+from scipy.optimize import minimize as sp_minimize
 
 plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
@@ -169,6 +174,56 @@ how much to trust the prediction vs the observation:
 Kalman gain** for a local level model. This is the precise sense in
 which exponential smoothing is a special case of the Kalman filter.
 
+## Deriving the update from joint Gaussian conditioning
+
+The Kalman update formulas are not arbitrary --- they follow from
+a single fact about multivariate Gaussians. If a joint distribution
+is Gaussian:
+
+$$
+\begin{pmatrix} \boldsymbol{\alpha}_t \\ \mathbf{y}_t \end{pmatrix}
+\Bigg| \, y_1, \ldots, y_{t-1}
+\sim \mathcal{N}\!\left(
+\begin{pmatrix}
+  \boldsymbol{\alpha}_{t|t-1} \\
+  \mathbf{Z}\boldsymbol{\alpha}_{t|t-1}
+\end{pmatrix},
+\begin{pmatrix}
+  \mathbf{P}_{t|t-1} & \mathbf{P}_{t|t-1}\mathbf{Z}^\top \\
+  \mathbf{Z}\mathbf{P}_{t|t-1} & \mathbf{F}_t
+\end{pmatrix}
+\right)
+$$
+
+where
+$\mathbf{F}_t = \mathbf{Z}\mathbf{P}_{t|t-1}\mathbf{Z}^\top + \mathbf{H}$,
+then the conditional distribution
+$\boldsymbol{\alpha}_t \mid y_1, \ldots, y_t$ is Gaussian with:
+
+$$
+\text{mean:}\quad
+\boldsymbol{\alpha}_{t|t-1}
++ \mathbf{P}_{t|t-1}\mathbf{Z}^\top \mathbf{F}_t^{-1}
+  (\mathbf{y}_t - \mathbf{Z}\boldsymbol{\alpha}_{t|t-1})
+$$
+$$
+\text{covariance:}\quad
+\mathbf{P}_{t|t-1}
+- \mathbf{P}_{t|t-1}\mathbf{Z}^\top \mathbf{F}_t^{-1}
+  \mathbf{Z}\mathbf{P}_{t|t-1}
+$$
+
+Identifying terms: the factor
+$\mathbf{P}_{t|t-1}\mathbf{Z}^\top \mathbf{F}_t^{-1}$ is the Kalman
+gain $\mathbf{K}_t$, the residual
+$\mathbf{y}_t - \mathbf{Z}\boldsymbol{\alpha}_{t|t-1}$ is the
+innovation $\mathbf{v}_t$, and the covariance simplifies to
+$(\mathbf{I} - \mathbf{K}_t\mathbf{Z})\mathbf{P}_{t|t-1}$. Every
+formula in the predict-update cycle drops out of this single
+conditioning identity. The Kalman filter is not a clever heuristic
+--- it is exact Bayesian inference for a model that happens to stay
+Gaussian at every step.
+
 ## Why the Kalman filter is optimal
 
 For the linear Gaussian model (@eq-state, @eq-obs), the Kalman filter
@@ -182,10 +237,10 @@ $$
 and $\mathbf{P}_{t|t}$ is the conditional covariance. No other linear
 estimator can achieve a smaller mean squared error.
 
-**Why:** The predict-update cycle is equivalent to recursive
-application of Bayes' rule to the Gaussian prior (prediction) and
-Gaussian likelihood (observation). For Gaussians, the Bayesian
-posterior is exact and has a closed-form --- the Kalman filter
+**Why:** The derivation above makes this immediate. The predict-update
+cycle is recursive application of Bayes' rule to the Gaussian prior
+(prediction) and Gaussian likelihood (observation). For Gaussians,
+the Bayesian posterior is exact and closed-form --- the Kalman filter
 computes this closed form at each step.
 
 ## How MLE works for state-space models
@@ -209,6 +264,40 @@ from Chapter 2).
 a given set of ARIMA parameters, computes @eq-kalman-ll, and uses
 L-BFGS-B to find the parameters that maximize it.
 
+## EM as an alternative to direct optimization
+
+Direct numerical optimization of the innovations likelihood can be
+fragile --- the surface is often flat in some directions, and
+optimizers can wander into regions where a covariance matrix loses
+positive definiteness. The **EM algorithm** offers a more stable
+alternative for state-space models. It treats the states
+$\boldsymbol{\alpha}_{1:T}$ as missing data:
+
+**E-step:** Run the Kalman smoother to compute
+$\mathbb{E}[\boldsymbol{\alpha}_t \mid y_{1:T}]$ and the smoothed
+covariances under current parameters. These are the sufficient
+statistics for the complete-data likelihood.
+
+**M-step:** Update the system matrices analytically. For the local
+level model, the updates are simple:
+
+$$
+\hat{\sigma}^2_\varepsilon = \frac{1}{T}\sum_{t=1}^T
+  \left[(y_t - \alpha_{t|T})^2 + P_{t|T}\right]
+$$
+$$
+\hat{\sigma}^2_\eta = \frac{1}{T-1}\sum_{t=1}^{T-1}
+  \left[(\alpha_{t+1|T} - \alpha_{t|T})^2
+  + P_{t+1|T} + P_{t|T} - 2C_{t+1,t|T}\right]
+$$
+
+where $C_{t+1,t|T}$ is the lag-one smoothed covariance (from the
+RTS backward pass). Each iteration increases the likelihood, and the
+algorithm avoids matrix-parameter constrained optimization entirely.
+Statsmodels uses direct optimization by default, but
+`fit(method='em')` is available for `UnobservedComponents` when
+convergence is difficult.
+
 ## Smoothing: using the future to improve the past
 
 The Kalman *filter* uses only observations up to time $t$ to estimate
@@ -219,10 +308,33 @@ $$
 \boldsymbol{\alpha}_{t|T} = \mathbb{E}[\boldsymbol{\alpha}_t \mid y_1, \ldots, y_T]
 $$
 
-The smoother runs the filter forward, then a backward pass that
-propagates future information back in time. Smoothed estimates are
-always at least as good as filtered estimates (lower MSE) because they
-use more data.
+The standard algorithm is the **Rauch-Tung-Striebel (RTS) smoother**.
+After the forward Kalman filter pass, a backward pass computes:
+
+$$
+\mathbf{L}_t = \mathbf{P}_{t|t}\mathbf{T}^\top
+  \mathbf{P}_{t+1|t}^{-1}
+  \quad \text{(smoother gain)}
+$$
+$$
+\boldsymbol{\alpha}_{t|T} = \boldsymbol{\alpha}_{t|t}
+  + \mathbf{L}_t(\boldsymbol{\alpha}_{t+1|T}
+  - \boldsymbol{\alpha}_{t+1|t})
+$$
+$$
+\mathbf{P}_{t|T} = \mathbf{P}_{t|t}
+  + \mathbf{L}_t(\mathbf{P}_{t+1|T}
+  - \mathbf{P}_{t+1|t})\mathbf{L}_t^\top
+$$
+
+for $t = T-1, T-2, \ldots, 1$, starting from the final filtered
+values $\boldsymbol{\alpha}_{T|T}$ and $\mathbf{P}_{T|T}$. The
+smoother gain $\mathbf{L}_t$ controls how much future information
+corrects the filtered estimate at time $t$. The correction is the
+difference between what time $t{+}1$ turned out to be (smoothed)
+and what we predicted it would be (one-step-ahead). Smoothed
+estimates are always at least as good as filtered estimates (lower
+MSE) because they use strictly more data.
 
 Statsmodels gives both: `.filtered_state` and `.smoothed_state`.
 
@@ -240,8 +352,33 @@ At each time $t$, the data follows a regime-specific model:
 $y_t \mid S_t = j \sim \mathcal{N}(\mu_j, \sigma^2_j)$.
 
 **The Hamilton filter** (Hamilton, 1989) estimates the regime
-probabilities: $\Pr(S_t = j \mid y_1, \ldots, y_t)$. It is the
-discrete-state analogue of the Kalman filter.
+probabilities $\Pr(S_t = j \mid y_1, \ldots, y_t)$ using the
+following recursion. Let
+$\boldsymbol{\xi}_{t|t} = (\Pr(S_t = 1 \mid \mathcal{Y}_t),
+\ldots, \Pr(S_t = K \mid \mathcal{Y}_t))^\top$ be the vector of
+filtered regime probabilities.
+
+**Predict:** Propagate through the transition matrix $\mathbf{P}$:
+$$
+\boldsymbol{\xi}_{t|t-1} = \mathbf{P}^\top
+  \boldsymbol{\xi}_{t-1|t-1}
+$$
+
+**Update:** Weight by the regime-conditional likelihoods:
+$$
+\xi_{t|t}^{(j)} = \frac{
+  f(y_t \mid S_t = j) \, \xi_{t|t-1}^{(j)}
+}{
+  \sum_{k=1}^K f(y_t \mid S_t = k) \, \xi_{t|t-1}^{(k)}
+}
+$$
+
+The denominator is the marginal density of $y_t$ --- summing its log
+across $t$ gives the log-likelihood. This is Bayes' rule applied at
+each step, exactly as the Kalman filter applies Bayes' rule for
+continuous states. The computational cost is $O(K^2)$ per step (the
+matrix-vector product), compared to $O(m^3)$ for the Kalman filter
+with $m$-dimensional continuous state.
 
 **Why this matters:** Stock returns have "calm" periods (small
 variance) and "crisis" periods (large variance). GDP growth switches
@@ -350,6 +487,93 @@ Kalman smoother "knows" the cycle because it uses future observations
 to inform past estimates --- that is why the smoothed cycle is cleaner
 than what you'd get from a simple filter.
 
+## Custom state-space models via `MLEModel`
+
+`UnobservedComponents` covers common decompositions, but
+statsmodels' real power is `MLEModel` --- the base class that lets
+you define *any* linear Gaussian state-space model by specifying the
+system matrices directly. Below, we build a local level model from
+scratch as an `MLEModel` subclass to show the machinery.
+
+```{python}
+#| label: mlemodel-subclass
+class LocalLevel(MLEModel):
+    """Local level model: y_t = alpha_t + eps_t,
+    alpha_{t+1} = alpha_t + eta_t."""
+    _start_params = [1.0, 1.0]
+    _param_names = ['sigma2_eps', 'sigma2_eta']
+
+    def __init__(self, endog):
+        # k_states=1: one state variable (the level)
+        super().__init__(
+            endog, k_states=1, initialization='diffuse',
+        )
+        # Fix the matrices that don't depend on params
+        self['transition', 0, 0] = 1.0    # T = 1
+        self['design', 0, 0] = 1.0        # Z = 1
+        self['selection', 0, 0] = 1.0     # R = 1
+
+    def update(self, params, **kwargs):
+        """Called by the optimizer at each step."""
+        params = super().update(params, **kwargs)
+        # params[0] = obs noise, params[1] = state noise
+        self['obs_cov', 0, 0] = params[0]      # H
+        self['state_cov', 0, 0] = params[1]    # Q
+
+
+ll_custom = LocalLevel(y_uc).fit(disp=0)
+# Compare against UC local level fit on same data
+uc_ll_check = UnobservedComponents(
+    y_uc, level='local level',
+).fit(disp=0)
+print(f"Custom MLEModel estimates:")
+print(f"  sigma2_eps = {ll_custom.params[0]:.4f}")
+print(f"  sigma2_eta = {ll_custom.params[1]:.4f}")
+print(f"  Log-likelihood: {ll_custom.llf:.2f}")
+print(f"\nMatches UC local level: "
+      f"{abs(ll_custom.llf - uc_ll_check.llf) < 1.0}")
+```
+
+The pattern is always the same: subclass `MLEModel`, set fixed
+matrices in `__init__`, and update parameter-dependent matrices in
+`update`. This is how every model in `statsmodels.tsa.statespace`
+works internally --- `UnobservedComponents`, `SARIMAX`, and
+`DynamicFactor` are all `MLEModel` subclasses with pre-built
+`update` methods.
+
+## `DynamicFactor`: shared latent dynamics
+
+When multiple time series move together, a **dynamic factor model**
+explains the co-movement through a small number of latent factors.
+Each observed series is a linear combination of the factors plus
+idiosyncratic noise --- a state-space model where the state is the
+vector of factors.
+
+```{python}
+#| label: dynamic-factor
+# Simulate 3 series driven by 1 common factor
+n_df = 200
+factor_true = np.cumsum(0.3 * rng.standard_normal(n_df))
+loadings_true = np.array([1.0, 0.7, -0.5])
+Y_df = np.column_stack([
+    l * factor_true + rng.standard_normal(n_df)
+    for l in loadings_true
+])
+
+df_mod = DynamicFactor(
+    Y_df, k_factors=1, factor_order=1,
+).fit(disp=0)
+
+print(f"Estimated factor loadings:")
+for i in range(3):
+    print(f"  Series {i}: {df_mod.params[i]:.3f} "
+          f"(true: {loadings_true[i]:.1f})")
+fac_corr = np.corrcoef(
+    df_mod.factors.smoothed[0], factor_true,
+)[0, 1]
+print(f"\nFactor-true correlation: {fac_corr:.4f}")
+```
+
 ## `MarkovRegression`: regime switching
 
 ```{python}
@@ -421,6 +645,48 @@ volatile (mean ≈ 0, high variance). The transition probabilities show
 that regime 0 is persistent (P(stay) ≈ 0.98) while regime 1 is less
 so (P(stay) ≈ 0.95).
 
+## `MarkovAutoregression`: regime-dependent dynamics
+
+`MarkovRegression` switches the mean and variance across regimes but
+assumes no serial dependence within each regime. When the
+*autoregressive structure* itself changes between regimes, use
+`MarkovAutoregression`. This models $y_t$ as an AR process whose
+coefficients, intercept, and variance all depend on the current
+regime $S_t$.
+
+```{python}
+#| label: markov-ar
+# Simulate AR(1) with regime-switching persistence
+n_ar = 400
+regime_ar = np.zeros(n_ar, dtype=int)
+for t in range(1, n_ar):
+    if regime_ar[t-1] == 0:
+        regime_ar[t] = int(rng.random() < 0.03)
+    else:
+        regime_ar[t] = int(rng.random() > 0.05)
+
+# Regime 0: low persistence, regime 1: high persistence
+y_ar = np.zeros(n_ar)
+for t in range(1, n_ar):
+    phi = 0.3 if regime_ar[t] == 0 else 0.9
+    sigma = 0.5 if regime_ar[t] == 0 else 1.5
+    y_ar[t] = phi * y_ar[t-1] + sigma * rng.standard_normal()
+
+mar = MarkovAutoregression(
+    y_ar, k_regimes=2, order=1,
+    switching_ar=True, switching_variance=True,
+).fit(disp=0)
+
+print(f"Regime 0: AR(1) coeff = {mar.params[4]:.3f}, "
+      f"sigma = {np.sqrt(mar.params[6]):.3f}")
+print(f"Regime 1: AR(1) coeff = {mar.params[5]:.3f}, "
+      f"sigma = {np.sqrt(mar.params[7]):.3f}")
+```
+
+The key difference from `MarkovRegression`: here the model captures
+the idea that not just the *level* changes across regimes, but the
+*dynamics* --- how strongly the series depends on its own past.
+
 
 # Variations, Diagnostics, and Pitfalls {#sec-ch16-variations}
 
@@ -447,6 +713,48 @@ print(f"{'Model':<25} {'AIC':>8} {'BIC':>8}")
 print(f"{'Local level':<25} {uc_ll.aic:>8.1f} {uc_ll.bic:>8.1f}")
 print(f"{'Local linear trend':<25} {uc_llt.aic:>8.1f} {uc_llt.bic:>8.1f}")
 print(f"{'Level + cycle':<25} {uc_full.aic:>8.1f} {uc_full.bic:>8.1f}")
+```
+
+## Filtering vs smoothing: what the future buys you
+
+The difference between filtered and smoothed states is diagnostic
+itself. Large discrepancies indicate periods where future data
+substantially revised the filter's real-time estimate --- often
+around structural changes or outliers.
+
+```{python}
+#| label: fig-filter-vs-smooth
+#| fig-cap: "Filtered vs smoothed level estimates for the UC model. The smoother (which uses future data) is less volatile. The largest discrepancies occur where the signal changes direction --- exactly where hindsight helps most."
+
+fig, (ax1, ax2) = plt.subplots(
+    2, 1, figsize=(10, 5), sharex=True,
+)
+ax1.plot(y_uc, linewidth=0.3, alpha=0.5, label='Observed')
+ax1.plot(
+    uc.level.filtered, linewidth=1.0,
+    label='Filtered', color='C1',
+)
+ax1.plot(
+    uc.level.smoothed, linewidth=1.0,
+    label='Smoothed', color='C2', linestyle='--',
+)
+ax1.legend(fontsize=8)
+ax1.set_title('Filtered vs smoothed level')
+
+# The revision: how much the smoother changed
+# the filter's estimate
+revision = uc.level.smoothed - uc.level.filtered
+ax2.fill_between(
+    range(len(revision)), revision,
+    alpha=0.5, color='C3',
+)
+ax2.axhline(0, color='gray', linewidth=0.5)
+ax2.set_ylabel('Smoothed − Filtered')
+ax2.set_xlabel('Time')
+ax2.set_title('Smoother revision (large = hindsight helped)')
+
+plt.tight_layout()
+plt.show()
 ```
 
 ## Diagnostics: standardized prediction errors
@@ -565,13 +873,167 @@ def kalman_local_level(y, sigma2_eta, sigma2_eps):
     return alpha_filt, P_filt, ll
 ```
 
+## Innovations likelihood from scratch
+
+The from-scratch Kalman filter above already computes the
+log-likelihood, but let us isolate the innovations likelihood to
+make the prediction-error decomposition explicit. This function
+takes the system matrices and returns only the log-likelihood ---
+the form an optimizer would call repeatedly during MLE.
+
+```{python}
+#| label: ll-data
+# Generate local level data for the likelihood examples
+y_ll = (np.cumsum(0.5 * rng.standard_normal(100))
+        + rng.standard_normal(100))
+```
+
+```{python}
+#| label: innovations-ll
+def innovations_loglik(params, y):
+    """Innovations log-likelihood for local level model.
+
+    Implements @eq-kalman-ll directly: the log-likelihood is a sum
+    of Gaussian log-densities evaluated at the prediction errors.
+
+    Parameters
+    ----------
+    params : array (2,)
+        [sigma2_eta, sigma2_eps].
+    y : array (T,)
+        Observations.
+
+    Returns
+    -------
+    neg_ll : float
+        Negative log-likelihood (for minimization).
+    """
+    sigma2_eta, sigma2_eps = params
+    T = len(y)
+    # Initialize
+    a = y[0]                          # state prediction
+    P = sigma2_eta + sigma2_eps       # state variance
+    ll = 0.0
+
+    for t in range(T):
+        v = y[t] - a                  # innovation
+        F = P + sigma2_eps            # innovation variance
+        ll -= 0.5 * (np.log(2 * np.pi) + np.log(F)
+                     + v**2 / F)
+        K = P / F                     # Kalman gain
+        a = a + K * v                 # filtered state
+        P = (1 - K) * P + sigma2_eta  # predict next
+    return -ll  # return negative for minimization
+
+
+opt = sp_minimize(
+    innovations_loglik, x0=[1.0, 1.0],
+    args=(y_ll,), method='L-BFGS-B',
+    bounds=[(1e-6, None), (1e-6, None)],
+)
+print(f"MLE via innovations likelihood:")
+print(f"  sigma2_eta = {opt.x[0]:.4f}")
+print(f"  sigma2_eps = {opt.x[1]:.4f}")
+print(f"  Log-likelihood = {-opt.fun:.2f}")
+```
+
+## Hamilton filter from scratch
+
+The Hamilton filter for a two-regime model with switching mean and
+variance. This mirrors the Kalman filter's predict-update logic, but
+for discrete hidden states.
+
+```{python}
+#| label: hamilton-scratch
+def hamilton_filter(y, mu, sigma2, P_trans):
+    """Hamilton filter for K-regime Gaussian model.
+
+    Parameters
+    ----------
+    y : array (T,)
+        Observations.
+    mu : array (K,)
+        Regime-specific means.
+    sigma2 : array (K,)
+        Regime-specific variances.
+    P_trans : array (K, K)
+        Transition matrix. P_trans[i, j] = P(S_t=j | S_{t-1}=i).
+
+    Returns
+    -------
+    xi_filt : array (T, K)
+        Filtered regime probabilities.
+    ll : float
+        Log-likelihood.
+    """
+    T = len(y)
+    K = len(mu)
+    xi_filt = np.zeros((T, K))
+    ll = 0.0
+
+    # Initialize with ergodic distribution
+    # (stationary distribution of the Markov chain)
+    A = np.vstack([P_trans.T - np.eye(K), np.ones(K)])
+    b = np.zeros(K + 1)
+    b[-1] = 1.0
+    xi_pred = np.linalg.lstsq(A, b, rcond=None)[0]
+
+    for t in range(T):
+        # Regime-conditional densities
+        eta = np.array([
+            stats.norm.pdf(y[t], loc=mu[j],
+                           scale=np.sqrt(sigma2[j]))
+            for j in range(K)
+        ])
+
+        # Joint prob: P(S_t=j, y_t | past)
+        joint = eta * xi_pred
+        marginal = joint.sum()
+
+        # Update: P(S_t=j | y_1:t)
+        xi_filt[t] = joint / marginal
+
+        # Log-likelihood contribution
+        ll += np.log(marginal)
+
+        # Predict: P(S_{t+1}=j | y_1:t)
+        xi_pred = P_trans.T @ xi_filt[t]
+
+    return xi_filt, ll
+```
+
+Verify against statsmodels on the two-regime data we already
+generated:
+
+```{python}
+#| label: hamilton-verify
+# Use the statsmodels-estimated parameters
+mu_hat = np.array([ms.params[2], ms.params[3]])
+s2_hat = np.array([ms.params[4], ms.params[5]])
+P_hat = np.array([
+    [ms.params[0], 1 - ms.params[0]],
+    [ms.params[1], 1 - ms.params[1]],
+])
+
+xi_ours, ll_ours = hamilton_filter(
+    y_ms, mu_hat, s2_hat, P_hat,
+)
+print(f"Hamilton filter log-likelihood:")
+print(f"  From scratch: {ll_ours:.2f}")
+print(f"  statsmodels:  {ms.llf:.2f}")
+xi_corr = np.corrcoef(
+    xi_ours[:, 1],
+    ms.filtered_marginal_probabilities[:, 1],
+)[0, 1]
+print(f"\nFiltered prob correlation (regime 1):")
+print(f"  {xi_corr:.6f}")
+```
+
 ## Verification against statsmodels
 
 ```{python}
 #| label: kalman-verify
-# Simulate local level data
-y_ll = np.cumsum(0.5 * rng.standard_normal(100)) + rng.standard_normal(100)
-
+# Reuse y_ll generated above (local level data)
 # Our implementation
 alpha_ours, P_ours, ll_ours = kalman_local_level(y_ll, 0.25, 1.0)
 

@@ -151,6 +151,49 @@ with the minimal change from $\mathbf{B}_k$. Scipy's
 `root(method='broyden1')` implements this.
 
 
+## Convergence rates
+
+Newton's method for root finding enjoys **quadratic convergence**
+when the Jacobian $\mathbf{J}_F(\mathbf{x}^*)$ is nonsingular at
+the solution. Near $\mathbf{x}^*$, Taylor-expand $\mathbf{F}$:
+
+$$
+\mathbf{0} = \mathbf{F}(\mathbf{x}^*)
+  = \mathbf{F}(\mathbf{x}_k)
+  + \mathbf{J}_F(\mathbf{x}_k)(\mathbf{x}^* - \mathbf{x}_k)
+  + O(\|\mathbf{x}_k - \mathbf{x}^*\|^2).
+$$
+
+The Newton step sets
+$\mathbf{x}_{k+1} = \mathbf{x}_k
+  - \mathbf{J}_F^{-1}\mathbf{F}(\mathbf{x}_k)$.
+Substituting and rearranging:
+
+$$
+\|\mathbf{x}_{k+1} - \mathbf{x}^*\|
+  = O(\|\mathbf{x}_k - \mathbf{x}^*\|^2).
+$$
+
+The number of correct digits roughly doubles each iteration ---
+spectacular when it kicks in, but it only kicks in *locally*.
+Far from the solution, Newton can diverge or cycle. This is why
+`scipy.optimize.root(method='hybr')` wraps Newton in a trust-region
+framework (Powell's hybrid method): it uses Newton's direction
+when the step is reasonable and falls back to a scaled gradient
+step when Newton's step is too aggressive.
+
+For Gauss--Newton applied to least squares, the convergence rate
+depends on the residual size at the solution. When
+$\|\mathbf{r}^*\| \approx 0$ (the model fits well), the omitted
+Hessian term $\sum r_i \nabla^2 r_i$ is negligible and
+Gauss--Newton inherits Newton's fast convergence. When residuals
+are large, convergence degrades to **linear** because the
+approximation $\nabla^2 S \approx 2\mathbf{J}^\top\mathbf{J}$ is
+poor. Levenberg--Marquardt does not improve the convergence rate,
+but its damping prevents the catastrophic divergence that makes
+raw Gauss--Newton unusable in the large-residual regime.
+
+
 # The Algorithm {#sec-ch06-algorithm}
 
 ::: {.callout-note appearance="minimal"}
@@ -312,6 +355,66 @@ for method in ['hybr', 'broyden1']:
 trust region. `broyden1` uses Broyden's rank-one update (@eq-broyden),
 which avoids computing the Jacobian at every step.
 
+## Robust loss functions in `least_squares`
+
+When outliers contaminate the data, squared residuals give them
+outsized influence. `least_squares` supports robust loss functions
+that down-weight large residuals via the `loss` parameter. Each
+replaces the squared loss $r_i^2$ with a function $\rho(r_i^2)$
+that grows more slowly for large $|r_i|$:
+
+| Loss | $\rho(z)$ where $z = r^2$ | Behavior |
+|---|---|---|
+| `'linear'` | $z$ | Standard LS |
+| `'huber'` | $z$ if $z \leq 1$; $2\sqrt{z}-1$ otherwise | Linear tails |
+| `'soft_l1'` | $2(\sqrt{1+z} - 1)$ | Smooth $\ell_1$ approx |
+| `'cauchy'` | $\ln(1+z)$ | Heaviest down-weighting |
+
+The `f_scale` parameter sets the inlier threshold: residuals
+smaller than `f_scale` are treated as inliers ($\rho \approx z$),
+and those above are down-weighted. Getting `f_scale` right matters
+more than the choice of loss function --- set it to the expected
+noise level of your clean data.
+
+```{python}
+#| label: robust-loss-demo
+# Corrupt the exponential decay data with two outliers
+y_outliers = y_data.copy()
+y_outliers[5] = 5.0     # large positive outlier
+y_outliers[20] = -1.0   # negative outlier
+
+losses = ['linear', 'huber', 'soft_l1', 'cauchy']
+print(f"{'Loss':<10} {'a':>8} {'b':>8} {'c':>8}"
+      f" {'cost':>8}")
+for loss in losses:
+    res = least_squares(
+        fun=residuals,
+        x0=[1, 1, 0],
+        args=(x_data, y_outliers),
+        loss=loss,
+        f_scale=0.2,    # expected noise level
+        method='trf',   # robust losses require trf/dogbox
+    )
+    a, b, c = res.x
+    print(f"{loss:<10} {a:>8.4f} {b:>8.4f}"
+          f" {c:>8.4f} {res.cost:>8.4f}")
+print(f"\n{'True':<10} {'2.5':>8} {'1.3':>8}"
+      f" {'0.5':>8}")
+```
+
+Standard least squares (`'linear'`) is pulled toward the outliers.
+Cauchy loss recovers parameters closest to the truth because it
+down-weights outliers most aggressively, at the cost of slower
+convergence. Note that `method='lm'` does not support robust
+losses --- you must use `'trf'` or `'dogbox'`.
+
+These robust losses are M-estimators with different influence
+functions --- the connection developed fully in Chapter 12
+(GLMs and M-estimation). The practical hierarchy: try `'huber'`
+first (mildest correction), escalate to `'cauchy'` for heavy
+contamination, and always set `f_scale` to the noise level
+you would expect in clean data.
+
 
 # From-Scratch Implementation {#sec-ch06-scratch}
 
@@ -368,6 +471,180 @@ print(f"scipy LM:     params={res_scipy.x.round(4)}, "
       f"cost={res_scipy.cost:.4f}")
 print(f"Match: {np.allclose(res_gn['x'], res_scipy.x, atol=1e-3)}")
 ```
+
+## Levenberg--Marquardt from scratch
+
+The key addition over Gauss--Newton is the damping term
+$\lambda_k \mathbf{I}$ and the gain ratio $\rho_k$ that controls
+how $\lambda$ adapts. When a step produces a good reduction
+($\rho > 0.25$), we trust the quadratic model more and shrink
+$\lambda$; when the step is poor, we increase $\lambda$ to pull
+toward steepest descent.
+
+```{python}
+#| label: lm-scratch
+
+def levenberg_marquardt(fun, jac, x0, args=(),
+                        tol=1e-8, maxiter=100,
+                        lam0=1e-3):
+    """Levenberg-Marquardt for nonlinear least squares.
+
+    Implements Algorithm 6.2. Tracks convergence history
+    for diagnostics.
+
+    Parameters
+    ----------
+    fun : callable
+        Residual function r(params, *args) -> (n,) array.
+    jac : callable
+        Jacobian function jac(params, *args) -> (n, p).
+    x0 : array
+        Initial parameter guess.
+    lam0 : float
+        Initial damping parameter.
+    """
+    x = np.asarray(x0, dtype=float).copy()
+    lam = lam0
+    history = {'cost': [], 'lam': [], 'grad_norm': []}
+
+    for k in range(maxiter):
+        r = fun(x, *args)
+        J = jac(x, *args)
+        JtJ = J.T @ J
+        Jtr = J.T @ r
+        cost = 0.5 * np.sum(r**2)
+
+        history['cost'].append(cost)
+        history['lam'].append(lam)
+        history['grad_norm'].append(
+            np.linalg.norm(Jtr)
+        )
+
+        # Damped normal equations (Algorithm 6.2, step 3)
+        A = JtJ + lam * np.eye(len(x))
+        p = np.linalg.solve(A, Jtr)
+        x_trial = x - p
+
+        # Gain ratio: actual vs predicted reduction
+        r_trial = fun(x_trial, *args)
+        actual = np.sum(r**2) - np.sum(r_trial**2)
+        lin_pred = J @ (-p) + r
+        predicted = np.sum(r**2) - np.sum(lin_pred**2)
+
+        if predicted > 0:
+            rho = actual / predicted
+        else:
+            rho = 0
+
+        # Adaptive damping (Algorithm 6.2, steps 5--6)
+        if rho > 0.25:
+            x = x_trial           # accept step
+            lam = max(lam / 3, 1e-15)
+        else:
+            lam = min(lam * 2, 1e15)  # reject step
+
+        if np.linalg.norm(p) < tol:
+            break
+
+    r_final = fun(x, *args)
+    cost_final = 0.5 * np.sum(r_final**2)
+    history['cost'].append(cost_final)
+
+    return {'x': x, 'cost': cost_final,
+            'nit': k + 1, 'history': history}
+```
+
+```{python}
+#| label: lm-verify
+res_lm = levenberg_marquardt(
+    residuals_gn, jacobian, [1, 1, 0],
+    args=(x_data, y_data),
+)
+res_lm_scipy = least_squares(
+    fun=residuals, x0=[1, 1, 0], jac=jacobian,
+    args=(x_data, y_data), method='lm',
+)
+
+print("Levenberg-Marquardt verification:")
+print(f"  From-scratch: {res_lm['x'].round(4)}, "
+      f"cost={res_lm['cost']:.6f}")
+print(f"  scipy LM:     {res_lm_scipy.x.round(4)}, "
+      f"cost={res_lm_scipy.cost:.6f}")
+print(f"  Match: {np.allclose(res_lm['x'], res_lm_scipy.x, atol=1e-3)}")
+```
+
+## Newton's method for root finding from scratch
+
+Root finding is the mirror image of least squares: instead of
+minimizing $\|\mathbf{r}\|^2$, we solve
+$\mathbf{F}(\mathbf{x}) = \mathbf{0}$ directly. Newton's method
+uses the Jacobian of $\mathbf{F}$ (not $\mathbf{J}^\top\mathbf{J}$)
+to compute the step. The implementation is simpler than
+Gauss--Newton because there is no sum-of-squares structure to
+exploit.
+
+```{python}
+#| label: newton-root-scratch
+
+def newton_root(fun, jac, x0, tol=1e-10, maxiter=50):
+    """Newton's method for root finding.
+
+    Solves F(x) = 0 by iterating
+    x_{k+1} = x_k - J_F(x_k)^{-1} F(x_k).
+
+    Parameters
+    ----------
+    fun : callable
+        System F(x) -> (n,) array.
+    jac : callable
+        Jacobian J_F(x) -> (n, n) array.
+    x0 : array
+        Initial guess.
+    """
+    x = np.asarray(x0, dtype=float).copy()
+
+    for k in range(maxiter):
+        F = np.asarray(fun(x), dtype=float)
+        J = np.asarray(jac(x), dtype=float)
+        step = np.linalg.solve(J, F)
+        x = x - step
+        if np.linalg.norm(step) < tol:
+            break
+
+    F_final = np.asarray(fun(x), dtype=float)
+    return {'x': x, 'nit': k + 1,
+            'success': np.linalg.norm(F_final) < tol}
+```
+
+```{python}
+#| label: newton-root-verify
+def system_jac(x):
+    """Analytical Jacobian for the test system."""
+    J = np.zeros((2, 2))
+    # d/dx0 of [x0 + 0.5*(x0-x1)^3 - 1]
+    J[0, 0] = 1 + 1.5 * (x[0] - x[1])**2
+    J[0, 1] = -1.5 * (x[0] - x[1])**2
+    # d/dx1 of [0.5*(x1-x0)^3 + x1]
+    J[1, 0] = -1.5 * (x[1] - x[0])**2
+    J[1, 1] = 1 + 1.5 * (x[1] - x[0])**2
+    return J
+
+res_nr = newton_root(system, system_jac, [0.0, 0.0])
+res_root_scipy = root(system, [0, 0], method='hybr')
+
+print("Newton root-finding verification:")
+print(f"  From-scratch: x={res_nr['x'].round(6)}, "
+      f"iters={res_nr['nit']}")
+print(f"  scipy hybr:   x={res_root_scipy.x.round(6)}"
+      f", nfev={res_root_scipy.nfev}")
+print(f"  Match: {np.allclose(res_nr['x'], res_root_scipy.x, atol=1e-6)}")
+```
+
+Newton converges in very few iterations on this problem ---
+typical of quadratic convergence when started reasonably close.
+The `hybr` method uses more function evaluations because it
+also evaluates the Jacobian numerically (we did not supply one)
+and includes safeguarding logic.
 
 
 # Diagnostics {#sec-ch06-diagnostics}
@@ -433,6 +710,68 @@ Three warning signs:
    solutions with similar cost, the problem has multiple local minima
    and `curve_fit` found only one.
 
+## Convergence monitoring
+
+Scipy's `least_squares` does not expose per-iteration diagnostics.
+The from-scratch Levenberg--Marquardt implementation above tracks
+three quantities that together tell you whether the optimizer is
+behaving:
+
+- **Cost** $S_k = \|\mathbf{r}_k\|^2$: should decrease monotonically
+  (LM rejects steps that increase it). A plateau means the
+  algorithm has converged or is stuck.
+- **Gradient norm** $\|\mathbf{J}_k^\top\mathbf{r}_k\|$: measures
+  first-order optimality. At a local minimum it should be near
+  zero. If it plateaus at a large value, the algorithm is stuck
+  at a non-stationary point --- likely a saddle or a flat region.
+- **Damping parameter** $\lambda_k$: reveals the algorithm's
+  strategy. Decreasing $\lambda$ means the quadratic model is
+  trustworthy (Gauss--Newton regime). Increasing $\lambda$ means
+  the algorithm is struggling and falling back to steepest descent.
+  A $\lambda$ that never decreases signals a poor starting point
+  or an ill-conditioned problem.
+
+```{python}
+#| label: fig-convergence
+#| fig-cap: "Convergence monitoring for Levenberg-Marquardt on the exponential decay problem. Left: cost drops rapidly in the first few iterations, then plateaus at the minimum. Center: gradient norm decreases toward zero, confirming first-order optimality. Right: the damping parameter decreases as the algorithm transitions from cautious steepest-descent steps to aggressive Gauss-Newton steps near the solution."
+
+hist = res_lm['history']
+n_iters = len(hist['lam'])
+
+fig, (ax1, ax2, ax3) = plt.subplots(
+    1, 3, figsize=(12, 3.5)
+)
+
+ax1.semilogy(range(n_iters), hist['cost'][:-1],
+             'o-', markersize=4)
+ax1.set_xlabel("Iteration")
+ax1.set_ylabel("Cost")
+ax1.set_title("Cost reduction")
+
+ax2.semilogy(range(n_iters), hist['grad_norm'],
+             'o-', markersize=4, color="C1")
+ax2.set_xlabel("Iteration")
+ax2.set_ylabel(r"$\|\mathbf{J}^\top\mathbf{r}\|$")
+ax2.set_title("Gradient norm")
+
+ax3.semilogy(range(n_iters), hist['lam'],
+             'o-', markersize=4, color="C2")
+ax3.set_xlabel("Iteration")
+ax3.set_ylabel(r"$\lambda_k$")
+ax3.set_title("Damping parameter")
+
+plt.tight_layout()
+plt.show()
+```
+
+When you see pathological patterns --- cost oscillating instead of
+decreasing, gradient norm stuck at a large value, or $\lambda$
+growing without bound --- the most productive fix is usually a
+better starting point `x0`, not a different algorithm. For
+`curve_fit`, try plotting your model with the initial `p0` values
+overlaid on the data: if the initial curve is nowhere near the
+data, no local optimizer will save you.
+
 
 # Computational Considerations {#sec-ch06-computation}
 
@@ -446,6 +785,30 @@ For large $n$ and small $p$ (typical in curve fitting: thousands of
 data points, 3--10 parameters), the dominant cost is the $n \times p$
 Jacobian evaluation. Supplying an analytical Jacobian (as we did above)
 avoids the $O(np)$ cost of finite differencing.
+
+**When to supply an analytical Jacobian.** For 3--10 parameter
+problems, finite-difference Jacobians (the default when `jac` is
+not supplied) add $p$ extra function evaluations per iteration.
+This is tolerable when the residual function is cheap but
+significant when it involves solving a differential equation or
+running a simulation at each evaluation. The analytical Jacobian
+also improves convergence reliability: finite-difference
+approximations introduce noise that can confuse the trust-region
+logic, especially near the solution where the step size is small
+and the finite-difference perturbation is comparable to the
+machine precision times the parameter scale.
+
+For systems large enough that forming the full $n \times n$
+Jacobian is impractical, `scipy.optimize.root` supports
+Jacobian-free Newton--Krylov methods via `method='krylov'`.
+These compute the matrix--vector product $\mathbf{J}\mathbf{v}$
+via finite differences without ever forming $\mathbf{J}$
+explicitly, then solve the Newton system iteratively using GMRES
+or BiCGSTAB. The cost per iteration drops from $O(n^2)$ storage
+and $O(n^3)$ factorization to $O(n)$ storage and $O(kn)$ work
+for $k$ Krylov iterations. The tradeoff is slower convergence
+(the linear system is solved only approximately), but for large
+systems this is the only feasible approach.
 
 
 # Worked Example {#sec-ch06-example}

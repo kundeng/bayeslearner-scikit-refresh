@@ -23,6 +23,9 @@ rng = np.random.default_rng(42)
 | $q(x)$ | Proposal / importance sampling distribution |
 | $w(x) = p(x)/q(x)$ | Importance weight |
 | $c(X)$ | Control variate (known expectation) |
+| $\bar{w}_i$ | Self-normalized importance weight |
+| $K$ | Number of strata |
+| $\sigma_k^2$ | Within-stratum variance |
 
 
 # Motivation {#sec-ch07-motivation}
@@ -66,6 +69,18 @@ where $\sigma^2_h = \text{Var}(h(X))$. The error scales as
 $\sigma_h / \sqrt{n}$ --- dimension-free, but dependent on the variance
 of $h$. All variance reduction methods attack $\sigma^2_h$.
 
+**Why $1/\sqrt{n}$?** The CLT gives the rate directly. By the central
+limit theorem,
+$\sqrt{n}(\hat{\mu}_n - \mu) \xrightarrow{d} \mathcal{N}(0, \sigma^2_h)$.
+Inverting: the estimation error $\hat{\mu}_n - \mu$ is approximately
+$\mathcal{N}(0, \sigma^2_h / n)$, so the root-mean-square error is
+$\sigma_h / \sqrt{n}$. The dimension $d$ of $X$ appears nowhere ---
+this is why MC scales to thousands of dimensions where quadrature
+cannot. But the dependence on $\sigma_h$ is the opening that variance
+reduction exploits: any transformation that computes the same $\mu$
+with a smaller effective $\sigma_h$ achieves the same accuracy with
+fewer samples.
+
 ## Importance sampling
 
 To estimate $\mu = \mathbb{E}_p[h(X)] = \int h(x) p(x)\, dx$, sample
@@ -86,6 +101,34 @@ but important events, and the variance can be *larger* than plain MC.
 The effective sample size $\text{ESS} = n / (1 + \text{Var}_q(w))$
 measures how many of your $n$ samples are actually contributing.
 
+**The zero-variance limit.** The optimal proposal
+$q^*(x) \propto |h(x)| p(x)$ achieves zero variance when
+$h(x) \geq 0$ everywhere. To see why: under $q^*$, the importance
+weight becomes $w(x) = p(x)/q^*(x) = \mu / h(x)$, where
+$\mu = \int h(x) p(x)\, dx$ is the normalizing constant we seek.
+Then $w(x) h(x) = \mu$ for every sample --- a constant, with zero
+variance. This is circular ($q^*$ requires knowing $\mu$), but it
+guides design: good proposals should be large where $|h(x)| p(x)$
+is large.
+
+**Self-normalized importance sampling.** When $p$ is known only up
+to a normalizing constant (common in Bayesian inference), the
+unnormalized weights $\tilde{w}_i = p(X_i) / q(X_i)$ can be used
+with self-normalization:
+$$
+\hat{\mu}_{\text{SNIS}} = \frac{\sum_{i=1}^n \tilde{w}_i h(X_i)}{\sum_{i=1}^n \tilde{w}_i}.
+$$ {#eq-snis}
+This estimator is biased (it is a ratio of two sample means), but
+the bias is $O(1/n)$ and vanishes faster than the $O(1/\sqrt{n})$
+standard error. Self-normalized IS is more stable than unnormalized
+IS in practice because the weights are forced to sum to one,
+preventing a single extreme weight from dominating the estimate.
+The effective sample size for self-normalized weights is:
+$$
+\text{ESS} = \frac{1}{\sum_{i=1}^n \bar{w}_i^2}, \qquad
+\bar{w}_i = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}.
+$$
+
 ## Control variates
 
 If $c(X)$ is a function with known mean $\mathbb{E}[c(X)] = \mu_c$, then
@@ -98,12 +141,88 @@ coefficient is $\beta^* = \text{Cov}(h, c) / \text{Var}(c)$ --- the
 regression coefficient of $h$ on $c$. This is why control variates are
 sometimes called "regression-adjusted Monte Carlo."
 
+**Projection interpretation.** The control variate estimator minimizes
+$\text{Var}(\hat{\mu}_n - \beta(\bar{c}_n - \mu_c))$ over $\beta$.
+This is ordinary least squares: regress $h(X_i)$ on $c(X_i)$, and the
+residuals give the variance-reduced estimate. Geometrically, we project
+$h$ onto the space spanned by $c$ (functions with known expectation)
+and integrate the residual. The variance reduction factor is
+$1/(1 - \rho^2_{h,c})$, so a control variate correlated at
+$\rho = 0.95$ eliminates $90\%$ of the variance --- a 10x reduction
+in sample size for free.
+
+**Multiple control variates** extend naturally: if
+$c_1, \ldots, c_k$ have known expectations, regress $h$ on all of
+them simultaneously. The variance reduction factor becomes $1/(1 - R^2)$,
+where $R^2$ is the coefficient of determination from the multivariate
+regression. Each additional control variate can only help (or be
+neutral), never hurt --- the optimal $\boldsymbol{\beta}$ vector
+simply sets unused controls to zero.
+
 ## Antithetic variates
 
 If $X$ and $X'$ are identically distributed but negatively correlated
 (e.g., $X \sim U(0,1)$ and $X' = 1 - X$), then
 $\frac{1}{2}[h(X) + h(X')]$ has lower variance than $h(X)$ alone
 whenever $h$ is monotone.
+
+**Why monotonicity matters.** If $h$ is monotonically increasing and
+$U \sim \text{Uniform}(0,1)$, then $h(U)$ and $h(1 - U)$ have the
+same marginal distribution but
+$\text{Cov}(h(U), h(1 - U)) \leq 0$ by the rearrangement inequality.
+The variance of the paired average is:
+$$
+\text{Var}\!\left(\frac{h(U) + h(1-U)}{2}\right)
+= \frac{\text{Var}(h(U))}{2}\bigl(1 + \text{Corr}(h(U), h(1-U))\bigr).
+$$
+For monotone $h$, the correlation is negative, so the factor
+$(1 + \text{Corr})$ is less than 1 and the variance drops. For
+strongly monotone functions like $\exp$, the correlation is
+strongly negative and the reduction is substantial. The technique
+extends to normal samples via $X$ and $-X$ (both
+$\sim \mathcal{N}(0,1)$), and to multivariate settings by negating
+all components.
+
+## Stratified sampling
+
+Partition the sample space into $K$ strata $S_1, \ldots, S_K$ with
+probabilities $p_k = \Pr(X \in S_k)$. Draw $n_k$ samples from each
+stratum and combine:
+$$
+\hat{\mu}_{\text{strat}} = \sum_{k=1}^K p_k \hat{\mu}_k, \qquad
+\hat{\mu}_k = \frac{1}{n_k}\sum_{i=1}^{n_k} h(X_i \mid X_i \in S_k).
+$$
+
+**Variance bound.** With proportional allocation ($n_k = n p_k$),
+the stratified estimator has variance:
+$$
+\text{Var}(\hat{\mu}_{\text{strat}})
+= \frac{1}{n}\sum_{k=1}^K p_k \sigma_k^2,
+$$
+where $\sigma_k^2 = \text{Var}(h(X) \mid X \in S_k)$. Decomposing
+total variance as $\sigma^2_h = \sum_k p_k \sigma_k^2 + \sum_k p_k(\mu_k - \mu)^2$
+shows that stratification removes the *between-stratum variance* ---
+the second term. The more the stratum means $\mu_k$ differ from the
+overall mean $\mu$, the larger the gain. In the extreme where $h$ is
+constant within each stratum ($\sigma_k^2 = 0$), the estimator has
+zero variance.
+
+## Rao--Blackwellization
+
+If $X = (X_1, X_2)$ and you can compute
+$g(x_1) = \mathbb{E}[h(X) \mid X_1 = x_1]$ analytically, then
+$g(X_1)$ has the same expectation as $h(X)$ but lower variance:
+$$
+\text{Var}(g(X_1)) = \text{Var}(h(X))
+- \mathbb{E}[\text{Var}(h(X) \mid X_1)].
+$$
+This is the Rao--Blackwell theorem: conditioning on part of the
+randomness and computing the conditional expectation analytically
+always reduces variance. The subtracted term is nonnegative, so the
+reduction is guaranteed. The technique applies whenever the integrand
+has structure that permits partial analytic integration --- for
+example, integrating out one component of a multivariate normal
+while sampling the others.
 
 ## Quasi-Monte Carlo
 
@@ -145,6 +264,50 @@ Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 3. $\hat{\mu}_{\text{IS}} \leftarrow \frac{1}{n}\sum_i w_i h(X_i)$
 4. $\text{ESS} \leftarrow (\sum_i w_i)^2 / \sum_i w_i^2$ $\triangleright$ effective sample size
 5. **return** $\hat{\mu}_{\text{IS}}$, ESS
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 7.3: Self-Normalized Importance Sampling
+
+**Input:** $h$, unnormalized target $\tilde{p}$, proposal $q$, sample size $n$
+
+**Output:** SNIS estimate and effective sample size
+
+1. Draw $X_1, \ldots, X_n \sim q$
+2. $\tilde{w}_i \leftarrow \tilde{p}(X_i) / q(X_i)$ for all $i$
+3. $\bar{w}_i \leftarrow \tilde{w}_i / \sum_j \tilde{w}_j$ $\triangleright$ normalize to sum to 1
+4. $\hat{\mu}_{\text{SNIS}} \leftarrow \sum_i \bar{w}_i h(X_i)$
+5. $\text{ESS} \leftarrow 1 / \sum_i \bar{w}_i^2$
+6. **return** $\hat{\mu}_{\text{SNIS}}$, ESS
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 7.4: Control Variate Estimator
+
+**Input:** samples $h(X_i)$, control values $c(X_i)$, known mean $\mu_c$
+
+**Output:** CV estimate and variance reduction factor
+
+1. $\hat{\beta} \leftarrow \text{Cov}(h, c) / \text{Var}(c)$ $\triangleright$ OLS slope
+2. $\hat{\mu}_{\text{CV}} \leftarrow \bar{h} - \hat{\beta}(\bar{c} - \mu_c)$
+3. $\text{VRF} \leftarrow \text{Var}(h) / \text{Var}(h - \hat{\beta}(c - \mu_c))$
+4. **return** $\hat{\mu}_{\text{CV}}$, VRF
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 7.5: Stratified Sampling
+
+**Input:** $h$, strata boundaries $a_0 < a_1 < \cdots < a_K$, total $n$
+
+**Output:** Stratified estimate and standard error
+
+1. **for** $k = 1, \ldots, K$:
+2. $\quad p_k \leftarrow F(a_k) - F(a_{k-1})$ $\triangleright$ stratum probability
+3. $\quad n_k \leftarrow \lfloor n \cdot p_k \rceil$ $\triangleright$ proportional allocation
+4. $\quad$ Draw $X_1^{(k)}, \ldots, X_{n_k}^{(k)} \sim p(\cdot \mid X \in S_k)$
+5. $\quad \hat{\mu}_k \leftarrow \frac{1}{n_k}\sum_i h(X_i^{(k)})$
+6. $\hat{\mu}_{\text{strat}} \leftarrow \sum_k p_k \hat{\mu}_k$
+7. **return** $\hat{\mu}_{\text{strat}}$
 :::
 
 
@@ -340,6 +503,97 @@ def control_variate(h_samples, c_samples, c_mean):
     return adjusted.mean(), plain_var / cv_var
 ```
 
+## Self-normalized importance sampling
+
+```{python}
+#| label: snis-scratch
+
+def self_normalized_is(
+    h, log_p_unnorm, q_logpdf, q_sampler, n, seed=42
+):
+    """Self-normalized importance sampling (Algorithm 7.3).
+
+    Handles unnormalized target densities, as in
+    Bayesian posterior inference.
+
+    Parameters
+    ----------
+    h : callable
+        Function to integrate.
+    log_p_unnorm : callable
+        Log of *unnormalized* target density.
+    q_logpdf : callable
+        Log-density of proposal distribution.
+    q_sampler : callable
+        Sampler from proposal: q_sampler(n, rng).
+
+    Returns
+    -------
+    estimate, effective_sample_size
+    """
+    local_rng = np.random.default_rng(seed)
+    x = q_sampler(n, local_rng)
+    # Log unnormalized weights
+    log_w = log_p_unnorm(x) - q_logpdf(x)
+    log_w -= log_w.max()  # numerical stability
+    w = np.exp(log_w)
+    # Normalize to sum to 1
+    w_norm = w / w.sum()
+    estimate = np.sum(w_norm * h(x))
+    ess = 1.0 / np.sum(w_norm**2)
+    return estimate, ess
+```
+
+## Stratified sampling
+
+```{python}
+#| label: stratified-scratch
+
+def stratified_mc(h, inv_cdf, n, n_strata=10, seed=42):
+    """Stratified Monte Carlo on [0, 1] mapped through inv_cdf.
+
+    Implements Algorithm 7.5 using the probability
+    integral transform: stratify U ~ Uniform(0,1) into
+    equal-probability strata, then map through the inverse
+    CDF to get samples from the target distribution.
+
+    Parameters
+    ----------
+    h : callable
+        Function to integrate: h(x) -> scalar or array.
+    inv_cdf : callable
+        Inverse CDF (quantile function) of target.
+    n : int
+        Total number of samples.
+    n_strata : int
+        Number of strata (equal-probability).
+
+    Returns
+    -------
+    estimate, standard_error, variance_reduction_factor
+    """
+    local_rng = np.random.default_rng(seed)
+    n_per = n // n_strata
+    stratum_means = np.empty(n_strata)
+    for k in range(n_strata):
+        # Uniform samples within stratum [k/K, (k+1)/K)
+        u = (k + local_rng.random(n_per)) / n_strata
+        x = inv_cdf(u)
+        stratum_means[k] = np.mean(h(x))
+
+    estimate = np.mean(stratum_means)
+    se = np.std(stratum_means, ddof=1) / np.sqrt(n_strata)
+
+    # Compare to plain MC for variance reduction factor
+    u_plain = local_rng.random(n)
+    x_plain = inv_cdf(u_plain)
+    plain_var = np.var(h(x_plain)) / n
+    strat_var = se**2
+    # Avoid division by zero
+    vrf = plain_var / max(strat_var, 1e-15)
+    return estimate, se, vrf
+```
+
 ## Demonstration: all techniques on one problem
 
 ```{python}
@@ -381,6 +635,30 @@ print(f"{'Control variate':<20} {cv_est:>10.4f} "
       f"{'':>10} {cv_vrf:>10.1f}")
 print(f"{'Importance sampling':<20} {is_est:>10.4f} {is_se:>10.4f} "
       f"{(plain_se/is_se)**2:>10.1f}")
+
+# 5. Stratified sampling
+strat_est, strat_se, strat_vrf = stratified_mc(
+    h=np.exp,
+    inv_cdf=stats.norm.ppf,
+    n=n,
+    n_strata=50,
+    seed=42,
+)
+print(f"{'Stratified':<20} {strat_est:>10.4f} {strat_se:>10.4f} "
+      f"{strat_vrf:>10.1f}")
+
+# 6. Self-normalized IS (same setup, but treat N(0,1)
+# as unnormalized to exercise the SNIS machinery)
+snis_est, snis_ess = self_normalized_is(
+    h=np.exp,
+    log_p_unnorm=stats.norm.logpdf,
+    q_logpdf=lambda x: stats.norm.logpdf(x, loc=0.5),
+    q_sampler=lambda n, rng: rng.normal(loc=0.5, size=n),
+    n=n,
+    seed=42,
+)
+print(f"{'Self-norm IS':<20} {snis_est:>10.4f} "
+      f"{'':>10} {'ESS='+str(int(snis_ess)):>10}")
 print(f"\nTrue value: {true_val:.4f}")
 ```
 
@@ -412,12 +690,160 @@ ax.set_xlim(1, 5000)
 plt.show()
 ```
 
+## MC error estimation: batch means
+
+The standard error $\hat{\sigma}/\sqrt{n}$ assumes independent samples.
+When samples are correlated (e.g., from MCMC), it underestimates the
+true error. **Batch means** provides a simple alternative: divide the
+$n$ samples into $B$ batches, compute the mean of each batch, and use
+the standard error of the batch means as the MC error estimate.
+
+```{python}
+#| label: batch-means
+
+def batch_means_se(values, n_batches=30):
+    """MC standard error via batch means.
+
+    Robust to within-batch correlation when batches
+    are large enough for the batch means to be
+    approximately independent.
+    """
+    n = len(values)
+    batch_size = n // n_batches
+    # Trim to exact multiple
+    trimmed = values[:batch_size * n_batches]
+    batches = trimmed.reshape(n_batches, batch_size)
+    batch_avgs = batches.mean(axis=1)
+    return batch_avgs.std(ddof=1) / np.sqrt(n_batches)
+
+# Compare standard SE vs batch means on iid samples
+samples = np.exp(rng.standard_normal(10_000))
+std_se = samples.std(ddof=1) / np.sqrt(len(samples))
+bm_se = batch_means_se(samples)
+print(f"Standard SE: {std_se:.4f}")
+print(f"Batch means SE: {bm_se:.4f}")
+print("(Should agree for iid samples)")
+```
+
 ## Diagnosing importance sampling
 
 The effective sample size (ESS) tells you how many of your $n$ samples
 are actually contributing. If $\text{ESS} \ll n$, your proposal $q$ is
 a poor match and the estimate is dominated by a few large weights.
 Rule of thumb: $\text{ESS} < n/5$ is a warning sign.
+
+### Weight degeneracy detection
+
+The most direct diagnostic is to look at the weight distribution.
+When IS is working well, weights are spread across many samples. When
+it fails, a handful of weights dominate --- the estimate depends on
+a few lucky draws.
+
+```{python}
+#| label: fig-is-weight-diagnostic
+#| fig-cap: "Importance weight diagnostics for two proposals estimating a tail probability. Left: a well-matched proposal (t-distribution) gives spread-out weights. Right: a poor proposal (standard normal for a shifted target) gives degenerate weights --- one sample dominates."
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+n_diag = 5_000
+
+# Good proposal: t(df=3) for a heavy-tailed target
+x_good = stats.t.rvs(df=3, size=n_diag, random_state=42)
+log_w_good = (
+    stats.norm.logpdf(x_good)
+    - stats.t.logpdf(x_good, df=3)
+)
+w_good = np.exp(log_w_good - log_w_good.max())
+w_good_norm = w_good / w_good.sum()
+ess_good = 1.0 / np.sum(w_good_norm**2)
+
+# Bad proposal: N(0,1) for a N(5,1) target
+x_bad = rng.standard_normal(n_diag)
+log_w_bad = (
+    stats.norm.logpdf(x_bad, loc=5)
+    - stats.norm.logpdf(x_bad)
+)
+w_bad = np.exp(log_w_bad - log_w_bad.max())
+w_bad_norm = w_bad / w_bad.sum()
+ess_bad = 1.0 / np.sum(w_bad_norm**2)
+
+# Plot sorted normalized weights
+for ax, w_n, ess_val, title in zip(
+    axes,
+    [w_good_norm, w_bad_norm],
+    [ess_good, ess_bad],
+    ['Good proposal (t₃)', 'Bad proposal (N(0,1))'],
+):
+    sorted_w = np.sort(w_n)[::-1]
+    ax.bar(
+        range(min(200, len(sorted_w))),
+        sorted_w[:200],
+        width=1.0,
+        color="C0",
+        alpha=0.7,
+    )
+    ax.set_xlabel("Weight rank")
+    ax.set_ylabel("Normalized weight")
+    ax.set_title(
+        f"{title}\nESS = {ess_val:.0f} / {n_diag}"
+    )
+    ax.axhline(
+        1 / n_diag, color="gray",
+        linestyle="--", linewidth=0.5,
+    )
+plt.tight_layout()
+plt.show()
+```
+
+### Running ESS monitor
+
+For sequential or iterative IS applications, monitoring ESS over time
+reveals when the proposal drifts away from the target. A declining
+ESS signals the need to refresh or adapt the proposal.
+
+```{python}
+#| label: fig-running-ess
+#| fig-cap: "Running ESS as samples accumulate under importance sampling. The good proposal (t₃ for a normal target) maintains high ESS; the bad proposal (normal for a shifted target) collapses to near-zero ESS as extreme weights accumulate."
+
+fig, ax = plt.subplots()
+checkpoints = np.arange(100, n_diag + 1, 100)
+ess_good_running, ess_bad_running = [], []
+
+for cp in checkpoints:
+    wg = w_good_norm[:cp]
+    wg = wg / wg.sum()  # re-normalize prefix
+    ess_good_running.append(1.0 / np.sum(wg**2))
+
+    wb = w_bad_norm[:cp]
+    wb = wb / wb.sum()
+    ess_bad_running.append(1.0 / np.sum(wb**2))
+
+ax.plot(
+    checkpoints, ess_good_running,
+    color="C0", label="Good proposal",
+)
+ax.plot(
+    checkpoints, ess_bad_running,
+    color="C3", label="Bad proposal",
+)
+ax.plot(
+    checkpoints, checkpoints,
+    '--', color="gray", alpha=0.4,
+    label="ESS = n (ideal)",
+)
+ax.set_xlabel("Samples drawn")
+ax.set_ylabel("ESS")
+ax.legend()
+plt.show()
+```
+
+### IS diagnostic checklist
+
+| Symptom | Diagnosis | Remedy |
+|---|---|---|
+| ESS $< n/5$ | Proposal too far from target | Heavier tails or closer location |
+| Max weight $> 10/n$ | Single sample dominates | Widen proposal or use SNIS |
+| Estimate jumps between runs | High variance from rare large weights | Increase $n$ or switch proposal |
+| ESS declines with $n$ | Proposal tails lighter than $p \cdot |h|$ | Use $t$-distribution or mixture proposal |
 
 
 # Computational Considerations {#sec-ch07-computation}
@@ -428,7 +854,18 @@ Rule of thumb: $\text{ESS} < n/5$ is a warning sign.
 | Antithetic | Up to 2x | ~0 (just negate) | $h$ is monotone |
 | Control variates | Up to $1/(1-\rho^2)$ | 1 extra function eval | Correlated auxiliary available |
 | Importance sampling | Unbounded (can be huge) | Density evaluation | Tail probabilities, rare events |
+| Stratified | Removes between-stratum var | Stratum bookkeeping | Known structure in $h$ |
 | QMC (Sobol/Halton) | $O(\sqrt{n}/\log^d n)$ | Sequence generation | Low-to-moderate dimension ($d \leq 20$) |
+| Rao--Blackwell | Removes conditional var | Analytic integration | Partial conjugacy available |
+
+**Combining techniques.** These methods are not mutually exclusive.
+Control variates and antithetic variates combine straightforwardly
+(apply CV to the antithetic pairs). IS and CV can be combined: use
+importance sampling to reach the relevant region, then apply a control
+variate to the weighted samples. Stratification and QMC share a
+similar geometric intuition (fill space evenly), so combining them
+offers diminishing returns. In practice, the most common combination
+is IS with a control variate for tail probability estimation.
 
 QMC's advantage degrades rapidly with dimension ($d$) because the
 $(\log n)^d$ factor grows. Above $d \approx 20$, plain MC with variance
@@ -485,6 +922,138 @@ ess = np.sum(w)**2 / np.sum(w**2)
 print(f"IS:       P(loss > 2%) = {is_est:.6f} +/- {is_se:.6f}")
 print(f"ESS: {ess:.0f} / {n_sim} ({ess/n_sim*100:.1f}%)")
 ```
+
+## Higher-dimensional integration: expected shortfall
+
+Extending the portfolio example, we estimate the expected shortfall
+(conditional value at risk) --- the expected loss given that the loss
+exceeds the VaR threshold. This requires integrating in the tail, where
+plain MC is particularly wasteful.
+
+```{python}
+#| label: worked-cvar
+# Expected shortfall: E[loss | loss > VaR]
+# Reuse portfolio setup from above
+losses = -portfolio_returns  # positive = loss
+
+# Plain MC for expected shortfall at 99% level
+var_99 = np.quantile(losses, 0.99)
+tail_mask = losses >= var_99
+es_plain = losses[tail_mask].mean()
+# SE: only ~1% of samples contribute
+n_tail = tail_mask.sum()
+es_plain_se = losses[tail_mask].std() / np.sqrt(max(n_tail, 1))
+
+# IS estimate: reuse shifted samples
+losses_is = -portfolio_is
+log_w_is = log_w.copy()
+w_is = np.exp(log_w_is)
+tail_is = losses_is >= var_99
+# Weighted mean in the tail
+if tail_is.sum() > 0:
+    w_tail = w_is[tail_is]
+    es_is = (
+        np.sum(w_tail * losses_is[tail_is])
+        / np.sum(w_tail)
+    )
+    es_is_se = np.sqrt(
+        np.sum(w_tail**2 * (losses_is[tail_is] - es_is)**2)
+    ) / np.sum(w_tail)
+else:
+    es_is, es_is_se = np.nan, np.nan
+
+print(f"VaR (99%): {var_99:.6f}")
+print(f"ES (plain MC): {es_plain:.6f} "
+      f"+/- {es_plain_se:.6f} "
+      f"(n_tail={n_tail})")
+print(f"ES (IS):       {es_is:.6f} "
+      f"+/- {es_is_se:.6f}")
+```
+
+## Comparing all methods: convergence in practice
+
+```{python}
+#| label: fig-variance-reduction-convergence
+#| fig-cap: "Convergence of MC estimators for E[exp(X)], X ~ N(0,1). Each method achieves the 1/√n rate, but variance reduction shifts the curve downward --- equivalent to starting with more samples. Stratified sampling and control variates deliver the largest gains for this smooth, monotone integrand."
+
+true_val_conv = np.exp(0.5)
+ns_conv = [500, 1000, 2000, 5000, 10_000, 20_000, 50_000]
+n_rep = 100
+results = {
+    'Plain MC': [],
+    'Antithetic': [],
+    'Control var.': [],
+    'Stratified': [],
+}
+
+for n in ns_conv:
+    plain_errs, anti_errs = [], []
+    cv_errs, strat_errs = [], []
+    for rep in range(n_rep):
+        seed = rep * 1000 + n
+        local = np.random.default_rng(seed)
+
+        # Plain MC
+        x = local.standard_normal(n)
+        plain_errs.append(abs(np.exp(x).mean() - true_val_conv))
+
+        # Antithetic
+        x2 = local.standard_normal(n // 2)
+        anti_vals = 0.5 * (np.exp(x2) + np.exp(-x2))
+        anti_errs.append(
+            abs(anti_vals.mean() - true_val_conv)
+        )
+
+        # Control variate
+        hv = np.exp(x)
+        beta = np.cov(hv, x)[0, 1] / np.var(x)
+        cv_vals = hv - beta * x
+        cv_errs.append(
+            abs(cv_vals.mean() - true_val_conv)
+        )
+
+        # Stratified (20 strata)
+        n_strata = 20
+        n_per = n // n_strata
+        s_means = []
+        for k in range(n_strata):
+            u = (k + local.random(n_per)) / n_strata
+            s_means.append(np.exp(stats.norm.ppf(u)).mean())
+        strat_errs.append(
+            abs(np.mean(s_means) - true_val_conv)
+        )
+
+    results['Plain MC'].append(np.mean(plain_errs))
+    results['Antithetic'].append(np.mean(anti_errs))
+    results['Control var.'].append(np.mean(cv_errs))
+    results['Stratified'].append(np.mean(strat_errs))
+
+fig, ax = plt.subplots()
+colors = ['C0', 'C1', 'C2', 'C4']
+for (name, errs), color in zip(results.items(), colors):
+    ax.loglog(
+        ns_conv, errs, 'o-',
+        color=color, label=name, markersize=4,
+    )
+# Reference slope
+ax.loglog(
+    ns_conv,
+    [results['Plain MC'][0] * (ns_conv[0]/n)**0.5
+     for n in ns_conv],
+    '--', color="gray", alpha=0.4,
+    label=r"$O(1/\sqrt{n})$",
+)
+ax.set_xlabel("Sample size $n$")
+ax.set_ylabel("Mean absolute error")
+ax.legend(fontsize=8)
+plt.show()
+```
+
+The convergence plot confirms that all methods share the $O(1/\sqrt{n})$
+rate but differ in their constants. Control variates and stratified
+sampling shift the error curve down by roughly an order of magnitude
+for this smooth, monotone integrand --- achieving with 1,000 samples
+what plain MC needs 10,000--50,000 for.
 
 
 # Exercises {#sec-ch07-exercises}
@@ -676,6 +1245,18 @@ Quasi-Monte Carlo: Sobol sequences (Sobol, 1967), Halton sequences
 (Halton, 1960). The Koksma--Hlawka inequality is from Niederreiter
 (1992). Scipy's implementation follows Joe and Kuo (2008) for the
 Sobol direction numbers.
+
+Stratified sampling in the MC context: Cochran (1977) covers the
+survey-sampling origin; the extension to simulation is in Glasserman
+(2003), Chapter 4. Rao--Blackwellization in MCMC: Casella and Robert
+(1996) formalize the idea; Douc and Robert (2011) analyze when it
+helps and when the computational overhead cancels the variance gain.
+
+Self-normalized importance sampling: the $O(1/n)$ bias analysis is
+from Hesterberg (1988). The ESS diagnostic is from Kong, Liu, and
+Wong (1994), formalized for self-normalized weights by Liu (2001),
+Chapter 2. For adaptive importance sampling (adapting $q$ on the fly),
+see Bugallo et al. (2017) for a survey.
 
 For a comprehensive treatment of Monte Carlo methods in computational
 finance (where variance reduction is most developed), see Glasserman

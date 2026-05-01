@@ -429,6 +429,52 @@ print(f"Ljung-Box: all p > 0.05? {(lb['lb_pvalue'] > 0.05).all()}")
 - **Ljung-Box test:** Tests whether the residual autocorrelations are
   jointly zero. All $p$-values should be > 0.05.
 
+**Ljung-Box at multiple lags.** The test at lag $k$ asks whether the
+first $k$ autocorrelations are *jointly* zero. Different lag ranges
+detect different problems:
+
+- **Low lags (1--5):** Detect short-range dependence. A failure here
+  usually means you need more AR or MA terms. This is the most
+  actionable signal.
+- **Medium lags (6--12):** Detect seasonal structure or slowly decaying
+  dependence. If these fail but low lags pass, consider adding a
+  seasonal component (SARIMAX) rather than more ARMA terms.
+- **High lags (13--20):** The test accumulates degrees of freedom, so
+  power drops. A single failure at lag 17 with all lower lags passing
+  is rarely worth modeling --- it is often a Type I error.
+
+The Ljung-Box statistic is
+$Q(k) = T(T+2)\sum_{j=1}^{k}\hat\rho_j^2 / (T-j)$,
+distributed as $\chi^2(k - p - q)$ under the null. The
+degrees-of-freedom adjustment $(k - p - q)$ accounts for the
+parameters already estimated. In `acorr_ljungbox`, the `model_df`
+argument handles this:
+
+```{python}
+#| label: ljungbox-adjusted
+# Adjusted Ljung-Box: subtract fitted AR + MA parameters
+lb_adj = acorr_ljungbox(
+    model.resid, lags=20,
+    model_df=2,  # p=2 AR terms, q=0 MA terms
+    return_df=True,
+)
+print("Ljung-Box with df adjustment (model_df=2):")
+print(f"  Lag  5: p = {lb_adj['lb_pvalue'][5]:.4f}")
+print(f"  Lag 10: p = {lb_adj['lb_pvalue'][10]:.4f}")
+print(f"  Lag 20: p = {lb_adj['lb_pvalue'][20]:.4f}")
+```
+
+Omitting `model_df` uses the unadjusted $\chi^2(k)$ distribution,
+which makes the test conservative (p-values too large, less likely to
+reject). For diagnostic purposes this conservative behavior is
+acceptable --- you are unlikely to *miss* a problem --- but for
+formal reporting, always pass `model_df`.
+
+**Reading the p-value plot:** Look for a *pattern* of failures across
+lags, not a single isolated spike. A single spike at one lag is often
+noise; a run of small p-values at lags 1--5 is a genuine signal that
+the model needs revision.
+
 If the diagnostics pass, the model is adequate. If they fail, go back
 to Step 3 and try a different order.
 
@@ -547,18 +593,130 @@ print(f"\nAIC: {ets.aic:.1f}")
 print(f"SARIMAX AIC: {sarima.aic:.1f}")
 ```
 
-**When to use ETS vs ARIMA:**
+**When to use ETS vs ARIMA:** Neither dominates --- the choice depends
+on data characteristics and the forecasting goal.
 
-| Criterion | ETS | ARIMA |
+| Criterion | ETS | ARIMA / SARIMAX |
 |---|---|---|
-| Philosophy | Decompose into components | Model autocorrelation |
-| Interpretability | Easy (level, trend, seasonal) | Harder (AR/MA coefficients) |
-| Flexibility | Fixed component structure | Data-driven via ACF/PACF |
-| Handling of non-linearity | Multiplicative options | Linear only |
-| Connection to state space | Chapter 16 | Chapter 16 |
+| Philosophy | Decompose into level, trend, seasonal | Model autocorrelation structure |
+| Best for | Clean trend + seasonal patterns | Complex autocorrelation, irregular data |
+| Interpretability | High: smoothing params have direct meaning | Lower: AR/MA coeffs less intuitive |
+| Multiplicative patterns | Native (`seasonal='mul'`) | Requires log transform |
+| Exogenous regressors | Not supported | Supported via SARIMAX `exog` |
+| Missing data | Not supported | Handled via Kalman filter |
+| Identification | Choose A/M components; no ACF/PACF needed | Requires Box-Jenkins workflow |
+| Overfitting risk | Low (few parameters) | Higher with large $p$, $q$ |
+| Long seasonal periods | Fast (linear in $T$) | Slow ($O(Ts^2)$ per iteration) |
+| State-space form | Ch. 16: every ETS is a state-space model | Ch. 16: every ARIMA is too |
 
-In practice, both give similar forecasts for well-behaved series.
-ARIMA is more flexible; ETS is more interpretable.
+**Rule of thumb:** Start with ETS for business forecasting (sales,
+demand, inventory) where the decomposition into level + trend +
+seasonal is natural. Start with ARIMA for data where the
+autocorrelation structure is the primary feature (financial returns,
+macroeconomic indicators, residuals from a regression model).
+
+In practice, fit both and compare out-of-sample forecast accuracy.
+The next section shows how.
+
+
+## Forecast evaluation: expanding-window comparison
+
+Information criteria (AIC, BIC) measure in-sample fit penalized for
+complexity. But forecasting is an out-of-sample problem: the real
+question is how well the model predicts data it has never seen.
+
+**Expanding-window evaluation** (also called *recursive* or
+*pseudo-out-of-sample*) works as follows:
+
+1. Fix a minimum training window (e.g., 96 months = 8 years)
+2. Fit the model on the first $t$ observations
+3. Forecast $h$ steps ahead
+4. Record the forecast errors
+5. Expand the window by one period and repeat
+
+This mimics real-time forecasting: at each step, the model sees only
+past data.
+
+```{python}
+#| label: expanding-window
+# Expanding-window one-step-ahead forecast evaluation
+min_train = 96   # 8 years minimum training window
+horizon = 1
+n_eval = len(y_seasonal)
+
+errors_arima = []
+errors_ets = []
+
+for t in range(min_train, n_eval - horizon):
+    y_train = y_seasonal[:t]
+
+    # SARIMAX forecast
+    m_arima = SARIMAX(
+        y_train, order=(1, 1, 1),
+        seasonal_order=(1, 0, 1, 12),
+        enforce_stationarity=True,
+        enforce_invertibility=True,
+    ).fit(disp=0)
+    fc_a = m_arima.forecast(steps=horizon)
+    errors_arima.append(y_seasonal[t] - fc_a[0])
+
+    # ETS forecast
+    m_ets = ExponentialSmoothing(
+        y_train, seasonal_periods=12,
+        trend='add', seasonal='add',
+    ).fit(optimized=True)
+    fc_e = m_ets.forecast(steps=horizon)
+    errors_ets.append(y_seasonal[t] - fc_e[0])
+
+errors_arima = np.array(errors_arima)
+errors_ets = np.array(errors_ets)
+
+# RMSE and MAE
+rmse_a = np.sqrt(np.mean(errors_arima**2))
+rmse_e = np.sqrt(np.mean(errors_ets**2))
+mae_a = np.mean(np.abs(errors_arima))
+mae_e = np.mean(np.abs(errors_ets))
+
+print(f"{'Metric':<8} {'SARIMAX':>10} {'ETS':>10}")
+print("-" * 30)
+print(f"{'RMSE':<8} {rmse_a:>10.3f} {rmse_e:>10.3f}")
+print(f"{'MAE':<8} {mae_a:>10.3f} {mae_e:>10.3f}")
+```
+
+**RMSE vs MAE:**
+
+- **RMSE** (root mean squared error) penalizes large errors
+  heavily because of the squaring. Use it when large forecast
+  misses are disproportionately costly (inventory management,
+  energy grid planning).
+- **MAE** (mean absolute error) treats all errors linearly. Use
+  it when forecast errors translate proportionally to cost (simple
+  budgeting, headcount planning).
+
+Both metrics are scale-dependent: an RMSE of 5 means nothing without
+knowing whether the series ranges from 0--10 or 0--10,000. For
+cross-series comparison, normalize by the series standard deviation
+or use MAPE (mean absolute percentage error).
+
+```{python}
+#| label: fig-expanding-errors
+#| fig-cap: "Cumulative absolute forecast errors from the expanding-window evaluation. The model whose line stays lower produces better forecasts overall. Crossings indicate periods where one model temporarily outperforms the other."
+
+fig, ax = plt.subplots(figsize=(10, 3.5))
+t_axis = range(min_train, n_eval - horizon)
+ax.plot(
+    t_axis, np.cumsum(np.abs(errors_arima)),
+    linewidth=0.9, label='SARIMAX', color='C0',
+)
+ax.plot(
+    t_axis, np.cumsum(np.abs(errors_ets)),
+    linewidth=0.9, label='ETS', color='C1',
+)
+ax.set_xlabel('Training window end (month)')
+ax.set_ylabel('Cumulative |error|')
+ax.legend()
+plt.show()
+```
 
 
 # From-Scratch Implementation {#sec-ch15-scratch}

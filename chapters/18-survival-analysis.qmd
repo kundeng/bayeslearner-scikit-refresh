@@ -126,9 +126,65 @@ censored (between event times), they leave the risk set. This is why
 KM handles censoring correctly: censored subjects contribute to the
 estimate for as long as they are observed, then drop out.
 
-**Greenwood's formula** for the variance:
-$\widehat{\text{Var}}(\hat{S}(t)) = \hat{S}(t)^2 \sum_{t_j \leq t} \frac{d_j}{n_j(n_j - d_j)}$.
-This gives the confidence band around the KM curve.
+### KM as the nonparametric MLE {#sec-ch18-km-npmle}
+
+The claim that KM is "the nonparametric MLE" deserves a proof sketch,
+because the construction reveals *why* the product formula appears.
+
+The full likelihood for right-censored data is
+
+$$
+L = \prod_{i:\delta_i=1} f(t_i) \prod_{i:\delta_i=0} S(c_i).
+$$
+
+We restrict to discrete distributions that place mass only at the
+observed event times $t_1 < t_2 < \cdots < t_K$. Let $p_j$ be the
+probability mass at $t_j$, so that $S(t) = 1 - \sum_{t_j \leq t} p_j$.
+The discrete hazard at $t_j$ is $\lambda_j = p_j / S(t_j^-)$, and the
+survival function factors as $S(t_j^-) = \prod_{k < j}(1 - \lambda_k)$.
+
+Substituting into the likelihood, each factor becomes a function of the
+$\lambda_j$ alone.  Setting $\partial \ell / \partial \lambda_j = 0$
+gives $\hat{\lambda}_j = d_j / n_j$ --- exactly the conditional event
+probability at $t_j$.  The MLE of the survival function is therefore
+
+$$
+\hat{S}(t) = \prod_{t_j \leq t}(1 - \hat{\lambda}_j)
+           = \prod_{t_j \leq t}\left(1 - \frac{d_j}{n_j}\right),
+$$
+
+which is the KM estimator (@eq-km).  The product-of-conditionals
+structure is not a heuristic: it is the *consequence* of maximizing the
+nonparametric likelihood over discrete distributions supported on the
+event times.
+
+### Greenwood's variance {#sec-ch18-greenwood}
+
+**Greenwood's formula** gives the variance of the KM estimator.  The
+derivation uses the delta method on the log-survival function.
+
+Since $\hat{S}(t) = \prod_{j}(1 - \hat{\lambda}_j)$, the log is a sum:
+$\log \hat{S}(t) = \sum_{t_j \leq t} \log(1 - d_j/n_j)$.  Each term
+depends on an independent binomial draw ($d_j$ events from $n_j$ at
+risk), so
+
+$$
+\operatorname{Var}(\log \hat{S}(t))
+  \approx \sum_{t_j \leq t} \frac{d_j}{n_j(n_j - d_j)},
+$$
+
+where the approximation applies the delta method to
+$\log(1 - d_j/n_j)$ with $\operatorname{Var}(\hat{\lambda}_j)
+= \lambda_j(1-\lambda_j)/n_j$.  Exponentiating back via the delta
+method:
+
+$$
+\widehat{\operatorname{Var}}(\hat{S}(t))
+  = \hat{S}(t)^2 \sum_{t_j \leq t} \frac{d_j}{n_j(n_j - d_j)}.
+$$ {#eq-greenwood}
+
+This is the formula `SurvfuncRight` uses to compute the confidence band
+around the KM curve.
 
 ## Cox proportional hazards: the key idea
 
@@ -154,34 +210,165 @@ This is a strong assumption and should be checked (Schoenfeld
 residuals).
 
 **Why the partial likelihood works:** The genius of Cox (1972) is that
-you can estimate $\boldsymbol{\beta}$ without knowing $h_0(t)$. The
-partial likelihood asks: at each event time, given that *someone* in
-the risk set died, what is the probability it was the person who
-actually died?
+you can estimate $\boldsymbol{\beta}$ without knowing $h_0(t)$.  Start
+from the full likelihood.  For an event at $t_i$ with covariates
+$\mathbf{x}_i$, the density is $f(t_i \mid \mathbf{x}_i)
+= h_0(t_i)\exp(\mathbf{x}_i^\top\boldsymbol{\beta})
+  \cdot S(t_i \mid \mathbf{x}_i)$.  The survival factor depends on
+the *cumulative* baseline hazard $H_0(t_i) = \int_0^{t_i} h_0(u)\,du$,
+which is an infinite-dimensional nuisance parameter.
+
+Cox's insight is to *condition* on two things: (1) the set of observed
+event times, and (2) the number of events at each time.  Given that
+exactly one event occurs at time $t_i$, the conditional probability
+that it is subject $i$ (rather than any other subject in the risk set
+$\mathcal{R}(t_i)$) is
 
 $$
-\mathcal{L}_P(\boldsymbol{\beta}) = \prod_{i:\delta_i=1} \frac{\exp(\mathbf{x}_i^\top\boldsymbol{\beta})}{\sum_{j \in \mathcal{R}(t_i)} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})},
+\frac{h_0(t_i)\exp(\mathbf{x}_i^\top\boldsymbol{\beta})}
+     {\sum_{j \in \mathcal{R}(t_i)} h_0(t_i)
+      \exp(\mathbf{x}_j^\top\boldsymbol{\beta})}
+= \frac{\exp(\mathbf{x}_i^\top\boldsymbol{\beta})}
+       {\sum_{j \in \mathcal{R}(t_i)}
+        \exp(\mathbf{x}_j^\top\boldsymbol{\beta})}.
+$$
+
+The baseline hazard $h_0(t_i)$ factors out of both numerator and
+denominator and *cancels*.  Multiplying these conditional
+probabilities over all event times gives the partial likelihood:
+
+$$
+\mathcal{L}_P(\boldsymbol{\beta}) = \prod_{i:\delta_i=1} \frac{\exp(\mathbf{x}_i^\top\boldsymbol{\beta})}{\sum_{j \in \mathcal{R}(t_i)} \exp(\mathbf{x}_j^\top\boldsymbol{\beta})}.
 $$ {#eq-partial-lik}
 
 Each factor is a softmax: the probability that subject $i$ (the one
 who actually died) had the highest hazard among everyone still at risk.
-The baseline hazard $h_0(t)$ appears in both the numerator and
-denominator and *cancels*. This is why Cox regression is
-"semiparametric" --- it makes no assumption about the shape of the
-baseline hazard.
+This is why Cox regression is "semiparametric" --- it isolates the
+$\boldsymbol{\beta}$-dependent part without specifying $h_0(t)$.
+
+The payoff: $\hat{\boldsymbol{\beta}}$ is $\sqrt{n}$-consistent and
+asymptotically normal, with the same variance you would get from the
+full likelihood if $h_0(t)$ were known.  You lose nothing
+asymptotically by leaving $h_0(t)$ unspecified --- a remarkable result
+proved formally by Andersen and Gill (1982).
 
 **Interpreting the coefficients:** $\exp(\beta_j)$ is the *hazard ratio*.
 If $\exp(\beta_j) = 0.5$, a one-unit increase in $x_j$ halves the
 hazard (protective). If $\exp(\beta_j) = 2$, it doubles the hazard
 (harmful).
 
-## The log-rank test
+## The log-rank test as a score test {#sec-ch18-logrank-score}
 
-The log-rank test compares survival curves between two groups. It
-turns out to be equivalent to the *score test* (Chapter 10) from a
-Cox model with a single binary covariate (group indicator). When the
-log-rank test rejects, it means the two groups have significantly
-different hazard functions.
+The log-rank test compares survival curves between two groups.  Its
+connection to Cox regression is deeper than "they often agree" --- the
+log-rank statistic is *exactly* the score test from a Cox model with a
+single binary covariate.
+
+Let $z_i \in \{0, 1\}$ be the group indicator.  At each event time
+$t_j$, let $d_{1j}$ be the number of events in group 1 and $n_{1j}$
+the number at risk in group 1.  The total events and total at risk at
+$t_j$ are $d_j$ and $n_j$.  Under the null $\beta = 0$ (no group
+difference), the expected number of events in group 1 at time $t_j$ is
+
+$$
+e_{1j} = \frac{n_{1j}\, d_j}{n_j}.
+$$
+
+The log-rank statistic is
+
+$$
+U = \sum_j (d_{1j} - e_{1j}),
+$$
+
+which is the total observed-minus-expected events in group 1.  Now
+consider the Cox partial log-likelihood with covariate $z_i$:
+
+$$
+\ell_P(\beta) = \sum_{i:\delta_i=1}
+  \left[ z_i \beta - \log \sum_{j \in \mathcal{R}(t_i)}
+         \exp(z_j \beta) \right].
+$$
+
+Taking the derivative and evaluating at $\beta = 0$:
+
+$$
+\frac{\partial \ell_P}{\partial \beta}\bigg|_{\beta=0}
+  = \sum_{i:\delta_i=1} \left(z_i - \frac{n_{1,t_i}}{n_{t_i}}\right)
+  = \sum_j (d_{1j} - e_{1j}) = U.
+$$
+
+This is the score function at the null.  The score test statistic is
+$U^2 / \operatorname{Var}(U)$, which gives the standard log-rank
+chi-squared statistic.  The equivalence confirms that the log-rank test
+has optimal power against proportional-hazards alternatives --- it is
+the locally most powerful rank test in that class.
+
+## Competing risks {#sec-ch18-competing-risks}
+
+When multiple event types are possible --- death from cancer versus
+death from heart disease, or voluntary churn versus involuntary
+account closure --- naive application of KM is biased.
+
+**The problem with naive KM:** If you are interested in cancer death
+and treat heart-disease death as censoring, KM overestimates the
+cumulative incidence of cancer death.  Censoring assumes the subject
+*could still* experience the event, but a subject who died of heart
+disease cannot later die of cancer.
+
+Two frameworks handle this:
+
+**Cause-specific hazard.** Model the hazard for cause $k$ as
+
+$$
+h_k(t) = \lim_{\Delta t \to 0}
+  \frac{\Pr(t \leq T < t+\Delta t,\; \text{cause}=k \mid T \geq t)}
+       {\Delta t}.
+$$
+
+Subjects who experience a competing event are censored at their event
+time.  This is correct for the cause-specific hazard itself, but the
+resulting survival curve does *not* give the marginal probability of
+experiencing cause $k$ by time $t$, because it ignores the fact that
+competing events remove subjects from the risk pool permanently.
+
+**Fine--Gray subdistribution hazard.** The Fine--Gray model defines a
+hazard on the *subdistribution* function
+$F_k(t) = \Pr(T \leq t, \text{cause}=k)$:
+
+$$
+\tilde{h}_k(t) = \lim_{\Delta t \to 0}
+  \frac{\Pr(t \leq T < t+\Delta t,\; \text{cause}=k \mid
+        T \geq t \;\text{or}\; (T < t \;\text{and cause} \neq k))}
+       {\Delta t}.
+$$
+
+Subjects who experienced a competing event *remain* in the risk set
+(as "immortal" subjects).  This is unintuitive, but it makes
+$\exp(\beta)$ directly interpretable as a subdistribution hazard ratio
+whose cumulative incidence function has a one-to-one mapping.  Use
+Fine--Gray when your goal is to estimate $\Pr(\text{cause } k
+\text{ by time } t)$; use cause-specific hazards when you want to
+understand the biology or mechanism.
+
+## Nelson--Aalen cumulative hazard estimator {#sec-ch18-nelson-aalen}
+
+The Nelson--Aalen estimator targets the cumulative hazard $H(t)$
+directly, rather than the survival function:
+
+$$
+\hat{H}(t) = \sum_{t_j \leq t} \frac{d_j}{n_j}.
+$$ {#eq-nelson-aalen}
+
+The KM and Nelson--Aalen estimators are related:
+$\hat{S}_{\text{KM}}(t) = \prod(1 - d_j/n_j)$ while
+$\hat{S}_{\text{NA}}(t) = \exp(-\hat{H}(t))
+= \exp(-\sum d_j/n_j)$.  For small $d_j/n_j$ the two are nearly
+identical (since $\log(1-x) \approx -x$), but they can diverge when
+the risk set is small.  The Nelson--Aalen estimator has the advantage
+that its variance is simpler:
+$\widehat{\operatorname{Var}}(\hat{H}(t)) = \sum_{t_j \leq t}
+d_j / n_j^2$, and it connects naturally to the Breslow estimator of the
+baseline hazard after Cox regression.
 
 
 # The Algorithm {#sec-ch18-algorithm}
@@ -318,6 +505,138 @@ print(f"Estimated: age={cox.params[0]:.3f}, treatment={cox.params[1]:.3f}")
 A negative $\hat\beta$ means reduced hazard; $\exp(\hat\beta) < 1$ means
 treatment is protective. The code above prints the estimated coefficients.
 
+## Handling tied event times: Breslow vs Efron {#sec-ch18-ties}
+
+When multiple events share the same time, the partial likelihood is
+ambiguous: the ordering within a tie is unknown.  Two approximations
+dominate:
+
+**Breslow's method** (the default in `PHReg`) treats ties as if they
+occurred sequentially in arbitrary order.  The denominator stays the
+same for all tied events:
+
+$$
+\mathcal{L}_{\text{Breslow}} = \prod_j
+  \frac{\prod_{i \in \mathcal{D}_j}
+        \exp(\mathbf{x}_i^\top\boldsymbol{\beta})}
+       {\left[\sum_{k \in \mathcal{R}(t_j)}
+              \exp(\mathbf{x}_k^\top\boldsymbol{\beta})\right]^{d_j}},
+$$
+
+where $\mathcal{D}_j$ is the set of subjects who die at $t_j$.  This
+is fast but biased when ties are heavy.
+
+**Efron's method** removes a fraction of the tied subjects from the
+risk set in each factor, yielding a better approximation:
+
+$$
+\mathcal{L}_{\text{Efron}} = \prod_j \prod_{r=1}^{d_j}
+  \frac{1}{\sum_{k \in \mathcal{R}(t_j)}
+        \exp(\mathbf{x}_k^\top\boldsymbol{\beta})
+      - \frac{r-1}{d_j}\sum_{i \in \mathcal{D}_j}
+        \exp(\mathbf{x}_i^\top\boldsymbol{\beta})}.
+$$
+
+Use `PHReg(..., ties="efron")` when ties are common (e.g., discrete
+time scales like months or years).  With few ties, the two methods
+give nearly identical results.
+
+```{python}
+#| label: ties-demo
+# Compare Breslow (default) vs Efron
+cox_breslow = PHReg(
+    t_obs_cox, X_cox, status=d_cox, ties="breslow"
+).fit()
+cox_efron = PHReg(
+    t_obs_cox, X_cox, status=d_cox, ties="efron"
+).fit()
+
+print("Breslow vs Efron comparison:")
+for i, name in enumerate(["age", "treatment"]):
+    print(f"  {name}: Breslow={cox_breslow.params[i]:.4f}"
+          f"  Efron={cox_efron.params[i]:.4f}")
+```
+
+## Stratified Cox model {#sec-ch18-stratified}
+
+When the PH assumption fails for a categorical variable (say, sex),
+stratification is the standard fix.  Each stratum $s$ gets its own
+baseline hazard $h_{0,s}(t)$, but all strata share the same
+$\boldsymbol{\beta}$:
+
+$$
+h(t \mid \mathbf{x}, s) = h_{0,s}(t)
+  \exp(\mathbf{x}^\top\boldsymbol{\beta}).
+$$
+
+The partial likelihood becomes a product over strata.  In `PHReg`,
+pass the stratification variable via the `strata` argument:
+
+```{python}
+#| label: stratified-cox
+# Stratify by a binary variable (e.g., sex)
+sex = rng.binomial(1, 0.5, n)
+
+cox_strat = PHReg(
+    t_obs_cox, X_cox, status=d_cox, strata=sex
+).fit()
+
+print("Stratified Cox model (by sex):")
+for i, name in enumerate(["age", "treatment"]):
+    print(f"  {name}: coef={cox_strat.params[i]:.4f}"
+          f"  SE={cox_strat.bse[i]:.4f}")
+print(f"\nUnstratified: treatment={cox.params[1]:.4f}")
+print(f"Stratified:   treatment={cox_strat.params[1]:.4f}")
+```
+
+Each stratum has its own baseline hazard, so the PH assumption need
+not hold across strata --- only within each stratum.
+
+## Baseline hazard estimation {#sec-ch18-baseline}
+
+After fitting the Cox model, you often want the baseline survival
+curve $\hat{S}_0(t)$.  The **Breslow estimator** gives the cumulative
+baseline hazard:
+
+$$
+\hat{H}_0(t) = \sum_{t_j \leq t}
+  \frac{d_j}{\sum_{k \in \mathcal{R}(t_j)}
+        \exp(\mathbf{x}_k^\top\hat{\boldsymbol{\beta}})},
+$$
+
+then $\hat{S}_0(t) = \exp(-\hat{H}_0(t))$.  This is the Nelson--Aalen
+estimator applied to the weighted risk set.
+
+```{python}
+#| label: baseline-hazard
+# Breslow baseline hazard estimate
+event_mask = d_cox == 1
+event_times_sorted = np.sort(t_obs_cox[event_mask])
+
+lp_all = X_cox @ cox.params
+cum_haz = np.zeros(len(event_times_sorted))
+
+for idx, t in enumerate(event_times_sorted):
+    at_risk = t_obs_cox >= t
+    denom = np.sum(np.exp(lp_all[at_risk]))
+    cum_haz[idx] = (cum_haz[idx-1] if idx > 0 else 0) + 1.0/denom
+
+baseline_surv = np.exp(-cum_haz)
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 3.5))
+axes[0].step(event_times_sorted, cum_haz, where='post')
+axes[0].set_xlabel("Time")
+axes[0].set_ylabel(r"$\hat{H}_0(t)$")
+axes[0].set_title("Baseline cumulative hazard")
+
+axes[1].step(event_times_sorted, baseline_surv, where='post')
+axes[1].set_xlabel("Time")
+axes[1].set_ylabel(r"$\hat{S}_0(t)$")
+axes[1].set_title("Baseline survival")
+plt.tight_layout()
+plt.show()
+```
+
 ## Diagnostics: Schoenfeld residuals
 
 ```{python}
@@ -372,6 +691,162 @@ def kaplan_meier(times, events):
 t_km, s_km, se_km = kaplan_meier(observed_time, event)
 print(f"KM at median time: S={s_km[len(s_km)//2]:.3f}")
 print(f"statsmodels:       S={sf.surv_prob[len(sf.surv_prob)//2]:.3f}")
+```
+
+## Nelson--Aalen from scratch
+
+```{python}
+#| label: na-scratch
+
+def nelson_aalen(times, events):
+    """Nelson-Aalen cumulative hazard estimator."""
+    order = np.argsort(times)
+    t_sorted = times[order]
+    e_sorted = events[order]
+
+    unique_times = np.unique(t_sorted[e_sorted == 1])
+    cum_haz = np.zeros(len(unique_times))
+    var_haz = np.zeros(len(unique_times))
+    n_at_risk = len(times)
+
+    for i, t in enumerate(unique_times):
+        # Remove censored before this time
+        if i > 0:
+            censored = np.sum(
+                (t_sorted < t) & (e_sorted == 0)
+                & (t_sorted >= unique_times[i-1])
+            )
+        else:
+            censored = np.sum(
+                (t_sorted < t) & (e_sorted == 0)
+            )
+        n_at_risk -= censored
+        d = np.sum((t_sorted == t) & (e_sorted == 1))
+        prev = cum_haz[i-1] if i > 0 else 0
+        prev_v = var_haz[i-1] if i > 0 else 0
+        cum_haz[i] = prev + d / n_at_risk
+        var_haz[i] = prev_v + d / n_at_risk**2
+        n_at_risk -= d
+
+    surv_na = np.exp(-cum_haz)
+    return unique_times, cum_haz, surv_na, var_haz
+
+t_na, h_na, s_na, v_na = nelson_aalen(observed_time, event)
+print(f"Nelson-Aalen S(median): {s_na[len(s_na)//2]:.3f}")
+print(f"KM S(median):           {s_km[len(s_km)//2]:.3f}")
+print(f"Difference:             {abs(s_na[len(s_na)//2] - s_km[len(s_km)//2]):.4f}")
+```
+
+## Cox partial likelihood from scratch {#sec-ch18-cox-scratch}
+
+The partial log-likelihood, its gradient, and its Hessian are all we
+need for Newton--Raphson optimization.  For the Breslow approximation
+(no ties adjustment):
+
+$$
+\ell_P(\boldsymbol{\beta}) = \sum_{i:\delta_i=1}
+  \left[\mathbf{x}_i^\top\boldsymbol{\beta}
+        - \log \sum_{j \in \mathcal{R}(t_i)}
+          \exp(\mathbf{x}_j^\top\boldsymbol{\beta})\right].
+$$
+
+The gradient is
+
+$$
+\frac{\partial \ell_P}{\partial \boldsymbol{\beta}}
+  = \sum_{i:\delta_i=1} \left(\mathbf{x}_i
+    - \frac{\sum_{j \in \mathcal{R}(t_i)}
+            \mathbf{x}_j \exp(\mathbf{x}_j^\top\boldsymbol{\beta})}
+           {\sum_{j \in \mathcal{R}(t_i)}
+            \exp(\mathbf{x}_j^\top\boldsymbol{\beta})}
+    \right)
+  = \sum_{i:\delta_i=1} (\mathbf{x}_i - \bar{\mathbf{x}}_w(t_i)),
+$$
+
+where $\bar{\mathbf{x}}_w(t_i)$ is the weighted mean of covariates in
+the risk set, with weights $\exp(\mathbf{x}_j^\top\boldsymbol{\beta})$.
+Each event contributes the *residual*: the actual covariate minus what
+we would expect under the model.
+
+```{python}
+#| label: cox-scratch
+
+def cox_partial_loglik(beta, X, times, events):
+    """Partial log-likelihood (Breslow)."""
+    n, p = X.shape
+    lp = X @ beta
+    order = np.argsort(-times)  # descending
+    t_s = times[order]
+    e_s = events[order]
+    lp_s = lp[order]
+
+    loglik = 0.0
+    log_denom = -np.inf  # log-sum-exp accumulator
+
+    for i in range(n):
+        # Add subject to risk set (cumulative logsumexp)
+        log_denom = np.logaddexp(log_denom, lp_s[i])
+        if e_s[i] == 1:
+            loglik += lp_s[i] - log_denom
+
+    return loglik
+
+
+def cox_newton_raphson(X, times, events, max_iter=25,
+                       tol=1e-9):
+    """Fit Cox model via Newton-Raphson."""
+    n, p = X.shape
+    beta = np.zeros(p)
+
+    for iteration in range(max_iter):
+        lp = X @ beta
+        order = np.argsort(-times)
+        t_s = times[order]
+        e_s = events[order]
+        X_s = X[order]
+        elp_s = np.exp(lp[order])
+
+        # Accumulate risk-set sums (descending time)
+        grad = np.zeros(p)
+        hess = np.zeros((p, p))
+        s0 = 0.0          # sum of exp(lp)
+        s1 = np.zeros(p)   # sum of x * exp(lp)
+        s2 = np.zeros((p, p))  # sum of xx' * exp(lp)
+
+        for i in range(n):
+            s0 += elp_s[i]
+            s1 += X_s[i] * elp_s[i]
+            s2 += np.outer(X_s[i], X_s[i]) * elp_s[i]
+
+            if e_s[i] == 1:
+                xbar = s1 / s0
+                grad += X_s[i] - xbar
+                hess -= (s2/s0 - np.outer(xbar, xbar))
+
+        # Newton step
+        step = np.linalg.solve(-hess, grad)
+        beta += step
+
+        if np.max(np.abs(step)) < tol:
+            break
+
+    # Standard errors from observed information
+    se = np.sqrt(np.diag(np.linalg.inv(-hess)))
+    return beta, se, iteration + 1
+
+
+beta_hat, se_hat, n_iter = cox_newton_raphson(
+    X_cox, t_obs_cox, d_cox
+)
+
+print(f"From-scratch Cox (converged in {n_iter} iterations):")
+for i, name in enumerate(["age", "treatment"]):
+    print(f"  {name}: beta={beta_hat[i]:.4f}"
+          f"  SE={se_hat[i]:.4f}")
+print(f"\nPHReg comparison:")
+for i, name in enumerate(["age", "treatment"]):
+    print(f"  {name}: beta={cox.params[i]:.4f}"
+          f"  SE={cox.bse[i]:.4f}")
 ```
 
 
@@ -463,6 +938,156 @@ If the PH assumption is violated:
    $\ln T = \mathbf{x}^\top\boldsymbol{\beta} + \sigma W$. Use
    `lifelines.WeibullAFTFitter` or `LogNormalAFTFitter`.
 
+## Martingale residuals {#sec-ch18-martingale}
+
+The martingale residual for subject $i$ is
+
+$$
+\hat{M}_i = \delta_i - \hat{H}_0(t_i)\exp(\mathbf{x}_i^\top\hat{\boldsymbol{\beta}}),
+$$
+
+the difference between the observed number of events (0 or 1) and the
+expected number under the fitted model.  These residuals are useful for
+detecting the correct *functional form* of a continuous covariate: plot
+$\hat{M}_i$ against $x_j$ and add a LOWESS smooth.  A nonlinear trend
+suggests that $x_j$ should enter the model as a transformation (log,
+spline, etc.) rather than linearly.
+
+```{python}
+#| label: fig-martingale
+#| fig-cap: "Martingale residuals vs age. A flat LOWESS smooth supports the linear functional form. A curve would suggest transforming the covariate."
+
+# Compute martingale residuals
+# Expected cumulative hazard for each subject
+lp_fit = X_cox @ cox.params
+order_e = np.argsort(t_obs_cox)
+t_sorted_e = t_obs_cox[order_e]
+d_sorted_e = d_cox[order_e]
+elp_sorted = np.exp(lp_fit[order_e])
+
+# Breslow cumulative hazard at each observation time
+H0_all = np.zeros(n)
+cum_h0 = 0.0
+risk_sum = np.sum(np.exp(lp_fit))
+prev_t = -1.0
+
+for idx in range(n):
+    # Remove subjects no longer at risk
+    if idx > 0:
+        gone = (t_sorted_e < t_sorted_e[idx])
+        risk_sum_curr = np.sum(
+            np.exp(lp_fit[t_obs_cox >= t_sorted_e[idx]])
+        )
+    else:
+        risk_sum_curr = risk_sum
+
+    if d_sorted_e[idx] == 1 and t_sorted_e[idx] != prev_t:
+        d_at_t = np.sum(
+            (t_obs_cox == t_sorted_e[idx]) & (d_cox == 1)
+        )
+        cum_h0 += d_at_t / risk_sum_curr
+        prev_t = t_sorted_e[idx]
+
+    H0_all[order_e[idx]] = cum_h0
+
+martingale = d_cox - H0_all * np.exp(lp_fit)
+
+fig, ax = plt.subplots()
+ax.scatter(X_cox[:, 0], martingale, s=10, alpha=0.4)
+smooth_m = lowess(martingale, X_cox[:, 0], frac=0.3)
+ax.plot(smooth_m[:, 0], smooth_m[:, 1], color='C1',
+        linewidth=2, label='LOWESS')
+ax.axhline(0, color='gray', linewidth=0.5)
+ax.set_xlabel("Age")
+ax.set_ylabel("Martingale residual")
+ax.set_title("Functional form check")
+ax.legend()
+plt.show()
+```
+
+## Cox--Snell residuals {#sec-ch18-cox-snell}
+
+The Cox--Snell residual is the fitted cumulative hazard for subject $i$:
+
+$$
+r_i^{\text{CS}} = \hat{H}_0(t_i)\exp(\mathbf{x}_i^\top\hat{\boldsymbol{\beta}}).
+$$
+
+If the model fits well, the $r_i^{\text{CS}}$ for uncensored subjects
+should follow a unit-rate exponential distribution --- equivalently,
+the Nelson--Aalen estimate of the cumulative hazard of the $r_i^{\text{CS}}$
+should be close to the 45-degree line.
+
+```{python}
+#| label: fig-cox-snell
+#| fig-cap: "Cox-Snell residual plot. If the model fits well, the Nelson-Aalen estimate of the cumulative hazard of the residuals should follow the 45-degree line."
+
+cs_resid = H0_all * np.exp(lp_fit)
+
+# Nelson-Aalen of the Cox-Snell residuals
+sf_cs = SurvfuncRight(cs_resid, d_cox)
+na_cs = -np.log(sf_cs.surv_prob)
+
+fig, ax = plt.subplots()
+ax.step(sf_cs.surv_times, na_cs, where='post',
+        label="Nelson-Aalen of CS residuals")
+max_val = min(np.max(sf_cs.surv_times), np.max(na_cs))
+ax.plot([0, max_val], [0, max_val], '--', color='gray',
+        label="45° line (perfect fit)")
+ax.set_xlabel("Cox-Snell residual")
+ax.set_ylabel("Cumulative hazard")
+ax.set_title("Overall model fit")
+ax.legend()
+plt.show()
+```
+
+## Concordance index (C-statistic) {#sec-ch18-concordance}
+
+The concordance index measures *discrimination*: among all pairs of
+subjects where the one with the shorter observed time had an event,
+what fraction have the higher predicted risk?
+
+$$
+C = \frac{\sum_{i,j} \mathbb{1}(\hat{\eta}_i > \hat{\eta}_j)
+          \cdot \mathbb{1}(t_i < t_j) \cdot \delta_i}
+         {\sum_{i,j} \mathbb{1}(t_i < t_j) \cdot \delta_i},
+$$
+
+where $\hat{\eta}_i = \mathbf{x}_i^\top\hat{\boldsymbol{\beta}}$ is
+the linear predictor.  $C = 0.5$ means no discrimination (random);
+$C = 1$ means perfect discrimination.  It is the survival-analysis
+analogue of the AUC for binary classifiers.
+
+```{python}
+#| label: concordance
+
+def concordance_index(times, events, risk_scores):
+    """Harrell's concordance index."""
+    concordant = 0
+    discordant = 0
+    tied = 0
+
+    event_idx = np.where(events == 1)[0]
+    for i in event_idx:
+        # Compare with subjects who survived longer
+        longer = times > times[i]
+        scores_longer = risk_scores[longer]
+        concordant += np.sum(risk_scores[i] > scores_longer)
+        discordant += np.sum(risk_scores[i] < scores_longer)
+        tied += np.sum(risk_scores[i] == scores_longer)
+
+    total = concordant + discordant + tied
+    if total == 0:
+        return 0.5
+    return (concordant + 0.5 * tied) / total
+
+
+lp_pred = X_cox @ cox.params
+c_idx = concordance_index(t_obs_cox, d_cox, lp_pred)
+print(f"Concordance index: {c_idx:.3f}")
+print(f"(0.5 = random, 1.0 = perfect discrimination)")
+```
+
 ## Common pitfalls
 
 1. **Ignoring censoring:** Treating censored observations as events
@@ -476,36 +1101,163 @@ If the PH assumption is violated:
 3. **Ignoring competing risks:** If patients can die from multiple
    causes, the KM estimator for one cause is biased because it treats
    deaths from other causes as censoring. Use cause-specific hazards
-   or the Fine-Gray subdistribution hazard.
+   or the Fine--Gray subdistribution hazard (@sec-ch18-competing-risks).
 
 
 # Computational Considerations {#sec-ch18-computation}
 
 | Method | Cost | Notes |
 |---|---|---|
-| Kaplan-Meier | $O(n \log n)$ (sort) | Nonparametric |
-| Cox PH (partial likelihood) | $O(n \cdot p)$ per iteration | Risk set computation at each event |
-| Parametric AFT | $O(n \cdot p)$ per iteration | Use `lifelines` |
+| Kaplan--Meier | $O(n \log n)$ (sort) | Nonparametric, no iteration |
+| Nelson--Aalen | $O(n \log n)$ (sort) | Same structure as KM |
+| Log-rank test | $O(n \log n)$ | Single pass after sorting |
+| Cox PH (Breslow) | $O(n \cdot p)$ per iteration | Risk set sums dominate |
+| Cox PH (Efron) | $O(n \cdot p \cdot \bar{d})$ per iteration | $\bar{d}$ = avg tied events per time |
+| Concordance index | $O(n^2)$ naive, $O(n \log n)$ tree | Naive loop is simple but slow |
+| Stratified Cox | $O(n \cdot p)$ per iteration | Sum partials over strata |
+
+The main bottleneck in Cox regression is the risk-set computation at
+each event time.  Sorting by descending time and accumulating a running
+sum (as in our from-scratch implementation) reduces this to a single
+$O(n)$ pass per iteration, making the total cost $O(n \cdot p \cdot
+\text{iterations})$.  Newton--Raphson typically converges in 5--10
+iterations for well-conditioned problems.
 
 
 # Worked Example {#sec-ch18-example}
 
-```{python}
-#| label: worked
-# Full survival analysis workflow
-print("1. Kaplan-Meier by group:")
-for g in [0, 1]:
-    mask = group == g
-    sf_g = SurvfuncRight(t_obs[mask], d[mask])
-    median_idx = np.searchsorted(-sf_g.surv_prob, -0.5)
-    median_t = sf_g.surv_times[min(median_idx, len(sf_g.surv_times)-1)]
-    print(f"   Group {g}: median survival ≈ {median_t:.1f}")
+We walk through a complete survival analysis on simulated clinical
+trial data: two treatment arms, two continuous covariates, and
+moderate censoring.  The workflow follows the sequence a practitioner
+would use: descriptive analysis → group comparison → regression →
+diagnostics.
 
-print(f"\n2. Log-rank test: p={pval:.4f}")
-print(f"\n3. Cox model:")
-print(f"   Treatment HR = {np.exp(cox.params[1]):.3f}")
-print(f"   95% CI: ({np.exp(cox.conf_int()[1,0]):.3f}, "
-      f"{np.exp(cox.conf_int()[1,1]):.3f})")
+```{python}
+#| label: worked-data
+# Simulate a clinical trial dataset
+n_trial = 400
+arm = rng.binomial(1, 0.5, n_trial)  # 0=control, 1=drug
+age_trial = rng.normal(60, 8, n_trial)
+biomarker = rng.normal(0, 1, n_trial)
+
+# Cox-structured event times
+lp_trial = (0.03 * (age_trial - 60)
+            + 0.4 * biomarker
+            - 0.6 * arm)
+rate_trial = 0.02 * np.exp(lp_trial)
+t_event_trial = rng.exponential(1/rate_trial)
+t_censor_trial = rng.uniform(10, 50, n_trial)
+t_obs_trial = np.minimum(t_event_trial, t_censor_trial)
+d_trial = (t_event_trial <= t_censor_trial).astype(int)
+
+print(f"Sample size: {n_trial}")
+print(f"Events: {d_trial.sum()} ({d_trial.mean():.0%})")
+print(f"Control arm: {(arm==0).sum()}, "
+      f"Drug arm: {(arm==1).sum()}")
+```
+
+```{python}
+#| label: fig-worked-km
+#| fig-cap: "Kaplan-Meier curves by treatment arm. The drug arm shows improved survival (curve shifted right)."
+
+# Step 1: KM curves by treatment arm
+fig, ax = plt.subplots()
+for g, label, color in [(0, 'Control', 'C0'),
+                        (1, 'Drug', 'C1')]:
+    mask_g = arm == g
+    sf_g = SurvfuncRight(t_obs_trial[mask_g],
+                         d_trial[mask_g])
+    ax.step(sf_g.surv_times, sf_g.surv_prob,
+            where='post', color=color, label=label)
+    se_g = sf_g.surv_prob_se
+    ax.fill_between(sf_g.surv_times,
+                    np.maximum(sf_g.surv_prob - 1.96*se_g, 0),
+                    np.minimum(sf_g.surv_prob + 1.96*se_g, 1),
+                    step='post', alpha=0.15, color=color)
+
+ax.set_xlabel("Time")
+ax.set_ylabel("S(t)")
+ax.legend()
+plt.show()
+```
+
+```{python}
+#| label: worked-analysis
+# Step 2: Log-rank test
+stat_trial, pval_trial = survdiff(t_obs_trial, d_trial, arm)
+print(f"Log-rank test: chi2={stat_trial:.2f}, "
+      f"p={pval_trial:.4f}")
+
+# Step 3: Cox regression
+X_trial = np.column_stack([age_trial, biomarker, arm])
+cox_trial = PHReg(
+    t_obs_trial, X_trial, status=d_trial
+).fit()
+
+print("\nCox model results:")
+names = ["age", "biomarker", "drug"]
+for i, name in enumerate(names):
+    hr = np.exp(cox_trial.params[i])
+    ci = np.exp(cox_trial.conf_int()[i])
+    print(f"  {name:10s}: HR={hr:.3f}"
+          f"  95% CI=({ci[0]:.3f}, {ci[1]:.3f})"
+          f"  p={cox_trial.pvalues[i]:.4f}")
+
+# Step 4: Concordance index
+lp_trial_fit = X_trial @ cox_trial.params
+c_trial = concordance_index(
+    t_obs_trial, d_trial, lp_trial_fit
+)
+print(f"\nConcordance index: {c_trial:.3f}")
+
+# Step 5: Compare estimated vs true coefficients
+print(f"\nTrue betas:      age=0.03, biomarker=0.4, "
+      f"drug=-0.6")
+print(f"Estimated betas: age={cox_trial.params[0]:.3f}, "
+      f"biomarker={cox_trial.params[1]:.3f}, "
+      f"drug={cox_trial.params[2]:.3f}")
+```
+
+```{python}
+#| label: fig-worked-diagnostics
+#| fig-cap: "Diagnostic suite: (a) Schoenfeld residuals for the drug covariate with LOWESS smooth — a flat line supports PH. (b) Log-log plot by arm — parallel curves confirm PH."
+
+# Step 6: Full diagnostic suite
+fig, axes = plt.subplots(1, 2, figsize=(8, 3.5))
+
+# (a) Schoenfeld residuals for drug
+schoen_trial = cox_trial.schoenfeld_residuals
+event_t = t_obs_trial[d_trial == 1]
+schoen_drug = schoen_trial[d_trial == 1, 2]
+
+axes[0].scatter(event_t, schoen_drug, s=8, alpha=0.4)
+smooth_s = lowess(schoen_drug, event_t, frac=0.3)
+axes[0].plot(smooth_s[:, 0], smooth_s[:, 1],
+             color='C1', linewidth=2)
+axes[0].axhline(0, color='gray', linewidth=0.5)
+axes[0].set_xlabel("Event time")
+axes[0].set_ylabel("Schoenfeld residual (drug)")
+axes[0].set_title("(a) PH check")
+
+# (b) Log-log plot
+for g, label, color in [(0, 'Control', 'C0'),
+                        (1, 'Drug', 'C1')]:
+    mask_g = arm == g
+    sf_g = SurvfuncRight(t_obs_trial[mask_g],
+                         d_trial[mask_g])
+    valid = sf_g.surv_prob > 0
+    axes[1].step(
+        np.log(sf_g.surv_times[valid]),
+        np.log(-np.log(sf_g.surv_prob[valid])),
+        where='post', label=label, color=color)
+
+axes[1].set_xlabel("ln(time)")
+axes[1].set_ylabel("ln(-ln(S(t)))")
+axes[1].set_title("(b) Log-log plot")
+axes[1].legend()
+
+plt.tight_layout()
+plt.show()
 ```
 
 
@@ -599,7 +1351,32 @@ always worthwhile.
 
 # Bibliographic Notes {#sec-ch18-biblio}
 
-Kaplan--Meier: Kaplan and Meier (1958). Greenwood's variance: Greenwood
-(1926). Cox regression: Cox (1972). The partial likelihood justification:
-Cox (1975) and Efron (1977). Schoenfeld residuals: Schoenfeld (1982).
-For a comprehensive treatment: Kalbfleisch and Prentice (2002).
+**Kaplan--Meier** estimator: @kaplan1958nonparametric.  The NPMLE
+characterization was formalized by @johansen1978statistical.
+**Greenwood's variance**: @greenwood1926natural; the delta-method
+derivation follows @klein2003survival Ch. 3.  **Nelson--Aalen**
+estimator: independently proposed by @nelson1972theory and
+@aalen1978nonparametric.
+
+**Cox regression**: @cox1972regression introduced the partial
+likelihood.  The asymptotic theory (consistency, efficiency) was
+developed by @andersen1982cox.  @efron1977efficiency showed that the
+partial likelihood is asymptotically fully efficient for
+$\boldsymbol{\beta}$.  **Tie-handling**: @breslow1974covariance (the
+default in most software) and @efron1977efficiency (better
+approximation for heavy ties).
+
+**Log-rank test**: @mantel1966evaluation; its equivalence to the Cox
+score test is shown in @klein2003survival §8.5.  **Schoenfeld
+residuals**: @schoenfeld1982partial.  **Martingale and Cox--Snell
+residuals**: @therneau2000modeling Ch. 4.  **Concordance index**:
+@harrell1996multivariable.
+
+**Competing risks**: @prentice1978analysis introduced the cause-specific
+hazard framework; @fine1999proportional developed the subdistribution
+hazard model.  For a modern treatment: @beyersmann2012competing.
+
+For a comprehensive reference combining theory, software, and worked
+examples: @kalbfleisch2002statistical and @klein2003survival.
+@therneau2000modeling is the definitive guide to diagnostics and
+residuals in Cox models.

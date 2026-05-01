@@ -44,13 +44,16 @@ others didn't ($D = 0$). You observe covariates $\mathbf{X}$
 earnings, test score). You want to estimate the causal effect of $D$
 on $Y$.
 
-Three estimators, all built from scipy/statsmodels/sklearn components:
+Four estimators, all built from scipy/statsmodels/sklearn components:
 
 1. **Regression adjustment** — fit separate outcome models for treated
    and control, predict counterfactuals
-2. **IPW (Inverse Probability Weighting)** — reweight observations to
+2. **Matching** — pair treated and control units with similar
+   covariates, compare outcomes within pairs
+3. **IPW (Inverse Probability Weighting)** — reweight observations to
    create a pseudo-population where treatment is random
-3. **AIPW (Augmented IPW)** — combines both for "double robustness"
+4. **AIPW (Augmented IPW)** — combines regression and weighting for
+   "double robustness"
 
 
 # Mathematical Foundation {#sec-ch21-math}
@@ -134,7 +137,121 @@ for a single number --- the propensity score.
 In practice, we estimate $e(\mathbf{x})$ using logistic regression
 or other classifiers (sklearn's `LogisticRegression`).
 
-## The three estimators
+### Proof of the Rosenbaum-Rubin theorem
+
+The theorem is worth proving because the proof *is* the design
+principle: it shows exactly why propensity-score methods work and
+what they require.
+
+**Claim:** If $(Y(1), Y(0)) \perp D \mid \mathbf{X}$, then
+$(Y(1), Y(0)) \perp D \mid e(\mathbf{X})$.
+
+**Proof.** We need to show that $\Pr(D=1 \mid Y(1), Y(0),
+e(\mathbf{X})) = \Pr(D=1 \mid e(\mathbf{X}))$. Start from the
+right-hand side. By the law of iterated expectations, conditioning
+on $e(\mathbf{X})$:
+
+$$
+\Pr(D=1 \mid e(\mathbf{X})) = \mathbb{E}[\Pr(D=1 \mid \mathbf{X})
+\mid e(\mathbf{X})] = \mathbb{E}[e(\mathbf{X}) \mid e(\mathbf{X})]
+= e(\mathbf{X}).
+$$
+
+The first equality uses the tower property. The second uses the
+definition of the propensity score. The third is trivial: a
+function of $e(\mathbf{X})$ is measurable with respect to
+$e(\mathbf{X})$.
+
+Now for the left-hand side. Since unconfoundedness holds given
+$\mathbf{X}$, and $e(\mathbf{X})$ is a function of $\mathbf{X}$:
+
+$$
+\Pr(D=1 \mid Y(1), Y(0), e(\mathbf{X}))
+= \mathbb{E}[\Pr(D=1 \mid Y(1), Y(0), \mathbf{X})
+\mid Y(1), Y(0), e(\mathbf{X})]
+$$
+
+By unconfoundedness, $\Pr(D=1 \mid Y(1), Y(0), \mathbf{X}) =
+\Pr(D=1 \mid \mathbf{X}) = e(\mathbf{X})$. Substituting:
+
+$$
+= \mathbb{E}[e(\mathbf{X}) \mid Y(1), Y(0), e(\mathbf{X})]
+= e(\mathbf{X}).
+$$
+
+Both sides equal $e(\mathbf{X})$, so $D$ is conditionally
+independent of the potential outcomes given the propensity score.
+$\square$
+
+**Why this matters for code:** The proof tells you that after you
+estimate $\hat{e}(\mathbf{x})$, you can stratify, match, or
+reweight on this single number instead of the full covariate vector.
+This is why IPW works --- it reweights by $1/\hat{e}$ rather than
+requiring nonparametric adjustment in the full $\mathbf{X}$ space.
+
+### Positivity violations
+
+Positivity requires $0 < e(\mathbf{x}) < 1$ for all $\mathbf{x}$.
+When this fails --- some covariate strata have $e(\mathbf{x})
+\approx 0$ or $\approx 1$ --- the causal effect is not identified
+for those strata, and estimation becomes unstable.
+
+**Practical consequences:**
+
+- **IPW weights explode.** If $e(\mathbf{x}_i) = 0.01$, the weight
+  $1/e(\mathbf{x}_i) = 100$. A single observation with near-zero
+  propensity can dominate the entire estimate.
+- **Effective sample size drops.** The ESS formula
+  $(\sum w_i)^2 / \sum w_i^2$ captures how many independent
+  observations the weighted sample is worth. Extreme weights mean
+  few observations drive the estimate.
+- **Extrapolation.** If no treated units exist in some covariate
+  region, the outcome model must extrapolate the counterfactual
+  $\mu_1(\mathbf{x})$ from distant data --- pure model dependence.
+
+**Diagnostic:** The propensity score histogram (shown in
+@sec-ch21-diagnostics) reveals positivity violations as regions
+where one group's distribution has mass but the other's does not.
+
+**Practical responses:**
+
+1. **Trimming:** Discard units with $\hat{e}(\mathbf{x}) < c$ or
+   $> 1 - c$ (common choices: $c = 0.01$ or $c = 0.05$). This
+   changes the estimand from the population ATE to the ATE among
+   the trimmed population.
+2. **Stabilized weights:** Replace $1/e$ with $e_{\text{marg}} / e$
+   where $e_{\text{marg}} = \Pr(D=1)$ is the marginal treatment
+   probability. This preserves consistency while reducing variance.
+3. **AIPW:** Less sensitive to extreme weights because the outcome
+   model handles the regions where $e(\mathbf{x})$ is extreme.
+
+## The four estimators
+
+### Matching
+
+The oldest approach: for each treated unit, find one or more control
+units with similar covariates and compare their outcomes. The ATE
+estimate averages the within-match differences.
+
+**Distance metrics:**
+
+- *Exact matching:* Require $\mathbf{X}_i = \mathbf{X}_j$. Only
+  feasible with few discrete covariates.
+- *Mahalanobis distance:*
+  $d(\mathbf{x}_i, \mathbf{x}_j) = \sqrt{(\mathbf{x}_i -
+  \mathbf{x}_j)^\top \mathbf{S}^{-1} (\mathbf{x}_i -
+  \mathbf{x}_j)}$ where $\mathbf{S}$ is the pooled sample covariance.
+  Scale-invariant and accounts for correlations between covariates.
+- *Propensity-score distance:*
+  $d(\mathbf{x}_i, \mathbf{x}_j) = |e(\mathbf{x}_i) -
+  e(\mathbf{x}_j)|$. Reduces matching to a one-dimensional problem
+  by the Rosenbaum-Rubin theorem.
+
+**Limitation:** Matching discards unmatched units, which changes the
+estimand (the population you're averaging over). With replacement,
+the same control unit may be matched multiple times, inflating its
+influence. Matching quality degrades in high dimensions (the
+"curse of dimensionality").
 
 ### Regression adjustment
 
@@ -162,6 +279,35 @@ $\hat{\tau}_{\text{IPW}} = \frac{1}{n}\sum_i \left[\frac{D_i Y_i}{e(\mathbf{X}_i
 $e(\mathbf{x})$ are near 0 or 1 (poor overlap), the weights become
 extreme and the estimate is unstable.
 
+**IPW asymptotic variance.** The IPW estimator has influence
+function $\psi_i^{\text{IPW}} = D_i Y_i / e(\mathbf{X}_i) -
+(1-D_i) Y_i / (1-e(\mathbf{X}_i)) - \tau$, so its asymptotic
+variance is:
+
+$$
+V_{\text{IPW}} = \mathbb{E}\!\left[
+\frac{D_i Y_i^2}{e(\mathbf{X}_i)^2} +
+\frac{(1-D_i) Y_i^2}{(1-e(\mathbf{X}_i))^2}
+\right] - \tau^2
+$$
+
+This grows as $e(\mathbf{x}) \to 0$ or $e(\mathbf{x}) \to 1$,
+confirming the weight-instability intuition. In code, we estimate
+this via the sample variance of the individual IPW contributions,
+connecting to the M-estimation framework from Chapter 12.
+
+**Stabilized (Hajek) IPW.** The *normalized* variant divides
+treated and control weighted means by their respective weight sums:
+
+$\hat{\tau}_{\text{Hajek}} = \frac{\sum_i D_i Y_i / e_i}{\sum_i
+D_i / e_i} - \frac{\sum_i (1-D_i) Y_i / (1-e_i)}{\sum_i
+(1-D_i) / (1-e_i)}$
+
+This is invariant to rescaling of the weights and has lower
+variance than the unnormalized Horvitz-Thompson estimator when the
+sample size varies across strata. It is slightly biased in finite
+samples but the bias is $O(1/n)$.
+
 ### AIPW (Augmented IPW): double robustness
 
 AIPW combines both approaches:
@@ -182,6 +328,78 @@ that use the IPW weights to fix any bias in the regression. If the
 regression is perfect ($\hat{\mu}_d = \mu_d$), the corrections have
 mean zero and don't hurt. If the regression is wrong but the
 propensity is right, the corrections fix the bias.
+
+### Proof of double robustness {#sec-ch21-dr-proof}
+
+This proof is worth giving in full because it reveals the mechanism
+behind the estimator's resilience --- and shows exactly what "double
+robustness" means mathematically.
+
+**Claim.** Let $\hat{\mu}_d(\mathbf{x})$ and $\hat{e}(\mathbf{x})$
+be working models for the outcome and propensity, respectively.
+The AIPW estimator is consistent for $\tau$ if *either* (a)
+$\hat{\mu}_d(\mathbf{x}) \xrightarrow{p} \mu_d(\mathbf{x})$ for
+$d \in \{0, 1\}$, or (b) $\hat{e}(\mathbf{x}) \xrightarrow{p}
+e(\mathbf{x})$.
+
+**Proof.** Write the AIPW score for a single observation:
+
+$$
+\phi_i = \hat{\mu}_1(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i)
++ \frac{D_i(Y_i - \hat{\mu}_1(\mathbf{X}_i))}{\hat{e}(\mathbf{X}_i)}
+- \frac{(1-D_i)(Y_i - \hat{\mu}_0(\mathbf{X}_i))}{1-\hat{e}(\mathbf{X}_i)}
+$$
+
+Take expectations conditional on $\mathbf{X}_i$, treating the
+working models as fixed (they converge to their probability
+limits):
+
+$$
+\mathbb{E}[\phi_i \mid \mathbf{X}_i] =
+\hat{\mu}_1(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i)
++ \frac{e(\mathbf{X}_i)(\mu_1(\mathbf{X}_i) -
+\hat{\mu}_1(\mathbf{X}_i))}{\hat{e}(\mathbf{X}_i)}
+- \frac{(1-e(\mathbf{X}_i))(\mu_0(\mathbf{X}_i) -
+\hat{\mu}_0(\mathbf{X}_i))}{1-\hat{e}(\mathbf{X}_i)}
+$$
+
+where we used $\mathbb{E}[D_i \mid \mathbf{X}_i] =
+e(\mathbf{X}_i)$ and $\mathbb{E}[Y_i \mid D_i=d, \mathbf{X}_i] =
+\mu_d(\mathbf{X}_i)$.
+
+**Case (a): outcome model correct** ($\hat{\mu}_d = \mu_d$).
+The residuals $\mu_d - \hat{\mu}_d = 0$, so the correction terms
+vanish regardless of $\hat{e}$:
+
+$$
+\mathbb{E}[\phi_i \mid \mathbf{X}_i] =
+\mu_1(\mathbf{X}_i) - \mu_0(\mathbf{X}_i) = \tau(\mathbf{X}_i).
+$$
+
+Taking the outer expectation gives $\mathbb{E}[\phi_i] = \tau$.
+
+**Case (b): propensity model correct** ($\hat{e} = e$). The
+correction terms become:
+
+$$
+(\mu_1(\mathbf{X}_i) - \hat{\mu}_1(\mathbf{X}_i)) -
+(\mu_0(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i))
+$$
+
+which, combined with the regression terms, yields:
+
+$$
+\mathbb{E}[\phi_i \mid \mathbf{X}_i] =
+\mu_1(\mathbf{X}_i) - \mu_0(\mathbf{X}_i) = \tau(\mathbf{X}_i).
+$$
+
+Again, $\mathbb{E}[\phi_i] = \tau$. $\square$
+
+**The key insight** is that the AIPW score decomposes into a
+regression component plus an IPW-based correction. The correction
+removes any first-order bias from the regression, but only needs
+*one* of the two models to be correct to do so. This is the same
+Neyman-orthogonality property exploited by DML in Chapter 23.
 
 
 # The Algorithm {#sec-ch21-algorithm}
@@ -211,6 +429,31 @@ propensity is right, the corrections fix the bias.
 5. **Standard error:** $\hat{\text{se}} = \text{sd}(\text{AIPW}_i) / \sqrt{n}$.
    This uses the *influence function* representation of the estimator
    (connecting to M-estimation theory from Chapter 12).
+:::
+
+::: {.callout-note appearance="minimal"}
+## Algorithm 21.2: Nearest-Neighbor Matching
+
+**Input:** Data $(\mathbf{X}, D, Y)$, distance metric $d$,
+number of matches $M$
+
+**Output:** $\hat{\tau}_{\text{match}}$
+
+1. **Compute pooled covariance** $\mathbf{S}$ from $\mathbf{X}$.
+
+2. **For each treated unit $i$:** Find the $M$ nearest control
+   units by $d(\mathbf{X}_i, \mathbf{X}_j)$ where $D_j = 0$.
+   Compute $\hat{Y}_i(0) = \frac{1}{M} \sum_{j \in
+   \mathcal{M}(i)} Y_j$.
+
+3. **For each control unit $j$:** Find the $M$ nearest treated
+   units by $d(\mathbf{X}_j, \mathbf{X}_k)$ where $D_k = 1$.
+   Compute $\hat{Y}_j(1) = \frac{1}{M} \sum_{k \in
+   \mathcal{M}(j)} Y_k$.
+
+4. **Estimate ATE:**
+   $\hat{\tau} = \frac{1}{n} \sum_{i=1}^n [D_i(Y_i -
+   \hat{Y}_i(0)) + (1-D_i)(\hat{Y}_i(1) - Y_i)]$
 :::
 
 
@@ -371,18 +614,143 @@ residual bias from the outcome model. If the outcome model is perfect,
 the corrections are noise around zero. If the outcome model is wrong
 but the propensity is right, the corrections fix the bias.
 
+## Step-by-step: stabilized (Hajek) IPW
+
+```{python}
+#| label: hajek-ipw
+# Stabilized weights: divide by the sum within each group
+# This is the Hajek estimator — lower variance than HT
+w_treated = 1 / e_hat[D == 1]
+w_control = 1 / (1 - e_hat[D == 0])
+
+# Weighted means with normalized weights
+mu1_hajek = (
+    np.sum(Y[D == 1] * w_treated) / np.sum(w_treated)
+)
+mu0_hajek = (
+    np.sum(Y[D == 0] * w_control) / np.sum(w_control)
+)
+ate_hajek = mu1_hajek - mu0_hajek
+
+# Compare with unnormalized IPW
+print(f"Horvitz-Thompson IPW: {ate_ipw:.3f}")
+print(f"Hajek (stabilized):   {ate_hajek:.3f}")
+print(f"True ATE:             {tau_true}")
+print(f"\nHajek is often closer — normalization reduces "
+      f"sensitivity to extreme weights.")
+```
+
+**What happened:** The Hajek estimator normalizes by the sum of
+weights within each group. This is equivalent to using stabilized
+weights $w_i^{\text{stab}} = D_i \cdot \bar{D} / e_i +
+(1-D_i) \cdot (1 - \bar{D}) / (1-e_i)$ where $\bar{D}$ is the
+marginal treatment rate.
+
+## Step-by-step: matching with Mahalanobis distance
+
+```{python}
+#| label: matching
+def match_ate(X, D, Y, n_matches=1):
+    """Nearest-neighbor matching using Mahalanobis distance.
+
+    Implements Algorithm 21.2. For each unit, finds
+    the closest unit(s) in the opposite treatment group
+    and imputes the missing potential outcome.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n, p)
+        Covariates.
+    D : ndarray of shape (n,)
+        Treatment indicator (0 or 1).
+    Y : ndarray of shape (n,)
+        Observed outcomes.
+    n_matches : int
+        Number of nearest neighbors to match.
+
+    Returns
+    -------
+    ate : float
+        Estimated ATE.
+    matched_diffs : ndarray
+        Per-unit treatment effect estimates.
+    """
+    n = len(Y)
+    # Pooled covariance for Mahalanobis distance
+    S = np.cov(X, rowvar=False)
+    S_inv = np.linalg.inv(S)
+
+    treated_idx = np.where(D == 1)[0]
+    control_idx = np.where(D == 0)[0]
+
+    matched_diffs = np.zeros(n)
+
+    for i in range(n):
+        if D[i] == 1:
+            # Find nearest control(s)
+            pool = control_idx
+        else:
+            # Find nearest treated unit(s)
+            pool = treated_idx
+
+        # Mahalanobis distance to all units in pool
+        diff = X[pool] - X[i]
+        dists = np.sqrt(
+            np.sum(diff @ S_inv * diff, axis=1)
+        )
+
+        # Indices of n_matches nearest neighbors
+        nn = pool[np.argsort(dists)[:n_matches]]
+        y_imputed = Y[nn].mean()
+
+        if D[i] == 1:
+            # Observed Y(1), imputed Y(0)
+            matched_diffs[i] = Y[i] - y_imputed
+        else:
+            # Imputed Y(1), observed Y(0)
+            matched_diffs[i] = y_imputed - Y[i]
+
+    return matched_diffs.mean(), matched_diffs
+
+
+ate_match, match_diffs = match_ate(X, D, Y, n_matches=1)
+print(f"Matching ATE (M=1): {ate_match:.3f} "
+      f"(true: {tau_true})")
+
+# Try M=3 for smoother estimate
+ate_match3, _ = match_ate(X, D, Y, n_matches=3)
+print(f"Matching ATE (M=3): {ate_match3:.3f}")
+```
+
+**What happened:** For each unit, we found the closest unit in
+the other treatment group (by Mahalanobis distance) and used its
+outcome as the counterfactual. The $O(n^2 p)$ loop is slow but
+transparent --- production implementations use $k$-d trees. The
+single-match estimator is noisier than $M=3$ because each
+counterfactual depends on one neighbor.
+
 ## Comparison of all estimators
 
 ```{python}
 #| label: comparison
+naive_est = Y[D == 1].mean() - Y[D == 0].mean()
+se_match = match_diffs.std() / np.sqrt(n)
+
 print(f"{'Method':<20} {'ATE':>8} {'SE':>8} {'Bias':>8}")
 print("-" * 48)
 print(f"{'True':<20} {tau_true:>8.3f}")
-print(f"{'Naive':<20} {Y[D==1].mean()-Y[D==0].mean():>8.3f} "
-      f"{'':>8} {Y[D==1].mean()-Y[D==0].mean()-tau_true:>8.3f}")
-print(f"{'Regression':<20} {ate_reg:>8.3f} {'':>8} {ate_reg-tau_true:>8.3f}")
-print(f"{'IPW':<20} {ate_ipw:>8.3f} {'':>8} {ate_ipw-tau_true:>8.3f}")
-print(f"{'AIPW':<20} {ate_aipw:>8.3f} {se_aipw:>8.3f} {ate_aipw-tau_true:>8.3f}")
+print(f"{'Naive':<20} {naive_est:>8.3f} "
+      f"{'':>8} {naive_est - tau_true:>8.3f}")
+print(f"{'Regression':<20} {ate_reg:>8.3f} "
+      f"{'':>8} {ate_reg - tau_true:>8.3f}")
+print(f"{'Matching (M=1)':<20} {ate_match:>8.3f} "
+      f"{se_match:>8.3f} {ate_match - tau_true:>8.3f}")
+print(f"{'IPW (HT)':<20} {ate_ipw:>8.3f} "
+      f"{'':>8} {ate_ipw - tau_true:>8.3f}")
+print(f"{'IPW (Hajek)':<20} {ate_hajek:>8.3f} "
+      f"{'':>8} {ate_hajek - tau_true:>8.3f}")
+print(f"{'AIPW':<20} {ate_aipw:>8.3f} "
+      f"{se_aipw:>8.3f} {ate_aipw - tau_true:>8.3f}")
 ```
 
 
@@ -441,7 +809,7 @@ plt.show()
 If any covariate remains imbalanced, the treatment effect estimate
 may still be confounded.
 
-## Sensitivity analysis
+## Sensitivity analysis: Rosenbaum bounds
 
 Unconfoundedness is *untestable* --- it assumes no unobserved
 confounders. Sensitivity analysis asks: "How strong would an
@@ -449,16 +817,143 @@ unobserved confounder need to be to explain away the estimated
 effect?" If only an implausibly strong confounder could do it,
 the result is robust.
 
+**Rosenbaum bounds** formalize this. Under unconfoundedness, any
+two units with the same covariates have the same odds of treatment.
+Rosenbaum's framework allows an unobserved confounder $U$ that
+shifts the treatment odds by a factor of at most $\Gamma$:
+
+$$
+\frac{1}{\Gamma} \leq
+\frac{\Pr(D_i=1 \mid \mathbf{X}, U) / \Pr(D_i=0 \mid \mathbf{X}, U)}
+{\Pr(D_j=1 \mid \mathbf{X}, U) / \Pr(D_j=0 \mid \mathbf{X}, U)}
+\leq \Gamma
+$$
+
+for matched pairs $(i, j)$ with the same $\mathbf{X}$. When
+$\Gamma = 1$, there is no unobserved confounding. As $\Gamma$
+increases, we allow stronger confounders. For each $\Gamma$, we
+compute bounds on the $p$-value: if the treatment effect remains
+significant even at large $\Gamma$, the result is robust.
+
 ```{python}
 #| label: sensitivity
-# Simple sensitivity check: how much does the estimate change
-# if we omit a known confounder (x1)?
-ate_no_x1 = Y[D==1].mean() - Y[D==0].mean()  # same as naive
+# Simplified Rosenbaum bounds for matched-pair data
+# For each matched pair, compute the signed rank statistic
+# under varying degrees of hidden bias (Gamma)
+
+def rosenbaum_bounds(diffs, gammas):
+    """Compute Rosenbaum sensitivity bounds.
+
+    For a set of matched-pair differences, computes
+    the worst-case p-value under hidden bias of
+    strength Gamma.
+
+    Parameters
+    ----------
+    diffs : ndarray
+        Matched-pair outcome differences (treated -
+        control).
+    gammas : array-like
+        Values of Gamma to evaluate.
+
+    Returns
+    -------
+    results : list of (gamma, p_upper)
+        Worst-case p-values for each Gamma.
+    """
+    abs_diffs = np.abs(diffs)
+    # Rank the absolute differences
+    ranks = stats.rankdata(abs_diffs)
+    signs = np.sign(diffs)
+
+    results = []
+    for gamma in gammas:
+        # Under hidden bias Gamma, the probability that
+        # the treated unit in pair i has the larger
+        # outcome ranges from 1/(1+Gamma) to Gamma/(1+Gamma)
+        p_plus = gamma / (1 + gamma)
+
+        # The signed-rank statistic T+ = sum of ranks
+        # where diff > 0
+        t_plus = np.sum(ranks[signs > 0])
+
+        # Under the worst case, each positive pair has
+        # probability p_plus of being positive
+        n_pairs = len(diffs)
+        # Expected value and variance of T+ under
+        # worst-case assignment
+        e_t = p_plus * n_pairs * (n_pairs + 1) / 2
+        var_t = (
+            p_plus * (1 - p_plus)
+            * n_pairs * (n_pairs + 1)
+            * (2 * n_pairs + 1) / 6
+        )
+
+        # Normal approximation for p-value
+        if var_t > 0:
+            z = (t_plus - e_t) / np.sqrt(var_t)
+            p_val = 1 - stats.norm.cdf(z)
+        else:
+            p_val = 0.5
+
+        results.append((gamma, p_val))
+
+    return results
+
+
+# Use matched-pair differences from our matching estimator
+# Get matched pairs for treated units
+S_cov = np.cov(X, rowvar=False)
+S_inv = np.linalg.inv(S_cov)
+treated_idx = np.where(D == 1)[0]
+control_idx = np.where(D == 0)[0]
+
+pair_diffs = []
+for i in treated_idx:
+    diff = X[control_idx] - X[i]
+    dists = np.sqrt(
+        np.sum(diff @ S_inv * diff, axis=1)
+    )
+    nn = control_idx[np.argmin(dists)]
+    pair_diffs.append(Y[i] - Y[nn])
+
+pair_diffs = np.array(pair_diffs)
+
+gammas = [1.0, 1.2, 1.5, 2.0, 2.5, 3.0]
+bounds = rosenbaum_bounds(pair_diffs, gammas)
+
+print("Rosenbaum sensitivity analysis")
+print(f"{'Gamma':>6} {'p-value (upper)':>16}")
+print("-" * 24)
+for gamma, p in bounds:
+    sig = "***" if p < 0.001 else (
+        "**" if p < 0.01 else (
+        "*" if p < 0.05 else ""))
+    print(f"{gamma:>6.1f} {p:>16.4f} {sig}")
+print(f"\nResult robust up to Gamma where p > 0.05.")
+print(f"Higher Gamma = more robust to hidden bias.")
+```
+
+The table tells you: even if an unobserved confounder doubled the
+odds of treatment ($\Gamma = 2$), the effect would still be
+statistically significant. This is a strong result --- it means
+you'd need an implausibly powerful hidden confounder to explain
+away the effect.
+
+A complementary check: how much does the estimate shift when we
+omit a known confounder?
+
+```{python}
+#| label: sensitivity-omit
+# Omission-based sensitivity: drop x1 and see the bias
+ate_no_x1 = Y[D == 1].mean() - Y[D == 0].mean()
 print(f"ATE with x1 adjustment:    {ate_aipw:.3f}")
 print(f"ATE without x1 (biased):   {ate_no_x1:.3f}")
-print(f"Bias from omitting x1:     {ate_no_x1 - ate_aipw:.3f}")
-print(f"\nThis tells you: an unobserved confounder as strong as x1")
-print(f"would change the estimate by {abs(ate_no_x1 - ate_aipw):.3f}.")
+print(f"Bias from omitting x1:     "
+      f"{ate_no_x1 - ate_aipw:.3f}")
+print(f"\nAn unobserved confounder as strong as x1")
+print(f"would shift the estimate by "
+      f"{abs(ate_no_x1 - ate_aipw):.3f}.")
 ```
 
 
@@ -466,11 +961,12 @@ print(f"would change the estimate by {abs(ate_no_x1 - ate_aipw):.3f}.")
 
 | Method | Cost | Memory | Notes |
 |---|---|---|---|
-| Regression adjustment | $O(np^2)$ × 2 (two OLS fits) | $O(np)$ | Fast, most efficient if model is right |
-| IPW | $O(np)$ (one logistic fit) | $O(n)$ weights | Simple, can be unstable with extreme weights |
-| AIPW | $O(np^2)$ × 2 + $O(np)$ (both models) | $O(n)$ scores | Best overall: doubly robust + SE from scores |
+| Regression | $O(np^2)$ × 2 (two OLS) | $O(np)$ | Fast, efficient if model right |
+| Matching | $O(n^2 p)$ brute-force | $O(n^2)$ dist. matrix | Slow; $k$-d tree gives $O(n \log n)$ |
+| IPW | $O(np)$ (one logistic) | $O(n)$ weights | Simple, unstable with extreme weights |
+| AIPW | $O(np^2)$ × 2 + $O(np)$ | $O(n)$ scores | Best overall: doubly robust + SE from scores |
 
-All three estimators are fast for typical observational studies
+All four estimators are fast for typical observational studies
 ($n < 10^5$, $p < 100$). For larger problems, consider doubly robust
 estimators with machine learning nuisance models (Chapter 23, DML).
 
@@ -525,10 +1021,201 @@ se_w = aipw_w.std() / np.sqrt(n_w)
 print(f"True training effect:  ${tau_w:,.0f}")
 print(f"Naive estimate:        ${naive_w:,.0f}")
 print(f"AIPW estimate:         ${ate_w:,.0f} (SE: ${se_w:,.0f})")
-print(f"95% CI: (${ate_w - 1.96*se_w:,.0f}, ${ate_w + 1.96*se_w:,.0f})")
+print(f"95% CI: (${ate_w - 1.96*se_w:,.0f}, "
+      f"${ate_w + 1.96*se_w:,.0f})")
 print(f"\nNaive is biased upward because educated workers")
-print(f"self-select into training AND earn more regardless.")
+print(f"self-select into training AND earn more.")
 ```
+
+Now run all four estimators on the same data and compare.
+
+```{python}
+#| label: worked-all-estimators
+# --- Regression adjustment ---
+mu1_w_hat = m1.predict(X_w_sm)
+mu0_w_hat = m0.predict(X_w_sm)
+ate_reg_w = (mu1_w_hat - mu0_w_hat).mean()
+
+# --- IPW (Horvitz-Thompson) ---
+ate_ipw_w = np.mean(
+    D_w * Y_w / e_w_hat
+    - (1 - D_w) * Y_w / (1 - e_w_hat)
+)
+
+# --- Hajek (stabilized) IPW ---
+w1_w = 1 / e_w_hat[D_w == 1]
+w0_w = 1 / (1 - e_w_hat[D_w == 0])
+mu1_hajek_w = (
+    np.sum(Y_w[D_w == 1] * w1_w) / np.sum(w1_w)
+)
+mu0_hajek_w = (
+    np.sum(Y_w[D_w == 0] * w0_w) / np.sum(w0_w)
+)
+ate_hajek_w = mu1_hajek_w - mu0_hajek_w
+
+# --- Matching ---
+ate_match_w, _ = match_ate(X_w, D_w, Y_w, n_matches=3)
+
+# --- Comparison ---
+naive_w = Y_w[D_w == 1].mean() - Y_w[D_w == 0].mean()
+print(f"{'Method':<20} {'ATE':>10} {'Bias':>10}")
+print("-" * 42)
+print(f"{'True':<20} {tau_w:>10,.0f}")
+print(f"{'Naive':<20} {naive_w:>10,.0f} "
+      f"{naive_w - tau_w:>10,.0f}")
+print(f"{'Regression':<20} {ate_reg_w:>10,.0f} "
+      f"{ate_reg_w - tau_w:>10,.0f}")
+print(f"{'Matching (M=3)':<20} {ate_match_w:>10,.0f} "
+      f"{ate_match_w - tau_w:>10,.0f}")
+print(f"{'IPW (HT)':<20} {ate_ipw_w:>10,.0f} "
+      f"{ate_ipw_w - tau_w:>10,.0f}")
+print(f"{'IPW (Hajek)':<20} {ate_hajek_w:>10,.0f} "
+      f"{ate_hajek_w - tau_w:>10,.0f}")
+print(f"{'AIPW':<20} {ate_w:>10,.0f} "
+      f"{ate_w - tau_w:>10,.0f}")
+```
+
+## Diagnostic suite for the worked example
+
+The diagnostic suite answers three questions: (1) is the propensity
+model adequate? (2) do the treated and control groups overlap? (3)
+do the weights or matching produce covariate balance?
+
+```{python}
+#| label: fig-worked-diagnostics
+#| fig-cap: "Full diagnostic suite for the job training example. Top-left: propensity score distributions — good overlap is essential. Top-right: covariate balance before and after IPW. Bottom-left: IPW weight distribution — long tails signal positivity concerns. Bottom-right: propensity model calibration."
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+
+# --- Panel 1: Propensity score overlap ---
+ax = axes[0, 0]
+ax.hist(
+    e_w_hat[D_w == 1], bins=30, alpha=0.5,
+    density=True, label="Treated", color="C0"
+)
+ax.hist(
+    e_w_hat[D_w == 0], bins=30, alpha=0.5,
+    density=True, label="Control", color="C1"
+)
+ax.set_xlabel("Propensity score")
+ax.set_ylabel("Density")
+ax.legend(fontsize=8)
+ax.set_title("Overlap check")
+
+# --- Panel 2: Covariate balance (love plot) ---
+ax = axes[0, 1]
+cov_names = ["Education", "Experience", "Log earnings"]
+smd_raw_w = []
+smd_ipw_w = []
+for j in range(3):
+    # Raw SMD
+    pool_sd = X_w[:, j].std()
+    raw = (
+        X_w[D_w == 1, j].mean()
+        - X_w[D_w == 0, j].mean()
+    ) / pool_sd
+    smd_raw_w.append(abs(raw))
+
+    # Weighted SMD
+    w1 = 1 / e_w_hat[D_w == 1]
+    w0 = 1 / (1 - e_w_hat[D_w == 0])
+    wm1 = (
+        (X_w[D_w == 1, j] * w1).sum() / w1.sum()
+    )
+    wm0 = (
+        (X_w[D_w == 0, j] * w0).sum() / w0.sum()
+    )
+    smd_ipw_w.append(abs((wm1 - wm0) / pool_sd))
+
+y_pos = np.arange(3)
+ax.barh(
+    y_pos - 0.15, smd_raw_w, 0.3,
+    label="Before IPW", color="C0"
+)
+ax.barh(
+    y_pos + 0.15, smd_ipw_w, 0.3,
+    label="After IPW", color="C1"
+)
+ax.set_yticks(y_pos)
+ax.set_yticklabels(cov_names)
+ax.set_xlabel("Absolute SMD")
+ax.axvline(
+    0.1, color="gray", linestyle="--", alpha=0.5,
+    label="< 0.1 threshold"
+)
+ax.legend(fontsize=7)
+ax.set_title("Covariate balance")
+
+# --- Panel 3: Weight distribution ---
+ax = axes[1, 0]
+ipw_weights = np.where(
+    D_w, 1 / e_w_hat, 1 / (1 - e_w_hat)
+)
+ax.hist(
+    ipw_weights, bins=50, color="C2",
+    edgecolor="white", linewidth=0.5
+)
+ax.set_xlabel("IPW weight")
+ax.set_ylabel("Count")
+ax.set_title("Weight distribution")
+ess = (
+    ipw_weights.sum() ** 2
+    / (ipw_weights ** 2).sum()
+)
+ax.text(
+    0.95, 0.95,
+    f"ESS: {ess:.0f} / {n_w}",
+    transform=ax.transAxes,
+    ha="right", va="top", fontsize=9
+)
+
+# --- Panel 4: Propensity calibration ---
+ax = axes[1, 1]
+# Bin propensity scores, compare predicted vs actual
+n_bins = 10
+bins = np.linspace(0, 1, n_bins + 1)
+bin_centers = []
+bin_means = []
+for b in range(n_bins):
+    mask = (
+        (e_w_hat >= bins[b])
+        & (e_w_hat < bins[b + 1])
+    )
+    if mask.sum() > 0:
+        bin_centers.append(
+            (bins[b] + bins[b + 1]) / 2
+        )
+        bin_means.append(D_w[mask].mean())
+
+ax.plot(
+    bin_centers, bin_means, "o-",
+    color="C0", label="Observed"
+)
+ax.plot([0, 1], [0, 1], "--", color="gray",
+        label="Perfect calibration")
+ax.set_xlabel("Predicted P(D=1)")
+ax.set_ylabel("Observed P(D=1)")
+ax.legend(fontsize=8)
+ax.set_title("Propensity calibration")
+
+plt.tight_layout()
+plt.show()
+```
+
+**Reading the diagnostics:**
+
+- **Overlap (top-left):** If the two histograms don't overlap, some
+  units have no comparable counterparts in the other group ---
+  positivity is violated and no estimator can fix this.
+- **Balance (top-right):** After IPW, all SMDs should be below 0.1.
+  Remaining imbalance means confounding may persist.
+- **Weights (bottom-left):** A long right tail signals near-violations
+  of positivity. The ESS tells you the effective information content
+  --- if ESS is much smaller than $n$, the estimate is driven by
+  a few heavily weighted units.
+- **Calibration (bottom-right):** If the propensity model is well
+  calibrated, points follow the diagonal. Systematic deviation means
+  the propensity model is misspecified --- IPW will be biased.
 
 
 # Exercises {#sec-ch21-exercises}
@@ -691,10 +1378,25 @@ Propensity score: Rosenbaum and Rubin (1983). The balancing property
 paper.
 
 IPW: Horvitz and Thompson (1952) for the survey sampling origin.
-The application to causal inference: Robins (1986).
+The application to causal inference: Robins (1986). The stabilized
+(Hajek) estimator: Hajek (1971).
+
+Matching: Rubin (1973) for bias reduction via matching; Abadie and
+Imbens (2006) for large-sample properties of matching estimators,
+including the result that matching with replacement is
+$\sqrt{n}$-consistent but has a bias term that requires correction
+when the number of matches is fixed. Mahalanobis distance matching:
+Rubin (1980).
 
 AIPW and double robustness: Robins, Rotnitzky, and Zhao (1994). The
-semiparametric efficiency bound for the ATE: Hahn (1998).
+semiparametric efficiency bound for the ATE: Hahn (1998). The
+double-robustness proof in @sec-ch21-dr-proof follows the argument
+in Lunceford and Davidian (2004), which gives a clear finite-sample
+decomposition.
+
+Sensitivity analysis: Rosenbaum (2002, Ch. 4) for the theory of
+sensitivity bounds. Cinelli and Hazlett (2020) for the omitted
+variable bias framework as a modern alternative.
 
 For textbooks: Imbens and Rubin (2015) for the potential-outcomes
 approach; Hernán and Robins (2020) for a modern epidemiological

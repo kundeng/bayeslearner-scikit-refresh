@@ -63,6 +63,93 @@ vs component number). The "elbow" --- where eigenvalues drop from
 large to small --- suggests the number of true underlying factors.
 Components after the elbow are noise.
 
+## Factor analysis: latent variables behind observed data
+
+PCA finds directions of maximum variance, but it does not
+model *why* those directions exist. Factor analysis does: it
+posits that the $p$ observed variables are driven by $k \ll p$
+latent factors plus idiosyncratic noise:
+
+$$
+\mathbf{X} = \boldsymbol{\Lambda}\mathbf{f}
+  + \boldsymbol{\varepsilon},
+$$
+
+where $\boldsymbol{\Lambda}$ is a $p \times k$ *loadings* matrix,
+$\mathbf{f}$ is the $k \times 1$ factor vector, and
+$\boldsymbol{\varepsilon} \sim \mathcal{N}(\mathbf{0},
+\boldsymbol{\Psi})$ with $\boldsymbol{\Psi}$ diagonal (each
+variable has its own noise, uncorrelated with others). The
+implied covariance is $\boldsymbol{\Sigma} =
+\boldsymbol{\Lambda}\boldsymbol{\Lambda}^\top +
+\boldsymbol{\Psi}$.
+
+**The rotation indeterminacy problem.** For any orthogonal
+matrix $\mathbf{R}$ ($\mathbf{R}^\top\mathbf{R} = \mathbf{I}$),
+define $\tilde{\boldsymbol{\Lambda}} =
+\boldsymbol{\Lambda}\mathbf{R}$ and $\tilde{\mathbf{f}} =
+\mathbf{R}^\top\mathbf{f}$. Then
+$\tilde{\boldsymbol{\Lambda}}\tilde{\mathbf{f}} =
+\boldsymbol{\Lambda}\mathbf{R}\mathbf{R}^\top\mathbf{f} =
+\boldsymbol{\Lambda}\mathbf{f}$ --- the model produces
+identical data. The loadings are not uniquely determined by
+the data; there are infinitely many equivalent solutions
+related by rotation.
+
+This is not a bug --- it is a fundamental property of the
+model. Without additional constraints, asking "which variable
+loads on which factor" has no unique answer. *Varimax rotation*
+(Kaiser, 1958) resolves the ambiguity by finding the rotation
+$\mathbf{R}$ that maximizes the variance of the squared
+loadings within each factor. This pushes each loading toward
+either 0 or $\pm 1$, yielding a *simple structure* where
+each variable loads heavily on one factor and weakly on
+others. The rotation does not change the fit ($\boldsymbol{\Lambda}\boldsymbol{\Lambda}^\top$ is
+invariant) --- it changes interpretability.
+
+**PCA vs factor analysis:** PCA extracts directions of maximum
+variance without modeling error structure. Factor analysis
+models the error structure explicitly (the diagonal
+$\boldsymbol{\Psi}$) and separates common variance
+($\boldsymbol{\Lambda}\boldsymbol{\Lambda}^\top$) from unique
+variance ($\boldsymbol{\Psi}$). When $\boldsymbol{\Psi}
+\to \mathbf{0}$ (no unique variance), factor analysis
+reduces to PCA.
+
+## Canonical correlation analysis (CCA)
+
+CCA generalizes correlation to two *sets* of variables.
+Given $\mathbf{X}_1 \in \mathbb{R}^{n \times p_1}$ and
+$\mathbf{X}_2 \in \mathbb{R}^{n \times p_2}$, CCA finds
+linear combinations $\mathbf{a}^\top\mathbf{X}_1$ and
+$\mathbf{b}^\top\mathbf{X}_2$ that are maximally correlated:
+
+$$
+(\mathbf{a}_1, \mathbf{b}_1) = \arg\max_{\mathbf{a}, \mathbf{b}}
+\text{Corr}(\mathbf{X}_1\mathbf{a}, \mathbf{X}_2\mathbf{b}).
+$$
+
+This reduces to a *generalized eigenvalue problem*. Partition
+the covariance matrix as
+$\boldsymbol{\Sigma} = \begin{pmatrix}
+\boldsymbol{\Sigma}_{11} & \boldsymbol{\Sigma}_{12} \\
+\boldsymbol{\Sigma}_{21} & \boldsymbol{\Sigma}_{22}
+\end{pmatrix}$.
+The canonical correlations are the singular values of the
+matrix $\boldsymbol{\Sigma}_{11}^{-1/2}
+\boldsymbol{\Sigma}_{12}
+\boldsymbol{\Sigma}_{22}^{-1/2}$. Equivalently, they are the
+square roots of the eigenvalues of
+$\boldsymbol{\Sigma}_{11}^{-1}\boldsymbol{\Sigma}_{12}
+\boldsymbol{\Sigma}_{22}^{-1}\boldsymbol{\Sigma}_{21}$.
+
+The connection to SVD is direct: compute the SVD of the
+standardized cross-covariance matrix, and the singular values
+*are* the canonical correlations. The left and right singular
+vectors, mapped back through $\boldsymbol{\Sigma}_{11}^{-1/2}$
+and $\boldsymbol{\Sigma}_{22}^{-1/2}$, give the canonical
+weight vectors $\mathbf{a}$ and $\mathbf{b}$.
+
 ## Kernel density estimation: putting bumps at data points
 
 The histogram is the simplest density estimator, but it depends on
@@ -88,12 +175,55 @@ bias-variance tradeoff:
   becomes smooth. High bias (fine structure is smeared out) but low
   variance. The KDE is *smooth*.
 
+### The AMISE derivation
+
 The optimal bandwidth minimizes the *mean integrated squared error*
-(MISE). For a Gaussian kernel and Gaussian data, the optimal bandwidth
-is $h^* = 1.06 \hat{\sigma} n^{-1/5}$ (Silverman's rule). This gives
-a convergence rate of $O(n^{-2/5})$ for the density estimate --- slower
-than the parametric $n^{-1/2}$ rate, which is the *price of not
-assuming a parametric form*.
+(MISE), defined as $\text{MISE}(h) = \mathbb{E}\!\left[\int
+(\hat{f}(x) - f(x))^2\,dx\right]$. The MISE decomposes into
+integrated squared bias plus integrated variance. A Taylor expansion
+of the kernel convolution gives the pointwise bias and variance:
+
+$$
+\text{Bias}[\hat{f}(x)] = \tfrac{h^2}{2}\,\mu_2(K)\,f''(x)
+  + O(h^4),
+\qquad
+\text{Var}[\hat{f}(x)] = \frac{R(K)}{nh}\,f(x) + O(n^{-1}),
+$$
+
+where $\mu_2(K) = \int u^2 K(u)\,du$ is the second moment of the
+kernel and $R(K) = \int K(u)^2\,du$ is the roughness of the kernel.
+For the Gaussian kernel: $\mu_2(K) = 1$, $R(K) = 1/(2\sqrt{\pi})$.
+
+Integrating the pointwise MSE and dropping higher-order terms
+gives the *asymptotic* MISE (AMISE):
+
+$$
+\text{AMISE}(h) = \frac{h^4}{4}\,\mu_2(K)^2\,R(f'')
+  + \frac{R(K)}{nh},
+$$
+
+where $R(f'') = \int [f''(x)]^2\,dx$ is the roughness of the
+true density's second derivative. Differentiating with respect
+to $h$ and setting to zero:
+
+$$
+h^* = \left[\frac{R(K)}{\mu_2(K)^2\,R(f'')\,n}
+  \right]^{1/5} \propto n^{-1/5}.
+$$
+
+Substituting back yields $\text{AMISE}(h^*) \propto n^{-4/5}$,
+so the MISE-optimal *integrated* error rate is $n^{-4/5}$ and the
+pointwise rate is $n^{-2/5}$. Compare this to the parametric rate
+$n^{-1/2}$: the gap is the *price of nonparametrics*. You pay
+for not knowing the functional form, and the payment grows with
+dimension (see the curse-of-dimensionality table below).
+
+**Silverman's rule** plugs in $R(f'')$ for a Gaussian reference
+density, yielding $h^* = 1.06\,\hat{\sigma}\,n^{-1/5}$. This
+works well for unimodal, roughly symmetric data but oversmooths
+multimodal distributions --- the Gaussian reference has small
+$R(f'')$, so the rule picks a bandwidth too wide for data with
+sharp features.
 
 ## LOWESS and kernel regression
 
@@ -111,6 +241,43 @@ nonparametric analogue of bandwidth selection in KDE.
 weighting instead of LOWESS's tricube weights. Both converge to the
 true conditional expectation, but at the nonparametric rate
 $O(n^{-2/(d+4)})$.
+
+## Local linear regression and boundary bias
+
+The Nadaraya-Watson estimator (local constant kernel regression)
+takes a weighted average of nearby $Y$ values:
+
+$$
+\hat{m}(x) = \frac{\sum_{i=1}^n K_h(x - X_i)\,Y_i}
+  {\sum_{i=1}^n K_h(x - X_i)},
+$$
+
+where $K_h(\cdot) = K(\cdot/h)/h$. This has a problem at
+boundaries: when $x$ is near the edge of the data, the kernel
+weights are asymmetric (there are more points on one side),
+which introduces $O(1)$ bias --- the estimate is pulled toward
+the interior.
+
+*Local linear regression* (Fan, 1993) fixes this. Instead of
+averaging, it fits a weighted linear regression at each point:
+
+$$
+\hat{m}(x) = \mathbf{e}_1^\top
+  \arg\min_{\boldsymbol{\beta}} \sum_{i=1}^n
+  K_h(x - X_i)\,(Y_i - \beta_0 - \beta_1(X_i - x))^2,
+$$
+
+where $\mathbf{e}_1 = (1, 0)^\top$ extracts the intercept.
+The local linear fit *adapts* to the boundary: the linear term
+absorbs the asymmetric weighting, reducing boundary bias from
+$O(1)$ to $O(h^2)$ --- the same rate as in the interior.
+
+This is why statsmodels' `KernelReg` defaults to
+`reg_type='ll'` (local linear) rather than `reg_type='lc'`
+(local constant / Nadaraya-Watson). The local linear estimator
+is *design-adaptive*: it automatically handles boundaries,
+uneven spacing, and heterogeneous density of the $X$ values
+without manual adjustment.
 
 ## The curse of dimensionality
 
@@ -177,6 +344,128 @@ ax.legend()
 plt.show()
 ```
 
+## Factor analysis
+
+`statsmodels.multivariate.factor.Factor` fits the factor model
+$\mathbf{X} = \boldsymbol{\Lambda}\mathbf{f} +
+\boldsymbol{\varepsilon}$ and returns loadings, uniquenesses,
+and communalities. The `method` parameter selects the
+estimation approach: `'pa'` (principal axis factoring) is
+iterative but robust; `'ml'` (maximum likelihood) gives
+chi-squared goodness-of-fit tests but requires normality
+and may fail to converge.
+
+```{python}
+#| label: factor-demo
+from statsmodels.multivariate.factor import Factor
+from statsmodels.multivariate.factor_rotation import (
+    rotate_factors,
+)
+
+# Data with 2 true factors driving 6 observed variables
+n_fa, p_fa = 200, 6
+true_L = np.array([[1, 0], [0.9, 0], [0.8, 0],
+                    [0, 1], [0, 0.9], [0, 0.8]])
+fa_factors = rng.standard_normal((n_fa, 2))
+X_fa = (fa_factors @ true_L.T
+        + 0.3*rng.standard_normal((n_fa, p_fa)))
+
+fa = Factor(X_fa, n_factor=2, method='pa')
+res_fa = fa.fit()
+print("Unrotated loadings:")
+print(res_fa.loadings.round(3))
+print(f"\nUniqueness: {res_fa.uniqueness.round(3)}")
+```
+
+The unrotated loadings mix both factors on every variable.
+Varimax rotation reveals the true simple structure:
+
+```{python}
+#| label: factor-varimax
+# Varimax rotation finds the rotation R that maximizes
+# the variance of squared loadings within each factor
+L_rot, T_rot = rotate_factors(
+    res_fa.loadings, method='varimax',
+)
+print("Varimax-rotated loadings:")
+print(L_rot.round(3))
+```
+
+After rotation, variables 1--3 load on factor 1 and variables
+4--6 load on factor 2 --- recovering the true structure. The
+rotation matrix $\mathbf{T}$ satisfies
+$\mathbf{T}^\top\mathbf{T} = \mathbf{I}$, confirming it
+is an orthogonal rotation that preserves the fit.
+
+## Canonical correlation analysis (CCA)
+
+`statsmodels.multivariate.cancorr.CanCorr` computes canonical
+correlations between two variable sets and provides
+significance tests via Wilks' lambda.
+
+```{python}
+#| label: cca-demo
+from statsmodels.multivariate.cancorr import CanCorr
+
+# Two variable sets with a known shared factor
+shared = rng.standard_normal((200, 1))
+X1_cca = (shared @ rng.standard_normal((1, 3))
+          + 0.5*rng.standard_normal((200, 3)))
+X2_cca = (shared @ rng.standard_normal((1, 4))
+          + 0.5*rng.standard_normal((200, 4)))
+
+cc = CanCorr(X1_cca, X2_cca)
+cc_test = cc.corr_test()
+print("Canonical correlations:")
+for i, r in enumerate(
+    cc_test.stats['Canonical Correlation'].values
+):
+    print(f"  CC{i+1}: {r:.3f}")
+print("\nWilks' lambda test:")
+print(cc_test.stats[
+    ['Wilks\' lambda', 'Num DF', 'F Value', 'Pr > F']
+].to_string())
+```
+
+The first canonical correlation should be large (reflecting
+the shared factor), while the remaining correlations should
+be near zero (pure noise).
+
+## MANOVA
+
+`statsmodels.multivariate.manova.MANOVA` tests whether group
+means differ across multiple response variables simultaneously.
+It reports four test statistics: Wilks' lambda, Pillai's
+trace, Hotelling-Lawley trace, and Roy's greatest root.
+
+```{python}
+#| label: manova-demo
+import pandas as pd
+from statsmodels.multivariate.manova import MANOVA
+
+# Three groups with known differences on 2 response variables
+n_per = 80
+groups = np.repeat(['A', 'B', 'C'], n_per)
+y1 = np.concatenate([rng.normal(0, 1, n_per),
+                      rng.normal(1.5, 1, n_per),
+                      rng.normal(0.5, 1, n_per)])
+y2 = np.concatenate([rng.normal(0, 1, n_per),
+                      rng.normal(0, 1, n_per),
+                      rng.normal(2, 1, n_per)])
+df_mv = pd.DataFrame(
+    {'y1': y1, 'y2': y2, 'group': groups}
+)
+
+mv = MANOVA.from_formula('y1 + y2 ~ group', data=df_mv)
+print(mv.mv_test().results['group']['stat'])
+```
+
+Wilks' lambda is the most commonly reported: values near 0
+indicate strong group separation, values near 1 indicate
+groups are indistinguishable. The $F$ approximation converts
+lambda to a familiar scale; Pillai's trace is more robust
+to violations of homogeneity of covariance.
+
 ## Kernel density estimation
 
 KDE estimates the probability density from data, without assuming a
@@ -224,11 +513,39 @@ plt.show()
 
 ## Kernel regression
 
+`KernelReg` has two key parameters: `var_type` (variable types:
+`'c'` for continuous, `'u'` for unordered discrete, `'o'` for
+ordered discrete) and `reg_type` (`'ll'` for local linear,
+`'lc'` for local constant / Nadaraya-Watson). The bandwidth
+is selected automatically via least-squares cross-validation.
+
 ```{python}
 #| label: kernreg-demo
 kr = KernelReg(y_lo, x_lo, var_type='c', reg_type='ll')
 y_pred, y_mfx = kr.fit()
 print(f"KernelReg R²: {1 - np.var(y_lo - y_pred)/np.var(y_lo):.3f}")
+```
+
+```{python}
+#| label: fig-kernreg-comparison
+#| fig-cap: "Local linear vs local constant kernel regression. Both track the true curve in the interior, but local constant (Nadaraya-Watson) shows visible bias near the boundaries at x=0 and x=4π."
+
+# Compare reg_type='ll' vs 'lc'
+kr_lc = KernelReg(
+    y_lo, x_lo, var_type='c', reg_type='lc',
+)
+y_lc, _ = kr_lc.fit()
+
+fig, ax = plt.subplots()
+ax.scatter(x_lo, y_lo, s=8, alpha=0.3, color="C0")
+ax.plot(x_lo, y_pred, color="C1", linewidth=2,
+        label=f"Local linear (bw={kr.bw[0]:.2f})")
+ax.plot(x_lo, y_lc, color="C2", linewidth=2,
+        label=f"Local constant (bw={kr_lc.bw[0]:.2f})")
+ax.plot(x_lo, np.sin(x_lo), '--', color="gray",
+        label="True")
+ax.legend()
+plt.show()
 ```
 
 
@@ -244,6 +561,138 @@ U, S, Vt = np.linalg.svd(X_std, full_matrices=False)
 var_explained = S**2
 print(f"Top 3 variance: {var_explained[:3].round(2)}")
 print(f"statsmodels:    {pca.eigenvals[:3].round(2)}")
+```
+
+## KDE from scratch with Silverman bandwidth
+
+The from-scratch KDE places a Gaussian bump at each data
+point and sums. Silverman's rule provides the bandwidth.
+
+```{python}
+#| label: kde-scratch
+def kde_gaussian(x_eval, data, bw):
+    """Gaussian kernel density estimate.
+
+    Evaluates KDE at points x_eval using data and bandwidth
+    bw. Implements the estimator from §19.2.
+
+    Parameters
+    ----------
+    x_eval : array, shape (m,)
+        Points at which to evaluate the density.
+    data : array, shape (n,)
+        Observed sample.
+    bw : float
+        Bandwidth (kernel width).
+
+    Returns
+    -------
+    density : array, shape (m,)
+    """
+    n = len(data)
+    # Each row: one eval point; each col: one data point
+    u = (x_eval[:, None] - data[None, :]) / bw
+    # Gaussian kernel: (2π)^{-1/2} exp(-u²/2)
+    K = np.exp(-0.5 * u**2) / np.sqrt(2 * np.pi)
+    return K.sum(axis=1) / (n * bw)
+
+
+def silverman_bw(data):
+    """Silverman's rule-of-thumb bandwidth.
+
+    h = 1.06 * σ̂ * n^{-1/5}, optimal for Gaussian data.
+    """
+    sigma = np.std(data, ddof=1)
+    return 1.06 * sigma * len(data) ** (-1/5)
+
+
+bw_manual = silverman_bw(x_kde)
+x_grid = np.linspace(x_kde.min() - 1, x_kde.max() + 1, 500)
+f_hat = kde_gaussian(x_grid, x_kde, bw_manual)
+
+# Verify against statsmodels
+kde_check = KDEUnivariate(x_kde)
+kde_check.fit(kernel='gau', bw='silverman')
+
+print(f"Scratch bandwidth: {bw_manual:.4f}")
+print(f"statsmodels bw:    {kde_check.bw:.4f}")
+
+# Compare at a few points via interpolation
+from scipy.interpolate import interp1d
+sm_interp = interp1d(
+    kde_check.support, kde_check.density,
+    bounds_error=False, fill_value=0.0,
+)
+test_pts = np.array([-2, 0, 2])
+print("\nDensity comparison at test points:")
+for pt in test_pts:
+    print(f"  x={pt:+d}: scratch={kde_gaussian(np.array([pt]), x_kde, bw_manual)[0]:.4f}, "
+          f"sm={sm_interp(pt):.4f}")
+```
+
+## Local linear regression from scratch
+
+At each evaluation point $x$, local linear regression solves
+a weighted least squares problem: minimize
+$\sum_i K_h(x - X_i)(Y_i - \beta_0 - \beta_1(X_i - x))^2$.
+The solution uses the kernel-weighted normal equations.
+
+```{python}
+#| label: ll-scratch
+def local_linear(x_eval, X, Y, bw):
+    """Local linear kernel regression.
+
+    Solves a weighted least squares at each evaluation point.
+    Implements Fan (1993); see §19.2 on boundary bias.
+
+    Parameters
+    ----------
+    x_eval : array, shape (m,)
+        Evaluation points.
+    X : array, shape (n,)
+        Predictor values.
+    Y : array, shape (n,)
+        Response values.
+    bw : float
+        Bandwidth.
+
+    Returns
+    -------
+    y_hat : array, shape (m,)
+    """
+    m = len(x_eval)
+    y_hat = np.empty(m)
+    for j in range(m):
+        # Kernel weights: Gaussian kernel centered at x_eval[j]
+        u = (X - x_eval[j]) / bw
+        w = np.exp(-0.5 * u**2)
+        # Weighted design matrix: [1, X_i - x]
+        dx = X - x_eval[j]
+        # Normal equations for WLS:
+        # [Σw    Σw·dx  ] [β₀]   [Σw·Y    ]
+        # [Σw·dx Σw·dx²] [β₁] = [Σw·dx·Y ]
+        s0 = w.sum()
+        s1 = (w * dx).sum()
+        s2 = (w * dx**2).sum()
+        t0 = (w * Y).sum()
+        t1 = (w * dx * Y).sum()
+        det = s0 * s2 - s1**2
+        # β₀ is the fitted value at x_eval[j]
+        y_hat[j] = (s2 * t0 - s1 * t1) / det
+    return y_hat
+
+
+# Use the same bandwidth as statsmodels KernelReg
+bw_ll = kr.bw[0]
+y_scratch_ll = local_linear(x_lo, x_lo, y_lo, bw_ll)
+
+# Verify against statsmodels
+max_diff = np.max(np.abs(y_scratch_ll - y_pred))
+print(f"Max |scratch - statsmodels|: {max_diff:.6f}")
+print(f"R² (scratch): "
+      f"{1 - np.var(y_lo - y_scratch_ll)/np.var(y_lo):.3f}")
+print(f"R² (statsmodels): "
+      f"{1 - np.var(y_lo - y_pred)/np.var(y_lo):.3f}")
 ```
 
 
@@ -270,6 +719,42 @@ print(f"Components for 90% variance: {n_90}")
 print(f"Cumulative variance: {cumvar[:5].round(3)}")
 ```
 
+## Loading plot for PCA interpretation
+
+The scree plot tells you *how many* components matter. The
+*loading plot* tells you *what each component means* by
+showing how strongly each original variable contributes.
+
+```{python}
+#| label: fig-loading-plot
+#| fig-cap: "PCA loading plot for the first two components of the synthetic data. Each arrow shows how strongly a variable contributes to PC1 (horizontal) and PC2 (vertical). Variables that cluster together are correlated."
+
+# Loadings: correlations between original variables and PCs
+# pca.loadings gives the loadings matrix
+pc_loadings = np.asarray(pca.loadings)
+
+fig, ax = plt.subplots(figsize=(6, 5))
+for j in range(min(p, 10)):
+    ax.arrow(0, 0, pc_loadings[j, 0],
+             pc_loadings[j, 1],
+             head_width=0.03, head_length=0.02,
+             color="C0", alpha=0.7)
+    ax.text(pc_loadings[j, 0] * 1.1,
+            pc_loadings[j, 1] * 1.1,
+            f"V{j+1}", fontsize=9)
+ax.axhline(0, color="gray", linewidth=0.5)
+ax.axvline(0, color="gray", linewidth=0.5)
+ax.set_xlabel("PC1 loading")
+ax.set_ylabel("PC2 loading")
+ax.set_aspect('equal')
+plt.show()
+```
+
+Variables with loadings in the same direction on PC1 and PC2
+are positively correlated through those components. Variables
+at 90 degrees are uncorrelated; variables in opposite
+directions are negatively correlated.
+
 ## Bandwidth selection for KDE
 
 Silverman's rule (`bw='silverman'`) is the default. For multimodal
@@ -285,19 +770,109 @@ for bw_method in ['silverman', 'scott']:
     print(f"{bw_method}: bw = {kde_bw.bw:.4f}")
 ```
 
+## Leave-one-out cross-validation for bandwidth
+
+LOO-CV scores bandwidths by how well the KDE trained on
+$n-1$ points predicts the held-out point. This avoids
+the Gaussian reference assumption in Silverman's rule.
+
+```{python}
+#| label: loo-cv-bandwidth
+def loo_cv_score(data, bw):
+    """Leave-one-out log-likelihood for KDE bandwidth.
+
+    For each point i, fit KDE on all other points and
+    evaluate at point i. Returns mean log density.
+    """
+    n = len(data)
+    log_dens = np.empty(n)
+    for i in range(n):
+        # LOO: exclude point i
+        other = np.delete(data, i)
+        u = (data[i] - other) / bw
+        K = np.exp(-0.5 * u**2) / np.sqrt(2 * np.pi)
+        f_hat_i = K.sum() / ((n - 1) * bw)
+        # Avoid log(0)
+        log_dens[i] = np.log(max(f_hat_i, 1e-300))
+    return log_dens.mean()
+
+
+# Search over a grid of bandwidths
+bw_grid = np.linspace(0.1, 1.5, 30)
+cv_scores = [loo_cv_score(x_kde, b) for b in bw_grid]
+bw_cv = bw_grid[np.argmax(cv_scores)]
+print(f"LOO-CV optimal bandwidth: {bw_cv:.3f}")
+print(f"Silverman bandwidth:      {silverman_bw(x_kde):.3f}")
+```
+
+For the bimodal data, LOO-CV typically selects a smaller
+bandwidth than Silverman's rule, better resolving the two
+peaks. This is the tradeoff: Silverman is fast
+($O(1)$ computation) but assumes unimodality; LOO-CV is
+$O(n^2)$ but data-driven.
+
+## Residual diagnostics for kernel regression
+
+Residuals from kernel regression should show no systematic
+pattern. Structured residuals indicate the bandwidth is wrong
+or the relationship has features the smoother cannot capture.
+
+```{python}
+#| label: fig-kr-residuals
+#| fig-cap: "Residuals from local linear kernel regression on the sinusoidal data. No systematic pattern is visible, suggesting the bandwidth is appropriate."
+
+resid_kr = y_lo - y_pred
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+axes[0].scatter(x_lo, resid_kr, s=8, alpha=0.5)
+axes[0].axhline(0, color="gray", linewidth=0.5)
+axes[0].set_xlabel("x")
+axes[0].set_ylabel("Residual")
+
+axes[1].hist(resid_kr, bins=25, density=True, alpha=0.5)
+axes[1].set_xlabel("Residual")
+axes[1].set_ylabel("Density")
+plt.tight_layout()
+plt.show()
+```
+
+## When PCA fails: nonlinear manifolds
+
+PCA finds linear subspaces. If the data lies on a curved
+manifold (a Swiss roll, for example), PCA will spread the
+manifold across multiple components and fail to find a
+low-dimensional representation.
+
+Diagnostic: if the scree plot shows no clear elbow and the
+first few PCs explain little variance despite obvious
+structure in the data, suspect nonlinearity. In such cases,
+consider kernel PCA, t-SNE, or UMAP --- but note that these
+methods have their own tuning parameters and do not provide
+the same interpretability as PCA (no loadings, no variance
+decomposition). See Hastie, Tibshirani, and Friedman (2009),
+Ch. 14 for a treatment of nonlinear dimension reduction.
+
 
 # Computational Considerations {#sec-ch19-computation}
 
 | Method | Cost | Dimension limit |
 |---|---|---|
 | PCA (via SVD) | $O(\min(np^2, n^2 p))$ | Any (but interpretation degrades) |
+| Factor analysis (PA) | $O(p^3)$ per iteration | $p \leq$ several hundred |
+| Factor analysis (ML) | $O(p^3 + np^2)$ | May not converge for large $p$ |
+| CCA | $O(n(p_1 + p_2)^2)$ | Requires $n > p_1 + p_2$ |
+| MANOVA | $O(nGp^2)$ | $n \gg Gp$ for reliable tests |
 | KDE (1D) | $O(n)$ per evaluation | $d \leq 3$ for visualization |
 | KDE ($d$-dim) | $O(n \cdot d)$ per evaluation | Curse of dim: $d \leq 6$ |
 | LOWESS | $O(n^2)$ | 1D only |
 | Kernel regression | $O(n)$ per prediction | $d \leq 5$ practical |
+| LOO-CV bandwidth | $O(n^2 \cdot |\text{grid}|)$ | Affordable for $n < 10{,}000$ |
 
 For high-dimensional KDE ($d > 5$), consider dimensionality reduction
-(PCA) first, then KDE in the reduced space.
+(PCA) first, then KDE in the reduced space. For large-$n$ kernel
+regression, FFT-based binning reduces the cost from $O(n)$ to
+$O(\log n)$ per evaluation point; statsmodels uses this internally
+for 1D KDE via the `fft` parameter.
 
 
 # Worked Example {#sec-ch19-example}
@@ -327,6 +902,39 @@ print(f"\nKeep {n_keep} components for 80% variance")
 ```
 
 ```{python}
+#| label: fig-housing-loadings
+#| fig-cap: "PCA loading plot for California Housing. PC1 captures geographic/density information (latitude, longitude, population, households). PC2 captures wealth (income, house value proxy through rooms/bedrooms)."
+
+# Loading plot: which features drive each PC?
+feature_names = housing.feature_names
+h_loadings = np.asarray(pca_h.loadings)
+
+fig, ax = plt.subplots(figsize=(7, 5))
+for j in range(len(feature_names)):
+    ax.arrow(0, 0, h_loadings[j, 0],
+             h_loadings[j, 1],
+             head_width=0.02, head_length=0.015,
+             color="C0", alpha=0.8)
+    ax.text(h_loadings[j, 0] * 1.12,
+            h_loadings[j, 1] * 1.12,
+            feature_names[j], fontsize=8)
+ax.axhline(0, color="gray", linewidth=0.5)
+ax.axvline(0, color="gray", linewidth=0.5)
+ax.set_xlabel("PC1 loading")
+ax.set_ylabel("PC2 loading")
+ax.set_aspect('equal')
+plt.show()
+```
+
+The loading plot reveals structure that the scree plot alone
+cannot: PC1 groups geographic and density variables (latitude,
+longitude, population, households), while PC2 separates
+income and housing-quality variables (rooms, bedrooms). This
+tells you that the first two principal "directions" in the
+data correspond to interpretable themes --- geography vs
+economic status.
+
+```{python}
 #| label: worked-lowess
 # Nonparametric regression: MedInc → house value
 lowess_h = sm.nonparametric.lowess(
@@ -347,6 +955,45 @@ plt.show()
 The LOWESS curve reveals the nonlinear relationship between income and
 house price: roughly linear up to income ≈ 5, then flattening. This
 nonlinearity would be missed by OLS.
+
+```{python}
+#| label: fig-ols-vs-lowess
+#| fig-cap: "OLS (dashed line) vs LOWESS (solid curve) for the MedInc–house value relationship. OLS misses the flattening above income ≈ 5 and the ceiling effect at the maximum recorded value of 5.0 (\\$500k, a top-coding artifact in the data)."
+
+# Fit OLS for comparison
+import statsmodels.api as sm_ols
+X_inc = sm_ols.add_constant(housing.data[:, 0])
+ols_fit = sm_ols.OLS(housing.target, X_inc).fit()
+
+x_plot = np.linspace(
+    housing.data[:, 0].min(),
+    housing.data[:, 0].max(), 200,
+)
+
+fig, ax = plt.subplots()
+ax.scatter(housing.data[:, 0], housing.target, s=1,
+           alpha=0.08, color="C0")
+ax.plot(lowess_h[:, 0], lowess_h[:, 1], color="C1",
+        linewidth=2, label="LOWESS")
+ax.plot(x_plot,
+        ols_fit.params[0] + ols_fit.params[1] * x_plot,
+        '--', color="C2", linewidth=2, label="OLS")
+ax.set_xlabel("Median Income")
+ax.set_ylabel("Median House Value")
+ax.legend()
+plt.show()
+print(f"OLS R²:    {ols_fit.rsquared:.3f}")
+print(f"LOWESS picks up the plateau above income ≈ 5 and "
+      f"the ceiling at target = 5.0")
+```
+
+The comparison is diagnostic: when OLS and LOWESS diverge
+substantially, the linear specification is wrong. Here the
+divergence above income ≈ 5 reveals a saturation effect ---
+possibly driven by top-coding in the dataset (house values
+are capped at $500k, recorded as target = 5.0). A
+practitioner seeing this would investigate the top-coding
+rather than trusting the OLS slope.
 
 
 # Exercises {#sec-ch19-exercises}
@@ -436,6 +1083,9 @@ exponentially — this is the curse of dimensionality.
 | Question | Method | Why |
 |---|---|---|
 | "What are the main patterns in my data?" | PCA | Finds directions of max variance |
+| "What latent constructs drive my variables?" | Factor analysis | Models shared vs unique variance; rotation gives interpretable factors |
+| "How are two variable sets related?" | CCA | Finds max-correlation linear combinations |
+| "Do groups differ on multiple outcomes?" | MANOVA | Simultaneous multivariate test |
 | "What does this distribution look like?" | KDE | Estimates density without assuming shape |
 | "What is $\mathbb{E}[Y \mid X]$ without assuming linearity?" | LOWESS / KernelReg | Nonparametric regression |
 | "Can I reduce 100 variables to 5?" | PCA | If the first 5 PCs explain >90% variance |
@@ -451,18 +1101,45 @@ methods when you have evidence the parametric model is correct.
 # Bibliographic Notes {#sec-ch19-biblio}
 
 PCA: Pearson (1901), Hotelling (1933). The connection to the
-eigendecomposition of the covariance matrix is in Anderson (2003).
+eigendecomposition of the covariance matrix is in Anderson (2003),
+Ch. 11.
+
+Factor analysis: Spearman (1904) introduced the single-factor
+model. Thurstone (1947) developed multiple-factor analysis and
+the concept of simple structure. Kaiser (1958) proposed the
+varimax rotation criterion. Bartholomew et al. (2011), *Latent
+Variable Models and Factor Analysis*, gives a modern treatment.
+For the rotation indeterminacy problem and its consequences, see
+Mulaik (2009), *Foundations of Factor Analysis*, Ch. 10.
+
+CCA: Hotelling (1936) introduced canonical correlations.
+The connection to the generalized eigenvalue problem and SVD
+of the standardized cross-covariance is in Anderson (2003),
+Ch. 12. Hardoon, Szedmak, and Shawe-Taylor (2004) survey
+kernel extensions.
+
+MANOVA: Wilks (1932) for the lambda statistic; Pillai (1955)
+for the trace. Anderson (2003), Ch. 8, covers the theory and
+the relationship between the four test statistics.
 
 KDE: Rosenblatt (1956), Parzen (1962). Silverman (1986) for
-bandwidth selection theory and the rule-of-thumb bandwidth.
+bandwidth selection theory, the rule-of-thumb bandwidth, and
+the AMISE derivation reproduced in this chapter. Scott (1992),
+*Multivariate Density Estimation*, extends the theory to
+multiple dimensions.
 
 LOWESS: Cleveland (1979). The `frac` parameter is the analogue of
 the bandwidth.
 
 Kernel regression: Nadaraya (1964), Watson (1964). Local linear
-regression: Fan (1993), who showed it has better boundary behavior
-than kernel regression.
+regression: Fan (1993), who proved the boundary-bias result
+described in this chapter. Fan and Gijbels (1996), *Local
+Polynomial Modelling and Its Applications*, is the definitive
+reference. The design-adaptivity property (automatic boundary
+correction, adaptation to heterogeneous design density) is why
+`reg_type='ll'` is the default in statsmodels.
 
-For a comprehensive treatment of nonparametric methods in Python:
-see the `statsmodels.nonparametric` documentation and Wasserman
-(2006), *All of Nonparametric Statistics*.
+For a comprehensive treatment of nonparametric methods: Wasserman
+(2006), *All of Nonparametric Statistics*. For the statsmodels
+implementation details: Racine and Li (2004) describe the
+mixed-data kernel framework used by `KernelReg`.
