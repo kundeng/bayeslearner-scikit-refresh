@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Appendix A — Appendix A: Probability and Mathematical Statistics – Advanced Methods in SciPy and Statsmodels</title>
+<title>Appendix B — Probability and Mathematical Statistics – Advanced Methods in SciPy and Statsmodels</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -66,7 +66,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../chapters/appendix-matrix-algebra.html" rel="next">
-<link href="../chapters/23-hte-double-ml.html" rel="prev">
+<link href="../chapters/appendix-prerequisites.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -349,7 +349,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/appendix-probability-stats.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/appendix-probability-stats.html"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/appendix-prerequisites.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/appendix-probability-stats.html"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Probability and Mathematical Statistics</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -609,20 +609,20 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Python Scientific Computing Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/appendix-probability-stats.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></span></a>
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Probability and Mathematical Statistics</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/appendix-matrix-algebra.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../chapters/appendix-prerequisites.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Appendix C: Python Scientific Computing Reference</span></span></a>
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Matrix Algebra for Statistics</span></span></a>
   </div>
 </li>
       </ul>
@@ -639,75 +639,75 @@ window.Quarto = {
   <ul>
   <li><a href="#random-variables-and-distributions" id="toc-random-variables-and-distributions" class="nav-link active" data-scroll-target="#random-variables-and-distributions">Random Variables and Distributions</a>
   <ul class="collapse">
-  <li><a href="#discrete-random-variables" id="toc-discrete-random-variables" class="nav-link" data-scroll-target="#discrete-random-variables"><span class="header-section-number">A.0.1</span> Discrete random variables</a></li>
-  <li><a href="#continuous-random-variables" id="toc-continuous-random-variables" class="nav-link" data-scroll-target="#continuous-random-variables"><span class="header-section-number">A.0.2</span> Continuous random variables</a></li>
-  <li><a href="#expectation-variance-covariance" id="toc-expectation-variance-covariance" class="nav-link" data-scroll-target="#expectation-variance-covariance"><span class="header-section-number">A.0.3</span> Expectation, variance, covariance</a></li>
-  <li><a href="#joint-marginal-and-conditional-distributions" id="toc-joint-marginal-and-conditional-distributions" class="nav-link" data-scroll-target="#joint-marginal-and-conditional-distributions"><span class="header-section-number">A.0.4</span> Joint, marginal, and conditional distributions</a></li>
+  <li><a href="#discrete-random-variables" id="toc-discrete-random-variables" class="nav-link" data-scroll-target="#discrete-random-variables"><span class="header-section-number">B.0.1</span> Discrete random variables</a></li>
+  <li><a href="#continuous-random-variables" id="toc-continuous-random-variables" class="nav-link" data-scroll-target="#continuous-random-variables"><span class="header-section-number">B.0.2</span> Continuous random variables</a></li>
+  <li><a href="#expectation-variance-covariance" id="toc-expectation-variance-covariance" class="nav-link" data-scroll-target="#expectation-variance-covariance"><span class="header-section-number">B.0.3</span> Expectation, variance, covariance</a></li>
+  <li><a href="#joint-marginal-and-conditional-distributions" id="toc-joint-marginal-and-conditional-distributions" class="nav-link" data-scroll-target="#joint-marginal-and-conditional-distributions"><span class="header-section-number">B.0.4</span> Joint, marginal, and conditional distributions</a></li>
   </ul></li>
   <li><a href="#common-distribution-families" id="toc-common-distribution-families" class="nav-link" data-scroll-target="#common-distribution-families">Common Distribution Families</a>
   <ul class="collapse">
-  <li><a href="#continuous-distributions" id="toc-continuous-distributions" class="nav-link" data-scroll-target="#continuous-distributions"><span class="header-section-number">A.0.5</span> Continuous distributions</a></li>
-  <li><a href="#discrete-distributions" id="toc-discrete-distributions" class="nav-link" data-scroll-target="#discrete-distributions"><span class="header-section-number">A.0.6</span> Discrete distributions</a></li>
-  <li><a href="#relationships-between-distributions" id="toc-relationships-between-distributions" class="nav-link" data-scroll-target="#relationships-between-distributions"><span class="header-section-number">A.0.7</span> Relationships between distributions</a></li>
+  <li><a href="#continuous-distributions" id="toc-continuous-distributions" class="nav-link" data-scroll-target="#continuous-distributions"><span class="header-section-number">B.0.5</span> Continuous distributions</a></li>
+  <li><a href="#discrete-distributions" id="toc-discrete-distributions" class="nav-link" data-scroll-target="#discrete-distributions"><span class="header-section-number">B.0.6</span> Discrete distributions</a></li>
+  <li><a href="#relationships-between-distributions" id="toc-relationships-between-distributions" class="nav-link" data-scroll-target="#relationships-between-distributions"><span class="header-section-number">B.0.7</span> Relationships between distributions</a></li>
   </ul></li>
   <li><a href="#moment-generating-functions" id="toc-moment-generating-functions" class="nav-link" data-scroll-target="#moment-generating-functions">Moment Generating Functions</a></li>
   <li><a href="#convergence-concepts" id="toc-convergence-concepts" class="nav-link" data-scroll-target="#convergence-concepts">Convergence Concepts</a>
   <ul class="collapse">
-  <li><a href="#convergence-in-probability" id="toc-convergence-in-probability" class="nav-link" data-scroll-target="#convergence-in-probability"><span class="header-section-number">A.0.8</span> Convergence in probability</a></li>
-  <li><a href="#convergence-in-distribution" id="toc-convergence-in-distribution" class="nav-link" data-scroll-target="#convergence-in-distribution"><span class="header-section-number">A.0.9</span> Convergence in distribution</a></li>
-  <li><a href="#almost-sure-convergence" id="toc-almost-sure-convergence" class="nav-link" data-scroll-target="#almost-sure-convergence"><span class="header-section-number">A.0.10</span> Almost sure convergence</a></li>
-  <li><a href="#a-crucial-non-implication" id="toc-a-crucial-non-implication" class="nav-link" data-scroll-target="#a-crucial-non-implication"><span class="header-section-number">A.0.11</span> A crucial non-implication</a></li>
-  <li><a href="#slutskys-theorem" id="toc-slutskys-theorem" class="nav-link" data-scroll-target="#slutskys-theorem"><span class="header-section-number">A.0.12</span> Slutsky’s theorem</a></li>
+  <li><a href="#convergence-in-probability" id="toc-convergence-in-probability" class="nav-link" data-scroll-target="#convergence-in-probability"><span class="header-section-number">B.0.8</span> Convergence in probability</a></li>
+  <li><a href="#convergence-in-distribution" id="toc-convergence-in-distribution" class="nav-link" data-scroll-target="#convergence-in-distribution"><span class="header-section-number">B.0.9</span> Convergence in distribution</a></li>
+  <li><a href="#almost-sure-convergence" id="toc-almost-sure-convergence" class="nav-link" data-scroll-target="#almost-sure-convergence"><span class="header-section-number">B.0.10</span> Almost sure convergence</a></li>
+  <li><a href="#a-crucial-non-implication" id="toc-a-crucial-non-implication" class="nav-link" data-scroll-target="#a-crucial-non-implication"><span class="header-section-number">B.0.11</span> A crucial non-implication</a></li>
+  <li><a href="#slutskys-theorem" id="toc-slutskys-theorem" class="nav-link" data-scroll-target="#slutskys-theorem"><span class="header-section-number">B.0.12</span> Slutsky’s theorem</a></li>
   </ul></li>
   <li><a href="#law-of-large-numbers" id="toc-law-of-large-numbers" class="nav-link" data-scroll-target="#law-of-large-numbers">Law of Large Numbers</a></li>
   <li><a href="#central-limit-theorem" id="toc-central-limit-theorem" class="nav-link" data-scroll-target="#central-limit-theorem">Central Limit Theorem</a></li>
   <li><a href="#the-delta-method" id="toc-the-delta-method" class="nav-link" data-scroll-target="#the-delta-method">The Delta Method</a>
   <ul class="collapse">
-  <li><a href="#worked-example-variance-of-logbarx" id="toc-worked-example-variance-of-logbarx" class="nav-link" data-scroll-target="#worked-example-variance-of-logbarx"><span class="header-section-number">A.0.13</span> Worked example: variance of <span class="math inline">\(\log(\bar{X})\)</span></a></li>
+  <li><a href="#worked-example-variance-of-logbarx" id="toc-worked-example-variance-of-logbarx" class="nav-link" data-scroll-target="#worked-example-variance-of-logbarx"><span class="header-section-number">B.0.13</span> Worked example: variance of <span class="math inline">\(\log(\bar{X})\)</span></a></li>
   </ul></li>
   <li><a href="#maximum-likelihood-estimation" id="toc-maximum-likelihood-estimation" class="nav-link" data-scroll-target="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a>
   <ul class="collapse">
-  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup"><span class="header-section-number">A.0.14</span> Setup</a></li>
-  <li><a href="#score-function-and-fisher-information" id="toc-score-function-and-fisher-information" class="nav-link" data-scroll-target="#score-function-and-fisher-information"><span class="header-section-number">A.0.15</span> Score function and Fisher information</a></li>
-  <li><a href="#asymptotic-normality" id="toc-asymptotic-normality" class="nav-link" data-scroll-target="#asymptotic-normality"><span class="header-section-number">A.0.16</span> Asymptotic normality</a></li>
-  <li><a href="#cramér-rao-lower-bound" id="toc-cramér-rao-lower-bound" class="nav-link" data-scroll-target="#cramér-rao-lower-bound"><span class="header-section-number">A.0.17</span> Cramér-Rao lower bound</a></li>
-  <li><a href="#from-scratch-mle-fitting-a-gamma-distribution" id="toc-from-scratch-mle-fitting-a-gamma-distribution" class="nav-link" data-scroll-target="#from-scratch-mle-fitting-a-gamma-distribution"><span class="header-section-number">A.0.18</span> From-scratch MLE: fitting a Gamma distribution</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup"><span class="header-section-number">B.0.14</span> Setup</a></li>
+  <li><a href="#score-function-and-fisher-information" id="toc-score-function-and-fisher-information" class="nav-link" data-scroll-target="#score-function-and-fisher-information"><span class="header-section-number">B.0.15</span> Score function and Fisher information</a></li>
+  <li><a href="#asymptotic-normality" id="toc-asymptotic-normality" class="nav-link" data-scroll-target="#asymptotic-normality"><span class="header-section-number">B.0.16</span> Asymptotic normality</a></li>
+  <li><a href="#cramér-rao-lower-bound" id="toc-cramér-rao-lower-bound" class="nav-link" data-scroll-target="#cramér-rao-lower-bound"><span class="header-section-number">B.0.17</span> Cramér-Rao lower bound</a></li>
+  <li><a href="#from-scratch-mle-fitting-a-gamma-distribution" id="toc-from-scratch-mle-fitting-a-gamma-distribution" class="nav-link" data-scroll-target="#from-scratch-mle-fitting-a-gamma-distribution"><span class="header-section-number">B.0.18</span> From-scratch MLE: fitting a Gamma distribution</a></li>
   </ul></li>
   <li><a href="#exponential-families" id="toc-exponential-families" class="nav-link" data-scroll-target="#exponential-families">Exponential Families</a>
   <ul class="collapse">
-  <li><a href="#canonical-form" id="toc-canonical-form" class="nav-link" data-scroll-target="#canonical-form"><span class="header-section-number">A.0.19</span> Canonical form</a></li>
-  <li><a href="#canonical-table" id="toc-canonical-table" class="nav-link" data-scroll-target="#canonical-table"><span class="header-section-number">A.0.20</span> Canonical table</a></li>
-  <li><a href="#why-exponential-families-matter-for-the-book" id="toc-why-exponential-families-matter-for-the-book" class="nav-link" data-scroll-target="#why-exponential-families-matter-for-the-book"><span class="header-section-number">A.0.21</span> Why exponential families matter for the book</a></li>
+  <li><a href="#canonical-form" id="toc-canonical-form" class="nav-link" data-scroll-target="#canonical-form"><span class="header-section-number">B.0.19</span> Canonical form</a></li>
+  <li><a href="#canonical-table" id="toc-canonical-table" class="nav-link" data-scroll-target="#canonical-table"><span class="header-section-number">B.0.20</span> Canonical table</a></li>
+  <li><a href="#why-exponential-families-matter-for-the-book" id="toc-why-exponential-families-matter-for-the-book" class="nav-link" data-scroll-target="#why-exponential-families-matter-for-the-book"><span class="header-section-number">B.0.21</span> Why exponential families matter for the book</a></li>
   </ul></li>
   <li><a href="#conditional-expectation-and-the-tower-property" id="toc-conditional-expectation-and-the-tower-property" class="nav-link" data-scroll-target="#conditional-expectation-and-the-tower-property">Conditional Expectation and the Tower Property</a></li>
   <li><a href="#sufficient-statistics-and-rao-blackwell" id="toc-sufficient-statistics-and-rao-blackwell" class="nav-link" data-scroll-target="#sufficient-statistics-and-rao-blackwell">Sufficient Statistics and Rao-Blackwell</a>
   <ul class="collapse">
-  <li><a href="#sufficient-statistics" id="toc-sufficient-statistics" class="nav-link" data-scroll-target="#sufficient-statistics"><span class="header-section-number">A.0.22</span> Sufficient statistics</a></li>
-  <li><a href="#rao-blackwell-theorem" id="toc-rao-blackwell-theorem" class="nav-link" data-scroll-target="#rao-blackwell-theorem"><span class="header-section-number">A.0.23</span> Rao-Blackwell theorem</a></li>
+  <li><a href="#sufficient-statistics" id="toc-sufficient-statistics" class="nav-link" data-scroll-target="#sufficient-statistics"><span class="header-section-number">B.0.22</span> Sufficient statistics</a></li>
+  <li><a href="#rao-blackwell-theorem" id="toc-rao-blackwell-theorem" class="nav-link" data-scroll-target="#rao-blackwell-theorem"><span class="header-section-number">B.0.23</span> Rao-Blackwell theorem</a></li>
   </ul></li>
   <li><a href="#jensens-inequality" id="toc-jensens-inequality" class="nav-link" data-scroll-target="#jensens-inequality">Jensen’s Inequality</a></li>
   <li><a href="#kullback-leibler-divergence" id="toc-kullback-leibler-divergence" class="nav-link" data-scroll-target="#kullback-leibler-divergence">Kullback-Leibler Divergence</a></li>
   <li><a href="#stochastic-processes-and-stationarity" id="toc-stochastic-processes-and-stationarity" class="nav-link" data-scroll-target="#stochastic-processes-and-stationarity">Stochastic Processes and Stationarity</a>
   <ul class="collapse">
-  <li><a href="#random-walk" id="toc-random-walk" class="nav-link" data-scroll-target="#random-walk"><span class="header-section-number">A.0.24</span> Random walk</a></li>
-  <li><a href="#strict-and-weak-stationarity" id="toc-strict-and-weak-stationarity" class="nav-link" data-scroll-target="#strict-and-weak-stationarity"><span class="header-section-number">A.0.25</span> Strict and weak stationarity</a></li>
-  <li><a href="#integration-order" id="toc-integration-order" class="nav-link" data-scroll-target="#integration-order"><span class="header-section-number">A.0.26</span> Integration order</a></li>
+  <li><a href="#random-walk" id="toc-random-walk" class="nav-link" data-scroll-target="#random-walk"><span class="header-section-number">B.0.24</span> Random walk</a></li>
+  <li><a href="#strict-and-weak-stationarity" id="toc-strict-and-weak-stationarity" class="nav-link" data-scroll-target="#strict-and-weak-stationarity"><span class="header-section-number">B.0.25</span> Strict and weak stationarity</a></li>
+  <li><a href="#integration-order" id="toc-integration-order" class="nav-link" data-scroll-target="#integration-order"><span class="header-section-number">B.0.26</span> Integration order</a></li>
   </ul></li>
   <li><a href="#martingales" id="toc-martingales" class="nav-link" data-scroll-target="#martingales">Martingales</a></li>
   <li><a href="#gâteaux-derivatives-and-influence-functions" id="toc-gâteaux-derivatives-and-influence-functions" class="nav-link" data-scroll-target="#gâteaux-derivatives-and-influence-functions">Gâteaux Derivatives and Influence Functions</a>
   <ul class="collapse">
-  <li><a href="#the-gâteaux-derivative" id="toc-the-gâteaux-derivative" class="nav-link" data-scroll-target="#the-gâteaux-derivative"><span class="header-section-number">A.0.27</span> The Gâteaux derivative</a></li>
+  <li><a href="#the-gâteaux-derivative" id="toc-the-gâteaux-derivative" class="nav-link" data-scroll-target="#the-gâteaux-derivative"><span class="header-section-number">B.0.27</span> The Gâteaux derivative</a></li>
   </ul></li>
   <li><a href="#empirical-processes-and-the-donsker-condition" id="toc-empirical-processes-and-the-donsker-condition" class="nav-link" data-scroll-target="#empirical-processes-and-the-donsker-condition">Empirical Processes and the Donsker Condition</a>
   <ul class="collapse">
-  <li><a href="#the-empirical-process" id="toc-the-empirical-process" class="nav-link" data-scroll-target="#the-empirical-process"><span class="header-section-number">A.0.28</span> The empirical process</a></li>
-  <li><a href="#donskers-theorem-and-function-classes" id="toc-donskers-theorem-and-function-classes" class="nav-link" data-scroll-target="#donskers-theorem-and-function-classes"><span class="header-section-number">A.0.29</span> Donsker’s theorem and function classes</a></li>
-  <li><a href="#why-this-matters-for-double-ml-ch.-23" id="toc-why-this-matters-for-double-ml-ch.-23" class="nav-link" data-scroll-target="#why-this-matters-for-double-ml-ch.-23"><span class="header-section-number">A.0.30</span> Why this matters for double ML (Ch. 23)</a></li>
+  <li><a href="#the-empirical-process" id="toc-the-empirical-process" class="nav-link" data-scroll-target="#the-empirical-process"><span class="header-section-number">B.0.28</span> The empirical process</a></li>
+  <li><a href="#donskers-theorem-and-function-classes" id="toc-donskers-theorem-and-function-classes" class="nav-link" data-scroll-target="#donskers-theorem-and-function-classes"><span class="header-section-number">B.0.29</span> Donsker’s theorem and function classes</a></li>
+  <li><a href="#why-this-matters-for-double-ml-ch.-23" id="toc-why-this-matters-for-double-ml-ch.-23" class="nav-link" data-scroll-target="#why-this-matters-for-double-ml-ch.-23"><span class="header-section-number">B.0.30</span> Why this matters for double ML (Ch. 23)</a></li>
   </ul></li>
   <li><a href="#semiparametric-efficiency" id="toc-semiparametric-efficiency" class="nav-link" data-scroll-target="#semiparametric-efficiency">Semiparametric Efficiency</a>
   <ul class="collapse">
-  <li><a href="#the-semiparametric-efficiency-bound" id="toc-the-semiparametric-efficiency-bound" class="nav-link" data-scroll-target="#the-semiparametric-efficiency-bound"><span class="header-section-number">A.0.31</span> The semiparametric efficiency bound</a></li>
-  <li><a href="#where-this-appears" id="toc-where-this-appears" class="nav-link" data-scroll-target="#where-this-appears"><span class="header-section-number">A.0.32</span> Where this appears</a></li>
+  <li><a href="#the-semiparametric-efficiency-bound" id="toc-the-semiparametric-efficiency-bound" class="nav-link" data-scroll-target="#the-semiparametric-efficiency-bound"><span class="header-section-number">B.0.31</span> The semiparametric efficiency bound</a></li>
+  <li><a href="#where-this-appears" id="toc-where-this-appears" class="nav-link" data-scroll-target="#where-this-appears"><span class="header-section-number">B.0.32</span> Where this appears</a></li>
   </ul></li>
   <li><a href="#summary-of-key-results-and-where-they-are-used" id="toc-summary-of-key-results-and-where-they-are-used" class="nav-link" data-scroll-target="#summary-of-key-results-and-where-they-are-used">Summary of Key Results and Where They Are Used</a></li>
   </ul>
@@ -717,9 +717,9 @@ window.Quarto = {
 <main class="content" id="quarto-document-content">
 
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/appendix-probability-stats.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/appendix-probability-stats.html"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Appendix A: Probability and Mathematical Statistics</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/appendix-prerequisites.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/appendix-probability-stats.html"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Probability and Mathematical Statistics</span></a></li></ol></nav>
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Appendix A — Appendix A: Probability and Mathematical Statistics</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Appendix B — Probability and Mathematical Statistics</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -748,8 +748,8 @@ window.Quarto = {
 <section id="random-variables-and-distributions" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="random-variables-and-distributions">Random Variables and Distributions</h2>
 <p>A <strong>random variable</strong> <span class="math inline">\(X\)</span> is a function from a sample space to <span class="math inline">\(\mathbb{R}\)</span>. We work entirely at the non-measure-theoretic level: <span class="math inline">\(X\)</span> either has a countable range (discrete) or a density (continuous). The book never needs more generality than this.</p>
-<section id="discrete-random-variables" class="level3" data-number="A.0.1">
-<h3 data-number="A.0.1" class="anchored" data-anchor-id="discrete-random-variables"><span class="header-section-number">A.0.1</span> Discrete random variables</h3>
+<section id="discrete-random-variables" class="level3" data-number="B.0.1">
+<h3 data-number="B.0.1" class="anchored" data-anchor-id="discrete-random-variables"><span class="header-section-number">B.0.1</span> Discrete random variables</h3>
 <p>A discrete random variable takes values in a countable set. Its <strong>probability mass function</strong> (PMF) is <span class="math inline">\(p(x) = \Pr(X = x)\)</span>. The PMF is nonnegative and sums to one.</p>
 <div id="pmf-demo" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Binomial(n=10, p=0.3) -- number of successes in 10 trials</span></span>
@@ -774,8 +774,8 @@ window.Quarto = {
 </div>
 </div>
 </section>
-<section id="continuous-random-variables" class="level3" data-number="A.0.2">
-<h3 data-number="A.0.2" class="anchored" data-anchor-id="continuous-random-variables"><span class="header-section-number">A.0.2</span> Continuous random variables</h3>
+<section id="continuous-random-variables" class="level3" data-number="B.0.2">
+<h3 data-number="B.0.2" class="anchored" data-anchor-id="continuous-random-variables"><span class="header-section-number">B.0.2</span> Continuous random variables</h3>
 <p>A continuous random variable has a <strong>probability density function</strong> (PDF) <span class="math inline">\(f(x)\)</span> satisfying <span class="math inline">\(\Pr(a \le X \le b) = \int_a^b f(x)\, dx\)</span>. The PDF can exceed 1 at a point — it is a density, not a probability.</p>
 <p>The <strong>cumulative distribution function</strong> (CDF) is defined for both types: <span class="math display">\[
 F(x) = \Pr(X \le x).
@@ -805,8 +805,8 @@ F(x) = \Pr(X \le x).
 </div>
 </div>
 </section>
-<section id="expectation-variance-covariance" class="level3" data-number="A.0.3">
-<h3 data-number="A.0.3" class="anchored" data-anchor-id="expectation-variance-covariance"><span class="header-section-number">A.0.3</span> Expectation, variance, covariance</h3>
+<section id="expectation-variance-covariance" class="level3" data-number="B.0.3">
+<h3 data-number="B.0.3" class="anchored" data-anchor-id="expectation-variance-covariance"><span class="header-section-number">B.0.3</span> Expectation, variance, covariance</h3>
 <p>The <strong>expectation</strong> of <span class="math inline">\(g(X)\)</span> is: <span class="math display">\[
 \mathbb{E}[g(X)] = \begin{cases}
 \sum_x g(x) p(x) &amp; \text{(discrete)} \\
@@ -846,8 +846,8 @@ F(x) = \Pr(X \le x).
 </div>
 </div>
 </section>
-<section id="joint-marginal-and-conditional-distributions" class="level3" data-number="A.0.4">
-<h3 data-number="A.0.4" class="anchored" data-anchor-id="joint-marginal-and-conditional-distributions"><span class="header-section-number">A.0.4</span> Joint, marginal, and conditional distributions</h3>
+<section id="joint-marginal-and-conditional-distributions" class="level3" data-number="B.0.4">
+<h3 data-number="B.0.4" class="anchored" data-anchor-id="joint-marginal-and-conditional-distributions"><span class="header-section-number">B.0.4</span> Joint, marginal, and conditional distributions</h3>
 <p>For a pair <span class="math inline">\((X, Y)\)</span>:</p>
 <ul>
 <li><strong>Joint PDF / PMF:</strong> <span class="math inline">\(f(x, y)\)</span> or <span class="math inline">\(p(x, y)\)</span>.</li>
@@ -891,12 +891,12 @@ Sample mean of X2 | X1≈1.5: 2.32 (n=367)</code></pre>
 <section id="common-distribution-families" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="common-distribution-families">Common Distribution Families</h2>
 <p>The distributions below recur throughout the book. For each, the table gives the scipy parameterization, key properties, and where in the book it appears most prominently.</p>
-<section id="continuous-distributions" class="level3" data-number="A.0.5">
-<h3 data-number="A.0.5" class="anchored" data-anchor-id="continuous-distributions"><span class="header-section-number">A.0.5</span> Continuous distributions</h3>
+<section id="continuous-distributions" class="level3" data-number="B.0.5">
+<h3 data-number="B.0.5" class="anchored" data-anchor-id="continuous-distributions"><span class="header-section-number">B.0.5</span> Continuous distributions</h3>
 <div id="tbl-continuous-dists" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-continuous-dists-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;A.1: Continuous distributions used in the book.
+Table&nbsp;B.1: Continuous distributions used in the book.
 </figcaption>
 <div aria-describedby="tbl-continuous-dists-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -976,12 +976,12 @@ Table&nbsp;A.1: Continuous distributions used in the book.
 <p><strong>The chi-squared and <span class="math inline">\(F\)</span> in testing.</strong> The <span class="math inline">\(\chi^2_\nu\)</span> distribution is the distribution of the sum of <span class="math inline">\(\nu\)</span> squared standard normals. It governs goodness-of-fit tests, likelihood ratio statistics, and Wald statistics. The <span class="math inline">\(F\)</span> distribution, as the ratio of two independent scaled chi-squareds, governs <span class="math inline">\(F\)</span>-tests in ANOVA and regression (Ch. 11). Both are special cases of the Gamma: <span class="math inline">\(\chi^2_\nu
 = \text{Gamma}(\nu/2, \text{scale}=2)\)</span>.</p>
 </section>
-<section id="discrete-distributions" class="level3" data-number="A.0.6">
-<h3 data-number="A.0.6" class="anchored" data-anchor-id="discrete-distributions"><span class="header-section-number">A.0.6</span> Discrete distributions</h3>
+<section id="discrete-distributions" class="level3" data-number="B.0.6">
+<h3 data-number="B.0.6" class="anchored" data-anchor-id="discrete-distributions"><span class="header-section-number">B.0.6</span> Discrete distributions</h3>
 <div id="tbl-discrete-dists" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-discrete-dists-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;A.2: Discrete distributions used in the book.
+Table&nbsp;B.2: Discrete distributions used in the book.
 </figcaption>
 <div aria-describedby="tbl-discrete-dists-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1023,8 +1023,8 @@ Table&nbsp;A.2: Discrete distributions used in the book.
 </div>
 <p><strong>Note on scipy’s Poisson.</strong> The parameter is <code>mu</code>, not <code>lam</code> or <code>lambda</code>. This follows scipy’s convention of naming the mean directly: <code>poisson(mu=5)</code>.</p>
 </section>
-<section id="relationships-between-distributions" class="level3" data-number="A.0.7">
-<h3 data-number="A.0.7" class="anchored" data-anchor-id="relationships-between-distributions"><span class="header-section-number">A.0.7</span> Relationships between distributions</h3>
+<section id="relationships-between-distributions" class="level3" data-number="B.0.7">
+<h3 data-number="B.0.7" class="anchored" data-anchor-id="relationships-between-distributions"><span class="header-section-number">B.0.7</span> Relationships between distributions</h3>
 <p>Several distributions are linked by transformations used constantly in hypothesis testing (Ch. 10):</p>
 <ul>
 <li>If <span class="math inline">\(Z \sim \mathcal{N}(0, 1)\)</span>, then <span class="math inline">\(Z^2 \sim \chi^2_1\)</span>.</li>
@@ -1074,7 +1074,7 @@ M_X(t) = \mathbb{E}[e^{tX}],
 <div id="tbl-mgfs" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mgfs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;A.3: MGFs for distributions used in this book.
+Table&nbsp;B.3: MGFs for distributions used in this book.
 </figcaption>
 <div aria-describedby="tbl-mgfs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1143,33 +1143,33 @@ Table&nbsp;A.3: MGFs for distributions used in this book.
 <section id="convergence-concepts" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="convergence-concepts">Convergence Concepts</h2>
 <p>Three modes of convergence appear in the book. They differ in what exactly “converges” means, and the distinctions matter when a theorem gives you one mode but you need another.</p>
-<section id="convergence-in-probability" class="level3" data-number="A.0.8">
-<h3 data-number="A.0.8" class="anchored" data-anchor-id="convergence-in-probability"><span class="header-section-number">A.0.8</span> Convergence in probability</h3>
+<section id="convergence-in-probability" class="level3" data-number="B.0.8">
+<h3 data-number="B.0.8" class="anchored" data-anchor-id="convergence-in-probability"><span class="header-section-number">B.0.8</span> Convergence in probability</h3>
 <p><span class="math inline">\(X_n \xrightarrow{p} X\)</span> means: for every <span class="math inline">\(\epsilon &gt; 0\)</span>, <span class="math display">\[
 \Pr(|X_n - X| &gt; \epsilon) \to 0 \quad \text{as } n \to \infty.
 \]</span> <strong>Intuition:</strong> the probability of being far from <span class="math inline">\(X\)</span> vanishes, but there is no claim about <em>how quickly</em>. This is the mode the law of large numbers delivers.</p>
 </section>
-<section id="convergence-in-distribution" class="level3" data-number="A.0.9">
-<h3 data-number="A.0.9" class="anchored" data-anchor-id="convergence-in-distribution"><span class="header-section-number">A.0.9</span> Convergence in distribution</h3>
+<section id="convergence-in-distribution" class="level3" data-number="B.0.9">
+<h3 data-number="B.0.9" class="anchored" data-anchor-id="convergence-in-distribution"><span class="header-section-number">B.0.9</span> Convergence in distribution</h3>
 <p><span class="math inline">\(X_n \xrightarrow{d} X\)</span> means: <span class="math inline">\(F_n(x) \to F(x)\)</span> at every continuity point <span class="math inline">\(x\)</span> of <span class="math inline">\(F\)</span>. Equivalently: <span class="math inline">\(\mathbb{E}[g(X_n)]
 \to \mathbb{E}[g(X)]\)</span> for every bounded continuous <span class="math inline">\(g\)</span>.</p>
 <p><strong>Intuition:</strong> the distribution shapes converge, but the random variables need not live on the same probability space. This is the mode the CLT delivers.</p>
 </section>
-<section id="almost-sure-convergence" class="level3" data-number="A.0.10">
-<h3 data-number="A.0.10" class="anchored" data-anchor-id="almost-sure-convergence"><span class="header-section-number">A.0.10</span> Almost sure convergence</h3>
+<section id="almost-sure-convergence" class="level3" data-number="B.0.10">
+<h3 data-number="B.0.10" class="anchored" data-anchor-id="almost-sure-convergence"><span class="header-section-number">B.0.10</span> Almost sure convergence</h3>
 <p><span class="math inline">\(X_n \xrightarrow{a.s.} X\)</span> means: <span class="math inline">\(\Pr(\lim_{n \to \infty} X_n = X) = 1\)</span>. This is the strongest mode — it implies convergence in probability, which in turn implies convergence in distribution.</p>
 <p><strong>The hierarchy:</strong> <span class="math display">\[
 X_n \xrightarrow{a.s.} X \implies X_n \xrightarrow{p} X
 \implies X_n \xrightarrow{d} X.
 \]</span> The converses are false in general.</p>
 </section>
-<section id="a-crucial-non-implication" class="level3" data-number="A.0.11">
-<h3 data-number="A.0.11" class="anchored" data-anchor-id="a-crucial-non-implication"><span class="header-section-number">A.0.11</span> A crucial non-implication</h3>
+<section id="a-crucial-non-implication" class="level3" data-number="B.0.11">
+<h3 data-number="B.0.11" class="anchored" data-anchor-id="a-crucial-non-implication"><span class="header-section-number">B.0.11</span> A crucial non-implication</h3>
 <p>Convergence in distribution does NOT imply convergence of expectations. The classic counterexample uses the Cauchy distribution, which has no finite mean. Consider <span class="math inline">\(X_n \sim t_n\)</span> (Student’s <span class="math inline">\(t\)</span> with <span class="math inline">\(n\)</span> degrees of freedom). As <span class="math inline">\(n \to \infty\)</span>, <span class="math inline">\(X_n \xrightarrow{d} \mathcal{N}(0, 1)\)</span>, so <span class="math inline">\(\mathbb{E}[X_n^2] = n/(n-2) \to 1 = \text{Var}(Z)\)</span> — that works fine. But consider <span class="math inline">\(Y_n = n \cdot \mathbf{1}(|X_n| &gt; n^{1/2})\)</span>. Then <span class="math inline">\(Y_n \xrightarrow{d} 0\)</span> but <span class="math inline">\(\mathbb{E}[Y_n]\)</span> does not converge to 0. The point: convergence in distribution controls the <em>shape</em> of the distribution, not the <em>tails</em>.</p>
 <p>A sufficient condition for <span class="math inline">\(\mathbb{E}[X_n] \to \mathbb{E}[X]\)</span> is <strong>uniform integrability</strong> — the tails of <span class="math inline">\(\{X_n\}\)</span> must be uniformly controlled. When you see a theorem in the main chapters that says “<span class="math inline">\(\hat{\theta}_n\)</span> is asymptotically normal,” the CLT gives convergence in distribution of the standardized statistic. To also conclude that moments converge (e.g., that the MSE of <span class="math inline">\(\hat{\theta}_n\)</span> converges to zero), you need uniform integrability or a separate argument.</p>
 </section>
-<section id="slutskys-theorem" class="level3" data-number="A.0.12">
-<h3 data-number="A.0.12" class="anchored" data-anchor-id="slutskys-theorem"><span class="header-section-number">A.0.12</span> Slutsky’s theorem</h3>
+<section id="slutskys-theorem" class="level3" data-number="B.0.12">
+<h3 data-number="B.0.12" class="anchored" data-anchor-id="slutskys-theorem"><span class="header-section-number">B.0.12</span> Slutsky’s theorem</h3>
 <p>A companion result used repeatedly alongside the CLT:</p>
 <p>If <span class="math inline">\(X_n \xrightarrow{d} X\)</span> and <span class="math inline">\(Y_n \xrightarrow{p} c\)</span> (a constant), then:</p>
 <ul>
@@ -1257,7 +1257,7 @@ X_n \xrightarrow{a.s.} X \implies X_n \xrightarrow{p} X
 <p><strong>Theorem (CLT).</strong> If <span class="math inline">\(X_1, X_2, \ldots\)</span> are iid with mean <span class="math inline">\(\mu\)</span> and finite variance <span class="math inline">\(\sigma^2 &gt; 0\)</span>, then <span id="eq-clt"><span class="math display">\[
 \sqrt{n}\,\frac{\bar{X}_n - \mu}{\sigma}
 \xrightarrow{d} \mathcal{N}(0, 1).
-\tag{A.1}\]</span></span></p>
+\tag{B.1}\]</span></span></p>
 <p><strong>Proof sketch (via characteristic functions).</strong> The characteristic function of <span class="math inline">\(Z_n = \sqrt{n}(\bar{X}_n - \mu)/\sigma\)</span> can be written as <span class="math inline">\(\varphi_{Z_n}(t) = [\varphi_{(X_1 - \mu)/\sigma}(t/\sqrt{n})]^n\)</span>. Expand <span class="math inline">\(\varphi_{(X_1 - \mu)/\sigma}\)</span> in a Taylor series around <span class="math inline">\(0\)</span>: <span class="math inline">\(\varphi(s) = 1 - s^2/2 + o(s^2)\)</span>. Substituting <span class="math inline">\(s = t/\sqrt{n}\)</span> and taking the <span class="math inline">\(n\)</span>-th power gives <span class="math inline">\([1 - t^2/(2n) + o(1/n)]^n \to e^{-t^2/2}\)</span>, which is the characteristic function of <span class="math inline">\(\mathcal{N}(0, 1)\)</span>. Lévy’s continuity theorem converts pointwise convergence of characteristic functions to convergence in distribution.</p>
 <p><strong>Why <span class="math inline">\(\sqrt{n}\)</span> matters.</strong> The CLT rate <span class="math inline">\(1/\sqrt{n}\)</span> is the fundamental speed limit of estimation from iid data. All standard errors in the book scale as <span class="math inline">\(O(1/\sqrt{n})\)</span>: the standard error of a regression coefficient (Ch. 11), of a maximum likelihood estimate (Ch. 10), of a Monte Carlo average (Ch. 7), of a treatment effect estimator (Ch. 21). When you see <span class="math inline">\(\sqrt{n}\)</span> in a denominator, you are looking at the CLT at work.</p>
 <p><strong>The Berry-Esseen bound</strong> quantifies the approximation error: <span class="math display">\[
@@ -1312,7 +1312,7 @@ X_n \xrightarrow{a.s.} X \implies X_n \xrightarrow{p} X
 <p><strong>Theorem (Univariate delta method).</strong> If <span class="math inline">\(\sqrt{n}(T_n - \theta) \xrightarrow{d} \mathcal{N}(0, \sigma^2)\)</span> and <span class="math inline">\(g\)</span> is differentiable at <span class="math inline">\(\theta\)</span> with <span class="math inline">\(g'(\theta) \ne 0\)</span>, then <span id="eq-delta-method"><span class="math display">\[
 \sqrt{n}(g(T_n) - g(\theta))
 \xrightarrow{d} \mathcal{N}(0, [g'(\theta)]^2 \sigma^2).
-\tag{A.2}\]</span></span></p>
+\tag{B.2}\]</span></span></p>
 <p><strong>Proof sketch.</strong> Taylor-expand <span class="math inline">\(g(T_n)\)</span> around <span class="math inline">\(\theta\)</span>: <span class="math inline">\(g(T_n) = g(\theta) + g'(\theta)(T_n - \theta) + o_p(|T_n - \theta|)\)</span>. Since <span class="math inline">\(T_n \xrightarrow{p} \theta\)</span>, the remainder is <span class="math inline">\(o_p(1/\sqrt{n})\)</span>. Multiply by <span class="math inline">\(\sqrt{n}\)</span>: <span class="math inline">\(\sqrt{n}(g(T_n) - g(\theta)) = g'(\theta) \cdot \sqrt{n}(T_n - \theta)
 + o_p(1)\)</span>. Apply Slutsky’s theorem to get the result.</p>
 <p><strong>Multivariate version.</strong> If <span class="math inline">\(\sqrt{n}(\mathbf{T}_n - \boldsymbol{\theta})
@@ -1322,8 +1322,8 @@ X_n \xrightarrow{a.s.} X \implies X_n \xrightarrow{p} X
 \nabla g(\boldsymbol{\theta})^\top \boldsymbol{\Sigma}\,
 \nabla g(\boldsymbol{\theta})\right).
 \]</span></p>
-<section id="worked-example-variance-of-logbarx" class="level3" data-number="A.0.13">
-<h3 data-number="A.0.13" class="anchored" data-anchor-id="worked-example-variance-of-logbarx"><span class="header-section-number">A.0.13</span> Worked example: variance of <span class="math inline">\(\log(\bar{X})\)</span></h3>
+<section id="worked-example-variance-of-logbarx" class="level3" data-number="B.0.13">
+<h3 data-number="B.0.13" class="anchored" data-anchor-id="worked-example-variance-of-logbarx"><span class="header-section-number">B.0.13</span> Worked example: variance of <span class="math inline">\(\log(\bar{X})\)</span></h3>
 <p>Suppose <span class="math inline">\(X_1, \ldots, X_n\)</span> are iid with <span class="math inline">\(\mathbb{E}[X_1] = \mu &gt; 0\)</span> and <span class="math inline">\(\text{Var}(X_1) = \sigma^2\)</span>. What is the asymptotic variance of <span class="math inline">\(\log(\bar{X}_n)\)</span>?</p>
 <p>By the CLT, <span class="math inline">\(\sqrt{n}(\bar{X}_n - \mu) \xrightarrow{d}
 \mathcal{N}(0, \sigma^2)\)</span>. Take <span class="math inline">\(g(x) = \log(x)\)</span>, so <span class="math inline">\(g'(x) = 1/x\)</span>. By the delta method: <span class="math display">\[
@@ -1364,16 +1364,16 @@ Ratio (should be ≈ 1):                  0.978</code></pre>
 <section id="maximum-likelihood-estimation" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="maximum-likelihood-estimation">Maximum Likelihood Estimation</h2>
 <p>Maximum likelihood is the inferential backbone of most models in this book: GLMs (Ch. 12), discrete choice (Ch. 13), mixed effects (Ch. 14), ARIMA (Ch. 15), state-space models (Ch. 16), Cox regression (Ch. 18). Ch. 10 develops the asymptotic theory in full; here we give the definitions and a from-scratch example.</p>
-<section id="setup" class="level3" data-number="A.0.14">
-<h3 data-number="A.0.14" class="anchored" data-anchor-id="setup"><span class="header-section-number">A.0.14</span> Setup</h3>
+<section id="setup" class="level3" data-number="B.0.14">
+<h3 data-number="B.0.14" class="anchored" data-anchor-id="setup"><span class="header-section-number">B.0.14</span> Setup</h3>
 <p>Given iid observations <span class="math inline">\(X_1, \ldots, X_n\)</span> from a density <span class="math inline">\(f(x; \theta)\)</span>, the <strong>likelihood</strong> is <span class="math display">\[
 L(\theta) = \prod_{i=1}^n f(X_i; \theta),
 \]</span> and the <strong>log-likelihood</strong> is <span class="math display">\[
 \ell(\theta) = \sum_{i=1}^n \log f(X_i; \theta).
 \]</span> The <strong>maximum likelihood estimator</strong> (MLE) is <span class="math inline">\(\hat{\theta}_n = \arg\max_\theta \ell(\theta)\)</span>.</p>
 </section>
-<section id="score-function-and-fisher-information" class="level3" data-number="A.0.15">
-<h3 data-number="A.0.15" class="anchored" data-anchor-id="score-function-and-fisher-information"><span class="header-section-number">A.0.15</span> Score function and Fisher information</h3>
+<section id="score-function-and-fisher-information" class="level3" data-number="B.0.15">
+<h3 data-number="B.0.15" class="anchored" data-anchor-id="score-function-and-fisher-information"><span class="header-section-number">B.0.15</span> Score function and Fisher information</h3>
 <p>The <strong>score function</strong> is the gradient of the log-likelihood: <span class="math display">\[
 S(\theta) = \nabla_\theta \ell(\theta)
 = \sum_{i=1}^n \nabla_\theta \log f(X_i; \theta).
@@ -1387,24 +1387,24 @@ S(\theta) = \nabla_\theta \ell(\theta)
 = -\mathbb{E}[\nabla^2_\theta \ell(\theta)]\)</span>. This says the curvature of the log-likelihood equals the variance of the score — a fact used to construct the observed information <span class="math inline">\(\hat{\mathcal{I}} = -\nabla^2 \ell(\hat{\theta})\)</span> as an estimator of <span class="math inline">\(\mathcal{I}\)</span>.</li>
 </ul>
 </section>
-<section id="asymptotic-normality" class="level3" data-number="A.0.16">
-<h3 data-number="A.0.16" class="anchored" data-anchor-id="asymptotic-normality"><span class="header-section-number">A.0.16</span> Asymptotic normality</h3>
+<section id="asymptotic-normality" class="level3" data-number="B.0.16">
+<h3 data-number="B.0.16" class="anchored" data-anchor-id="asymptotic-normality"><span class="header-section-number">B.0.16</span> Asymptotic normality</h3>
 <p>Under standard regularity conditions (see Ch. 10 for the precise statement): <span class="math display">\[
 \sqrt{n}(\hat{\theta}_n - \theta_0) \xrightarrow{d}
 \mathcal{N}\!\left(\mathbf{0},\;
 \mathcal{I}_1(\theta_0)^{-1}\right),
 \]</span> where <span class="math inline">\(\mathcal{I}_1(\theta_0)\)</span> is the Fisher information for a <em>single</em> observation. The MLE is consistent, asymptotically normal, and asymptotically efficient (achieves the Cramér-Rao bound).</p>
 </section>
-<section id="cramér-rao-lower-bound" class="level3" data-number="A.0.17">
-<h3 data-number="A.0.17" class="anchored" data-anchor-id="cramér-rao-lower-bound"><span class="header-section-number">A.0.17</span> Cramér-Rao lower bound</h3>
+<section id="cramér-rao-lower-bound" class="level3" data-number="B.0.17">
+<h3 data-number="B.0.17" class="anchored" data-anchor-id="cramér-rao-lower-bound"><span class="header-section-number">B.0.17</span> Cramér-Rao lower bound</h3>
 <p>For any unbiased estimator <span class="math inline">\(T\)</span> of <span class="math inline">\(\theta\)</span>: <span class="math display">\[
 \text{Var}(T) \ge \frac{1}{n \mathcal{I}_1(\theta)}.
 \]</span> No unbiased estimator can have smaller variance. The MLE achieves this bound asymptotically — this is what “efficient” means in the likelihood context.</p>
 <p><strong>Observed vs expected information.</strong> In practice, the Fisher information <span class="math inline">\(\mathcal{I}(\theta)\)</span> (the <em>expected</em> information) is replaced by the <strong>observed information</strong> <span class="math inline">\(\hat{\mathcal{I}} = -\nabla^2 \ell(\hat{\theta})\)</span>, which does not require computing an expectation. Under standard conditions, these converge to the same limit. Efron and Hinkley (1978) showed that the observed information is preferable in many settings because it conditions on the observed data. Ch. 10 develops this distinction in detail.</p>
 <p><strong>What “regularity conditions” means.</strong> The MLE results above hold under conditions that roughly require: (1) the parameter space is an open set, (2) the support of <span class="math inline">\(f(x; \theta)\)</span> does not depend on <span class="math inline">\(\theta\)</span>, (3) <span class="math inline">\(f\)</span> is thrice differentiable in <span class="math inline">\(\theta\)</span>, and (4) the Fisher information is positive definite. These are Cramér’s conditions. The most commonly violated condition in practice is (2): the uniform distribution <span class="math inline">\(\text{Uniform}(0, \theta)\)</span> has support depending on <span class="math inline">\(\theta\)</span>, so the standard MLE theory does not apply — and indeed, the MLE converges at rate <span class="math inline">\(1/n\)</span> rather than <span class="math inline">\(1/\sqrt{n}\)</span>.</p>
 </section>
-<section id="from-scratch-mle-fitting-a-gamma-distribution" class="level3" data-number="A.0.18">
-<h3 data-number="A.0.18" class="anchored" data-anchor-id="from-scratch-mle-fitting-a-gamma-distribution"><span class="header-section-number">A.0.18</span> From-scratch MLE: fitting a Gamma distribution</h3>
+<section id="from-scratch-mle-fitting-a-gamma-distribution" class="level3" data-number="B.0.18">
+<h3 data-number="B.0.18" class="anchored" data-anchor-id="from-scratch-mle-fitting-a-gamma-distribution"><span class="header-section-number">B.0.18</span> From-scratch MLE: fitting a Gamma distribution</h3>
 <div id="mle-gamma" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Gamma(a=3, scale=2) data</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>true_a, true_scale <span class="op">=</span> <span class="fl">3.0</span>, <span class="fl">2.0</span></span>
@@ -1513,25 +1513,25 @@ True values:      a=3.0, scale=2.0</code></pre>
 <section id="exponential-families" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="exponential-families">Exponential Families</h2>
 <p>Most parametric models in the book belong to the exponential family. This structure drives the theory of GLMs (Ch. 12), links to sufficient statistics, and explains why IRLS works.</p>
-<section id="canonical-form" class="level3" data-number="A.0.19">
-<h3 data-number="A.0.19" class="anchored" data-anchor-id="canonical-form"><span class="header-section-number">A.0.19</span> Canonical form</h3>
+<section id="canonical-form" class="level3" data-number="B.0.19">
+<h3 data-number="B.0.19" class="anchored" data-anchor-id="canonical-form"><span class="header-section-number">B.0.19</span> Canonical form</h3>
 <p>A family of distributions is an <strong>exponential family</strong> in canonical form if the density can be written as: <span id="eq-expfam"><span class="math display">\[
 f(x; \theta, \phi) = \exp\!\left\{
 \frac{x\theta - b(\theta)}{\phi} + c(x, \phi)
 \right\},
-\tag{A.3}\]</span></span> where <span class="math inline">\(\theta\)</span> is the <strong>natural parameter</strong>, <span class="math inline">\(b(\theta)\)</span> is the <strong>cumulant function</strong> (also called the log-partition function), <span class="math inline">\(\phi\)</span> is the <strong>dispersion parameter</strong>, and <span class="math inline">\(c(x, \phi)\)</span> collects everything that does not depend on <span class="math inline">\(\theta\)</span>.</p>
+\tag{B.3}\]</span></span> where <span class="math inline">\(\theta\)</span> is the <strong>natural parameter</strong>, <span class="math inline">\(b(\theta)\)</span> is the <strong>cumulant function</strong> (also called the log-partition function), <span class="math inline">\(\phi\)</span> is the <strong>dispersion parameter</strong>, and <span class="math inline">\(c(x, \phi)\)</span> collects everything that does not depend on <span class="math inline">\(\theta\)</span>.</p>
 <p>The key property: all the distributional information about <span class="math inline">\(\theta\)</span> is captured by: <span id="eq-expfam-moments"><span class="math display">\[
 \mathbb{E}[X] = b'(\theta), \qquad
 \text{Var}(X) = \phi \, b''(\theta).
-\tag{A.4}\]</span></span></p>
+\tag{B.4}\]</span></span></p>
 <p>The mean is a function of <span class="math inline">\(\theta\)</span> alone; the variance factors into a dispersion term and a <strong>variance function</strong> <span class="math inline">\(V(\mu) = b''(\theta(\mu))\)</span> that depends on the mean. This factoring is the foundation of GLM theory in Ch. 12.</p>
 </section>
-<section id="canonical-table" class="level3" data-number="A.0.20">
-<h3 data-number="A.0.20" class="anchored" data-anchor-id="canonical-table"><span class="header-section-number">A.0.20</span> Canonical table</h3>
+<section id="canonical-table" class="level3" data-number="B.0.20">
+<h3 data-number="B.0.20" class="anchored" data-anchor-id="canonical-table"><span class="header-section-number">B.0.20</span> Canonical table</h3>
 <div id="tbl-expfam" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-expfam-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;A.4: Exponential family representations. The natural parameter <span class="math inline">\(\theta\)</span>, cumulant function <span class="math inline">\(b(\theta)\)</span>, dispersion <span class="math inline">\(\phi\)</span>, and variance function <span class="math inline">\(V(\mu)\)</span> for distributions used in Ch. 12.
+Table&nbsp;B.4: Exponential family representations. The natural parameter <span class="math inline">\(\theta\)</span>, cumulant function <span class="math inline">\(b(\theta)\)</span>, dispersion <span class="math inline">\(\phi\)</span>, and variance function <span class="math inline">\(V(\mu)\)</span> for distributions used in Ch. 12.
 </figcaption>
 <div aria-describedby="tbl-expfam-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1620,8 +1620,8 @@ Table&nbsp;A.4: Exponential family representations. The natural parameter <span 
 </div>
 </div>
 </section>
-<section id="why-exponential-families-matter-for-the-book" class="level3" data-number="A.0.21">
-<h3 data-number="A.0.21" class="anchored" data-anchor-id="why-exponential-families-matter-for-the-book"><span class="header-section-number">A.0.21</span> Why exponential families matter for the book</h3>
+<section id="why-exponential-families-matter-for-the-book" class="level3" data-number="B.0.21">
+<h3 data-number="B.0.21" class="anchored" data-anchor-id="why-exponential-families-matter-for-the-book"><span class="header-section-number">B.0.21</span> Why exponential families matter for the book</h3>
 <ol type="1">
 <li><strong>Sufficient statistics.</strong> The exponential family is the <em>only</em> family with finite-dimensional sufficient statistics (by the Pitman-Koopman-Darmois theorem). This is why MLE reduces to solving a finite system of equations.</li>
 <li><strong>GLMs.</strong> Every GLM (Ch. 12) specifies a response distribution from the exponential family and a link function connecting <span class="math inline">\(\mathbb{E}[Y_i]\)</span> to the linear predictor <span class="math inline">\(\mathbf{x}_i^\top
@@ -1639,7 +1639,7 @@ Table&nbsp;A.4: Exponential family representations. The natural parameter <span 
 \]</span></p>
 <p>The most important property of conditional expectation for this book is the <strong>tower property</strong> (law of iterated expectations): <span id="eq-tower"><span class="math display">\[
 \mathbb{E}\!\left[\mathbb{E}[Y \mid X]\right] = \mathbb{E}[Y].
-\tag{A.5}\]</span></span></p>
+\tag{B.5}\]</span></span></p>
 <p><strong>Why this matters for causal inference.</strong> In Ch. 21, the average treatment effect is <span class="math inline">\(\text{ATE} = \mathbb{E}[Y(1) - Y(0)]\)</span>. Under unconfoundedness, <span class="math inline">\(\mathbb{E}[Y(1) \mid X] = \mathbb{E}[Y \mid T=1, X]\)</span>. The tower property turns this into a marginal statement: <span class="math display">\[
 \mathbb{E}[Y(1)] = \mathbb{E}\!\left[\mathbb{E}[Y \mid T=1, X]\right],
 \]</span> which is estimable from observed data. Without the tower property, the bridge from conditional identification to marginal estimation collapses.</p>
@@ -1687,12 +1687,12 @@ Theoretical E[Y]=E[2X]:  5.0</code></pre>
 </section>
 <section id="sufficient-statistics-and-rao-blackwell" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="sufficient-statistics-and-rao-blackwell">Sufficient Statistics and Rao-Blackwell</h2>
-<section id="sufficient-statistics" class="level3" data-number="A.0.22">
-<h3 data-number="A.0.22" class="anchored" data-anchor-id="sufficient-statistics"><span class="header-section-number">A.0.22</span> Sufficient statistics</h3>
+<section id="sufficient-statistics" class="level3" data-number="B.0.22">
+<h3 data-number="B.0.22" class="anchored" data-anchor-id="sufficient-statistics"><span class="header-section-number">B.0.22</span> Sufficient statistics</h3>
 <p>A statistic <span class="math inline">\(T(\mathbf{X})\)</span> is <strong>sufficient</strong> for <span class="math inline">\(\theta\)</span> if the conditional distribution of <span class="math inline">\(\mathbf{X}\)</span> given <span class="math inline">\(T(\mathbf{X})\)</span> does not depend on <span class="math inline">\(\theta\)</span>. Informally: <span class="math inline">\(T\)</span> captures everything in the data that is relevant for inference about <span class="math inline">\(\theta\)</span>.</p>
 <p><strong>Factorization theorem (Neyman).</strong> <span class="math inline">\(T(\mathbf{X})\)</span> is sufficient for <span class="math inline">\(\theta\)</span> iff the joint density factors as <span class="math display">\[
 f(\mathbf{x}; \theta) = g(T(\mathbf{x}), \theta) \cdot h(\mathbf{x}),
-\]</span> where <span class="math inline">\(h\)</span> does not depend on <span class="math inline">\(\theta\)</span>. The exponential family (<a href="#eq-expfam" class="quarto-xref">Equation&nbsp;<span>A.3</span></a>) makes sufficiency immediate: the sufficient statistic is whatever multiplies <span class="math inline">\(\theta\)</span> inside the exponent.</p>
+\]</span> where <span class="math inline">\(h\)</span> does not depend on <span class="math inline">\(\theta\)</span>. The exponential family (<a href="#eq-expfam" class="quarto-xref">Equation&nbsp;<span>B.3</span></a>) makes sufficiency immediate: the sufficient statistic is whatever multiplies <span class="math inline">\(\theta\)</span> inside the exponent.</p>
 <p><strong>Examples:</strong></p>
 <ul>
 <li>For <span class="math inline">\(X_1, \ldots, X_n \sim \mathcal{N}(\mu, \sigma^2)\)</span> with <span class="math inline">\(\sigma^2\)</span> known: <span class="math inline">\(T = \sum X_i\)</span> (or equivalently <span class="math inline">\(\bar{X}\)</span>) is sufficient for <span class="math inline">\(\mu\)</span>.</li>
@@ -1700,8 +1700,8 @@ f(\mathbf{x}; \theta) = g(T(\mathbf{x}), \theta) \cdot h(\mathbf{x}),
 <li>For <span class="math inline">\(X_1, \ldots, X_n \sim \mathcal{N}(\mu, \sigma^2)\)</span> with both unknown: <span class="math inline">\(T = (\sum X_i, \sum X_i^2)\)</span> is jointly sufficient for <span class="math inline">\((\mu, \sigma^2)\)</span>.</li>
 </ul>
 </section>
-<section id="rao-blackwell-theorem" class="level3" data-number="A.0.23">
-<h3 data-number="A.0.23" class="anchored" data-anchor-id="rao-blackwell-theorem"><span class="header-section-number">A.0.23</span> Rao-Blackwell theorem</h3>
+<section id="rao-blackwell-theorem" class="level3" data-number="B.0.23">
+<h3 data-number="B.0.23" class="anchored" data-anchor-id="rao-blackwell-theorem"><span class="header-section-number">B.0.23</span> Rao-Blackwell theorem</h3>
 <p><strong>Theorem.</strong> If <span class="math inline">\(T\)</span> is sufficient for <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\tilde{\theta}\)</span> is any unbiased estimator of <span class="math inline">\(\theta\)</span>, define <span class="math inline">\(\hat{\theta} = \mathbb{E}[\tilde{\theta} \mid T]\)</span>. Then:</p>
 <ol type="1">
 <li><span class="math inline">\(\hat{\theta}\)</span> is unbiased.</li>
@@ -1790,7 +1790,7 @@ f(\mathbf{x}; \theta) = g(T(\mathbf{x}), \theta) \cdot h(\mathbf{x}),
 <h2 class="unnumbered anchored" data-anchor-id="jensens-inequality">Jensen’s Inequality</h2>
 <p><strong>Theorem.</strong> If <span class="math inline">\(g\)</span> is convex and <span class="math inline">\(\mathbb{E}[|X|] &lt; \infty\)</span>, then <span id="eq-jensen"><span class="math display">\[
 \mathbb{E}[g(X)] \ge g(\mathbb{E}[X]).
-\tag{A.6}\]</span></span> If <span class="math inline">\(g\)</span> is strictly convex, equality holds only when <span class="math inline">\(X\)</span> is constant (degenerate).</p>
+\tag{B.6}\]</span></span> If <span class="math inline">\(g\)</span> is strictly convex, equality holds only when <span class="math inline">\(X\)</span> is constant (degenerate).</p>
 <p><strong>Proof sketch.</strong> A convex function lies above every tangent line. At the point <span class="math inline">\(\mu = \mathbb{E}[X]\)</span>, there exists a supporting hyperplane <span class="math inline">\(g(x) \ge g(\mu) + \lambda(x - \mu)\)</span> for some slope <span class="math inline">\(\lambda\)</span> (a subgradient). Taking expectations of both sides: <span class="math inline">\(\mathbb{E}[g(X)] \ge g(\mu) + \lambda(\mathbb{E}[X] - \mu)
 = g(\mu) = g(\mathbb{E}[X])\)</span>.</p>
 <p><strong>Intuition.</strong> Averaging first and then applying a curved function is not the same as applying the curve first and then averaging. The curvature of <span class="math inline">\(g\)</span> creates a systematic gap. The classic trap is <span class="math inline">\(\mathbb{E}[1/X] \ne 1/\mathbb{E}[X]\)</span>: since <span class="math inline">\(g(x) = 1/x\)</span> is convex on <span class="math inline">\((0, \infty)\)</span>, Jensen gives <span class="math inline">\(\mathbb{E}[1/X] \ge 1/\mathbb{E}[X]\)</span>.</p>
@@ -1802,7 +1802,7 @@ f(\mathbf{x}; \theta) = g(T(\mathbf{x}), \theta) \cdot h(\mathbf{x}),
 D_{\text{KL}}(p \| q)
 = \mathbb{E}_p\!\left[\log \frac{p(X)}{q(X)}\right]
 = \int p(x) \log \frac{p(x)}{q(x)}\, dx.
-\tag{A.7}\]</span></span></p>
+\tag{B.7}\]</span></span></p>
 <p><strong>Key properties:</strong></p>
 <ol type="1">
 <li><span class="math inline">\(D_{\text{KL}}(p \| q) \ge 0\)</span> (Gibbs’ inequality), with equality iff <span class="math inline">\(p = q\)</span> almost everywhere.</li>
@@ -1848,8 +1848,8 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 <section id="stochastic-processes-and-stationarity" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="stochastic-processes-and-stationarity">Stochastic Processes and Stationarity</h2>
 <p>A <strong>stochastic process</strong> is a collection of random variables <span class="math inline">\(\{X_t\}\)</span> indexed by time (or another ordered set). The simplest and most important example is the <strong>random walk</strong>.</p>
-<section id="random-walk" class="level3" data-number="A.0.24">
-<h3 data-number="A.0.24" class="anchored" data-anchor-id="random-walk"><span class="header-section-number">A.0.24</span> Random walk</h3>
+<section id="random-walk" class="level3" data-number="B.0.24">
+<h3 data-number="B.0.24" class="anchored" data-anchor-id="random-walk"><span class="header-section-number">B.0.24</span> Random walk</h3>
 <p>Start at <span class="math inline">\(X_0 = 0\)</span> and define <span class="math inline">\(X_t = X_{t-1} + \varepsilon_t\)</span> where <span class="math inline">\(\varepsilon_t \sim \text{iid}(0, \sigma^2)\)</span>. Equivalently, <span class="math inline">\(X_t = \sum_{s=1}^t \varepsilon_s\)</span>. Two properties make the random walk the canonical non-stationary process:</p>
 <ol type="1">
 <li><span class="math inline">\(\mathbb{E}[X_t] = 0\)</span> for all <span class="math inline">\(t\)</span> — the mean is constant.</li>
@@ -1857,13 +1857,13 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 </ol>
 <p>Property 2 disqualifies the random walk from stationarity. It also explains why OLS on non-stationary data produces nonsense: the usual asymptotics rely on fixed variances, and when the variance diverges, <span class="math inline">\(t\)</span>-statistics inflate and <span class="math inline">\(R^2\)</span> drifts toward 1 even between unrelated series (spurious regression, Ch. 17).</p>
 </section>
-<section id="strict-and-weak-stationarity" class="level3" data-number="A.0.25">
-<h3 data-number="A.0.25" class="anchored" data-anchor-id="strict-and-weak-stationarity"><span class="header-section-number">A.0.25</span> Strict and weak stationarity</h3>
+<section id="strict-and-weak-stationarity" class="level3" data-number="B.0.25">
+<h3 data-number="B.0.25" class="anchored" data-anchor-id="strict-and-weak-stationarity"><span class="header-section-number">B.0.25</span> Strict and weak stationarity</h3>
 <p><strong>Strict stationarity:</strong> the joint distribution of <span class="math inline">\((X_{t_1}, \ldots, X_{t_k})\)</span> is the same as <span class="math inline">\((X_{t_1+h}, \ldots, X_{t_k+h})\)</span> for every shift <span class="math inline">\(h\)</span>. This is a strong condition — rarely verifiable in practice.</p>
 <p><strong>Weak (covariance) stationarity:</strong> the process has constant mean <span class="math inline">\(\mathbb{E}[X_t] = \mu\)</span>, finite constant variance <span class="math inline">\(\text{Var}(X_t) = \gamma(0)\)</span>, and autocovariance <span class="math inline">\(\text{Cov}(X_t, X_{t+h}) = \gamma(h)\)</span> depending only on the lag <span class="math inline">\(h\)</span>, not on time <span class="math inline">\(t\)</span>.</p>
 </section>
-<section id="integration-order" class="level3" data-number="A.0.26">
-<h3 data-number="A.0.26" class="anchored" data-anchor-id="integration-order"><span class="header-section-number">A.0.26</span> Integration order</h3>
+<section id="integration-order" class="level3" data-number="B.0.26">
+<h3 data-number="B.0.26" class="anchored" data-anchor-id="integration-order"><span class="header-section-number">B.0.26</span> Integration order</h3>
 <p>A process is <strong>integrated of order <span class="math inline">\(d\)</span></strong>, written <span class="math inline">\(I(d)\)</span>, if differencing <span class="math inline">\(d\)</span> times produces a stationary process.</p>
 <ul>
 <li><span class="math inline">\(I(0)\)</span>: the process itself is stationary. ARMA models (Ch. 15) apply directly.</li>
@@ -1942,13 +1942,13 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 <section id="gâteaux-derivatives-and-influence-functions" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="gâteaux-derivatives-and-influence-functions">Gâteaux Derivatives and Influence Functions</h2>
 <p>A <strong>statistical functional</strong> is a map <span class="math inline">\(T\)</span> from distributions to real numbers. The sample mean <span class="math inline">\(T(F) = \int x\, dF(x)\)</span> is a functional of the distribution <span class="math inline">\(F\)</span>. OLS coefficients, the median, and the variance are all functionals. To ask “how sensitive is <span class="math inline">\(T\)</span> to a small contamination of <span class="math inline">\(F\)</span>?” we need a notion of derivative in function space.</p>
-<section id="the-gâteaux-derivative" class="level3" data-number="A.0.27">
-<h3 data-number="A.0.27" class="anchored" data-anchor-id="the-gâteaux-derivative"><span class="header-section-number">A.0.27</span> The Gâteaux derivative</h3>
+<section id="the-gâteaux-derivative" class="level3" data-number="B.0.27">
+<h3 data-number="B.0.27" class="anchored" data-anchor-id="the-gâteaux-derivative"><span class="header-section-number">B.0.27</span> The Gâteaux derivative</h3>
 <p>The <strong>Gâteaux derivative</strong> of <span class="math inline">\(T\)</span> at <span class="math inline">\(F\)</span> in the direction of a point mass <span class="math inline">\(\delta_x\)</span> is: <span id="eq-gateaux"><span class="math display">\[
 \text{IF}(x; T, F) = \lim_{\varepsilon \to 0}
 \frac{T((1 - \varepsilon)F + \varepsilon \delta_x) - T(F)}
 {\varepsilon}.
-\tag{A.8}\]</span></span></p>
+\tag{B.8}\]</span></span></p>
 <p>This is the <strong>influence function</strong> (IF): it measures how much <span class="math inline">\(T\)</span> changes when an infinitesimal mass is placed at <span class="math inline">\(x\)</span>.</p>
 <p><strong>Worked examples.</strong></p>
 <ul>
@@ -1962,16 +1962,16 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 </section>
 <section id="empirical-processes-and-the-donsker-condition" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="empirical-processes-and-the-donsker-condition">Empirical Processes and the Donsker Condition</h2>
-<section id="the-empirical-process" class="level3" data-number="A.0.28">
-<h3 data-number="A.0.28" class="anchored" data-anchor-id="the-empirical-process"><span class="header-section-number">A.0.28</span> The empirical process</h3>
+<section id="the-empirical-process" class="level3" data-number="B.0.28">
+<h3 data-number="B.0.28" class="anchored" data-anchor-id="the-empirical-process"><span class="header-section-number">B.0.28</span> The empirical process</h3>
 <p>Given iid observations <span class="math inline">\(X_1, \ldots, X_n\)</span> from distribution <span class="math inline">\(F\)</span>, the <strong>empirical distribution</strong> is <span class="math inline">\(F_n(x) = \frac{1}{n}
 \sum_{i=1}^n \mathbf{1}(X_i \le x)\)</span>. The <strong>empirical process</strong> is the scaled deviation: <span class="math display">\[
 \mathbb{G}_n(x) = \sqrt{n}(F_n(x) - F(x)).
 \]</span> By the CLT, at any fixed <span class="math inline">\(x\)</span>, <span class="math inline">\(\mathbb{G}_n(x) \xrightarrow{d}
 \mathcal{N}(0, F(x)(1 - F(x)))\)</span>. Donsker’s theorem says much more: the <em>entire function</em> <span class="math inline">\(\mathbb{G}_n\)</span> converges to a Gaussian process (a Brownian bridge) in a suitable function space.</p>
 </section>
-<section id="donskers-theorem-and-function-classes" class="level3" data-number="A.0.29">
-<h3 data-number="A.0.29" class="anchored" data-anchor-id="donskers-theorem-and-function-classes"><span class="header-section-number">A.0.29</span> Donsker’s theorem and function classes</h3>
+<section id="donskers-theorem-and-function-classes" class="level3" data-number="B.0.29">
+<h3 data-number="B.0.29" class="anchored" data-anchor-id="donskers-theorem-and-function-classes"><span class="header-section-number">B.0.29</span> Donsker’s theorem and function classes</h3>
 <p>More broadly, consider a class of functions <span class="math inline">\(\mathcal{F}\)</span> and the process <span class="math inline">\(\mathbb{G}_n f = \sqrt{n}(\mathbb{P}_n f - Pf)\)</span>, where <span class="math inline">\(\mathbb{P}_n f = \frac{1}{n}\sum f(X_i)\)</span> is the empirical average and <span class="math inline">\(Pf = \mathbb{E}[f(X)]\)</span>. The class <span class="math inline">\(\mathcal{F}\)</span> satisfies the <strong>Donsker condition</strong> if <span class="math inline">\(\mathbb{G}_n\)</span> converges weakly to a tight Gaussian process over <span class="math inline">\(\mathcal{F}\)</span>.</p>
 <p><strong>When does Donsker hold?</strong> The key is the <em>complexity</em> of the function class, measured by the <strong>VC dimension</strong>:</p>
 <ul>
@@ -1979,8 +1979,8 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 <li><strong>Growing complexity</strong> (deep neural networks, tree ensembles whose depth grows with <span class="math inline">\(n\)</span>): Donsker fails. The function class is too rich for uniform convergence at <span class="math inline">\(\sqrt{n}\)</span> rate.</li>
 </ul>
 </section>
-<section id="why-this-matters-for-double-ml-ch.-23" class="level3" data-number="A.0.30">
-<h3 data-number="A.0.30" class="anchored" data-anchor-id="why-this-matters-for-double-ml-ch.-23"><span class="header-section-number">A.0.30</span> Why this matters for double ML (Ch. 23)</h3>
+<section id="why-this-matters-for-double-ml-ch.-23" class="level3" data-number="B.0.30">
+<h3 data-number="B.0.30" class="anchored" data-anchor-id="why-this-matters-for-double-ml-ch.-23"><span class="header-section-number">B.0.30</span> Why this matters for double ML (Ch. 23)</h3>
 <p>In semiparametric estimation, you estimate a nuisance function <span class="math inline">\(\hat{\eta}\)</span> (e.g., a propensity score or outcome regression) and plug it into a target estimating equation. If <span class="math inline">\(\hat{\eta}\)</span> belongs to a Donsker class, you can analyze the plugged-in estimator using standard empirical process arguments: the estimation error in <span class="math inline">\(\hat{\eta}\)</span> is asymptotically negligible.</p>
 <p>When <span class="math inline">\(\hat{\eta}\)</span> comes from a flexible ML method (random forests, neural nets), the Donsker condition fails. The nuisance estimation error does not vanish uniformly, and the “plug-in” estimator is contaminated. <strong>Cross-fitting</strong> is the remedy: split the data into <span class="math inline">\(K\)</span> folds, estimate <span class="math inline">\(\hat{\eta}\)</span> on <span class="math inline">\(K-1\)</span> folds, and evaluate the estimating equation on the held-out fold. Because <span class="math inline">\(\hat{\eta}\)</span> is <em>fixed</em> relative to the evaluation data in each fold, no uniform convergence over a complex function class is needed. The CLT applies fold by fold, and averaging across folds restores <span class="math inline">\(\sqrt{n}\)</span>-consistency for the target parameter — even when the nuisance learner is non-Donsker.</p>
 </section>
@@ -1988,17 +1988,17 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 <section id="semiparametric-efficiency" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="semiparametric-efficiency">Semiparametric Efficiency</h2>
 <p>In a <strong>parametric model</strong>, the Cramér-Rao bound (<span class="math inline">\(\text{Var}(T) \ge (n\mathcal{I}_1)^{-1}\)</span>) sets the minimum variance for any unbiased estimator. When the model also contains <strong>infinite-dimensional nuisance parameters</strong> (nonparametric components), we enter the semiparametric setting, and the variance bound changes.</p>
-<section id="the-semiparametric-efficiency-bound" class="level3" data-number="A.0.31">
-<h3 data-number="A.0.31" class="anchored" data-anchor-id="the-semiparametric-efficiency-bound"><span class="header-section-number">A.0.31</span> The semiparametric efficiency bound</h3>
+<section id="the-semiparametric-efficiency-bound" class="level3" data-number="B.0.31">
+<h3 data-number="B.0.31" class="anchored" data-anchor-id="the-semiparametric-efficiency-bound"><span class="header-section-number">B.0.31</span> The semiparametric efficiency bound</h3>
 <p>A semiparametric model targets a finite-dimensional parameter <span class="math inline">\(\theta\)</span> while leaving the rest of the data-generating process (the nuisance <span class="math inline">\(\eta\)</span>) unrestricted or lightly restricted. The <strong>semiparametric efficiency bound</strong> is the smallest asymptotic variance achievable by any regular estimator of <span class="math inline">\(\theta\)</span> in this model.</p>
-<p>The bound is achieved by the <strong>efficient influence function</strong> <span class="math inline">\(\psi^*(X; \theta, \eta)\)</span>: the unique influence function (see <a href="#eq-gateaux" class="quarto-xref">Equation&nbsp;<span>A.8</span></a>) whose variance equals the bound. Concretely: <span class="math display">\[
+<p>The bound is achieved by the <strong>efficient influence function</strong> <span class="math inline">\(\psi^*(X; \theta, \eta)\)</span>: the unique influence function (see <a href="#eq-gateaux" class="quarto-xref">Equation&nbsp;<span>B.8</span></a>) whose variance equals the bound. Concretely: <span class="math display">\[
 \text{Var}(\psi^*(X; \theta_0, \eta_0))
 = \text{semiparametric efficiency bound}.
 \]</span></p>
 <p><strong>Intuition.</strong> The efficient influence function is the “best one-number summary” of each observation’s contribution to estimating <span class="math inline">\(\theta\)</span>. Any estimator whose influence function differs from <span class="math inline">\(\psi^*\)</span> leaves information on the table. You cannot do better than <span class="math inline">\(\text{Var}(\psi^*)\)</span> because <span class="math inline">\(\psi^*\)</span> already extracts all available information about <span class="math inline">\(\theta\)</span> — net of the uncertainty introduced by not knowing <span class="math inline">\(\eta\)</span>.</p>
 </section>
-<section id="where-this-appears" class="level3" data-number="A.0.32">
-<h3 data-number="A.0.32" class="anchored" data-anchor-id="where-this-appears"><span class="header-section-number">A.0.32</span> Where this appears</h3>
+<section id="where-this-appears" class="level3" data-number="B.0.32">
+<h3 data-number="B.0.32" class="anchored" data-anchor-id="where-this-appears"><span class="header-section-number">B.0.32</span> Where this appears</h3>
 <ul>
 <li><strong>Ch. 12 (M-estimation):</strong> The sandwich variance of an M-estimator equals the variance of its influence function. When the influence function is efficient, the M-estimator achieves the semiparametric bound.</li>
 <li><strong>Ch. 21 (AIPW):</strong> The augmented inverse probability weighted estimator has influence function equal to the efficient influence function for the ATE under unconfoundedness. It achieves the semiparametric efficiency bound and is therefore <em>locally efficient</em>.</li>
@@ -2012,7 +2012,7 @@ KL is not symmetric: 0.4431 ≠ 1.3069</code></pre>
 <div id="tbl-xref" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-xref-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;A.5: Cross-reference table: appendix results to main chapters.
+Table&nbsp;B.5: Cross-reference table: appendix results to main chapters.
 </figcaption>
 <div aria-describedby="tbl-xref-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -2587,18 +2587,18 @@ Table&nbsp;A.5: Cross-reference table: appendix results to main chapters.
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/23-hte-double-ml.html" class="pagination-link" aria-label="Heterogeneous Treatment Effects and Double Machine Learning">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Heterogeneous Treatment Effects and Double Machine Learning</span></span>
+      <a href="../chapters/appendix-prerequisites.html" class="pagination-link" aria-label="Python Scientific Computing Reference">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Python Scientific Computing Reference</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/appendix-matrix-algebra.html" class="pagination-link" aria-label="Appendix B: Matrix Algebra for Statistics">
-        <span class="nav-page-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Appendix B: Matrix Algebra for Statistics</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/appendix-matrix-algebra.html" class="pagination-link" aria-label="Matrix Algebra for Statistics">
+        <span class="nav-page-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Matrix Algebra for Statistics</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="sourceCode" id="cb30" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Appendix A: Probability and Mathematical Statistics"</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Probability and Mathematical Statistics"</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>This appendix collects the probability and mathematical statistics</span>
