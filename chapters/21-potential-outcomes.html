@@ -637,51 +637,40 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#notation-for-this-chapter" id="toc-notation-for-this-chapter" class="nav-link active" data-scroll-target="#notation-for-this-chapter"><span class="header-section-number">21.1</span> Notation for this chapter</a></li>
-  <li><a href="#sec-ch21-motivation" id="toc-sec-ch21-motivation" class="nav-link" data-scroll-target="#sec-ch21-motivation"><span class="header-section-number">22</span> Motivation</a></li>
-  <li><a href="#sec-ch21-math" id="toc-sec-ch21-math" class="nav-link" data-scroll-target="#sec-ch21-math"><span class="header-section-number">23</span> Mathematical Foundation</a>
+  <li><a href="#notation-for-this-chapter" id="toc-notation-for-this-chapter" class="nav-link active" data-scroll-target="#notation-for-this-chapter"><span class="header-section-number">21.0.1</span> Notation for this chapter</a></li>
+  <li><a href="#sec-ch21-motivation" id="toc-sec-ch21-motivation" class="nav-link" data-scroll-target="#sec-ch21-motivation"><span class="header-section-number">21.1</span> Motivation</a></li>
+  <li><a href="#sec-ch21-math" id="toc-sec-ch21-math" class="nav-link" data-scroll-target="#sec-ch21-math"><span class="header-section-number">21.2</span> Mathematical Foundation</a>
   <ul class="collapse">
-  <li><a href="#the-fundamental-problem-of-causal-inference" id="toc-the-fundamental-problem-of-causal-inference" class="nav-link" data-scroll-target="#the-fundamental-problem-of-causal-inference"><span class="header-section-number">23.1</span> The fundamental problem of causal inference</a></li>
-  <li><a href="#why-naive-comparison-fails" id="toc-why-naive-comparison-fails" class="nav-link" data-scroll-target="#why-naive-comparison-fails"><span class="header-section-number">23.2</span> Why naive comparison fails</a></li>
-  <li><a href="#identification-under-unconfoundedness" id="toc-identification-under-unconfoundedness" class="nav-link" data-scroll-target="#identification-under-unconfoundedness"><span class="header-section-number">23.3</span> Identification under unconfoundedness</a></li>
-  <li><a href="#the-propensity-score" id="toc-the-propensity-score" class="nav-link" data-scroll-target="#the-propensity-score"><span class="header-section-number">23.4</span> The propensity score</a>
+  <li><a href="#the-fundamental-problem-of-causal-inference" id="toc-the-fundamental-problem-of-causal-inference" class="nav-link" data-scroll-target="#the-fundamental-problem-of-causal-inference"><span class="header-section-number">21.2.1</span> The fundamental problem of causal inference</a></li>
+  <li><a href="#why-naive-comparison-fails" id="toc-why-naive-comparison-fails" class="nav-link" data-scroll-target="#why-naive-comparison-fails"><span class="header-section-number">21.2.2</span> Why naive comparison fails</a></li>
+  <li><a href="#identification-under-unconfoundedness" id="toc-identification-under-unconfoundedness" class="nav-link" data-scroll-target="#identification-under-unconfoundedness"><span class="header-section-number">21.2.3</span> Identification under unconfoundedness</a></li>
+  <li><a href="#the-propensity-score" id="toc-the-propensity-score" class="nav-link" data-scroll-target="#the-propensity-score"><span class="header-section-number">21.2.4</span> The propensity score</a></li>
+  <li><a href="#the-four-estimators" id="toc-the-four-estimators" class="nav-link" data-scroll-target="#the-four-estimators"><span class="header-section-number">21.2.5</span> The four estimators</a></li>
+  </ul></li>
+  <li><a href="#sec-ch21-algorithm" id="toc-sec-ch21-algorithm" class="nav-link" data-scroll-target="#sec-ch21-algorithm"><span class="header-section-number">21.3</span> The Algorithm</a></li>
+  <li><a href="#sec-ch21-stats" id="toc-sec-ch21-stats" class="nav-link" data-scroll-target="#sec-ch21-stats"><span class="header-section-number">21.4</span> Statistical Properties</a></li>
+  <li><a href="#sec-ch21-impl" id="toc-sec-ch21-impl" class="nav-link" data-scroll-target="#sec-ch21-impl"><span class="header-section-number">21.5</span> Implementation</a>
   <ul class="collapse">
-  <li><a href="#proof-of-the-rosenbaum-rubin-theorem" id="toc-proof-of-the-rosenbaum-rubin-theorem" class="nav-link" data-scroll-target="#proof-of-the-rosenbaum-rubin-theorem"><span class="header-section-number">23.4.1</span> Proof of the Rosenbaum-Rubin theorem</a></li>
-  <li><a href="#positivity-violations" id="toc-positivity-violations" class="nav-link" data-scroll-target="#positivity-violations"><span class="header-section-number">23.4.2</span> Positivity violations</a></li>
+  <li><a href="#simulating-observational-data" id="toc-simulating-observational-data" class="nav-link" data-scroll-target="#simulating-observational-data"><span class="header-section-number">21.5.1</span> Simulating observational data</a></li>
+  <li><a href="#step-by-step-regression-adjustment" id="toc-step-by-step-regression-adjustment" class="nav-link" data-scroll-target="#step-by-step-regression-adjustment"><span class="header-section-number">21.5.2</span> Step-by-step: regression adjustment</a></li>
+  <li><a href="#step-by-step-ipw" id="toc-step-by-step-ipw" class="nav-link" data-scroll-target="#step-by-step-ipw"><span class="header-section-number">21.5.3</span> Step-by-step: IPW</a></li>
+  <li><a href="#step-by-step-aipw" id="toc-step-by-step-aipw" class="nav-link" data-scroll-target="#step-by-step-aipw"><span class="header-section-number">21.5.4</span> Step-by-step: AIPW</a></li>
+  <li><a href="#step-by-step-stabilized-hajek-ipw" id="toc-step-by-step-stabilized-hajek-ipw" class="nav-link" data-scroll-target="#step-by-step-stabilized-hajek-ipw"><span class="header-section-number">21.5.5</span> Step-by-step: stabilized (Hajek) IPW</a></li>
+  <li><a href="#step-by-step-matching-with-mahalanobis-distance" id="toc-step-by-step-matching-with-mahalanobis-distance" class="nav-link" data-scroll-target="#step-by-step-matching-with-mahalanobis-distance"><span class="header-section-number">21.5.6</span> Step-by-step: matching with Mahalanobis distance</a></li>
+  <li><a href="#comparison-of-all-estimators" id="toc-comparison-of-all-estimators" class="nav-link" data-scroll-target="#comparison-of-all-estimators"><span class="header-section-number">21.5.7</span> Comparison of all estimators</a></li>
   </ul></li>
-  <li><a href="#the-four-estimators" id="toc-the-four-estimators" class="nav-link" data-scroll-target="#the-four-estimators"><span class="header-section-number">23.5</span> The four estimators</a>
+  <li><a href="#sec-ch21-diagnostics" id="toc-sec-ch21-diagnostics" class="nav-link" data-scroll-target="#sec-ch21-diagnostics"><span class="header-section-number">21.6</span> Diagnostics</a>
   <ul class="collapse">
-  <li><a href="#matching" id="toc-matching" class="nav-link" data-scroll-target="#matching"><span class="header-section-number">23.5.1</span> Matching</a></li>
-  <li><a href="#regression-adjustment" id="toc-regression-adjustment" class="nav-link" data-scroll-target="#regression-adjustment"><span class="header-section-number">23.5.2</span> Regression adjustment</a></li>
-  <li><a href="#inverse-probability-weighting-ipw" id="toc-inverse-probability-weighting-ipw" class="nav-link" data-scroll-target="#inverse-probability-weighting-ipw"><span class="header-section-number">23.5.3</span> Inverse Probability Weighting (IPW)</a></li>
-  <li><a href="#aipw-augmented-ipw-double-robustness" id="toc-aipw-augmented-ipw-double-robustness" class="nav-link" data-scroll-target="#aipw-augmented-ipw-double-robustness"><span class="header-section-number">23.5.4</span> AIPW (Augmented IPW): double robustness</a></li>
-  <li><a href="#sec-ch21-dr-proof" id="toc-sec-ch21-dr-proof" class="nav-link" data-scroll-target="#sec-ch21-dr-proof"><span class="header-section-number">23.5.5</span> Proof of double robustness</a></li>
+  <li><a href="#balance-diagnostics" id="toc-balance-diagnostics" class="nav-link" data-scroll-target="#balance-diagnostics"><span class="header-section-number">21.6.1</span> Balance diagnostics</a></li>
+  <li><a href="#sensitivity-analysis-rosenbaum-bounds" id="toc-sensitivity-analysis-rosenbaum-bounds" class="nav-link" data-scroll-target="#sensitivity-analysis-rosenbaum-bounds"><span class="header-section-number">21.6.2</span> Sensitivity analysis: Rosenbaum bounds</a></li>
   </ul></li>
-  </ul></li>
-  <li><a href="#sec-ch21-algorithm" id="toc-sec-ch21-algorithm" class="nav-link" data-scroll-target="#sec-ch21-algorithm"><span class="header-section-number">24</span> The Algorithm</a></li>
-  <li><a href="#sec-ch21-stats" id="toc-sec-ch21-stats" class="nav-link" data-scroll-target="#sec-ch21-stats"><span class="header-section-number">25</span> Statistical Properties</a></li>
-  <li><a href="#sec-ch21-impl" id="toc-sec-ch21-impl" class="nav-link" data-scroll-target="#sec-ch21-impl"><span class="header-section-number">26</span> Implementation</a>
+  <li><a href="#sec-ch21-computation" id="toc-sec-ch21-computation" class="nav-link" data-scroll-target="#sec-ch21-computation"><span class="header-section-number">21.7</span> Computational Considerations</a></li>
+  <li><a href="#sec-ch21-example" id="toc-sec-ch21-example" class="nav-link" data-scroll-target="#sec-ch21-example"><span class="header-section-number">21.8</span> Worked Example</a>
   <ul class="collapse">
-  <li><a href="#simulating-observational-data" id="toc-simulating-observational-data" class="nav-link" data-scroll-target="#simulating-observational-data"><span class="header-section-number">26.1</span> Simulating observational data</a></li>
-  <li><a href="#step-by-step-regression-adjustment" id="toc-step-by-step-regression-adjustment" class="nav-link" data-scroll-target="#step-by-step-regression-adjustment"><span class="header-section-number">26.2</span> Step-by-step: regression adjustment</a></li>
-  <li><a href="#step-by-step-ipw" id="toc-step-by-step-ipw" class="nav-link" data-scroll-target="#step-by-step-ipw"><span class="header-section-number">26.3</span> Step-by-step: IPW</a></li>
-  <li><a href="#step-by-step-aipw" id="toc-step-by-step-aipw" class="nav-link" data-scroll-target="#step-by-step-aipw"><span class="header-section-number">26.4</span> Step-by-step: AIPW</a></li>
-  <li><a href="#step-by-step-stabilized-hajek-ipw" id="toc-step-by-step-stabilized-hajek-ipw" class="nav-link" data-scroll-target="#step-by-step-stabilized-hajek-ipw"><span class="header-section-number">26.5</span> Step-by-step: stabilized (Hajek) IPW</a></li>
-  <li><a href="#step-by-step-matching-with-mahalanobis-distance" id="toc-step-by-step-matching-with-mahalanobis-distance" class="nav-link" data-scroll-target="#step-by-step-matching-with-mahalanobis-distance"><span class="header-section-number">26.6</span> Step-by-step: matching with Mahalanobis distance</a></li>
-  <li><a href="#comparison-of-all-estimators" id="toc-comparison-of-all-estimators" class="nav-link" data-scroll-target="#comparison-of-all-estimators"><span class="header-section-number">26.7</span> Comparison of all estimators</a></li>
+  <li><a href="#diagnostic-suite-for-the-worked-example" id="toc-diagnostic-suite-for-the-worked-example" class="nav-link" data-scroll-target="#diagnostic-suite-for-the-worked-example"><span class="header-section-number">21.8.1</span> Diagnostic suite for the worked example</a></li>
   </ul></li>
-  <li><a href="#sec-ch21-diagnostics" id="toc-sec-ch21-diagnostics" class="nav-link" data-scroll-target="#sec-ch21-diagnostics"><span class="header-section-number">27</span> Diagnostics</a>
-  <ul class="collapse">
-  <li><a href="#balance-diagnostics" id="toc-balance-diagnostics" class="nav-link" data-scroll-target="#balance-diagnostics"><span class="header-section-number">27.1</span> Balance diagnostics</a></li>
-  <li><a href="#sensitivity-analysis-rosenbaum-bounds" id="toc-sensitivity-analysis-rosenbaum-bounds" class="nav-link" data-scroll-target="#sensitivity-analysis-rosenbaum-bounds"><span class="header-section-number">27.2</span> Sensitivity analysis: Rosenbaum bounds</a></li>
-  </ul></li>
-  <li><a href="#sec-ch21-computation" id="toc-sec-ch21-computation" class="nav-link" data-scroll-target="#sec-ch21-computation"><span class="header-section-number">28</span> Computational Considerations</a></li>
-  <li><a href="#sec-ch21-example" id="toc-sec-ch21-example" class="nav-link" data-scroll-target="#sec-ch21-example"><span class="header-section-number">29</span> Worked Example</a>
-  <ul class="collapse">
-  <li><a href="#diagnostic-suite-for-the-worked-example" id="toc-diagnostic-suite-for-the-worked-example" class="nav-link" data-scroll-target="#diagnostic-suite-for-the-worked-example"><span class="header-section-number">29.1</span> Diagnostic suite for the worked example</a></li>
-  </ul></li>
-  <li><a href="#sec-ch21-exercises" id="toc-sec-ch21-exercises" class="nav-link" data-scroll-target="#sec-ch21-exercises"><span class="header-section-number">30</span> Exercises</a></li>
-  <li><a href="#sec-ch21-biblio" id="toc-sec-ch21-biblio" class="nav-link" data-scroll-target="#sec-ch21-biblio"><span class="header-section-number">31</span> Bibliographic Notes</a></li>
+  <li><a href="#sec-ch21-exercises" id="toc-sec-ch21-exercises" class="nav-link" data-scroll-target="#sec-ch21-exercises"><span class="header-section-number">21.9</span> Exercises</a></li>
+  <li><a href="#sec-ch21-biblio" id="toc-sec-ch21-biblio" class="nav-link" data-scroll-target="#sec-ch21-biblio"><span class="header-section-number">21.10</span> Bibliographic Notes</a></li>
   </ul>
 </nav>
     </div>
@@ -718,8 +707,8 @@ window.Quarto = {
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">'assets/book.mplstyle'</span>)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="notation-for-this-chapter" class="level2" data-number="21.1">
-<h2 data-number="21.1" class="anchored" data-anchor-id="notation-for-this-chapter"><span class="header-section-number">21.1</span> Notation for this chapter</h2>
+<section id="notation-for-this-chapter" class="level3" data-number="21.0.1">
+<h3 data-number="21.0.1" class="anchored" data-anchor-id="notation-for-this-chapter"><span class="header-section-number">21.0.1</span> Notation for this chapter</h3>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -751,8 +740,8 @@ window.Quarto = {
 </tbody>
 </table>
 </section>
-<section id="sec-ch21-motivation" class="level1" data-number="22">
-<h1 data-number="22"><span class="header-section-number">22</span> Motivation</h1>
+<section id="sec-ch21-motivation" class="level2" data-number="21.1">
+<h2 data-number="21.1" class="anchored" data-anchor-id="sec-ch21-motivation"><span class="header-section-number">21.1</span> Motivation</h2>
 <p>Regression (Chapters 10-14) tells you about associations: “people who take the drug have better outcomes.” Causal inference asks the harder question: “does the drug <em>cause</em> better outcomes, or do healthier people choose to take it?”</p>
 <p>The difference matters. If healthier people self-select into treatment, the naive comparison of treated vs untreated outcomes is biased — it conflates the treatment effect with the selection effect. This chapter develops the tools to separate the two.</p>
 <p><strong>The practical setting:</strong> You have observational data (not a randomized experiment). Some units received treatment (<span class="math inline">\(D = 1\)</span>), others didn’t (<span class="math inline">\(D = 0\)</span>). You observe covariates <span class="math inline">\(\mathbf{X}\)</span> (age, income, health status) and an outcome <span class="math inline">\(Y\)</span> (recovery time, earnings, test score). You want to estimate the causal effect of <span class="math inline">\(D\)</span> on <span class="math inline">\(Y\)</span>.</p>
@@ -764,10 +753,10 @@ window.Quarto = {
 <li><strong>AIPW (Augmented IPW)</strong> — combines regression and weighting for “double robustness”</li>
 </ol>
 </section>
-<section id="sec-ch21-math" class="level1" data-number="23">
-<h1 data-number="23"><span class="header-section-number">23</span> Mathematical Foundation</h1>
-<section id="the-fundamental-problem-of-causal-inference" class="level2" data-number="23.1">
-<h2 data-number="23.1" class="anchored" data-anchor-id="the-fundamental-problem-of-causal-inference"><span class="header-section-number">23.1</span> The fundamental problem of causal inference</h2>
+<section id="sec-ch21-math" class="level2" data-number="21.2">
+<h2 data-number="21.2" class="anchored" data-anchor-id="sec-ch21-math"><span class="header-section-number">21.2</span> Mathematical Foundation</h2>
+<section id="the-fundamental-problem-of-causal-inference" class="level3" data-number="21.2.1">
+<h3 data-number="21.2.1" class="anchored" data-anchor-id="the-fundamental-problem-of-causal-inference"><span class="header-section-number">21.2.1</span> The fundamental problem of causal inference</h3>
 <p>For each unit <span class="math inline">\(i\)</span>, there are two <em>potential outcomes</em>:</p>
 <ul>
 <li><span class="math inline">\(Y_i(1)\)</span>: what would happen if unit <span class="math inline">\(i\)</span> receives treatment</li>
@@ -780,8 +769,8 @@ window.Quarto = {
 \]</span></p>
 <p>We cannot compute this directly because we never observe both potential outcomes for the same unit. This is the fundamental problem.</p>
 </section>
-<section id="why-naive-comparison-fails" class="level2" data-number="23.2">
-<h2 data-number="23.2" class="anchored" data-anchor-id="why-naive-comparison-fails"><span class="header-section-number">23.2</span> Why naive comparison fails</h2>
+<section id="why-naive-comparison-fails" class="level3" data-number="21.2.2">
+<h3 data-number="21.2.2" class="anchored" data-anchor-id="why-naive-comparison-fails"><span class="header-section-number">21.2.2</span> Why naive comparison fails</h3>
 <p>The naive estimator <span class="math inline">\(\hat{\tau}_{\text{naive}} = \bar{Y}_{\text{treated}} - \bar{Y}_{\text{control}}\)</span> is biased whenever treatment assignment depends on characteristics that also affect the outcome. For example:</p>
 <ul>
 <li>People with worse health are more likely to take the drug → naive estimate is biased downward (treated group looks sicker)</li>
@@ -789,23 +778,23 @@ window.Quarto = {
 </ul>
 <p>This is <em>confounding</em>: a variable that affects both treatment assignment and the outcome.</p>
 </section>
-<section id="identification-under-unconfoundedness" class="level2" data-number="23.3">
-<h2 data-number="23.3" class="anchored" data-anchor-id="identification-under-unconfoundedness"><span class="header-section-number">23.3</span> Identification under unconfoundedness</h2>
+<section id="identification-under-unconfoundedness" class="level3" data-number="21.2.3">
+<h3 data-number="21.2.3" class="anchored" data-anchor-id="identification-under-unconfoundedness"><span class="header-section-number">21.2.3</span> Identification under unconfoundedness</h3>
 <p>To estimate causal effects from observational data, we need three assumptions:</p>
 <p><strong>1. SUTVA</strong> (Stable Unit Treatment Value Assumption): One unit’s treatment doesn’t affect another unit’s outcome. (No “spillover” effects.)</p>
 <p><strong>2. Unconfoundedness</strong> (ignorability): Treatment assignment is independent of potential outcomes, <em>conditional on covariates</em>: <span class="math inline">\((Y(1), Y(0)) \perp D \mid \mathbf{X}\)</span>. This means: once we condition on <span class="math inline">\(\mathbf{X}\)</span>, the remaining variation in <span class="math inline">\(D\)</span> is essentially random.</p>
 <p><strong>3. Positivity</strong> (overlap): Every unit has a positive probability of receiving either treatment status: <span class="math inline">\(0 &lt; e(\mathbf{x}) &lt; 1\)</span> for all <span class="math inline">\(\mathbf{x}\)</span> in the support. If some units <em>always</em> or <em>never</em> receive treatment, we cannot learn about the treatment effect for them.</p>
 <p>Under these three assumptions, the ATE is identified: <span id="eq-ipw"><span class="math display">\[
 \tau = \mathbb{E}\!\left[\frac{D_i Y_i}{e(\mathbf{X}_i)} - \frac{(1-D_i)Y_i}{1-e(\mathbf{X}_i)}\right]
-\tag{23.1}\]</span></span></p>
+\tag{21.1}\]</span></span></p>
 </section>
-<section id="the-propensity-score" class="level2" data-number="23.4">
-<h2 data-number="23.4" class="anchored" data-anchor-id="the-propensity-score"><span class="header-section-number">23.4</span> The propensity score</h2>
+<section id="the-propensity-score" class="level3" data-number="21.2.4">
+<h3 data-number="21.2.4" class="anchored" data-anchor-id="the-propensity-score"><span class="header-section-number">21.2.4</span> The propensity score</h3>
 <p>The propensity score <span class="math inline">\(e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{X}=\mathbf{x})\)</span> is the probability of receiving treatment given covariates. It is a <em>scalar summary</em> of all confounders.</p>
 <p><strong>The Rosenbaum-Rubin theorem (1983):</strong> If unconfoundedness holds given <span class="math inline">\(\mathbf{X}\)</span>, it also holds given <span class="math inline">\(e(\mathbf{X})\)</span> alone. This is powerful: instead of adjusting for many covariates simultaneously (which is hard in high dimensions), you can adjust for a single number — the propensity score.</p>
 <p>In practice, we estimate <span class="math inline">\(e(\mathbf{x})\)</span> using logistic regression or other classifiers (sklearn’s <code>LogisticRegression</code>).</p>
-<section id="proof-of-the-rosenbaum-rubin-theorem" class="level3" data-number="23.4.1">
-<h3 data-number="23.4.1" class="anchored" data-anchor-id="proof-of-the-rosenbaum-rubin-theorem"><span class="header-section-number">23.4.1</span> Proof of the Rosenbaum-Rubin theorem</h3>
+<section id="proof-of-the-rosenbaum-rubin-theorem" class="level4" data-number="21.2.4.1">
+<h4 data-number="21.2.4.1" class="anchored" data-anchor-id="proof-of-the-rosenbaum-rubin-theorem"><span class="header-section-number">21.2.4.1</span> Proof of the Rosenbaum-Rubin theorem</h4>
 <p>The theorem is worth proving because the proof <em>is</em> the design principle: it shows exactly why propensity-score methods work and what they require.</p>
 <p><strong>Claim:</strong> If <span class="math inline">\((Y(1), Y(0)) \perp D \mid \mathbf{X}\)</span>, then <span class="math inline">\((Y(1), Y(0)) \perp D \mid e(\mathbf{X})\)</span>.</p>
 <p><strong>Proof.</strong> We need to show that <span class="math inline">\(\Pr(D=1 \mid Y(1), Y(0),
@@ -831,8 +820,8 @@ e(\mathbf{X})) = \Pr(D=1 \mid e(\mathbf{X}))\)</span>. Start from the right-hand
 <p>Both sides equal <span class="math inline">\(e(\mathbf{X})\)</span>, so <span class="math inline">\(D\)</span> is conditionally independent of the potential outcomes given the propensity score. <span class="math inline">\(\square\)</span></p>
 <p><strong>Why this matters for code:</strong> The proof tells you that after you estimate <span class="math inline">\(\hat{e}(\mathbf{x})\)</span>, you can stratify, match, or reweight on this single number instead of the full covariate vector. This is why IPW works — it reweights by <span class="math inline">\(1/\hat{e}\)</span> rather than requiring nonparametric adjustment in the full <span class="math inline">\(\mathbf{X}\)</span> space.</p>
 </section>
-<section id="positivity-violations" class="level3" data-number="23.4.2">
-<h3 data-number="23.4.2" class="anchored" data-anchor-id="positivity-violations"><span class="header-section-number">23.4.2</span> Positivity violations</h3>
+<section id="positivity-violations" class="level4" data-number="21.2.4.2">
+<h4 data-number="21.2.4.2" class="anchored" data-anchor-id="positivity-violations"><span class="header-section-number">21.2.4.2</span> Positivity violations</h4>
 <p>Positivity requires <span class="math inline">\(0 &lt; e(\mathbf{x}) &lt; 1\)</span> for all <span class="math inline">\(\mathbf{x}\)</span>. When this fails — some covariate strata have <span class="math inline">\(e(\mathbf{x})
 \approx 0\)</span> or <span class="math inline">\(\approx 1\)</span> — the causal effect is not identified for those strata, and estimation becomes unstable.</p>
 <p><strong>Practical consequences:</strong></p>
@@ -841,7 +830,7 @@ e(\mathbf{X})) = \Pr(D=1 \mid e(\mathbf{X}))\)</span>. Start from the right-hand
 <li><strong>Effective sample size drops.</strong> The ESS formula <span class="math inline">\((\sum w_i)^2 / \sum w_i^2\)</span> captures how many independent observations the weighted sample is worth. Extreme weights mean few observations drive the estimate.</li>
 <li><strong>Extrapolation.</strong> If no treated units exist in some covariate region, the outcome model must extrapolate the counterfactual <span class="math inline">\(\mu_1(\mathbf{x})\)</span> from distant data — pure model dependence.</li>
 </ul>
-<p><strong>Diagnostic:</strong> The propensity score histogram (shown in <a href="#sec-ch21-diagnostics" class="quarto-xref"><span>Chapter 27</span></a>) reveals positivity violations as regions where one group’s distribution has mass but the other’s does not.</p>
+<p><strong>Diagnostic:</strong> The propensity score histogram (shown in <a href="#sec-ch21-diagnostics" class="quarto-xref"><span>Section 21.6</span></a>) reveals positivity violations as regions where one group’s distribution has mass but the other’s does not.</p>
 <p><strong>Practical responses:</strong></p>
 <ol type="1">
 <li><strong>Trimming:</strong> Discard units with <span class="math inline">\(\hat{e}(\mathbf{x}) &lt; c\)</span> or <span class="math inline">\(&gt; 1 - c\)</span> (common choices: <span class="math inline">\(c = 0.01\)</span> or <span class="math inline">\(c = 0.05\)</span>). This changes the estimand from the population ATE to the ATE among the trimmed population.</li>
@@ -850,10 +839,10 @@ e(\mathbf{X})) = \Pr(D=1 \mid e(\mathbf{X}))\)</span>. Start from the right-hand
 </ol>
 </section>
 </section>
-<section id="the-four-estimators" class="level2" data-number="23.5">
-<h2 data-number="23.5" class="anchored" data-anchor-id="the-four-estimators"><span class="header-section-number">23.5</span> The four estimators</h2>
-<section id="matching" class="level3" data-number="23.5.1">
-<h3 data-number="23.5.1" class="anchored" data-anchor-id="matching"><span class="header-section-number">23.5.1</span> Matching</h3>
+<section id="the-four-estimators" class="level3" data-number="21.2.5">
+<h3 data-number="21.2.5" class="anchored" data-anchor-id="the-four-estimators"><span class="header-section-number">21.2.5</span> The four estimators</h3>
+<section id="matching" class="level4" data-number="21.2.5.1">
+<h4 data-number="21.2.5.1" class="anchored" data-anchor-id="matching"><span class="header-section-number">21.2.5.1</span> Matching</h4>
 <p>The oldest approach: for each treated unit, find one or more control units with similar covariates and compare their outcomes. The ATE estimate averages the within-match differences.</p>
 <p><strong>Distance metrics:</strong></p>
 <ul>
@@ -866,14 +855,14 @@ e(\mathbf{x}_j)|\)</span>. Reduces matching to a one-dimensional problem by the 
 </ul>
 <p><strong>Limitation:</strong> Matching discards unmatched units, which changes the estimand (the population you’re averaging over). With replacement, the same control unit may be matched multiple times, inflating its influence. Matching quality degrades in high dimensions (the “curse of dimensionality”).</p>
 </section>
-<section id="regression-adjustment" class="level3" data-number="23.5.2">
-<h3 data-number="23.5.2" class="anchored" data-anchor-id="regression-adjustment"><span class="header-section-number">23.5.2</span> Regression adjustment</h3>
+<section id="regression-adjustment" class="level4" data-number="21.2.5.2">
+<h4 data-number="21.2.5.2" class="anchored" data-anchor-id="regression-adjustment"><span class="header-section-number">21.2.5.2</span> Regression adjustment</h4>
 <p>Fit separate outcome models for treated and control units: <span class="math inline">\(\hat{\mu}_1(\mathbf{x}) = \hat{\mathbb{E}}[Y \mid \mathbf{X}=\mathbf{x}, D=1]\)</span> and <span class="math inline">\(\hat{\mu}_0(\mathbf{x}) = \hat{\mathbb{E}}[Y \mid \mathbf{X}=\mathbf{x}, D=0]\)</span>.</p>
 <p>The ATE estimate is the average predicted difference: <span class="math inline">\(\hat{\tau}_{\text{reg}} = \frac{1}{n}\sum_i [\hat{\mu}_1(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i)]\)</span>.</p>
 <p><strong>Limitation:</strong> If the outcome model is wrong, the estimate is biased.</p>
 </section>
-<section id="inverse-probability-weighting-ipw" class="level3" data-number="23.5.3">
-<h3 data-number="23.5.3" class="anchored" data-anchor-id="inverse-probability-weighting-ipw"><span class="header-section-number">23.5.3</span> Inverse Probability Weighting (IPW)</h3>
+<section id="inverse-probability-weighting-ipw" class="level4" data-number="21.2.5.3">
+<h4 data-number="21.2.5.3" class="anchored" data-anchor-id="inverse-probability-weighting-ipw"><span class="header-section-number">21.2.5.3</span> Inverse Probability Weighting (IPW)</h4>
 <p>Reweight each observation by the inverse of its propensity score. Treated units with low <span class="math inline">\(e(\mathbf{x})\)</span> (unlikely to be treated) get high weight; control units with high <span class="math inline">\(e(\mathbf{x})\)</span> (likely to be treated) get high weight. This creates a pseudo-population where treatment is independent of covariates.</p>
 <p><span class="math inline">\(\hat{\tau}_{\text{IPW}} = \frac{1}{n}\sum_i \left[\frac{D_i Y_i}{e(\mathbf{X}_i)} - \frac{(1-D_i)Y_i}{1-e(\mathbf{X}_i)}\right]\)</span></p>
 <p><strong>Limitation:</strong> If the propensity model is wrong, or if some <span class="math inline">\(e(\mathbf{x})\)</span> are near 0 or 1 (poor overlap), the weights become extreme and the estimate is unstable.</p>
@@ -892,19 +881,19 @@ D_i / e_i} - \frac{\sum_i (1-D_i) Y_i / (1-e_i)}{\sum_i
 (1-D_i) / (1-e_i)}\)</span></p>
 <p>This is invariant to rescaling of the weights and has lower variance than the unnormalized Horvitz-Thompson estimator when the sample size varies across strata. It is slightly biased in finite samples but the bias is <span class="math inline">\(O(1/n)\)</span>.</p>
 </section>
-<section id="aipw-augmented-ipw-double-robustness" class="level3" data-number="23.5.4">
-<h3 data-number="23.5.4" class="anchored" data-anchor-id="aipw-augmented-ipw-double-robustness"><span class="header-section-number">23.5.4</span> AIPW (Augmented IPW): double robustness</h3>
+<section id="aipw-augmented-ipw-double-robustness" class="level4" data-number="21.2.5.4">
+<h4 data-number="21.2.5.4" class="anchored" data-anchor-id="aipw-augmented-ipw-double-robustness"><span class="header-section-number">21.2.5.4</span> AIPW (Augmented IPW): double robustness</h4>
 <p>AIPW combines both approaches:</p>
 <p><span id="eq-aipw"><span class="math display">\[
 \hat{\tau}_{\text{AIPW}} = \frac{1}{n}\sum_i \left[\hat{\mu}_1(\mathbf{X}_i) - \hat{\mu}_0(\mathbf{X}_i)
 + \frac{D_i(Y_i - \hat{\mu}_1(\mathbf{X}_i))}{\hat{e}(\mathbf{X}_i)}
 - \frac{(1-D_i)(Y_i - \hat{\mu}_0(\mathbf{X}_i))}{1-\hat{e}(\mathbf{X}_i)}\right]
-\tag{23.2}\]</span></span></p>
+\tag{21.2}\]</span></span></p>
 <p><strong>Double robustness:</strong> AIPW is consistent if <em>either</em> the outcome model or the propensity model is correct (but not necessarily both). This is the key advantage: you get two chances to get it right.</p>
 <p><strong>Intuition:</strong> The first line (<span class="math inline">\(\hat{\mu}_1 - \hat{\mu}_0\)</span>) is the regression adjustment. The second and third lines are <em>corrections</em> that use the IPW weights to fix any bias in the regression. If the regression is perfect (<span class="math inline">\(\hat{\mu}_d = \mu_d\)</span>), the corrections have mean zero and don’t hurt. If the regression is wrong but the propensity is right, the corrections fix the bias.</p>
 </section>
-<section id="sec-ch21-dr-proof" class="level3" data-number="23.5.5">
-<h3 data-number="23.5.5" class="anchored" data-anchor-id="sec-ch21-dr-proof"><span class="header-section-number">23.5.5</span> Proof of double robustness</h3>
+<section id="sec-ch21-dr-proof" class="level4" data-number="21.2.5.5">
+<h4 data-number="21.2.5.5" class="anchored" data-anchor-id="sec-ch21-dr-proof"><span class="header-section-number">21.2.5.5</span> Proof of double robustness</h4>
 <p>This proof is worth giving in full because it reveals the mechanism behind the estimator’s resilience — and shows exactly what “double robustness” means mathematically.</p>
 <p><strong>Claim.</strong> Let <span class="math inline">\(\hat{\mu}_d(\mathbf{x})\)</span> and <span class="math inline">\(\hat{e}(\mathbf{x})\)</span> be working models for the outcome and propensity, respectively. The AIPW estimator is consistent for <span class="math inline">\(\tau\)</span> if <em>either</em> (a) <span class="math inline">\(\hat{\mu}_d(\mathbf{x}) \xrightarrow{p} \mu_d(\mathbf{x})\)</span> for <span class="math inline">\(d \in \{0, 1\}\)</span>, or (b) <span class="math inline">\(\hat{e}(\mathbf{x}) \xrightarrow{p}
 e(\mathbf{x})\)</span>.</p>
@@ -947,8 +936,8 @@ e(\mathbf{X}_i)\)</span> and <span class="math inline">\(\mathbb{E}[Y_i \mid D_i
 </section>
 </section>
 </section>
-<section id="sec-ch21-algorithm" class="level1" data-number="24">
-<h1 data-number="24"><span class="header-section-number">24</span> The Algorithm</h1>
+<section id="sec-ch21-algorithm" class="level2" data-number="21.3">
+<h2 data-number="21.3" class="anchored" data-anchor-id="sec-ch21-algorithm"><span class="header-section-number">21.3</span> The Algorithm</h2>
 <div class="callout callout-style-simple callout-note no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -964,7 +953,7 @@ Algorithm 21.1: AIPW Estimator
 <ol type="1">
 <li><p><strong>Estimate propensity score:</strong> Fit logistic regression of <span class="math inline">\(D\)</span> on <span class="math inline">\(\mathbf{X}\)</span>. Get <span class="math inline">\(\hat{e}(\mathbf{X}_i)\)</span> for each observation. Clip to <span class="math inline">\([0.01, 0.99]\)</span> to avoid division by zero.</p></li>
 <li><p><strong>Estimate outcome models:</strong> Fit OLS of <span class="math inline">\(Y\)</span> on <span class="math inline">\(\mathbf{X}\)</span> separately for treated (<span class="math inline">\(D=1\)</span>) and control (<span class="math inline">\(D=0\)</span>) subsamples. Predict <span class="math inline">\(\hat{\mu}_1(\mathbf{X}_i)\)</span> and <span class="math inline">\(\hat{\mu}_0(\mathbf{X}_i)\)</span> for <em>all</em> observations (including counterfactual predictions).</p></li>
-<li><p><strong>Compute AIPW scores:</strong> For each observation, compute the individual AIPW contribution using <a href="#eq-aipw" class="quarto-xref">Equation&nbsp;<span>23.2</span></a>.</p></li>
+<li><p><strong>Compute AIPW scores:</strong> For each observation, compute the individual AIPW contribution using <a href="#eq-aipw" class="quarto-xref">Equation&nbsp;<span>21.2</span></a>.</p></li>
 <li><p><strong>Estimate ATE:</strong> <span class="math inline">\(\hat{\tau} = \bar{\text{AIPW}}\)</span> (sample mean of AIPW scores).</p></li>
 <li><p><strong>Standard error:</strong> <span class="math inline">\(\hat{\text{se}} = \text{sd}(\text{AIPW}_i) / \sqrt{n}\)</span>. This uses the <em>influence function</em> representation of the estimator (connecting to M-estimation theory from Chapter 12).</p></li>
 </ol>
@@ -994,18 +983,18 @@ Algorithm 21.2: Nearest-Neighbor Matching
 </div>
 </div>
 </section>
-<section id="sec-ch21-stats" class="level1" data-number="25">
-<h1 data-number="25"><span class="header-section-number">25</span> Statistical Properties</h1>
+<section id="sec-ch21-stats" class="level2" data-number="21.4">
+<h2 data-number="21.4" class="anchored" data-anchor-id="sec-ch21-stats"><span class="header-section-number">21.4</span> Statistical Properties</h2>
 <p><strong>Regression adjustment</strong> is consistent when the outcome model is correctly specified. It is the most efficient estimator when the model is right, but can be badly biased when the model is wrong.</p>
 <p><strong>IPW</strong> is consistent when the propensity model is correctly specified. Its variance depends on the variability of the weights: extreme weights (near-violations of positivity) inflate the variance.</p>
 <p><strong>AIPW</strong> is consistent when <em>either</em> model is correct. When <em>both</em> are correct, it achieves the semiparametric efficiency bound (Hahn, 1998) — it has the smallest possible variance among all regular estimators of the ATE under unconfoundedness.</p>
 <p><strong>The efficiency bound:</strong> <span class="math inline">\(\text{Var}(\hat{\tau}_{\text{eff}}) = \mathbb{E}\!\left[\frac{\text{Var}(Y(1) \mid \mathbf{X})}{e(\mathbf{X})} + \frac{\text{Var}(Y(0) \mid \mathbf{X})}{1 - e(\mathbf{X})} + (\tau(\mathbf{X}) - \tau)^2\right]\)</span></p>
 <p>The first two terms reflect the cost of not observing both potential outcomes; the third reflects treatment effect heterogeneity.</p>
 </section>
-<section id="sec-ch21-impl" class="level1" data-number="26">
-<h1 data-number="26"><span class="header-section-number">26</span> Implementation</h1>
-<section id="simulating-observational-data" class="level2" data-number="26.1">
-<h2 data-number="26.1" class="anchored" data-anchor-id="simulating-observational-data"><span class="header-section-number">26.1</span> Simulating observational data</h2>
+<section id="sec-ch21-impl" class="level2" data-number="21.5">
+<h2 data-number="21.5" class="anchored" data-anchor-id="sec-ch21-impl"><span class="header-section-number">21.5</span> Implementation</h2>
+<section id="simulating-observational-data" class="level3" data-number="21.5.1">
+<h3 data-number="21.5.1" class="anchored" data-anchor-id="simulating-observational-data"><span class="header-section-number">21.5.1</span> Simulating observational data</h3>
 <p>To understand these estimators, we simulate data where we <em>control</em> everything and know the true ATE. This lets us see exactly how and why each estimator succeeds or fails.</p>
 <div id="sim-data" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">1000</span></span>
@@ -1044,8 +1033,8 @@ Naive diff in means: 2.233
 </div>
 <p>The naive estimate is biased because <span class="math inline">\(x_1\)</span> affects both who gets treated and the outcome. People with higher <span class="math inline">\(x_1\)</span> are both more likely to be treated <em>and</em> have higher <span class="math inline">\(Y(0)\)</span>. The naive comparison picks up both the treatment effect and the selection effect.</p>
 </section>
-<section id="step-by-step-regression-adjustment" class="level2" data-number="26.2">
-<h2 data-number="26.2" class="anchored" data-anchor-id="step-by-step-regression-adjustment"><span class="header-section-number">26.2</span> Step-by-step: regression adjustment</h2>
+<section id="step-by-step-regression-adjustment" class="level3" data-number="21.5.2">
+<h3 data-number="21.5.2" class="anchored" data-anchor-id="step-by-step-regression-adjustment"><span class="header-section-number">21.5.2</span> Step-by-step: regression adjustment</h3>
 <div id="reg-adjustment" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Fit separate outcome models for treated and control</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>X_sm <span class="op">=</span> sm.add_constant(X)</span>
@@ -1070,8 +1059,8 @@ Naive diff in means: 2.233
 </div>
 <p><strong>What happened:</strong> We used the outcome model to <em>impute</em> the missing potential outcomes. For a treated unit, we observe <span class="math inline">\(Y(1)\)</span> and predict <span class="math inline">\(Y(0)\)</span>. For a control unit, we observe <span class="math inline">\(Y(0)\)</span> and predict <span class="math inline">\(Y(1)\)</span>. The estimated ATE is the average of these predicted differences.</p>
 </section>
-<section id="step-by-step-ipw" class="level2" data-number="26.3">
-<h2 data-number="26.3" class="anchored" data-anchor-id="step-by-step-ipw"><span class="header-section-number">26.3</span> Step-by-step: IPW</h2>
+<section id="step-by-step-ipw" class="level3" data-number="21.5.3">
+<h3 data-number="21.5.3" class="anchored" data-anchor-id="step-by-step-ipw"><span class="header-section-number">21.5.3</span> Step-by-step: IPW</h3>
 <div id="ipw" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Estimate the propensity score</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use logistic regression: P(D=1 | X) = logistic(X @ beta)</span></span>
@@ -1101,8 +1090,8 @@ Effective sample size: 902 / 1000</code></pre>
 </div>
 <p><strong>What happened:</strong> We reweighted the sample so that treatment assignment is “as if random.” The weights balance the covariates between treated and control groups.</p>
 </section>
-<section id="step-by-step-aipw" class="level2" data-number="26.4">
-<h2 data-number="26.4" class="anchored" data-anchor-id="step-by-step-aipw"><span class="header-section-number">26.4</span> Step-by-step: AIPW</h2>
+<section id="step-by-step-aipw" class="level3" data-number="21.5.4">
+<h3 data-number="21.5.4" class="anchored" data-anchor-id="step-by-step-aipw"><span class="header-section-number">21.5.4</span> Step-by-step: AIPW</h3>
 <div id="aipw" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine regression adjustment and IPW</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Each observation gets an AIPW "score" — the individual-level</span></span>
@@ -1133,8 +1122,8 @@ True ATE: 2.0 — in CI ✓</code></pre>
 </div>
 <p><strong>What happened:</strong> AIPW starts with the regression adjustment estimate, then adds IPW-based corrections. The corrections account for any residual bias from the outcome model. If the outcome model is perfect, the corrections are noise around zero. If the outcome model is wrong but the propensity is right, the corrections fix the bias.</p>
 </section>
-<section id="step-by-step-stabilized-hajek-ipw" class="level2" data-number="26.5">
-<h2 data-number="26.5" class="anchored" data-anchor-id="step-by-step-stabilized-hajek-ipw"><span class="header-section-number">26.5</span> Step-by-step: stabilized (Hajek) IPW</h2>
+<section id="step-by-step-stabilized-hajek-ipw" class="level3" data-number="21.5.5">
+<h3 data-number="21.5.5" class="anchored" data-anchor-id="step-by-step-stabilized-hajek-ipw"><span class="header-section-number">21.5.5</span> Step-by-step: stabilized (Hajek) IPW</h3>
 <div id="hajek-ipw" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stabilized weights: divide by the sum within each group</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This is the Hajek estimator — lower variance than HT</span></span>
@@ -1167,8 +1156,8 @@ Hajek is often closer — normalization reduces sensitivity to extreme weights.<
 <p><strong>What happened:</strong> The Hajek estimator normalizes by the sum of weights within each group. This is equivalent to using stabilized weights <span class="math inline">\(w_i^{\text{stab}} = D_i \cdot \bar{D} / e_i +
 (1-D_i) \cdot (1 - \bar{D}) / (1-e_i)\)</span> where <span class="math inline">\(\bar{D}\)</span> is the marginal treatment rate.</p>
 </section>
-<section id="step-by-step-matching-with-mahalanobis-distance" class="level2" data-number="26.6">
-<h2 data-number="26.6" class="anchored" data-anchor-id="step-by-step-matching-with-mahalanobis-distance"><span class="header-section-number">26.6</span> Step-by-step: matching with Mahalanobis distance</h2>
+<section id="step-by-step-matching-with-mahalanobis-distance" class="level3" data-number="21.5.6">
+<h3 data-number="21.5.6" class="anchored" data-anchor-id="step-by-step-matching-with-mahalanobis-distance"><span class="header-section-number">21.5.6</span> Step-by-step: matching with Mahalanobis distance</h3>
 <div id="matching" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> match_ate(X, D, Y, n_matches<span class="op">=</span><span class="dv">1</span>):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Nearest-neighbor matching using Mahalanobis distance.</span></span>
@@ -1247,8 +1236,8 @@ Matching ATE (M=3): 2.001</code></pre>
 </div>
 <p><strong>What happened:</strong> For each unit, we found the closest unit in the other treatment group (by Mahalanobis distance) and used its outcome as the counterfactual. The <span class="math inline">\(O(n^2 p)\)</span> loop is slow but transparent — production implementations use <span class="math inline">\(k\)</span>-d trees. The single-match estimator is noisier than <span class="math inline">\(M=3\)</span> because each counterfactual depends on one neighbor.</p>
 </section>
-<section id="comparison-of-all-estimators" class="level2" data-number="26.7">
-<h2 data-number="26.7" class="anchored" data-anchor-id="comparison-of-all-estimators"><span class="header-section-number">26.7</span> Comparison of all estimators</h2>
+<section id="comparison-of-all-estimators" class="level3" data-number="21.5.7">
+<h3 data-number="21.5.7" class="anchored" data-anchor-id="comparison-of-all-estimators"><span class="header-section-number">21.5.7</span> Comparison of all estimators</h3>
 <div id="comparison" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>naive_est <span class="op">=</span> Y[D <span class="op">==</span> <span class="dv">1</span>].mean() <span class="op">-</span> Y[D <span class="op">==</span> <span class="dv">0</span>].mean()</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>se_match <span class="op">=</span> match_diffs.std() <span class="op">/</span> np.sqrt(n)</span>
@@ -1282,10 +1271,10 @@ AIPW                    1.967    0.066   -0.033</code></pre>
 </div>
 </section>
 </section>
-<section id="sec-ch21-diagnostics" class="level1" data-number="27">
-<h1 data-number="27"><span class="header-section-number">27</span> Diagnostics</h1>
-<section id="balance-diagnostics" class="level2" data-number="27.1">
-<h2 data-number="27.1" class="anchored" data-anchor-id="balance-diagnostics"><span class="header-section-number">27.1</span> Balance diagnostics</h2>
+<section id="sec-ch21-diagnostics" class="level2" data-number="21.6">
+<h2 data-number="21.6" class="anchored" data-anchor-id="sec-ch21-diagnostics"><span class="header-section-number">21.6</span> Diagnostics</h2>
+<section id="balance-diagnostics" class="level3" data-number="21.6.1">
+<h3 data-number="21.6.1" class="anchored" data-anchor-id="balance-diagnostics"><span class="header-section-number">21.6.1</span> Balance diagnostics</h3>
 <p>The most important diagnostic: after weighting or matching, are the treated and control groups balanced on covariates? The <em>standardized mean difference</em> (SMD) measures this.</p>
 <div id="cell-fig-balance" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
@@ -1332,7 +1321,7 @@ AIPW                    1.967    0.066   -0.033</code></pre>
 <img src="21-potential-outcomes_files/figure-html/fig-balance-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-balance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;27.1: Left: Propensity score distributions by treatment group. Good overlap (both distributions cover the same range) is necessary. Right: Standardized mean differences before and after IPW weighting — weighting reduces the imbalance.
+Figure&nbsp;21.1: Left: Propensity score distributions by treatment group. Good overlap (both distributions cover the same range) is necessary. Right: Standardized mean differences before and after IPW weighting — weighting reduces the imbalance.
 </figcaption>
 </figure>
 </div>
@@ -1340,8 +1329,8 @@ Figure&nbsp;27.1: Left: Propensity score distributions by treatment group. Good 
 </div>
 <p><strong>Rule of thumb:</strong> After weighting, all SMDs should be &lt; 0.1. If any covariate remains imbalanced, the treatment effect estimate may still be confounded.</p>
 </section>
-<section id="sensitivity-analysis-rosenbaum-bounds" class="level2" data-number="27.2">
-<h2 data-number="27.2" class="anchored" data-anchor-id="sensitivity-analysis-rosenbaum-bounds"><span class="header-section-number">27.2</span> Sensitivity analysis: Rosenbaum bounds</h2>
+<section id="sensitivity-analysis-rosenbaum-bounds" class="level3" data-number="21.6.2">
+<h3 data-number="21.6.2" class="anchored" data-anchor-id="sensitivity-analysis-rosenbaum-bounds"><span class="header-section-number">21.6.2</span> Sensitivity analysis: Rosenbaum bounds</h3>
 <p>Unconfoundedness is <em>untestable</em> — it assumes no unobserved confounders. Sensitivity analysis asks: “How strong would an unobserved confounder need to be to explain away the estimated effect?” If only an implausibly strong confounder could do it, the result is robust.</p>
 <p><strong>Rosenbaum bounds</strong> formalize this. Under unconfoundedness, any two units with the same covariates have the same odds of treatment. Rosenbaum’s framework allows an unobserved confounder <span class="math inline">\(U\)</span> that shifts the treatment odds by a factor of at most <span class="math inline">\(\Gamma\)</span>:</p>
 <p><span class="math display">\[
@@ -1485,8 +1474,8 @@ would shift the estimate by 0.267.</code></pre>
 </div>
 </section>
 </section>
-<section id="sec-ch21-computation" class="level1" data-number="28">
-<h1 data-number="28"><span class="header-section-number">28</span> Computational Considerations</h1>
+<section id="sec-ch21-computation" class="level2" data-number="21.7">
+<h2 data-number="21.7" class="anchored" data-anchor-id="sec-ch21-computation"><span class="header-section-number">21.7</span> Computational Considerations</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -1531,8 +1520,8 @@ would shift the estimate by 0.267.</code></pre>
 </table>
 <p>All four estimators are fast for typical observational studies (<span class="math inline">\(n &lt; 10^5\)</span>, <span class="math inline">\(p &lt; 100\)</span>). For larger problems, consider doubly robust estimators with machine learning nuisance models (Chapter 23, DML).</p>
 </section>
-<section id="sec-ch21-example" class="level1" data-number="29">
-<h1 data-number="29"><span class="header-section-number">29</span> Worked Example</h1>
+<section id="sec-ch21-example" class="level2" data-number="21.8">
+<h2 data-number="21.8" class="anchored" data-anchor-id="sec-ch21-example"><span class="header-section-number">21.8</span> Worked Example</h2>
 <p>Estimating the effect of job training on earnings.</p>
 <div id="worked" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate a job training program</span></span>
@@ -1649,8 +1638,8 @@ IPW (Hajek)               4,934        -66
 AIPW                      4,876       -124</code></pre>
 </div>
 </div>
-<section id="diagnostic-suite-for-the-worked-example" class="level2" data-number="29.1">
-<h2 data-number="29.1" class="anchored" data-anchor-id="diagnostic-suite-for-the-worked-example"><span class="header-section-number">29.1</span> Diagnostic suite for the worked example</h2>
+<section id="diagnostic-suite-for-the-worked-example" class="level3" data-number="21.8.1">
+<h3 data-number="21.8.1" class="anchored" data-anchor-id="diagnostic-suite-for-the-worked-example"><span class="header-section-number">21.8.1</span> Diagnostic suite for the worked example</h3>
 <p>The diagnostic suite answers three questions: (1) is the propensity model adequate? (2) do the treated and control groups overlap? (3) do the weights or matching produce covariate balance?</p>
 <div id="cell-fig-worked-diagnostics" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">8</span>))</span>
@@ -1775,7 +1764,7 @@ AIPW                      4,876       -124</code></pre>
 <img src="21-potential-outcomes_files/figure-html/fig-worked-diagnostics-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-worked-diagnostics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;29.1: Full diagnostic suite for the job training example. Top-left: propensity score distributions — good overlap is essential. Top-right: covariate balance before and after IPW. Bottom-left: IPW weight distribution — long tails signal positivity concerns. Bottom-right: propensity model calibration.
+Figure&nbsp;21.2: Full diagnostic suite for the job training example. Top-left: propensity score distributions — good overlap is essential. Top-right: covariate balance before and after IPW. Bottom-left: IPW weight distribution — long tails signal positivity concerns. Bottom-right: propensity model calibration.
 </figcaption>
 </figure>
 </div>
@@ -1790,8 +1779,8 @@ Figure&nbsp;29.1: Full diagnostic suite for the job training example. Top-left: 
 </ul>
 </section>
 </section>
-<section id="sec-ch21-exercises" class="level1" data-number="30">
-<h1 data-number="30"><span class="header-section-number">30</span> Exercises</h1>
+<section id="sec-ch21-exercises" class="level2" data-number="21.9">
+<h2 data-number="21.9" class="anchored" data-anchor-id="sec-ch21-exercises"><span class="header-section-number">21.9</span> Exercises</h2>
 <p><strong>Exercise 21.1</strong> (<span class="math inline">\(\star\star\)</span>, diagnostic failure). Simulate data with a positivity violation: <span class="math inline">\(e(\mathbf{x}) \approx 0\)</span> for some covariate values. Show that IPW becomes unstable (extreme weights) while AIPW remains more stable. What does the propensity score overlap plot look like?</p>
 <p>%%</p>
 <div id="ex-21-1" class="cell" data-execution_count="15">
@@ -1908,13 +1897,13 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <p>where <span class="math inline">\(\sigma_d^2(\mathbf{x}) = \text{Var}(Y(d) \mid \mathbf{X}=\mathbf{x})\)</span>.</p>
 <p>%%</p>
 </section>
-<section id="sec-ch21-biblio" class="level1" data-number="31">
-<h1 data-number="31"><span class="header-section-number">31</span> Bibliographic Notes</h1>
+<section id="sec-ch21-biblio" class="level2" data-number="21.10">
+<h2 data-number="21.10" class="anchored" data-anchor-id="sec-ch21-biblio"><span class="header-section-number">21.10</span> Bibliographic Notes</h2>
 <p>Potential outcomes: Neyman (1923) for randomized experiments, Rubin (1974) for the extension to observational studies. The framework is sometimes called the “Rubin Causal Model”; Holland (1986) provides a clear exposition.</p>
 <p>Propensity score: Rosenbaum and Rubin (1983). The balancing property (propensity score suffices for unconfoundedness) is Theorem 3 of that paper.</p>
 <p>IPW: Horvitz and Thompson (1952) for the survey sampling origin. The application to causal inference: Robins (1986). The stabilized (Hajek) estimator: Hajek (1971).</p>
 <p>Matching: Rubin (1973) for bias reduction via matching; Abadie and Imbens (2006) for large-sample properties of matching estimators, including the result that matching with replacement is <span class="math inline">\(\sqrt{n}\)</span>-consistent but has a bias term that requires correction when the number of matches is fixed. Mahalanobis distance matching: Rubin (1980).</p>
-<p>AIPW and double robustness: Robins, Rotnitzky, and Zhao (1994). The semiparametric efficiency bound for the ATE: Hahn (1998). The double-robustness proof in <a href="#sec-ch21-dr-proof" class="quarto-xref"><span>Section 23.5.5</span></a> follows the argument in Lunceford and Davidian (2004), which gives a clear finite-sample decomposition.</p>
+<p>AIPW and double robustness: Robins, Rotnitzky, and Zhao (1994). The semiparametric efficiency bound for the ATE: Hahn (1998). The double-robustness proof in <a href="#sec-ch21-dr-proof" class="quarto-xref"><span>Section 21.2.5.5</span></a> follows the argument in Lunceford and Davidian (2004), which gives a clear finite-sample decomposition.</p>
 <p>Sensitivity analysis: Rosenbaum (2002, Ch. 4) for the theory of sensitivity bounds. Cinelli and Hazlett (2020) for the omitted variable bias framework as a modern alternative.</p>
 <p>For textbooks: Imbens and Rubin (2015) for the potential-outcomes approach; Hernán and Robins (2020) for a modern epidemiological perspective (freely available online). Pearl (2009) for the structural causal model (SCM) approach, which this chapter does not cover but which is complementary.</p>
 
@@ -2415,7 +2404,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
 <span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notation for this chapter</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="fu">### Notation for this chapter</span></span>
 <span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Symbol <span class="pp">|</span> Meaning <span class="pp">|</span></span>
 <span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------|</span></span>
@@ -2426,7 +2415,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{x})$ <span class="pp">|</span> Propensity score <span class="pp">|</span></span>
 <span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a><span class="fu"># Motivation {#sec-ch21-motivation}</span></span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## Motivation {#sec-ch21-motivation}</span></span>
 <span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a>Regression (Chapters 10-14) tells you about associations: "people who</span>
 <span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a>take the drug have better outcomes." Causal inference asks the harder</span>
@@ -2457,9 +2446,9 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-58"><a href="#cb32-58" aria-hidden="true" tabindex="-1"></a>   "double robustness"</span>
 <span id="cb32-59"><a href="#cb32-59" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-60"><a href="#cb32-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-61"><a href="#cb32-61" aria-hidden="true" tabindex="-1"></a><span class="fu"># Mathematical Foundation {#sec-ch21-math}</span></span>
+<span id="cb32-61"><a href="#cb32-61" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mathematical Foundation {#sec-ch21-math}</span></span>
 <span id="cb32-62"><a href="#cb32-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-63"><a href="#cb32-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## The fundamental problem of causal inference</span></span>
+<span id="cb32-63"><a href="#cb32-63" aria-hidden="true" tabindex="-1"></a><span class="fu">### The fundamental problem of causal inference</span></span>
 <span id="cb32-64"><a href="#cb32-64" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-65"><a href="#cb32-65" aria-hidden="true" tabindex="-1"></a>For each unit $i$, there are two *potential outcomes*:</span>
 <span id="cb32-66"><a href="#cb32-66" aria-hidden="true" tabindex="-1"></a></span>
@@ -2482,7 +2471,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-83"><a href="#cb32-83" aria-hidden="true" tabindex="-1"></a>We cannot compute this directly because we never observe both</span>
 <span id="cb32-84"><a href="#cb32-84" aria-hidden="true" tabindex="-1"></a>potential outcomes for the same unit. This is the fundamental problem.</span>
 <span id="cb32-85"><a href="#cb32-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-86"><a href="#cb32-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why naive comparison fails</span></span>
+<span id="cb32-86"><a href="#cb32-86" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why naive comparison fails</span></span>
 <span id="cb32-87"><a href="#cb32-87" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-88"><a href="#cb32-88" aria-hidden="true" tabindex="-1"></a>The naive estimator $\hat{\tau}_{\text{naive}} = \bar{Y}_{\text{treated}} - \bar{Y}_{\text{control}}$</span>
 <span id="cb32-89"><a href="#cb32-89" aria-hidden="true" tabindex="-1"></a>is biased whenever treatment assignment depends on characteristics</span>
@@ -2497,7 +2486,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-98"><a href="#cb32-98" aria-hidden="true" tabindex="-1"></a>This is *confounding*: a variable that affects both treatment</span>
 <span id="cb32-99"><a href="#cb32-99" aria-hidden="true" tabindex="-1"></a>assignment and the outcome.</span>
 <span id="cb32-100"><a href="#cb32-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-101"><a href="#cb32-101" aria-hidden="true" tabindex="-1"></a><span class="fu">## Identification under unconfoundedness</span></span>
+<span id="cb32-101"><a href="#cb32-101" aria-hidden="true" tabindex="-1"></a><span class="fu">### Identification under unconfoundedness</span></span>
 <span id="cb32-102"><a href="#cb32-102" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-103"><a href="#cb32-103" aria-hidden="true" tabindex="-1"></a>To estimate causal effects from observational data, we need three</span>
 <span id="cb32-104"><a href="#cb32-104" aria-hidden="true" tabindex="-1"></a>assumptions:</span>
@@ -2523,7 +2512,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-124"><a href="#cb32-124" aria-hidden="true" tabindex="-1"></a>\tau = \mathbb{E}<span class="sc">\!</span>\left<span class="co">[</span><span class="ot">\frac{D_i Y_i}{e(\mathbf{X}_i)} - \frac{(1-D_i)Y_i}{1-e(\mathbf{X}_i)}\right</span><span class="co">]</span></span>
 <span id="cb32-125"><a href="#cb32-125" aria-hidden="true" tabindex="-1"></a>$$ {#eq-ipw}</span>
 <span id="cb32-126"><a href="#cb32-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-127"><a href="#cb32-127" aria-hidden="true" tabindex="-1"></a><span class="fu">## The propensity score</span></span>
+<span id="cb32-127"><a href="#cb32-127" aria-hidden="true" tabindex="-1"></a><span class="fu">### The propensity score</span></span>
 <span id="cb32-128"><a href="#cb32-128" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-129"><a href="#cb32-129" aria-hidden="true" tabindex="-1"></a>The propensity score $e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{X}=\mathbf{x})$</span>
 <span id="cb32-130"><a href="#cb32-130" aria-hidden="true" tabindex="-1"></a>is the probability of receiving treatment given covariates. It is a</span>
@@ -2538,7 +2527,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-139"><a href="#cb32-139" aria-hidden="true" tabindex="-1"></a>In practice, we estimate $e(\mathbf{x})$ using logistic regression</span>
 <span id="cb32-140"><a href="#cb32-140" aria-hidden="true" tabindex="-1"></a>or other classifiers (sklearn's <span class="in">`LogisticRegression`</span>).</span>
 <span id="cb32-141"><a href="#cb32-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-142"><a href="#cb32-142" aria-hidden="true" tabindex="-1"></a><span class="fu">### Proof of the Rosenbaum-Rubin theorem</span></span>
+<span id="cb32-142"><a href="#cb32-142" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Proof of the Rosenbaum-Rubin theorem</span></span>
 <span id="cb32-143"><a href="#cb32-143" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-144"><a href="#cb32-144" aria-hidden="true" tabindex="-1"></a>The theorem is worth proving because the proof *is* the design</span>
 <span id="cb32-145"><a href="#cb32-145" aria-hidden="true" tabindex="-1"></a>principle: it shows exactly why propensity-score methods work and</span>
@@ -2590,7 +2579,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-191"><a href="#cb32-191" aria-hidden="true" tabindex="-1"></a>This is why IPW works --- it reweights by $1/\hat{e}$ rather than</span>
 <span id="cb32-192"><a href="#cb32-192" aria-hidden="true" tabindex="-1"></a>requiring nonparametric adjustment in the full $\mathbf{X}$ space.</span>
 <span id="cb32-193"><a href="#cb32-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-194"><a href="#cb32-194" aria-hidden="true" tabindex="-1"></a><span class="fu">### Positivity violations</span></span>
+<span id="cb32-194"><a href="#cb32-194" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Positivity violations</span></span>
 <span id="cb32-195"><a href="#cb32-195" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-196"><a href="#cb32-196" aria-hidden="true" tabindex="-1"></a>Positivity requires $0 &lt; e(\mathbf{x}) &lt; 1$ for all $\mathbf{x}$.</span>
 <span id="cb32-197"><a href="#cb32-197" aria-hidden="true" tabindex="-1"></a>When this fails --- some covariate strata have $e(\mathbf{x})</span>
@@ -2626,9 +2615,9 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-227"><a href="#cb32-227" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**AIPW:** Less sensitive to extreme weights because the outcome</span>
 <span id="cb32-228"><a href="#cb32-228" aria-hidden="true" tabindex="-1"></a>   model handles the regions where $e(\mathbf{x})$ is extreme.</span>
 <span id="cb32-229"><a href="#cb32-229" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-230"><a href="#cb32-230" aria-hidden="true" tabindex="-1"></a><span class="fu">## The four estimators</span></span>
+<span id="cb32-230"><a href="#cb32-230" aria-hidden="true" tabindex="-1"></a><span class="fu">### The four estimators</span></span>
 <span id="cb32-231"><a href="#cb32-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-232"><a href="#cb32-232" aria-hidden="true" tabindex="-1"></a><span class="fu">### Matching</span></span>
+<span id="cb32-232"><a href="#cb32-232" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Matching</span></span>
 <span id="cb32-233"><a href="#cb32-233" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-234"><a href="#cb32-234" aria-hidden="true" tabindex="-1"></a>The oldest approach: for each treated unit, find one or more control</span>
 <span id="cb32-235"><a href="#cb32-235" aria-hidden="true" tabindex="-1"></a>units with similar covariates and compare their outcomes. The ATE</span>
@@ -2654,7 +2643,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-255"><a href="#cb32-255" aria-hidden="true" tabindex="-1"></a>influence. Matching quality degrades in high dimensions (the</span>
 <span id="cb32-256"><a href="#cb32-256" aria-hidden="true" tabindex="-1"></a>"curse of dimensionality").</span>
 <span id="cb32-257"><a href="#cb32-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-258"><a href="#cb32-258" aria-hidden="true" tabindex="-1"></a><span class="fu">### Regression adjustment</span></span>
+<span id="cb32-258"><a href="#cb32-258" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Regression adjustment</span></span>
 <span id="cb32-259"><a href="#cb32-259" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-260"><a href="#cb32-260" aria-hidden="true" tabindex="-1"></a>Fit separate outcome models for treated and control units:</span>
 <span id="cb32-261"><a href="#cb32-261" aria-hidden="true" tabindex="-1"></a>$\hat{\mu}_1(\mathbf{x}) = \hat{\mathbb{E}}<span class="co">[</span><span class="ot">Y \mid \mathbf{X}=\mathbf{x}, D=1</span><span class="co">]</span>$</span>
@@ -2666,7 +2655,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-267"><a href="#cb32-267" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-268"><a href="#cb32-268" aria-hidden="true" tabindex="-1"></a>**Limitation:** If the outcome model is wrong, the estimate is biased.</span>
 <span id="cb32-269"><a href="#cb32-269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-270"><a href="#cb32-270" aria-hidden="true" tabindex="-1"></a><span class="fu">### Inverse Probability Weighting (IPW)</span></span>
+<span id="cb32-270"><a href="#cb32-270" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Inverse Probability Weighting (IPW)</span></span>
 <span id="cb32-271"><a href="#cb32-271" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-272"><a href="#cb32-272" aria-hidden="true" tabindex="-1"></a>Reweight each observation by the inverse of its propensity score.</span>
 <span id="cb32-273"><a href="#cb32-273" aria-hidden="true" tabindex="-1"></a>Treated units with low $e(\mathbf{x})$ (unlikely to be treated) get</span>
@@ -2709,7 +2698,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-310"><a href="#cb32-310" aria-hidden="true" tabindex="-1"></a>sample size varies across strata. It is slightly biased in finite</span>
 <span id="cb32-311"><a href="#cb32-311" aria-hidden="true" tabindex="-1"></a>samples but the bias is $O(1/n)$.</span>
 <span id="cb32-312"><a href="#cb32-312" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-313"><a href="#cb32-313" aria-hidden="true" tabindex="-1"></a><span class="fu">### AIPW (Augmented IPW): double robustness</span></span>
+<span id="cb32-313"><a href="#cb32-313" aria-hidden="true" tabindex="-1"></a><span class="fu">#### AIPW (Augmented IPW): double robustness</span></span>
 <span id="cb32-314"><a href="#cb32-314" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-315"><a href="#cb32-315" aria-hidden="true" tabindex="-1"></a>AIPW combines both approaches:</span>
 <span id="cb32-316"><a href="#cb32-316" aria-hidden="true" tabindex="-1"></a></span>
@@ -2730,7 +2719,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-331"><a href="#cb32-331" aria-hidden="true" tabindex="-1"></a>mean zero and don't hurt. If the regression is wrong but the</span>
 <span id="cb32-332"><a href="#cb32-332" aria-hidden="true" tabindex="-1"></a>propensity is right, the corrections fix the bias.</span>
 <span id="cb32-333"><a href="#cb32-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-334"><a href="#cb32-334" aria-hidden="true" tabindex="-1"></a><span class="fu">### Proof of double robustness {#sec-ch21-dr-proof}</span></span>
+<span id="cb32-334"><a href="#cb32-334" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Proof of double robustness {#sec-ch21-dr-proof}</span></span>
 <span id="cb32-335"><a href="#cb32-335" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-336"><a href="#cb32-336" aria-hidden="true" tabindex="-1"></a>This proof is worth giving in full because it reveals the mechanism</span>
 <span id="cb32-337"><a href="#cb32-337" aria-hidden="true" tabindex="-1"></a>behind the estimator's resilience --- and shows exactly what "double</span>
@@ -2803,10 +2792,10 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-404"><a href="#cb32-404" aria-hidden="true" tabindex="-1"></a>Neyman-orthogonality property exploited by DML in Chapter 23.</span>
 <span id="cb32-405"><a href="#cb32-405" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-406"><a href="#cb32-406" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-407"><a href="#cb32-407" aria-hidden="true" tabindex="-1"></a><span class="fu"># The Algorithm {#sec-ch21-algorithm}</span></span>
+<span id="cb32-407"><a href="#cb32-407" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Algorithm {#sec-ch21-algorithm}</span></span>
 <span id="cb32-408"><a href="#cb32-408" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-409"><a href="#cb32-409" aria-hidden="true" tabindex="-1"></a>::: {.callout-note appearance="minimal"}</span>
-<span id="cb32-410"><a href="#cb32-410" aria-hidden="true" tabindex="-1"></a><span class="fu">## Algorithm 21.1: AIPW Estimator</span></span>
+<span id="cb32-410"><a href="#cb32-410" aria-hidden="true" tabindex="-1"></a><span class="fu">### Algorithm 21.1: AIPW Estimator</span></span>
 <span id="cb32-411"><a href="#cb32-411" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-412"><a href="#cb32-412" aria-hidden="true" tabindex="-1"></a>**Input:** Data $(\mathbf{X}, D, Y)$</span>
 <span id="cb32-413"><a href="#cb32-413" aria-hidden="true" tabindex="-1"></a></span>
@@ -2833,7 +2822,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-434"><a href="#cb32-434" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb32-435"><a href="#cb32-435" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-436"><a href="#cb32-436" aria-hidden="true" tabindex="-1"></a>::: {.callout-note appearance="minimal"}</span>
-<span id="cb32-437"><a href="#cb32-437" aria-hidden="true" tabindex="-1"></a><span class="fu">## Algorithm 21.2: Nearest-Neighbor Matching</span></span>
+<span id="cb32-437"><a href="#cb32-437" aria-hidden="true" tabindex="-1"></a><span class="fu">### Algorithm 21.2: Nearest-Neighbor Matching</span></span>
 <span id="cb32-438"><a href="#cb32-438" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-439"><a href="#cb32-439" aria-hidden="true" tabindex="-1"></a>**Input:** Data $(\mathbf{X}, D, Y)$, distance metric $d$,</span>
 <span id="cb32-440"><a href="#cb32-440" aria-hidden="true" tabindex="-1"></a>number of matches $M$</span>
@@ -2858,7 +2847,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-459"><a href="#cb32-459" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb32-460"><a href="#cb32-460" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-461"><a href="#cb32-461" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-462"><a href="#cb32-462" aria-hidden="true" tabindex="-1"></a><span class="fu"># Statistical Properties {#sec-ch21-stats}</span></span>
+<span id="cb32-462"><a href="#cb32-462" aria-hidden="true" tabindex="-1"></a><span class="fu">## Statistical Properties {#sec-ch21-stats}</span></span>
 <span id="cb32-463"><a href="#cb32-463" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-464"><a href="#cb32-464" aria-hidden="true" tabindex="-1"></a>**Regression adjustment** is consistent when the outcome model is</span>
 <span id="cb32-465"><a href="#cb32-465" aria-hidden="true" tabindex="-1"></a>correctly specified. It is the most efficient estimator when the model</span>
@@ -2880,9 +2869,9 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-481"><a href="#cb32-481" aria-hidden="true" tabindex="-1"></a>outcomes; the third reflects treatment effect heterogeneity.</span>
 <span id="cb32-482"><a href="#cb32-482" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-483"><a href="#cb32-483" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-484"><a href="#cb32-484" aria-hidden="true" tabindex="-1"></a><span class="fu"># Implementation {#sec-ch21-impl}</span></span>
+<span id="cb32-484"><a href="#cb32-484" aria-hidden="true" tabindex="-1"></a><span class="fu">## Implementation {#sec-ch21-impl}</span></span>
 <span id="cb32-485"><a href="#cb32-485" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-486"><a href="#cb32-486" aria-hidden="true" tabindex="-1"></a><span class="fu">## Simulating observational data</span></span>
+<span id="cb32-486"><a href="#cb32-486" aria-hidden="true" tabindex="-1"></a><span class="fu">### Simulating observational data</span></span>
 <span id="cb32-487"><a href="#cb32-487" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-488"><a href="#cb32-488" aria-hidden="true" tabindex="-1"></a>To understand these estimators, we simulate data where we *control*</span>
 <span id="cb32-489"><a href="#cb32-489" aria-hidden="true" tabindex="-1"></a>everything and know the true ATE. This lets us see exactly how and</span>
@@ -2924,7 +2913,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-527"><a href="#cb32-527" aria-hidden="true" tabindex="-1"></a>likely to be treated *and* have higher $Y(0)$. The naive comparison</span>
 <span id="cb32-528"><a href="#cb32-528" aria-hidden="true" tabindex="-1"></a>picks up both the treatment effect and the selection effect.</span>
 <span id="cb32-529"><a href="#cb32-529" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-530"><a href="#cb32-530" aria-hidden="true" tabindex="-1"></a><span class="fu">## Step-by-step: regression adjustment</span></span>
+<span id="cb32-530"><a href="#cb32-530" aria-hidden="true" tabindex="-1"></a><span class="fu">### Step-by-step: regression adjustment</span></span>
 <span id="cb32-531"><a href="#cb32-531" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-534"><a href="#cb32-534" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb32-535"><a href="#cb32-535" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: reg-adjustment</span></span>
@@ -2952,7 +2941,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-557"><a href="#cb32-557" aria-hidden="true" tabindex="-1"></a>$Y(0)$. For a control unit, we observe $Y(0)$ and predict $Y(1)$. The</span>
 <span id="cb32-558"><a href="#cb32-558" aria-hidden="true" tabindex="-1"></a>estimated ATE is the average of these predicted differences.</span>
 <span id="cb32-559"><a href="#cb32-559" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-560"><a href="#cb32-560" aria-hidden="true" tabindex="-1"></a><span class="fu">## Step-by-step: IPW</span></span>
+<span id="cb32-560"><a href="#cb32-560" aria-hidden="true" tabindex="-1"></a><span class="fu">### Step-by-step: IPW</span></span>
 <span id="cb32-561"><a href="#cb32-561" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-564"><a href="#cb32-564" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb32-565"><a href="#cb32-565" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: ipw</span></span>
@@ -2982,7 +2971,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-589"><a href="#cb32-589" aria-hidden="true" tabindex="-1"></a>assignment is "as if random." The weights balance the covariates</span>
 <span id="cb32-590"><a href="#cb32-590" aria-hidden="true" tabindex="-1"></a>between treated and control groups.</span>
 <span id="cb32-591"><a href="#cb32-591" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-592"><a href="#cb32-592" aria-hidden="true" tabindex="-1"></a><span class="fu">## Step-by-step: AIPW</span></span>
+<span id="cb32-592"><a href="#cb32-592" aria-hidden="true" tabindex="-1"></a><span class="fu">### Step-by-step: AIPW</span></span>
 <span id="cb32-593"><a href="#cb32-593" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-596"><a href="#cb32-596" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb32-597"><a href="#cb32-597" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: aipw</span></span>
@@ -3015,7 +3004,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-624"><a href="#cb32-624" aria-hidden="true" tabindex="-1"></a>the corrections are noise around zero. If the outcome model is wrong</span>
 <span id="cb32-625"><a href="#cb32-625" aria-hidden="true" tabindex="-1"></a>but the propensity is right, the corrections fix the bias.</span>
 <span id="cb32-626"><a href="#cb32-626" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-627"><a href="#cb32-627" aria-hidden="true" tabindex="-1"></a><span class="fu">## Step-by-step: stabilized (Hajek) IPW</span></span>
+<span id="cb32-627"><a href="#cb32-627" aria-hidden="true" tabindex="-1"></a><span class="fu">### Step-by-step: stabilized (Hajek) IPW</span></span>
 <span id="cb32-628"><a href="#cb32-628" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-631"><a href="#cb32-631" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb32-632"><a href="#cb32-632" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: hajek-ipw</span></span>
@@ -3047,7 +3036,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-658"><a href="#cb32-658" aria-hidden="true" tabindex="-1"></a>(1-D_i) \cdot (1 - \bar{D}) / (1-e_i)$ where $\bar{D}$ is the</span>
 <span id="cb32-659"><a href="#cb32-659" aria-hidden="true" tabindex="-1"></a>marginal treatment rate.</span>
 <span id="cb32-660"><a href="#cb32-660" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-661"><a href="#cb32-661" aria-hidden="true" tabindex="-1"></a><span class="fu">## Step-by-step: matching with Mahalanobis distance</span></span>
+<span id="cb32-661"><a href="#cb32-661" aria-hidden="true" tabindex="-1"></a><span class="fu">### Step-by-step: matching with Mahalanobis distance</span></span>
 <span id="cb32-662"><a href="#cb32-662" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-665"><a href="#cb32-665" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb32-666"><a href="#cb32-666" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: matching</span></span>
@@ -3130,7 +3119,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-743"><a href="#cb32-743" aria-hidden="true" tabindex="-1"></a>single-match estimator is noisier than $M=3$ because each</span>
 <span id="cb32-744"><a href="#cb32-744" aria-hidden="true" tabindex="-1"></a>counterfactual depends on one neighbor.</span>
 <span id="cb32-745"><a href="#cb32-745" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-746"><a href="#cb32-746" aria-hidden="true" tabindex="-1"></a><span class="fu">## Comparison of all estimators</span></span>
+<span id="cb32-746"><a href="#cb32-746" aria-hidden="true" tabindex="-1"></a><span class="fu">### Comparison of all estimators</span></span>
 <span id="cb32-747"><a href="#cb32-747" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-750"><a href="#cb32-750" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb32-751"><a href="#cb32-751" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: comparison</span></span>
@@ -3155,9 +3144,9 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-770"><a href="#cb32-770" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb32-771"><a href="#cb32-771" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-772"><a href="#cb32-772" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-773"><a href="#cb32-773" aria-hidden="true" tabindex="-1"></a><span class="fu"># Diagnostics {#sec-ch21-diagnostics}</span></span>
+<span id="cb32-773"><a href="#cb32-773" aria-hidden="true" tabindex="-1"></a><span class="fu">## Diagnostics {#sec-ch21-diagnostics}</span></span>
 <span id="cb32-774"><a href="#cb32-774" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-775"><a href="#cb32-775" aria-hidden="true" tabindex="-1"></a><span class="fu">## Balance diagnostics</span></span>
+<span id="cb32-775"><a href="#cb32-775" aria-hidden="true" tabindex="-1"></a><span class="fu">### Balance diagnostics</span></span>
 <span id="cb32-776"><a href="#cb32-776" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-777"><a href="#cb32-777" aria-hidden="true" tabindex="-1"></a>The most important diagnostic: after weighting or matching, are the</span>
 <span id="cb32-778"><a href="#cb32-778" aria-hidden="true" tabindex="-1"></a>treated and control groups balanced on covariates? The *standardized</span>
@@ -3210,7 +3199,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-827"><a href="#cb32-827" aria-hidden="true" tabindex="-1"></a>If any covariate remains imbalanced, the treatment effect estimate</span>
 <span id="cb32-828"><a href="#cb32-828" aria-hidden="true" tabindex="-1"></a>may still be confounded.</span>
 <span id="cb32-829"><a href="#cb32-829" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-830"><a href="#cb32-830" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sensitivity analysis: Rosenbaum bounds</span></span>
+<span id="cb32-830"><a href="#cb32-830" aria-hidden="true" tabindex="-1"></a><span class="fu">### Sensitivity analysis: Rosenbaum bounds</span></span>
 <span id="cb32-831"><a href="#cb32-831" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-832"><a href="#cb32-832" aria-hidden="true" tabindex="-1"></a>Unconfoundedness is *untestable* --- it assumes no unobserved</span>
 <span id="cb32-833"><a href="#cb32-833" aria-hidden="true" tabindex="-1"></a>confounders. Sensitivity analysis asks: "How strong would an</span>
@@ -3358,7 +3347,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-979"><a href="#cb32-979" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb32-980"><a href="#cb32-980" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-981"><a href="#cb32-981" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-982"><a href="#cb32-982" aria-hidden="true" tabindex="-1"></a><span class="fu"># Computational Considerations {#sec-ch21-computation}</span></span>
+<span id="cb32-982"><a href="#cb32-982" aria-hidden="true" tabindex="-1"></a><span class="fu">## Computational Considerations {#sec-ch21-computation}</span></span>
 <span id="cb32-983"><a href="#cb32-983" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-984"><a href="#cb32-984" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Cost <span class="pp">|</span> Memory <span class="pp">|</span> Notes <span class="pp">|</span></span>
 <span id="cb32-985"><a href="#cb32-985" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
@@ -3372,7 +3361,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-993"><a href="#cb32-993" aria-hidden="true" tabindex="-1"></a>estimators with machine learning nuisance models (Chapter 23, DML).</span>
 <span id="cb32-994"><a href="#cb32-994" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-995"><a href="#cb32-995" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-996"><a href="#cb32-996" aria-hidden="true" tabindex="-1"></a><span class="fu"># Worked Example {#sec-ch21-example}</span></span>
+<span id="cb32-996"><a href="#cb32-996" aria-hidden="true" tabindex="-1"></a><span class="fu">## Worked Example {#sec-ch21-example}</span></span>
 <span id="cb32-997"><a href="#cb32-997" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-998"><a href="#cb32-998" aria-hidden="true" tabindex="-1"></a>Estimating the effect of job training on earnings.</span>
 <span id="cb32-999"><a href="#cb32-999" aria-hidden="true" tabindex="-1"></a></span>
@@ -3476,7 +3465,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-1101"><a href="#cb32-1101" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>ate_w <span class="op">-</span> tau_w<span class="sc">:&gt;10,.0f}</span><span class="ss">"</span>)</span>
 <span id="cb32-1102"><a href="#cb32-1102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb32-1103"><a href="#cb32-1103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-1104"><a href="#cb32-1104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Diagnostic suite for the worked example</span></span>
+<span id="cb32-1104"><a href="#cb32-1104" aria-hidden="true" tabindex="-1"></a><span class="fu">### Diagnostic suite for the worked example</span></span>
 <span id="cb32-1105"><a href="#cb32-1105" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-1106"><a href="#cb32-1106" aria-hidden="true" tabindex="-1"></a>The diagnostic suite answers three questions: (1) is the propensity</span>
 <span id="cb32-1107"><a href="#cb32-1107" aria-hidden="true" tabindex="-1"></a>model adequate? (2) do the treated and control groups overlap? (3)</span>
@@ -3619,7 +3608,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-1246"><a href="#cb32-1246" aria-hidden="true" tabindex="-1"></a>  the propensity model is misspecified --- IPW will be biased.</span>
 <span id="cb32-1247"><a href="#cb32-1247" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-1248"><a href="#cb32-1248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-1249"><a href="#cb32-1249" aria-hidden="true" tabindex="-1"></a><span class="fu"># Exercises {#sec-ch21-exercises}</span></span>
+<span id="cb32-1249"><a href="#cb32-1249" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises {#sec-ch21-exercises}</span></span>
 <span id="cb32-1250"><a href="#cb32-1250" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-1251"><a href="#cb32-1251" aria-hidden="true" tabindex="-1"></a>**Exercise 21.1** ($\star\star$, diagnostic failure). Simulate data</span>
 <span id="cb32-1252"><a href="#cb32-1252" aria-hidden="true" tabindex="-1"></a>with a positivity violation: $e(\mathbf{x}) \approx 0$ for some</span>
@@ -3767,7 +3756,7 @@ AIPW        1.993   -0.007    0.121</code></pre>
 <span id="cb32-1400"><a href="#cb32-1400" aria-hidden="true" tabindex="-1"></a>%%</span>
 <span id="cb32-1401"><a href="#cb32-1401" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-1402"><a href="#cb32-1402" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-1403"><a href="#cb32-1403" aria-hidden="true" tabindex="-1"></a><span class="fu"># Bibliographic Notes {#sec-ch21-biblio}</span></span>
+<span id="cb32-1403"><a href="#cb32-1403" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bibliographic Notes {#sec-ch21-biblio}</span></span>
 <span id="cb32-1404"><a href="#cb32-1404" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-1405"><a href="#cb32-1405" aria-hidden="true" tabindex="-1"></a>Potential outcomes: Neyman (1923) for randomized experiments, Rubin</span>
 <span id="cb32-1406"><a href="#cb32-1406" aria-hidden="true" tabindex="-1"></a>(1974) for the extension to observational studies. The framework is</span>

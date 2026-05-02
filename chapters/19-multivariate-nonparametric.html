@@ -637,50 +637,47 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#sec-ch19-motivation" id="toc-sec-ch19-motivation" class="nav-link active" data-scroll-target="#sec-ch19-motivation"><span class="header-section-number">20</span> Motivation</a></li>
-  <li><a href="#sec-ch19-math" id="toc-sec-ch19-math" class="nav-link" data-scroll-target="#sec-ch19-math"><span class="header-section-number">21</span> Mathematical Foundation</a>
+  <li><a href="#sec-ch19-motivation" id="toc-sec-ch19-motivation" class="nav-link active" data-scroll-target="#sec-ch19-motivation"><span class="header-section-number">19.1</span> Motivation</a></li>
+  <li><a href="#sec-ch19-math" id="toc-sec-ch19-math" class="nav-link" data-scroll-target="#sec-ch19-math"><span class="header-section-number">19.2</span> Mathematical Foundation</a>
   <ul class="collapse">
-  <li><a href="#pca-why-variance-maximization-works" id="toc-pca-why-variance-maximization-works" class="nav-link" data-scroll-target="#pca-why-variance-maximization-works"><span class="header-section-number">21.1</span> PCA: why variance maximization works</a></li>
-  <li><a href="#factor-analysis-latent-variables-behind-observed-data" id="toc-factor-analysis-latent-variables-behind-observed-data" class="nav-link" data-scroll-target="#factor-analysis-latent-variables-behind-observed-data"><span class="header-section-number">21.2</span> Factor analysis: latent variables behind observed data</a></li>
-  <li><a href="#canonical-correlation-analysis-cca" id="toc-canonical-correlation-analysis-cca" class="nav-link" data-scroll-target="#canonical-correlation-analysis-cca"><span class="header-section-number">21.3</span> Canonical correlation analysis (CCA)</a></li>
-  <li><a href="#kernel-density-estimation-putting-bumps-at-data-points" id="toc-kernel-density-estimation-putting-bumps-at-data-points" class="nav-link" data-scroll-target="#kernel-density-estimation-putting-bumps-at-data-points"><span class="header-section-number">21.4</span> Kernel density estimation: putting bumps at data points</a>
+  <li><a href="#pca-why-variance-maximization-works" id="toc-pca-why-variance-maximization-works" class="nav-link" data-scroll-target="#pca-why-variance-maximization-works"><span class="header-section-number">19.2.1</span> PCA: why variance maximization works</a></li>
+  <li><a href="#factor-analysis-latent-variables-behind-observed-data" id="toc-factor-analysis-latent-variables-behind-observed-data" class="nav-link" data-scroll-target="#factor-analysis-latent-variables-behind-observed-data"><span class="header-section-number">19.2.2</span> Factor analysis: latent variables behind observed data</a></li>
+  <li><a href="#canonical-correlation-analysis-cca" id="toc-canonical-correlation-analysis-cca" class="nav-link" data-scroll-target="#canonical-correlation-analysis-cca"><span class="header-section-number">19.2.3</span> Canonical correlation analysis (CCA)</a></li>
+  <li><a href="#kernel-density-estimation-putting-bumps-at-data-points" id="toc-kernel-density-estimation-putting-bumps-at-data-points" class="nav-link" data-scroll-target="#kernel-density-estimation-putting-bumps-at-data-points"><span class="header-section-number">19.2.4</span> Kernel density estimation: putting bumps at data points</a></li>
+  <li><a href="#lowess-and-kernel-regression" id="toc-lowess-and-kernel-regression" class="nav-link" data-scroll-target="#lowess-and-kernel-regression"><span class="header-section-number">19.2.5</span> LOWESS and kernel regression</a></li>
+  <li><a href="#local-linear-regression-and-boundary-bias" id="toc-local-linear-regression-and-boundary-bias" class="nav-link" data-scroll-target="#local-linear-regression-and-boundary-bias"><span class="header-section-number">19.2.6</span> Local linear regression and boundary bias</a></li>
+  <li><a href="#the-curse-of-dimensionality" id="toc-the-curse-of-dimensionality" class="nav-link" data-scroll-target="#the-curse-of-dimensionality"><span class="header-section-number">19.2.7</span> The curse of dimensionality</a></li>
+  </ul></li>
+  <li><a href="#sec-ch19-statsmodels" id="toc-sec-ch19-statsmodels" class="nav-link" data-scroll-target="#sec-ch19-statsmodels"><span class="header-section-number">19.3</span> Statsmodels Implementation</a>
   <ul class="collapse">
-  <li><a href="#the-amise-derivation" id="toc-the-amise-derivation" class="nav-link" data-scroll-target="#the-amise-derivation"><span class="header-section-number">21.4.1</span> The AMISE derivation</a></li>
+  <li><a href="#pca" id="toc-pca" class="nav-link" data-scroll-target="#pca"><span class="header-section-number">19.3.1</span> PCA</a></li>
+  <li><a href="#factor-analysis" id="toc-factor-analysis" class="nav-link" data-scroll-target="#factor-analysis"><span class="header-section-number">19.3.2</span> Factor analysis</a></li>
+  <li><a href="#canonical-correlation-analysis-cca-1" id="toc-canonical-correlation-analysis-cca-1" class="nav-link" data-scroll-target="#canonical-correlation-analysis-cca-1"><span class="header-section-number">19.3.3</span> Canonical correlation analysis (CCA)</a></li>
+  <li><a href="#manova" id="toc-manova" class="nav-link" data-scroll-target="#manova"><span class="header-section-number">19.3.4</span> MANOVA</a></li>
+  <li><a href="#kernel-density-estimation" id="toc-kernel-density-estimation" class="nav-link" data-scroll-target="#kernel-density-estimation"><span class="header-section-number">19.3.5</span> Kernel density estimation</a></li>
+  <li><a href="#lowess-locally-weighted-scatterplot-smoothing" id="toc-lowess-locally-weighted-scatterplot-smoothing" class="nav-link" data-scroll-target="#lowess-locally-weighted-scatterplot-smoothing"><span class="header-section-number">19.3.6</span> LOWESS (locally weighted scatterplot smoothing)</a></li>
+  <li><a href="#kernel-regression" id="toc-kernel-regression" class="nav-link" data-scroll-target="#kernel-regression"><span class="header-section-number">19.3.7</span> Kernel regression</a></li>
   </ul></li>
-  <li><a href="#lowess-and-kernel-regression" id="toc-lowess-and-kernel-regression" class="nav-link" data-scroll-target="#lowess-and-kernel-regression"><span class="header-section-number">21.5</span> LOWESS and kernel regression</a></li>
-  <li><a href="#local-linear-regression-and-boundary-bias" id="toc-local-linear-regression-and-boundary-bias" class="nav-link" data-scroll-target="#local-linear-regression-and-boundary-bias"><span class="header-section-number">21.6</span> Local linear regression and boundary bias</a></li>
-  <li><a href="#the-curse-of-dimensionality" id="toc-the-curse-of-dimensionality" class="nav-link" data-scroll-target="#the-curse-of-dimensionality"><span class="header-section-number">21.7</span> The curse of dimensionality</a></li>
-  </ul></li>
-  <li><a href="#sec-ch19-statsmodels" id="toc-sec-ch19-statsmodels" class="nav-link" data-scroll-target="#sec-ch19-statsmodels"><span class="header-section-number">22</span> Statsmodels Implementation</a>
+  <li><a href="#sec-ch19-scratch" id="toc-sec-ch19-scratch" class="nav-link" data-scroll-target="#sec-ch19-scratch"><span class="header-section-number">19.4</span> From-Scratch Implementation</a>
   <ul class="collapse">
-  <li><a href="#pca" id="toc-pca" class="nav-link" data-scroll-target="#pca"><span class="header-section-number">22.1</span> PCA</a></li>
-  <li><a href="#factor-analysis" id="toc-factor-analysis" class="nav-link" data-scroll-target="#factor-analysis"><span class="header-section-number">22.2</span> Factor analysis</a></li>
-  <li><a href="#canonical-correlation-analysis-cca-1" id="toc-canonical-correlation-analysis-cca-1" class="nav-link" data-scroll-target="#canonical-correlation-analysis-cca-1"><span class="header-section-number">22.3</span> Canonical correlation analysis (CCA)</a></li>
-  <li><a href="#manova" id="toc-manova" class="nav-link" data-scroll-target="#manova"><span class="header-section-number">22.4</span> MANOVA</a></li>
-  <li><a href="#kernel-density-estimation" id="toc-kernel-density-estimation" class="nav-link" data-scroll-target="#kernel-density-estimation"><span class="header-section-number">22.5</span> Kernel density estimation</a></li>
-  <li><a href="#lowess-locally-weighted-scatterplot-smoothing" id="toc-lowess-locally-weighted-scatterplot-smoothing" class="nav-link" data-scroll-target="#lowess-locally-weighted-scatterplot-smoothing"><span class="header-section-number">22.6</span> LOWESS (locally weighted scatterplot smoothing)</a></li>
-  <li><a href="#kernel-regression" id="toc-kernel-regression" class="nav-link" data-scroll-target="#kernel-regression"><span class="header-section-number">22.7</span> Kernel regression</a></li>
+  <li><a href="#pca-via-numpy-svd" id="toc-pca-via-numpy-svd" class="nav-link" data-scroll-target="#pca-via-numpy-svd"><span class="header-section-number">19.4.1</span> PCA via numpy SVD</a></li>
+  <li><a href="#kde-from-scratch-with-silverman-bandwidth" id="toc-kde-from-scratch-with-silverman-bandwidth" class="nav-link" data-scroll-target="#kde-from-scratch-with-silverman-bandwidth"><span class="header-section-number">19.4.2</span> KDE from scratch with Silverman bandwidth</a></li>
+  <li><a href="#local-linear-regression-from-scratch" id="toc-local-linear-regression-from-scratch" class="nav-link" data-scroll-target="#local-linear-regression-from-scratch"><span class="header-section-number">19.4.3</span> Local linear regression from scratch</a></li>
   </ul></li>
-  <li><a href="#sec-ch19-scratch" id="toc-sec-ch19-scratch" class="nav-link" data-scroll-target="#sec-ch19-scratch"><span class="header-section-number">23</span> From-Scratch Implementation</a>
+  <li><a href="#sec-ch19-diagnostics" id="toc-sec-ch19-diagnostics" class="nav-link" data-scroll-target="#sec-ch19-diagnostics"><span class="header-section-number">19.5</span> Diagnostics</a>
   <ul class="collapse">
-  <li><a href="#pca-via-numpy-svd" id="toc-pca-via-numpy-svd" class="nav-link" data-scroll-target="#pca-via-numpy-svd"><span class="header-section-number">23.1</span> PCA via numpy SVD</a></li>
-  <li><a href="#kde-from-scratch-with-silverman-bandwidth" id="toc-kde-from-scratch-with-silverman-bandwidth" class="nav-link" data-scroll-target="#kde-from-scratch-with-silverman-bandwidth"><span class="header-section-number">23.2</span> KDE from scratch with Silverman bandwidth</a></li>
-  <li><a href="#local-linear-regression-from-scratch" id="toc-local-linear-regression-from-scratch" class="nav-link" data-scroll-target="#local-linear-regression-from-scratch"><span class="header-section-number">23.3</span> Local linear regression from scratch</a></li>
+  <li><a href="#how-many-components-to-keep" id="toc-how-many-components-to-keep" class="nav-link" data-scroll-target="#how-many-components-to-keep"><span class="header-section-number">19.5.1</span> How many components to keep?</a></li>
+  <li><a href="#loading-plot-for-pca-interpretation" id="toc-loading-plot-for-pca-interpretation" class="nav-link" data-scroll-target="#loading-plot-for-pca-interpretation"><span class="header-section-number">19.5.2</span> Loading plot for PCA interpretation</a></li>
+  <li><a href="#bandwidth-selection-for-kde" id="toc-bandwidth-selection-for-kde" class="nav-link" data-scroll-target="#bandwidth-selection-for-kde"><span class="header-section-number">19.5.3</span> Bandwidth selection for KDE</a></li>
+  <li><a href="#leave-one-out-cross-validation-for-bandwidth" id="toc-leave-one-out-cross-validation-for-bandwidth" class="nav-link" data-scroll-target="#leave-one-out-cross-validation-for-bandwidth"><span class="header-section-number">19.5.4</span> Leave-one-out cross-validation for bandwidth</a></li>
+  <li><a href="#residual-diagnostics-for-kernel-regression" id="toc-residual-diagnostics-for-kernel-regression" class="nav-link" data-scroll-target="#residual-diagnostics-for-kernel-regression"><span class="header-section-number">19.5.5</span> Residual diagnostics for kernel regression</a></li>
+  <li><a href="#when-pca-fails-nonlinear-manifolds" id="toc-when-pca-fails-nonlinear-manifolds" class="nav-link" data-scroll-target="#when-pca-fails-nonlinear-manifolds"><span class="header-section-number">19.5.6</span> When PCA fails: nonlinear manifolds</a></li>
   </ul></li>
-  <li><a href="#sec-ch19-diagnostics" id="toc-sec-ch19-diagnostics" class="nav-link" data-scroll-target="#sec-ch19-diagnostics"><span class="header-section-number">24</span> Diagnostics</a>
-  <ul class="collapse">
-  <li><a href="#how-many-components-to-keep" id="toc-how-many-components-to-keep" class="nav-link" data-scroll-target="#how-many-components-to-keep"><span class="header-section-number">24.1</span> How many components to keep?</a></li>
-  <li><a href="#loading-plot-for-pca-interpretation" id="toc-loading-plot-for-pca-interpretation" class="nav-link" data-scroll-target="#loading-plot-for-pca-interpretation"><span class="header-section-number">24.2</span> Loading plot for PCA interpretation</a></li>
-  <li><a href="#bandwidth-selection-for-kde" id="toc-bandwidth-selection-for-kde" class="nav-link" data-scroll-target="#bandwidth-selection-for-kde"><span class="header-section-number">24.3</span> Bandwidth selection for KDE</a></li>
-  <li><a href="#leave-one-out-cross-validation-for-bandwidth" id="toc-leave-one-out-cross-validation-for-bandwidth" class="nav-link" data-scroll-target="#leave-one-out-cross-validation-for-bandwidth"><span class="header-section-number">24.4</span> Leave-one-out cross-validation for bandwidth</a></li>
-  <li><a href="#residual-diagnostics-for-kernel-regression" id="toc-residual-diagnostics-for-kernel-regression" class="nav-link" data-scroll-target="#residual-diagnostics-for-kernel-regression"><span class="header-section-number">24.5</span> Residual diagnostics for kernel regression</a></li>
-  <li><a href="#when-pca-fails-nonlinear-manifolds" id="toc-when-pca-fails-nonlinear-manifolds" class="nav-link" data-scroll-target="#when-pca-fails-nonlinear-manifolds"><span class="header-section-number">24.6</span> When PCA fails: nonlinear manifolds</a></li>
-  </ul></li>
-  <li><a href="#sec-ch19-computation" id="toc-sec-ch19-computation" class="nav-link" data-scroll-target="#sec-ch19-computation"><span class="header-section-number">25</span> Computational Considerations</a></li>
-  <li><a href="#sec-ch19-example" id="toc-sec-ch19-example" class="nav-link" data-scroll-target="#sec-ch19-example"><span class="header-section-number">26</span> Worked Example</a></li>
-  <li><a href="#sec-ch19-exercises" id="toc-sec-ch19-exercises" class="nav-link" data-scroll-target="#sec-ch19-exercises"><span class="header-section-number">27</span> Exercises</a></li>
-  <li><a href="#sec-ch19-choosing" id="toc-sec-ch19-choosing" class="nav-link" data-scroll-target="#sec-ch19-choosing"><span class="header-section-number">28</span> Choosing Between Methods</a></li>
-  <li><a href="#sec-ch19-biblio" id="toc-sec-ch19-biblio" class="nav-link" data-scroll-target="#sec-ch19-biblio"><span class="header-section-number">29</span> Bibliographic Notes</a></li>
+  <li><a href="#sec-ch19-computation" id="toc-sec-ch19-computation" class="nav-link" data-scroll-target="#sec-ch19-computation"><span class="header-section-number">19.6</span> Computational Considerations</a></li>
+  <li><a href="#sec-ch19-example" id="toc-sec-ch19-example" class="nav-link" data-scroll-target="#sec-ch19-example"><span class="header-section-number">19.7</span> Worked Example</a></li>
+  <li><a href="#sec-ch19-exercises" id="toc-sec-ch19-exercises" class="nav-link" data-scroll-target="#sec-ch19-exercises"><span class="header-section-number">19.8</span> Exercises</a></li>
+  <li><a href="#sec-ch19-choosing" id="toc-sec-ch19-choosing" class="nav-link" data-scroll-target="#sec-ch19-choosing"><span class="header-section-number">19.9</span> Choosing Between Methods</a></li>
+  <li><a href="#sec-ch19-biblio" id="toc-sec-ch19-biblio" class="nav-link" data-scroll-target="#sec-ch19-biblio"><span class="header-section-number">19.10</span> Bibliographic Notes</a></li>
   </ul>
 </nav>
     </div>
@@ -719,15 +716,15 @@ window.Quarto = {
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">'assets/book.mplstyle'</span>)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="sec-ch19-motivation" class="level1" data-number="20">
-<h1 data-number="20"><span class="header-section-number">20</span> Motivation</h1>
+<section id="sec-ch19-motivation" class="level2" data-number="19.1">
+<h2 data-number="19.1" class="anchored" data-anchor-id="sec-ch19-motivation"><span class="header-section-number">19.1</span> Motivation</h2>
 <p>Two related problems: (1) reducing the dimensionality of multivariate data (PCA, factor analysis, CCA), and (2) estimating relationships without assuming a parametric form (kernel regression, LOWESS, KDE). Both are about <em>what the estimator converges to and at what rate</em>.</p>
 <p>Statsmodels provides tools for both: <code>statsmodels.multivariate</code> for PCA, factor analysis, CCA, and MANOVA; <code>statsmodels.nonparametric</code> for LOWESS, kernel regression, and kernel density estimation.</p>
 </section>
-<section id="sec-ch19-math" class="level1" data-number="21">
-<h1 data-number="21"><span class="header-section-number">21</span> Mathematical Foundation</h1>
-<section id="pca-why-variance-maximization-works" class="level2" data-number="21.1">
-<h2 data-number="21.1" class="anchored" data-anchor-id="pca-why-variance-maximization-works"><span class="header-section-number">21.1</span> PCA: why variance maximization works</h2>
+<section id="sec-ch19-math" class="level2" data-number="19.2">
+<h2 data-number="19.2" class="anchored" data-anchor-id="sec-ch19-math"><span class="header-section-number">19.2</span> Mathematical Foundation</h2>
+<section id="pca-why-variance-maximization-works" class="level3" data-number="19.2.1">
+<h3 data-number="19.2.1" class="anchored" data-anchor-id="pca-why-variance-maximization-works"><span class="header-section-number">19.2.1</span> PCA: why variance maximization works</h3>
 <p>PCA asks: if you could only keep <span class="math inline">\(k\)</span> linear combinations of your <span class="math inline">\(p\)</span> variables, which ones would preserve the most information?</p>
 <p>The answer: the <span class="math inline">\(k\)</span> directions of <em>maximum variance</em>. Why variance? Because a direction with high variance is one where the data points are spread out — it carries the most information. A direction with zero variance means all data points have the same value there — it carries no information and can be discarded.</p>
 <p>Formally, the first principal component <span class="math inline">\(\mathbf{v}_1\)</span> is: <span class="math display">\[
@@ -737,8 +734,8 @@ window.Quarto = {
 <p><strong>Connection to SVD:</strong> If <span class="math inline">\(\mathbf{X}\)</span> is centered, the PCA is equivalent to the SVD: <span class="math inline">\(\mathbf{X} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^\top\)</span>. The columns of <span class="math inline">\(\mathbf{V}\)</span> are the principal component directions. The diagonal entries of <span class="math inline">\(\boldsymbol{\Sigma}^2/(n-1)\)</span> are the eigenvalues of <span class="math inline">\(\hat{\boldsymbol{\Sigma}}\)</span> (the variance explained by each component).</p>
 <p><strong>How many components to keep?</strong> Look at the <em>scree plot</em> (eigenvalue vs component number). The “elbow” — where eigenvalues drop from large to small — suggests the number of true underlying factors. Components after the elbow are noise.</p>
 </section>
-<section id="factor-analysis-latent-variables-behind-observed-data" class="level2" data-number="21.2">
-<h2 data-number="21.2" class="anchored" data-anchor-id="factor-analysis-latent-variables-behind-observed-data"><span class="header-section-number">21.2</span> Factor analysis: latent variables behind observed data</h2>
+<section id="factor-analysis-latent-variables-behind-observed-data" class="level3" data-number="19.2.2">
+<h3 data-number="19.2.2" class="anchored" data-anchor-id="factor-analysis-latent-variables-behind-observed-data"><span class="header-section-number">19.2.2</span> Factor analysis: latent variables behind observed data</h3>
 <p>PCA finds directions of maximum variance, but it does not model <em>why</em> those directions exist. Factor analysis does: it posits that the <span class="math inline">\(p\)</span> observed variables are driven by <span class="math inline">\(k \ll p\)</span> latent factors plus idiosyncratic noise:</p>
 <p><span class="math display">\[
 \mathbf{X} = \boldsymbol{\Lambda}\mathbf{f}
@@ -757,8 +754,8 @@ window.Quarto = {
 <p><strong>PCA vs factor analysis:</strong> PCA extracts directions of maximum variance without modeling error structure. Factor analysis models the error structure explicitly (the diagonal <span class="math inline">\(\boldsymbol{\Psi}\)</span>) and separates common variance (<span class="math inline">\(\boldsymbol{\Lambda}\boldsymbol{\Lambda}^\top\)</span>) from unique variance (<span class="math inline">\(\boldsymbol{\Psi}\)</span>). When <span class="math inline">\(\boldsymbol{\Psi}
 \to \mathbf{0}\)</span> (no unique variance), factor analysis reduces to PCA.</p>
 </section>
-<section id="canonical-correlation-analysis-cca" class="level2" data-number="21.3">
-<h2 data-number="21.3" class="anchored" data-anchor-id="canonical-correlation-analysis-cca"><span class="header-section-number">21.3</span> Canonical correlation analysis (CCA)</h2>
+<section id="canonical-correlation-analysis-cca" class="level3" data-number="19.2.3">
+<h3 data-number="19.2.3" class="anchored" data-anchor-id="canonical-correlation-analysis-cca"><span class="header-section-number">19.2.3</span> Canonical correlation analysis (CCA)</h3>
 <p>CCA generalizes correlation to two <em>sets</em> of variables. Given <span class="math inline">\(\mathbf{X}_1 \in \mathbb{R}^{n \times p_1}\)</span> and <span class="math inline">\(\mathbf{X}_2 \in \mathbb{R}^{n \times p_2}\)</span>, CCA finds linear combinations <span class="math inline">\(\mathbf{a}^\top\mathbf{X}_1\)</span> and <span class="math inline">\(\mathbf{b}^\top\mathbf{X}_2\)</span> that are maximally correlated:</p>
 <p><span class="math display">\[
 (\mathbf{a}_1, \mathbf{b}_1) = \arg\max_{\mathbf{a}, \mathbf{b}}
@@ -773,8 +770,8 @@ window.Quarto = {
 \boldsymbol{\Sigma}_{22}^{-1}\boldsymbol{\Sigma}_{21}\)</span>.</p>
 <p>The connection to SVD is direct: compute the SVD of the standardized cross-covariance matrix, and the singular values <em>are</em> the canonical correlations. The left and right singular vectors, mapped back through <span class="math inline">\(\boldsymbol{\Sigma}_{11}^{-1/2}\)</span> and <span class="math inline">\(\boldsymbol{\Sigma}_{22}^{-1/2}\)</span>, give the canonical weight vectors <span class="math inline">\(\mathbf{a}\)</span> and <span class="math inline">\(\mathbf{b}\)</span>.</p>
 </section>
-<section id="kernel-density-estimation-putting-bumps-at-data-points" class="level2" data-number="21.4">
-<h2 data-number="21.4" class="anchored" data-anchor-id="kernel-density-estimation-putting-bumps-at-data-points"><span class="header-section-number">21.4</span> Kernel density estimation: putting bumps at data points</h2>
+<section id="kernel-density-estimation-putting-bumps-at-data-points" class="level3" data-number="19.2.4">
+<h3 data-number="19.2.4" class="anchored" data-anchor-id="kernel-density-estimation-putting-bumps-at-data-points"><span class="header-section-number">19.2.4</span> Kernel density estimation: putting bumps at data points</h3>
 <p>The histogram is the simplest density estimator, but it depends on bin placement. KDE improves on it by placing a smooth “bump” (kernel) at each data point and summing:</p>
 <p><span class="math display">\[
 \hat{f}(x) = \frac{1}{nh}\sum_{i=1}^n K\!\left(\frac{x - X_i}{h}\right),
@@ -785,8 +782,8 @@ window.Quarto = {
 <li><strong>Small <span class="math inline">\(h\)</span></strong> (narrow bumps): each data point creates a sharp spike. Low bias (the estimate tracks every data point) but high variance (different samples give very different estimates). The KDE is <em>wiggly</em>.</li>
 <li><strong>Large <span class="math inline">\(h\)</span></strong> (wide bumps): the bumps overlap and the estimate becomes smooth. High bias (fine structure is smeared out) but low variance. The KDE is <em>smooth</em>.</li>
 </ul>
-<section id="the-amise-derivation" class="level3" data-number="21.4.1">
-<h3 data-number="21.4.1" class="anchored" data-anchor-id="the-amise-derivation"><span class="header-section-number">21.4.1</span> The AMISE derivation</h3>
+<section id="the-amise-derivation" class="level4" data-number="19.2.4.1">
+<h4 data-number="19.2.4.1" class="anchored" data-anchor-id="the-amise-derivation"><span class="header-section-number">19.2.4.1</span> The AMISE derivation</h4>
 <p>The optimal bandwidth minimizes the <em>mean integrated squared error</em> (MISE), defined as <span class="math inline">\(\text{MISE}(h) = \mathbb{E}\!\left[\int
 (\hat{f}(x) - f(x))^2\,dx\right]\)</span>. The MISE decomposes into integrated squared bias plus integrated variance. A Taylor expansion of the kernel convolution gives the pointwise bias and variance:</p>
 <p><span class="math display">\[
@@ -810,14 +807,14 @@ h^* = \left[\frac{R(K)}{\mu_2(K)^2\,R(f'')\,n}
 <p><strong>Silverman’s rule</strong> plugs in <span class="math inline">\(R(f'')\)</span> for a Gaussian reference density, yielding <span class="math inline">\(h^* = 1.06\,\hat{\sigma}\,n^{-1/5}\)</span>. This works well for unimodal, roughly symmetric data but oversmooths multimodal distributions — the Gaussian reference has small <span class="math inline">\(R(f'')\)</span>, so the rule picks a bandwidth too wide for data with sharp features.</p>
 </section>
 </section>
-<section id="lowess-and-kernel-regression" class="level2" data-number="21.5">
-<h2 data-number="21.5" class="anchored" data-anchor-id="lowess-and-kernel-regression"><span class="header-section-number">21.5</span> LOWESS and kernel regression</h2>
+<section id="lowess-and-kernel-regression" class="level3" data-number="19.2.5">
+<h3 data-number="19.2.5" class="anchored" data-anchor-id="lowess-and-kernel-regression"><span class="header-section-number">19.2.5</span> LOWESS and kernel regression</h3>
 <p>LOWESS (LOcally WEighted Scatterplot Smoothing) estimates <span class="math inline">\(\mathbb{E}[Y \mid X = x]\)</span> by fitting a <em>separate</em> linear regression at each point <span class="math inline">\(x\)</span>, using only nearby observations (weighted by their distance from <span class="math inline">\(x\)</span>).</p>
 <p>The <code>frac</code> parameter controls the <em>fraction</em> of data used in each local fit: small <code>frac</code> (using few nearby points) gives a wiggly curve; large <code>frac</code> (using many points) gives a smooth curve. This is the nonparametric analogue of bandwidth selection in KDE.</p>
 <p><strong>Kernel regression</strong> (<code>KernelReg</code>) is similar but uses a kernel weighting instead of LOWESS’s tricube weights. Both converge to the true conditional expectation, but at the nonparametric rate <span class="math inline">\(O(n^{-2/(d+4)})\)</span>.</p>
 </section>
-<section id="local-linear-regression-and-boundary-bias" class="level2" data-number="21.6">
-<h2 data-number="21.6" class="anchored" data-anchor-id="local-linear-regression-and-boundary-bias"><span class="header-section-number">21.6</span> Local linear regression and boundary bias</h2>
+<section id="local-linear-regression-and-boundary-bias" class="level3" data-number="19.2.6">
+<h3 data-number="19.2.6" class="anchored" data-anchor-id="local-linear-regression-and-boundary-bias"><span class="header-section-number">19.2.6</span> Local linear regression and boundary bias</h3>
 <p>The Nadaraya-Watson estimator (local constant kernel regression) takes a weighted average of nearby <span class="math inline">\(Y\)</span> values:</p>
 <p><span class="math display">\[
 \hat{m}(x) = \frac{\sum_{i=1}^n K_h(x - X_i)\,Y_i}
@@ -833,8 +830,8 @@ h^* = \left[\frac{R(K)}{\mu_2(K)^2\,R(f'')\,n}
 <p>where <span class="math inline">\(\mathbf{e}_1 = (1, 0)^\top\)</span> extracts the intercept. The local linear fit <em>adapts</em> to the boundary: the linear term absorbs the asymmetric weighting, reducing boundary bias from <span class="math inline">\(O(1)\)</span> to <span class="math inline">\(O(h^2)\)</span> — the same rate as in the interior.</p>
 <p>This is why statsmodels’ <code>KernelReg</code> defaults to <code>reg_type='ll'</code> (local linear) rather than <code>reg_type='lc'</code> (local constant / Nadaraya-Watson). The local linear estimator is <em>design-adaptive</em>: it automatically handles boundaries, uneven spacing, and heterogeneous density of the <span class="math inline">\(X\)</span> values without manual adjustment.</p>
 </section>
-<section id="the-curse-of-dimensionality" class="level2" data-number="21.7">
-<h2 data-number="21.7" class="anchored" data-anchor-id="the-curse-of-dimensionality"><span class="header-section-number">21.7</span> The curse of dimensionality</h2>
+<section id="the-curse-of-dimensionality" class="level3" data-number="19.2.7">
+<h3 data-number="19.2.7" class="anchored" data-anchor-id="the-curse-of-dimensionality"><span class="header-section-number">19.2.7</span> The curse of dimensionality</h3>
 <p>The convergence rate <span class="math inline">\(O(n^{-2/(d+4)})\)</span> reveals a fundamental problem: for <span class="math inline">\(d\)</span>-dimensional inputs, you need <em>exponentially more data</em> to achieve the same accuracy:</p>
 <table class="caption-top table">
 <thead>
@@ -870,10 +867,10 @@ h^* = \left[\frac{R(K)}{\mu_2(K)^2\,R(f'')\,n}
 <p>This is why nonparametric methods are practical only for low-dimensional problems (<span class="math inline">\(d \leq 3\)</span> for KDE, <span class="math inline">\(d \leq 5\)</span> for kernel regression). For higher dimensions, use parametric models or dimension reduction (PCA) first.</p>
 </section>
 </section>
-<section id="sec-ch19-statsmodels" class="level1" data-number="22">
-<h1 data-number="22"><span class="header-section-number">22</span> Statsmodels Implementation</h1>
-<section id="pca" class="level2" data-number="22.1">
-<h2 data-number="22.1" class="anchored" data-anchor-id="pca"><span class="header-section-number">22.1</span> PCA</h2>
+<section id="sec-ch19-statsmodels" class="level2" data-number="19.3">
+<h2 data-number="19.3" class="anchored" data-anchor-id="sec-ch19-statsmodels"><span class="header-section-number">19.3</span> Statsmodels Implementation</h2>
+<section id="pca" class="level3" data-number="19.3.1">
+<h3 data-number="19.3.1" class="anchored" data-anchor-id="pca"><span class="header-section-number">19.3.1</span> PCA</h3>
 <p>PCA finds the directions of maximum variance in your data. If you have 10 variables but only 3 underlying factors drive the variation, PCA will reveal this: the first 3 principal components will capture most of the variance, and the remaining 7 will be noise.</p>
 <p><code>statsmodels.multivariate.pca.PCA</code> provides PCA with eigenvalue decomposition, scree plots, and component scores.</p>
 <div id="pca-demo" class="cell" data-execution_count="2">
@@ -918,15 +915,15 @@ h^* = \left[\frac{R(K)}{\mu_2(K)^2\,R(f'')\,n}
 <img src="19-multivariate-nonparametric_files/figure-html/fig-scree-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;22.1: Scree plot: variance explained by each principal component. The elbow at PC 3 suggests 3 underlying factors, matching the data generating process.
+Figure&nbsp;19.1: Scree plot: variance explained by each principal component. The elbow at PC 3 suggests 3 underlying factors, matching the data generating process.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="factor-analysis" class="level2" data-number="22.2">
-<h2 data-number="22.2" class="anchored" data-anchor-id="factor-analysis"><span class="header-section-number">22.2</span> Factor analysis</h2>
+<section id="factor-analysis" class="level3" data-number="19.3.2">
+<h3 data-number="19.3.2" class="anchored" data-anchor-id="factor-analysis"><span class="header-section-number">19.3.2</span> Factor analysis</h3>
 <p><code>statsmodels.multivariate.factor.Factor</code> fits the factor model <span class="math inline">\(\mathbf{X} = \boldsymbol{\Lambda}\mathbf{f} +
 \boldsymbol{\varepsilon}\)</span> and returns loadings, uniquenesses, and communalities. The <code>method</code> parameter selects the estimation approach: <code>'pa'</code> (principal axis factoring) is iterative but robust; <code>'ml'</code> (maximum likelihood) gives chi-squared goodness-of-fit tests but requires normality and may fail to converge.</p>
 <div id="factor-demo" class="cell" data-execution_count="4">
@@ -981,8 +978,8 @@ Uniqueness: [0.087 0.095 0.128 0.055 0.084 0.121]</code></pre>
 </div>
 <p>After rotation, variables 1–3 load on factor 1 and variables 4–6 load on factor 2 — recovering the true structure. The rotation matrix <span class="math inline">\(\mathbf{T}\)</span> satisfies <span class="math inline">\(\mathbf{T}^\top\mathbf{T} = \mathbf{I}\)</span>, confirming it is an orthogonal rotation that preserves the fit.</p>
 </section>
-<section id="canonical-correlation-analysis-cca-1" class="level2" data-number="22.3">
-<h2 data-number="22.3" class="anchored" data-anchor-id="canonical-correlation-analysis-cca-1"><span class="header-section-number">22.3</span> Canonical correlation analysis (CCA)</h2>
+<section id="canonical-correlation-analysis-cca-1" class="level3" data-number="19.3.3">
+<h3 data-number="19.3.3" class="anchored" data-anchor-id="canonical-correlation-analysis-cca-1"><span class="header-section-number">19.3.3</span> Canonical correlation analysis (CCA)</h3>
 <p><code>statsmodels.multivariate.cancorr.CanCorr</code> computes canonical correlations between two variable sets and provides significance tests via Wilks’ lambda.</p>
 <div id="cca-demo" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.multivariate.cancorr <span class="im">import</span> CanCorr</span>
@@ -1020,8 +1017,8 @@ Wilks' lambda test:
 </div>
 <p>The first canonical correlation should be large (reflecting the shared factor), while the remaining correlations should be near zero (pure noise).</p>
 </section>
-<section id="manova" class="level2" data-number="22.4">
-<h2 data-number="22.4" class="anchored" data-anchor-id="manova"><span class="header-section-number">22.4</span> MANOVA</h2>
+<section id="manova" class="level3" data-number="19.3.4">
+<h3 data-number="19.3.4" class="anchored" data-anchor-id="manova"><span class="header-section-number">19.3.4</span> MANOVA</h3>
 <p><code>statsmodels.multivariate.manova.MANOVA</code> tests whether group means differ across multiple response variables simultaneously. It reports four test statistics: Wilks’ lambda, Pillai’s trace, Hotelling-Lawley trace, and Roy’s greatest root.</p>
 <div id="manova-demo" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -1052,8 +1049,8 @@ Roy's greatest root     0.899831      2         237  106.630007    0.0</code></p
 </div>
 <p>Wilks’ lambda is the most commonly reported: values near 0 indicate strong group separation, values near 1 indicate groups are indistinguishable. The <span class="math inline">\(F\)</span> approximation converts lambda to a familiar scale; Pillai’s trace is more robust to violations of homogeneity of covariance.</p>
 </section>
-<section id="kernel-density-estimation" class="level2" data-number="22.5">
-<h2 data-number="22.5" class="anchored" data-anchor-id="kernel-density-estimation"><span class="header-section-number">22.5</span> Kernel density estimation</h2>
+<section id="kernel-density-estimation" class="level3" data-number="19.3.5">
+<h3 data-number="19.3.5" class="anchored" data-anchor-id="kernel-density-estimation"><span class="header-section-number">19.3.5</span> Kernel density estimation</h3>
 <p>KDE estimates the probability density from data, without assuming a parametric form (like “the data is normal”). It places a small bump (kernel) at each data point and sums them up. The <code>bw</code> (bandwidth) parameter controls how wide each bump is — wider = smoother estimate.</p>
 <div id="cell-kde-demo" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create bimodal data: a mixture of two normal distributions</span></span>
@@ -1080,8 +1077,8 @@ Roy's greatest root     0.899831      2         237  106.630007    0.0</code></p
 </div>
 </div>
 </section>
-<section id="lowess-locally-weighted-scatterplot-smoothing" class="level2" data-number="22.6">
-<h2 data-number="22.6" class="anchored" data-anchor-id="lowess-locally-weighted-scatterplot-smoothing"><span class="header-section-number">22.6</span> LOWESS (locally weighted scatterplot smoothing)</h2>
+<section id="lowess-locally-weighted-scatterplot-smoothing" class="level3" data-number="19.3.6">
+<h3 data-number="19.3.6" class="anchored" data-anchor-id="lowess-locally-weighted-scatterplot-smoothing"><span class="header-section-number">19.3.6</span> LOWESS (locally weighted scatterplot smoothing)</h3>
 <div id="cell-lowess-demo" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Nonlinear relationship</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>x_lo <span class="op">=</span> np.sort(rng.uniform(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, <span class="dv">200</span>))</span>
@@ -1105,8 +1102,8 @@ Roy's greatest root     0.899831      2         237  106.630007    0.0</code></p
 </div>
 </div>
 </section>
-<section id="kernel-regression" class="level2" data-number="22.7">
-<h2 data-number="22.7" class="anchored" data-anchor-id="kernel-regression"><span class="header-section-number">22.7</span> Kernel regression</h2>
+<section id="kernel-regression" class="level3" data-number="19.3.7">
+<h3 data-number="19.3.7" class="anchored" data-anchor-id="kernel-regression"><span class="header-section-number">19.3.7</span> Kernel regression</h3>
 <p><code>KernelReg</code> has two key parameters: <code>var_type</code> (variable types: <code>'c'</code> for continuous, <code>'u'</code> for unordered discrete, <code>'o'</code> for ordered discrete) and <code>reg_type</code> (<code>'ll'</code> for local linear, <code>'lc'</code> for local constant / Nadaraya-Watson). The bandwidth is selected automatically via least-squares cross-validation.</p>
 <div id="kernreg-demo" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>kr <span class="op">=</span> KernelReg(y_lo, x_lo, var_type<span class="op">=</span><span class="st">'c'</span>, reg_type<span class="op">=</span><span class="st">'ll'</span>)</span>
@@ -1140,7 +1137,7 @@ Roy's greatest root     0.899831      2         237  106.630007    0.0</code></p
 <img src="19-multivariate-nonparametric_files/figure-html/fig-kernreg-comparison-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-kernreg-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;22.2: Local linear vs local constant kernel regression. Both track the true curve in the interior, but local constant (Nadaraya-Watson) shows visible bias near the boundaries at x=0 and x=4π.
+Figure&nbsp;19.2: Local linear vs local constant kernel regression. Both track the true curve in the interior, but local constant (Nadaraya-Watson) shows visible bias near the boundaries at x=0 and x=4π.
 </figcaption>
 </figure>
 </div>
@@ -1148,10 +1145,10 @@ Figure&nbsp;22.2: Local linear vs local constant kernel regression. Both track t
 </div>
 </section>
 </section>
-<section id="sec-ch19-scratch" class="level1" data-number="23">
-<h1 data-number="23"><span class="header-section-number">23</span> From-Scratch Implementation</h1>
-<section id="pca-via-numpy-svd" class="level2" data-number="23.1">
-<h2 data-number="23.1" class="anchored" data-anchor-id="pca-via-numpy-svd"><span class="header-section-number">23.1</span> PCA via numpy SVD</h2>
+<section id="sec-ch19-scratch" class="level2" data-number="19.4">
+<h2 data-number="19.4" class="anchored" data-anchor-id="sec-ch19-scratch"><span class="header-section-number">19.4</span> From-Scratch Implementation</h2>
+<section id="pca-via-numpy-svd" class="level3" data-number="19.4.1">
+<h3 data-number="19.4.1" class="anchored" data-anchor-id="pca-via-numpy-svd"><span class="header-section-number">19.4.1</span> PCA via numpy SVD</h3>
 <div id="pca-scratch" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>X_centered <span class="op">=</span> X_pca <span class="op">-</span> X_pca.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>X_std <span class="op">=</span> X_centered <span class="op">/</span> X_centered.std(axis<span class="op">=</span><span class="dv">0</span>)</span>
@@ -1165,8 +1162,8 @@ statsmodels:    [704.11 598.03 493.16]</code></pre>
 </div>
 </div>
 </section>
-<section id="kde-from-scratch-with-silverman-bandwidth" class="level2" data-number="23.2">
-<h2 data-number="23.2" class="anchored" data-anchor-id="kde-from-scratch-with-silverman-bandwidth"><span class="header-section-number">23.2</span> KDE from scratch with Silverman bandwidth</h2>
+<section id="kde-from-scratch-with-silverman-bandwidth" class="level3" data-number="19.4.2">
+<h3 data-number="19.4.2" class="anchored" data-anchor-id="kde-from-scratch-with-silverman-bandwidth"><span class="header-section-number">19.4.2</span> KDE from scratch with Silverman bandwidth</h3>
 <p>The from-scratch KDE places a Gaussian bump at each data point and sums. Silverman’s rule provides the bandwidth.</p>
 <div id="kde-scratch" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kde_gaussian(x_eval, data, bw):</span>
@@ -1238,8 +1235,8 @@ Density comparison at test points:
 </div>
 </div>
 </section>
-<section id="local-linear-regression-from-scratch" class="level2" data-number="23.3">
-<h2 data-number="23.3" class="anchored" data-anchor-id="local-linear-regression-from-scratch"><span class="header-section-number">23.3</span> Local linear regression from scratch</h2>
+<section id="local-linear-regression-from-scratch" class="level3" data-number="19.4.3">
+<h3 data-number="19.4.3" class="anchored" data-anchor-id="local-linear-regression-from-scratch"><span class="header-section-number">19.4.3</span> Local linear regression from scratch</h3>
 <p>At each evaluation point <span class="math inline">\(x\)</span>, local linear regression solves a weighted least squares problem: minimize <span class="math inline">\(\sum_i K_h(x - X_i)(Y_i - \beta_0 - \beta_1(X_i - x))^2\)</span>. The solution uses the kernel-weighted normal equations.</p>
 <div id="ll-scratch" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> local_linear(x_eval, X, Y, bw):</span>
@@ -1304,10 +1301,10 @@ R² (statsmodels): 0.879</code></pre>
 </div>
 </section>
 </section>
-<section id="sec-ch19-diagnostics" class="level1" data-number="24">
-<h1 data-number="24"><span class="header-section-number">24</span> Diagnostics</h1>
-<section id="how-many-components-to-keep" class="level2" data-number="24.1">
-<h2 data-number="24.1" class="anchored" data-anchor-id="how-many-components-to-keep"><span class="header-section-number">24.1</span> How many components to keep?</h2>
+<section id="sec-ch19-diagnostics" class="level2" data-number="19.5">
+<h2 data-number="19.5" class="anchored" data-anchor-id="sec-ch19-diagnostics"><span class="header-section-number">19.5</span> Diagnostics</h2>
+<section id="how-many-components-to-keep" class="level3" data-number="19.5.1">
+<h3 data-number="19.5.1" class="anchored" data-anchor-id="how-many-components-to-keep"><span class="header-section-number">19.5.1</span> How many components to keep?</h3>
 <p>The scree plot (above) shows the “elbow” — the point where adding more components captures diminishing returns. Rules of thumb:</p>
 <ul>
 <li><strong>Cumulative variance &gt; 80-90%</strong>: keep enough components to explain most of the data</li>
@@ -1326,8 +1323,8 @@ Cumulative variance: [0.372 0.688 0.948 0.98  1.   ]</code></pre>
 </div>
 </div>
 </section>
-<section id="loading-plot-for-pca-interpretation" class="level2" data-number="24.2">
-<h2 data-number="24.2" class="anchored" data-anchor-id="loading-plot-for-pca-interpretation"><span class="header-section-number">24.2</span> Loading plot for PCA interpretation</h2>
+<section id="loading-plot-for-pca-interpretation" class="level3" data-number="19.5.2">
+<h3 data-number="19.5.2" class="anchored" data-anchor-id="loading-plot-for-pca-interpretation"><span class="header-section-number">19.5.2</span> Loading plot for PCA interpretation</h3>
 <p>The scree plot tells you <em>how many</em> components matter. The <em>loading plot</em> tells you <em>what each component means</em> by showing how strongly each original variable contributes.</p>
 <div id="cell-fig-loading-plot" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Loadings: correlations between original variables and PCs</span></span>
@@ -1356,7 +1353,7 @@ Cumulative variance: [0.372 0.688 0.948 0.98  1.   ]</code></pre>
 <img src="19-multivariate-nonparametric_files/figure-html/fig-loading-plot-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-loading-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;24.1: PCA loading plot for the first two components of the synthetic data. Each arrow shows how strongly a variable contributes to PC1 (horizontal) and PC2 (vertical). Variables that cluster together are correlated.
+Figure&nbsp;19.3: PCA loading plot for the first two components of the synthetic data. Each arrow shows how strongly a variable contributes to PC1 (horizontal) and PC2 (vertical). Variables that cluster together are correlated.
 </figcaption>
 </figure>
 </div>
@@ -1364,8 +1361,8 @@ Figure&nbsp;24.1: PCA loading plot for the first two components of the synthetic
 </div>
 <p>Variables with loadings in the same direction on PC1 and PC2 are positively correlated through those components. Variables at 90 degrees are uncorrelated; variables in opposite directions are negatively correlated.</p>
 </section>
-<section id="bandwidth-selection-for-kde" class="level2" data-number="24.3">
-<h2 data-number="24.3" class="anchored" data-anchor-id="bandwidth-selection-for-kde"><span class="header-section-number">24.3</span> Bandwidth selection for KDE</h2>
+<section id="bandwidth-selection-for-kde" class="level3" data-number="19.5.3">
+<h3 data-number="19.5.3" class="anchored" data-anchor-id="bandwidth-selection-for-kde"><span class="header-section-number">19.5.3</span> Bandwidth selection for KDE</h3>
 <p>Silverman’s rule (<code>bw='silverman'</code>) is the default. For multimodal distributions, it may oversmooth. Cross-validation (leave-one-out likelihood) gives a data-driven bandwidth but is more expensive.</p>
 <div id="bw-comparison" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare bandwidth selectors</span></span>
@@ -1379,8 +1376,8 @@ scott: bw = 0.6590</code></pre>
 </div>
 </div>
 </section>
-<section id="leave-one-out-cross-validation-for-bandwidth" class="level2" data-number="24.4">
-<h2 data-number="24.4" class="anchored" data-anchor-id="leave-one-out-cross-validation-for-bandwidth"><span class="header-section-number">24.4</span> Leave-one-out cross-validation for bandwidth</h2>
+<section id="leave-one-out-cross-validation-for-bandwidth" class="level3" data-number="19.5.4">
+<h3 data-number="19.5.4" class="anchored" data-anchor-id="leave-one-out-cross-validation-for-bandwidth"><span class="header-section-number">19.5.4</span> Leave-one-out cross-validation for bandwidth</h3>
 <p>LOO-CV scores bandwidths by how well the KDE trained on <span class="math inline">\(n-1\)</span> points predicts the held-out point. This avoids the Gaussian reference assumption in Silverman’s rule.</p>
 <div id="loo-cv-bandwidth" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loo_cv_score(data, bw):</span>
@@ -1415,8 +1412,8 @@ Silverman bandwidth:      0.660</code></pre>
 </div>
 <p>For the bimodal data, LOO-CV typically selects a smaller bandwidth than Silverman’s rule, better resolving the two peaks. This is the tradeoff: Silverman is fast (<span class="math inline">\(O(1)\)</span> computation) but assumes unimodality; LOO-CV is <span class="math inline">\(O(n^2)\)</span> but data-driven.</p>
 </section>
-<section id="residual-diagnostics-for-kernel-regression" class="level2" data-number="24.5">
-<h2 data-number="24.5" class="anchored" data-anchor-id="residual-diagnostics-for-kernel-regression"><span class="header-section-number">24.5</span> Residual diagnostics for kernel regression</h2>
+<section id="residual-diagnostics-for-kernel-regression" class="level3" data-number="19.5.5">
+<h3 data-number="19.5.5" class="anchored" data-anchor-id="residual-diagnostics-for-kernel-regression"><span class="header-section-number">19.5.5</span> Residual diagnostics for kernel regression</h3>
 <p>Residuals from kernel regression should show no systematic pattern. Structured residuals indicate the bandwidth is wrong or the relationship has features the smoother cannot capture.</p>
 <div id="cell-fig-kr-residuals" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>resid_kr <span class="op">=</span> y_lo <span class="op">-</span> y_pred</span>
@@ -1439,21 +1436,21 @@ Silverman bandwidth:      0.660</code></pre>
 <img src="19-multivariate-nonparametric_files/figure-html/fig-kr-residuals-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-kr-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;24.2: Residuals from local linear kernel regression on the sinusoidal data. No systematic pattern is visible, suggesting the bandwidth is appropriate.
+Figure&nbsp;19.4: Residuals from local linear kernel regression on the sinusoidal data. No systematic pattern is visible, suggesting the bandwidth is appropriate.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="when-pca-fails-nonlinear-manifolds" class="level2" data-number="24.6">
-<h2 data-number="24.6" class="anchored" data-anchor-id="when-pca-fails-nonlinear-manifolds"><span class="header-section-number">24.6</span> When PCA fails: nonlinear manifolds</h2>
+<section id="when-pca-fails-nonlinear-manifolds" class="level3" data-number="19.5.6">
+<h3 data-number="19.5.6" class="anchored" data-anchor-id="when-pca-fails-nonlinear-manifolds"><span class="header-section-number">19.5.6</span> When PCA fails: nonlinear manifolds</h3>
 <p>PCA finds linear subspaces. If the data lies on a curved manifold (a Swiss roll, for example), PCA will spread the manifold across multiple components and fail to find a low-dimensional representation.</p>
 <p>Diagnostic: if the scree plot shows no clear elbow and the first few PCs explain little variance despite obvious structure in the data, suspect nonlinearity. In such cases, consider kernel PCA, t-SNE, or UMAP — but note that these methods have their own tuning parameters and do not provide the same interpretability as PCA (no loadings, no variance decomposition). See Hastie, Tibshirani, and Friedman (2009), Ch. 14 for a treatment of nonlinear dimension reduction.</p>
 </section>
 </section>
-<section id="sec-ch19-computation" class="level1" data-number="25">
-<h1 data-number="25"><span class="header-section-number">25</span> Computational Considerations</h1>
+<section id="sec-ch19-computation" class="level2" data-number="19.6">
+<h2 data-number="19.6" class="anchored" data-anchor-id="sec-ch19-computation"><span class="header-section-number">19.6</span> Computational Considerations</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -1522,8 +1519,8 @@ Figure&nbsp;24.2: Residuals from local linear kernel regression on the sinusoida
 </table>
 <p>For high-dimensional KDE (<span class="math inline">\(d &gt; 5\)</span>), consider dimensionality reduction (PCA) first, then KDE in the reduced space. For large-<span class="math inline">\(n\)</span> kernel regression, FFT-based binning reduces the cost from <span class="math inline">\(O(n)\)</span> to <span class="math inline">\(O(\log n)\)</span> per evaluation point; statsmodels uses this internally for 1D KDE via the <code>fft</code> parameter.</p>
 </section>
-<section id="sec-ch19-example" class="level1" data-number="26">
-<h1 data-number="26"><span class="header-section-number">26</span> Worked Example</h1>
+<section id="sec-ch19-example" class="level2" data-number="19.7">
+<h2 data-number="19.7" class="anchored" data-anchor-id="sec-ch19-example"><span class="header-section-number">19.7</span> Worked Example</h2>
 <p>Exploring the California Housing dataset with PCA and nonparametric regression.</p>
 <div id="worked-pca" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.datasets <span class="im">import</span> fetch_california_housing</span>
@@ -1584,7 +1581,7 @@ Keep 5 components for 80% variance</code></pre>
 <img src="19-multivariate-nonparametric_files/figure-html/fig-housing-loadings-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-housing-loadings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;26.1: PCA loading plot for California Housing. PC1 captures geographic/density information (latitude, longitude, population, households). PC2 captures wealth (income, house value proxy through rooms/bedrooms).
+Figure&nbsp;19.5: PCA loading plot for California Housing. PC1 captures geographic/density information (latitude, longitude, population, households). PC2 captures wealth (income, house value proxy through rooms/bedrooms).
 </figcaption>
 </figure>
 </div>
@@ -1648,7 +1645,7 @@ Figure&nbsp;26.1: PCA loading plot for California Housing. PC1 captures geograph
 <img src="19-multivariate-nonparametric_files/figure-html/fig-ols-vs-lowess-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ols-vs-lowess-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;26.2: OLS (dashed line) vs LOWESS (solid curve) for the MedInc–house value relationship. OLS misses the flattening above income ≈ 5 and the ceiling effect at the maximum recorded value of 5.0 ($500k, a top-coding artifact in the data).
+Figure&nbsp;19.6: OLS (dashed line) vs LOWESS (solid curve) for the MedInc–house value relationship. OLS misses the flattening above income ≈ 5 and the ceiling effect at the maximum recorded value of 5.0 ($500k, a top-coding artifact in the data).
 </figcaption>
 </figure>
 </div>
@@ -1660,8 +1657,8 @@ LOWESS picks up the plateau above income ≈ 5 and the ceiling at target = 5.0</
 </div>
 <p>The comparison is diagnostic: when OLS and LOWESS diverge substantially, the linear specification is wrong. Here the divergence above income ≈ 5 reveals a saturation effect — possibly driven by top-coding in the dataset (house values are capped at $500k, recorded as target = 5.0). A practitioner seeing this would investigate the top-coding rather than trusting the OLS slope.</p>
 </section>
-<section id="sec-ch19-exercises" class="level1" data-number="27">
-<h1 data-number="27"><span class="header-section-number">27</span> Exercises</h1>
+<section id="sec-ch19-exercises" class="level2" data-number="19.8">
+<h2 data-number="19.8" class="anchored" data-anchor-id="sec-ch19-exercises"><span class="header-section-number">19.8</span> Exercises</h2>
 <p><strong>Exercise 19.1</strong> (<span class="math inline">\(\star\star\)</span>, diagnostic failure). Apply KDE with a very small bandwidth (bw=0.05) and a very large bandwidth (bw=2.0) to the bimodal data. Show that small bw overfits (every point is a spike) and large bw oversmooths (misses the two modes).</p>
 <p>%%</p>
 <div id="cell-ex-19-1" class="cell" data-execution_count="24">
@@ -1724,8 +1721,8 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <p>The parametric rate <span class="math inline">\(n^{-1/2}\)</span> means error <span class="math inline">\(\approx 1/\sqrt{n}\)</span>. The KDE rate <span class="math inline">\(n^{-2/5}\)</span> means error <span class="math inline">\(\approx n^{-0.4}\)</span>. For equal accuracy: <span class="math inline">\(n_{\text{KDE}}^{-0.4} = n_{\text{param}}^{-0.5}\)</span>, so <span class="math inline">\(n_{\text{KDE}} = n_{\text{param}}^{1.25}\)</span>. At <span class="math inline">\(n = 100\)</span>: <span class="math inline">\(n_{\text{KDE}} = 100^{1.25} \approx 316\)</span>. The nonparametric approach needs ~3x more data for 1D. In <span class="math inline">\(d\)</span> dimensions, the ratio grows exponentially — this is the curse of dimensionality.</p>
 <p>%%</p>
 </section>
-<section id="sec-ch19-choosing" class="level1" data-number="28">
-<h1 data-number="28"><span class="header-section-number">28</span> Choosing Between Methods</h1>
+<section id="sec-ch19-choosing" class="level2" data-number="19.9">
+<h2 data-number="19.9" class="anchored" data-anchor-id="sec-ch19-choosing"><span class="header-section-number">19.9</span> Choosing Between Methods</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -1784,8 +1781,8 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 </table>
 <p><strong>The fundamental tradeoff:</strong> Nonparametric methods make fewer assumptions (more general) but converge slower (<span class="math inline">\(n^{-2/5}\)</span> vs <span class="math inline">\(n^{-1/2}\)</span>) and suffer from the curse of dimensionality. Use them when you don’t trust the parametric form; switch to parametric methods when you have evidence the parametric model is correct.</p>
 </section>
-<section id="sec-ch19-biblio" class="level1" data-number="29">
-<h1 data-number="29"><span class="header-section-number">29</span> Bibliographic Notes</h1>
+<section id="sec-ch19-biblio" class="level2" data-number="19.10">
+<h2 data-number="19.10" class="anchored" data-anchor-id="sec-ch19-biblio"><span class="header-section-number">19.10</span> Bibliographic Notes</h2>
 <p>PCA: Pearson (1901), Hotelling (1933). The connection to the eigendecomposition of the covariance matrix is in Anderson (2003), Ch. 11.</p>
 <p>Factor analysis: Spearman (1904) introduced the single-factor model. Thurstone (1947) developed multiple-factor analysis and the concept of simple structure. Kaiser (1958) proposed the varimax rotation criterion. Bartholomew et al.&nbsp;(2011), <em>Latent Variable Models and Factor Analysis</em>, gives a modern treatment. For the rotation indeterminacy problem and its consequences, see Mulaik (2009), <em>Foundations of Factor Analysis</em>, Ch. 10.</p>
 <p>CCA: Hotelling (1936) introduced canonical correlations. The connection to the generalized eigenvalue problem and SVD of the standardized cross-covariance is in Anderson (2003), Ch. 12. Hardoon, Szedmak, and Shawe-Taylor (2004) survey kernel extensions.</p>
@@ -2294,7 +2291,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
 <span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a><span class="fu"># Motivation {#sec-ch19-motivation}</span></span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a><span class="fu">## Motivation {#sec-ch19-motivation}</span></span>
 <span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a>Two related problems: (1) reducing the dimensionality of multivariate</span>
 <span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a>data (PCA, factor analysis, CCA), and (2) estimating relationships</span>
@@ -2306,9 +2303,9 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-30"><a href="#cb42-30" aria-hidden="true" tabindex="-1"></a>for LOWESS, kernel regression, and kernel density estimation.</span>
 <span id="cb42-31"><a href="#cb42-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-32"><a href="#cb42-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-33"><a href="#cb42-33" aria-hidden="true" tabindex="-1"></a><span class="fu"># Mathematical Foundation {#sec-ch19-math}</span></span>
+<span id="cb42-33"><a href="#cb42-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mathematical Foundation {#sec-ch19-math}</span></span>
 <span id="cb42-34"><a href="#cb42-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-35"><a href="#cb42-35" aria-hidden="true" tabindex="-1"></a><span class="fu">## PCA: why variance maximization works</span></span>
+<span id="cb42-35"><a href="#cb42-35" aria-hidden="true" tabindex="-1"></a><span class="fu">### PCA: why variance maximization works</span></span>
 <span id="cb42-36"><a href="#cb42-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-37"><a href="#cb42-37" aria-hidden="true" tabindex="-1"></a>PCA asks: if you could only keep $k$ linear combinations of your $p$</span>
 <span id="cb42-38"><a href="#cb42-38" aria-hidden="true" tabindex="-1"></a>variables, which ones would preserve the most information?</span>
@@ -2341,7 +2338,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-65"><a href="#cb42-65" aria-hidden="true" tabindex="-1"></a>large to small --- suggests the number of true underlying factors.</span>
 <span id="cb42-66"><a href="#cb42-66" aria-hidden="true" tabindex="-1"></a>Components after the elbow are noise.</span>
 <span id="cb42-67"><a href="#cb42-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## Factor analysis: latent variables behind observed data</span></span>
+<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a><span class="fu">### Factor analysis: latent variables behind observed data</span></span>
 <span id="cb42-69"><a href="#cb42-69" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-70"><a href="#cb42-70" aria-hidden="true" tabindex="-1"></a>PCA finds directions of maximum variance, but it does not</span>
 <span id="cb42-71"><a href="#cb42-71" aria-hidden="true" tabindex="-1"></a>model *why* those directions exist. Factor analysis does: it</span>
@@ -2394,7 +2391,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-118"><a href="#cb42-118" aria-hidden="true" tabindex="-1"></a>\to \mathbf{0}$ (no unique variance), factor analysis</span>
 <span id="cb42-119"><a href="#cb42-119" aria-hidden="true" tabindex="-1"></a>reduces to PCA.</span>
 <span id="cb42-120"><a href="#cb42-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-121"><a href="#cb42-121" aria-hidden="true" tabindex="-1"></a><span class="fu">## Canonical correlation analysis (CCA)</span></span>
+<span id="cb42-121"><a href="#cb42-121" aria-hidden="true" tabindex="-1"></a><span class="fu">### Canonical correlation analysis (CCA)</span></span>
 <span id="cb42-122"><a href="#cb42-122" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-123"><a href="#cb42-123" aria-hidden="true" tabindex="-1"></a>CCA generalizes correlation to two *sets* of variables.</span>
 <span id="cb42-124"><a href="#cb42-124" aria-hidden="true" tabindex="-1"></a>Given $\mathbf{X}_1 \in \mathbb{R}^{n \times p_1}$ and</span>
@@ -2428,7 +2425,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-152"><a href="#cb42-152" aria-hidden="true" tabindex="-1"></a>and $\boldsymbol{\Sigma}_{22}^{-1/2}$, give the canonical</span>
 <span id="cb42-153"><a href="#cb42-153" aria-hidden="true" tabindex="-1"></a>weight vectors $\mathbf{a}$ and $\mathbf{b}$.</span>
 <span id="cb42-154"><a href="#cb42-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-155"><a href="#cb42-155" aria-hidden="true" tabindex="-1"></a><span class="fu">## Kernel density estimation: putting bumps at data points</span></span>
+<span id="cb42-155"><a href="#cb42-155" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel density estimation: putting bumps at data points</span></span>
 <span id="cb42-156"><a href="#cb42-156" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-157"><a href="#cb42-157" aria-hidden="true" tabindex="-1"></a>The histogram is the simplest density estimator, but it depends on</span>
 <span id="cb42-158"><a href="#cb42-158" aria-hidden="true" tabindex="-1"></a>bin placement. KDE improves on it by placing a smooth "bump" (kernel)</span>
@@ -2453,7 +2450,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-177"><a href="#cb42-177" aria-hidden="true" tabindex="-1"></a>  becomes smooth. High bias (fine structure is smeared out) but low</span>
 <span id="cb42-178"><a href="#cb42-178" aria-hidden="true" tabindex="-1"></a>  variance. The KDE is *smooth*.</span>
 <span id="cb42-179"><a href="#cb42-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-180"><a href="#cb42-180" aria-hidden="true" tabindex="-1"></a><span class="fu">### The AMISE derivation</span></span>
+<span id="cb42-180"><a href="#cb42-180" aria-hidden="true" tabindex="-1"></a><span class="fu">#### The AMISE derivation</span></span>
 <span id="cb42-181"><a href="#cb42-181" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-182"><a href="#cb42-182" aria-hidden="true" tabindex="-1"></a>The optimal bandwidth minimizes the *mean integrated squared error*</span>
 <span id="cb42-183"><a href="#cb42-183" aria-hidden="true" tabindex="-1"></a>(MISE), defined as $\text{MISE}(h) = \mathbb{E}<span class="sc">\!</span>\left[\int</span>
@@ -2503,7 +2500,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-227"><a href="#cb42-227" aria-hidden="true" tabindex="-1"></a>$R(f'')$, so the rule picks a bandwidth too wide for data with</span>
 <span id="cb42-228"><a href="#cb42-228" aria-hidden="true" tabindex="-1"></a>sharp features.</span>
 <span id="cb42-229"><a href="#cb42-229" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-230"><a href="#cb42-230" aria-hidden="true" tabindex="-1"></a><span class="fu">## LOWESS and kernel regression</span></span>
+<span id="cb42-230"><a href="#cb42-230" aria-hidden="true" tabindex="-1"></a><span class="fu">### LOWESS and kernel regression</span></span>
 <span id="cb42-231"><a href="#cb42-231" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-232"><a href="#cb42-232" aria-hidden="true" tabindex="-1"></a>LOWESS (LOcally WEighted Scatterplot Smoothing) estimates</span>
 <span id="cb42-233"><a href="#cb42-233" aria-hidden="true" tabindex="-1"></a>$\mathbb{E}<span class="co">[</span><span class="ot">Y \mid X = x</span><span class="co">]</span>$ by fitting a *separate* linear regression</span>
@@ -2520,7 +2517,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-244"><a href="#cb42-244" aria-hidden="true" tabindex="-1"></a>true conditional expectation, but at the nonparametric rate</span>
 <span id="cb42-245"><a href="#cb42-245" aria-hidden="true" tabindex="-1"></a>$O(n^{-2/(d+4)})$.</span>
 <span id="cb42-246"><a href="#cb42-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-247"><a href="#cb42-247" aria-hidden="true" tabindex="-1"></a><span class="fu">## Local linear regression and boundary bias</span></span>
+<span id="cb42-247"><a href="#cb42-247" aria-hidden="true" tabindex="-1"></a><span class="fu">### Local linear regression and boundary bias</span></span>
 <span id="cb42-248"><a href="#cb42-248" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-249"><a href="#cb42-249" aria-hidden="true" tabindex="-1"></a>The Nadaraya-Watson estimator (local constant kernel regression)</span>
 <span id="cb42-250"><a href="#cb42-250" aria-hidden="true" tabindex="-1"></a>takes a weighted average of nearby $Y$ values:</span>
@@ -2557,7 +2554,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-281"><a href="#cb42-281" aria-hidden="true" tabindex="-1"></a>uneven spacing, and heterogeneous density of the $X$ values</span>
 <span id="cb42-282"><a href="#cb42-282" aria-hidden="true" tabindex="-1"></a>without manual adjustment.</span>
 <span id="cb42-283"><a href="#cb42-283" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-284"><a href="#cb42-284" aria-hidden="true" tabindex="-1"></a><span class="fu">## The curse of dimensionality</span></span>
+<span id="cb42-284"><a href="#cb42-284" aria-hidden="true" tabindex="-1"></a><span class="fu">### The curse of dimensionality</span></span>
 <span id="cb42-285"><a href="#cb42-285" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-286"><a href="#cb42-286" aria-hidden="true" tabindex="-1"></a>The convergence rate $O(n^{-2/(d+4)})$ reveals a fundamental problem:</span>
 <span id="cb42-287"><a href="#cb42-287" aria-hidden="true" tabindex="-1"></a>for $d$-dimensional inputs, you need *exponentially more data* to</span>
@@ -2576,9 +2573,9 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-300"><a href="#cb42-300" aria-hidden="true" tabindex="-1"></a>first.</span>
 <span id="cb42-301"><a href="#cb42-301" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-302"><a href="#cb42-302" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-303"><a href="#cb42-303" aria-hidden="true" tabindex="-1"></a><span class="fu"># Statsmodels Implementation {#sec-ch19-statsmodels}</span></span>
+<span id="cb42-303"><a href="#cb42-303" aria-hidden="true" tabindex="-1"></a><span class="fu">## Statsmodels Implementation {#sec-ch19-statsmodels}</span></span>
 <span id="cb42-304"><a href="#cb42-304" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-305"><a href="#cb42-305" aria-hidden="true" tabindex="-1"></a><span class="fu">## PCA</span></span>
+<span id="cb42-305"><a href="#cb42-305" aria-hidden="true" tabindex="-1"></a><span class="fu">### PCA</span></span>
 <span id="cb42-306"><a href="#cb42-306" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-307"><a href="#cb42-307" aria-hidden="true" tabindex="-1"></a>PCA finds the directions of maximum variance in your data. If you</span>
 <span id="cb42-308"><a href="#cb42-308" aria-hidden="true" tabindex="-1"></a>have 10 variables but only 3 underlying factors drive the variation,</span>
@@ -2622,7 +2619,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-350"><a href="#cb42-350" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-351"><a href="#cb42-351" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-352"><a href="#cb42-352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-353"><a href="#cb42-353" aria-hidden="true" tabindex="-1"></a><span class="fu">## Factor analysis</span></span>
+<span id="cb42-353"><a href="#cb42-353" aria-hidden="true" tabindex="-1"></a><span class="fu">### Factor analysis</span></span>
 <span id="cb42-354"><a href="#cb42-354" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-355"><a href="#cb42-355" aria-hidden="true" tabindex="-1"></a><span class="in">`statsmodels.multivariate.factor.Factor`</span> fits the factor model</span>
 <span id="cb42-356"><a href="#cb42-356" aria-hidden="true" tabindex="-1"></a>$\mathbf{X} = \boldsymbol{\Lambda}\mathbf{f} +</span>
@@ -2675,7 +2672,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-407"><a href="#cb42-407" aria-hidden="true" tabindex="-1"></a>$\mathbf{T}^\top\mathbf{T} = \mathbf{I}$, confirming it</span>
 <span id="cb42-408"><a href="#cb42-408" aria-hidden="true" tabindex="-1"></a>is an orthogonal rotation that preserves the fit.</span>
 <span id="cb42-409"><a href="#cb42-409" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-410"><a href="#cb42-410" aria-hidden="true" tabindex="-1"></a><span class="fu">## Canonical correlation analysis (CCA)</span></span>
+<span id="cb42-410"><a href="#cb42-410" aria-hidden="true" tabindex="-1"></a><span class="fu">### Canonical correlation analysis (CCA)</span></span>
 <span id="cb42-411"><a href="#cb42-411" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-412"><a href="#cb42-412" aria-hidden="true" tabindex="-1"></a><span class="in">`statsmodels.multivariate.cancorr.CanCorr`</span> computes canonical</span>
 <span id="cb42-413"><a href="#cb42-413" aria-hidden="true" tabindex="-1"></a>correlations between two variable sets and provides</span>
@@ -2709,7 +2706,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-443"><a href="#cb42-443" aria-hidden="true" tabindex="-1"></a>the shared factor), while the remaining correlations should</span>
 <span id="cb42-444"><a href="#cb42-444" aria-hidden="true" tabindex="-1"></a>be near zero (pure noise).</span>
 <span id="cb42-445"><a href="#cb42-445" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-446"><a href="#cb42-446" aria-hidden="true" tabindex="-1"></a><span class="fu">## MANOVA</span></span>
+<span id="cb42-446"><a href="#cb42-446" aria-hidden="true" tabindex="-1"></a><span class="fu">### MANOVA</span></span>
 <span id="cb42-447"><a href="#cb42-447" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-448"><a href="#cb42-448" aria-hidden="true" tabindex="-1"></a><span class="in">`statsmodels.multivariate.manova.MANOVA`</span> tests whether group</span>
 <span id="cb42-449"><a href="#cb42-449" aria-hidden="true" tabindex="-1"></a>means differ across multiple response variables simultaneously.</span>
@@ -2744,7 +2741,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-480"><a href="#cb42-480" aria-hidden="true" tabindex="-1"></a>lambda to a familiar scale; Pillai's trace is more robust</span>
 <span id="cb42-481"><a href="#cb42-481" aria-hidden="true" tabindex="-1"></a>to violations of homogeneity of covariance.</span>
 <span id="cb42-482"><a href="#cb42-482" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-483"><a href="#cb42-483" aria-hidden="true" tabindex="-1"></a><span class="fu">## Kernel density estimation</span></span>
+<span id="cb42-483"><a href="#cb42-483" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel density estimation</span></span>
 <span id="cb42-484"><a href="#cb42-484" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-485"><a href="#cb42-485" aria-hidden="true" tabindex="-1"></a>KDE estimates the probability density from data, without assuming a</span>
 <span id="cb42-486"><a href="#cb42-486" aria-hidden="true" tabindex="-1"></a>parametric form (like "the data is normal"). It places a small bump</span>
@@ -2770,7 +2767,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-508"><a href="#cb42-508" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-509"><a href="#cb42-509" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-510"><a href="#cb42-510" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-511"><a href="#cb42-511" aria-hidden="true" tabindex="-1"></a><span class="fu">## LOWESS (locally weighted scatterplot smoothing)</span></span>
+<span id="cb42-511"><a href="#cb42-511" aria-hidden="true" tabindex="-1"></a><span class="fu">### LOWESS (locally weighted scatterplot smoothing)</span></span>
 <span id="cb42-512"><a href="#cb42-512" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-515"><a href="#cb42-515" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-516"><a href="#cb42-516" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lowess-demo</span></span>
@@ -2789,7 +2786,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-529"><a href="#cb42-529" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-530"><a href="#cb42-530" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-531"><a href="#cb42-531" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-532"><a href="#cb42-532" aria-hidden="true" tabindex="-1"></a><span class="fu">## Kernel regression</span></span>
+<span id="cb42-532"><a href="#cb42-532" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel regression</span></span>
 <span id="cb42-533"><a href="#cb42-533" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-534"><a href="#cb42-534" aria-hidden="true" tabindex="-1"></a><span class="in">`KernelReg`</span> has two key parameters: <span class="in">`var_type`</span> (variable types:</span>
 <span id="cb42-535"><a href="#cb42-535" aria-hidden="true" tabindex="-1"></a><span class="in">`'c'`</span> for continuous, <span class="in">`'u'`</span> for unordered discrete, <span class="in">`'o'`</span> for</span>
@@ -2827,9 +2824,9 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-571"><a href="#cb42-571" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-572"><a href="#cb42-572" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-573"><a href="#cb42-573" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-574"><a href="#cb42-574" aria-hidden="true" tabindex="-1"></a><span class="fu"># From-Scratch Implementation {#sec-ch19-scratch}</span></span>
+<span id="cb42-574"><a href="#cb42-574" aria-hidden="true" tabindex="-1"></a><span class="fu">## From-Scratch Implementation {#sec-ch19-scratch}</span></span>
 <span id="cb42-575"><a href="#cb42-575" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-576"><a href="#cb42-576" aria-hidden="true" tabindex="-1"></a><span class="fu">## PCA via numpy SVD</span></span>
+<span id="cb42-576"><a href="#cb42-576" aria-hidden="true" tabindex="-1"></a><span class="fu">### PCA via numpy SVD</span></span>
 <span id="cb42-577"><a href="#cb42-577" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-580"><a href="#cb42-580" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-581"><a href="#cb42-581" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: pca-scratch</span></span>
@@ -2841,7 +2838,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-587"><a href="#cb42-587" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"statsmodels:    </span><span class="sc">{</span>pca<span class="sc">.</span>eigenvals[:<span class="dv">3</span>]<span class="sc">.</span><span class="bu">round</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb42-588"><a href="#cb42-588" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-589"><a href="#cb42-589" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-590"><a href="#cb42-590" aria-hidden="true" tabindex="-1"></a><span class="fu">## KDE from scratch with Silverman bandwidth</span></span>
+<span id="cb42-590"><a href="#cb42-590" aria-hidden="true" tabindex="-1"></a><span class="fu">### KDE from scratch with Silverman bandwidth</span></span>
 <span id="cb42-591"><a href="#cb42-591" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-592"><a href="#cb42-592" aria-hidden="true" tabindex="-1"></a>The from-scratch KDE places a Gaussian bump at each data</span>
 <span id="cb42-593"><a href="#cb42-593" aria-hidden="true" tabindex="-1"></a>point and sums. Silverman's rule provides the bandwidth.</span>
@@ -2908,7 +2905,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-656"><a href="#cb42-656" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"sm=</span><span class="sc">{</span>sm_interp(pt)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb42-657"><a href="#cb42-657" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-658"><a href="#cb42-658" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-659"><a href="#cb42-659" aria-hidden="true" tabindex="-1"></a><span class="fu">## Local linear regression from scratch</span></span>
+<span id="cb42-659"><a href="#cb42-659" aria-hidden="true" tabindex="-1"></a><span class="fu">### Local linear regression from scratch</span></span>
 <span id="cb42-660"><a href="#cb42-660" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-661"><a href="#cb42-661" aria-hidden="true" tabindex="-1"></a>At each evaluation point $x$, local linear regression solves</span>
 <span id="cb42-662"><a href="#cb42-662" aria-hidden="true" tabindex="-1"></a>a weighted least squares problem: minimize</span>
@@ -2974,9 +2971,9 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-724"><a href="#cb42-724" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-725"><a href="#cb42-725" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-726"><a href="#cb42-726" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-727"><a href="#cb42-727" aria-hidden="true" tabindex="-1"></a><span class="fu"># Diagnostics {#sec-ch19-diagnostics}</span></span>
+<span id="cb42-727"><a href="#cb42-727" aria-hidden="true" tabindex="-1"></a><span class="fu">## Diagnostics {#sec-ch19-diagnostics}</span></span>
 <span id="cb42-728"><a href="#cb42-728" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-729"><a href="#cb42-729" aria-hidden="true" tabindex="-1"></a><span class="fu">## How many components to keep?</span></span>
+<span id="cb42-729"><a href="#cb42-729" aria-hidden="true" tabindex="-1"></a><span class="fu">### How many components to keep?</span></span>
 <span id="cb42-730"><a href="#cb42-730" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-731"><a href="#cb42-731" aria-hidden="true" tabindex="-1"></a>The scree plot (above) shows the "elbow" --- the point where adding</span>
 <span id="cb42-732"><a href="#cb42-732" aria-hidden="true" tabindex="-1"></a>more components captures diminishing returns. Rules of thumb:</span>
@@ -2997,7 +2994,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-749"><a href="#cb42-749" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cumulative variance: </span><span class="sc">{</span>cumvar[:<span class="dv">5</span>]<span class="sc">.</span><span class="bu">round</span>(<span class="dv">3</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb42-750"><a href="#cb42-750" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-751"><a href="#cb42-751" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-752"><a href="#cb42-752" aria-hidden="true" tabindex="-1"></a><span class="fu">## Loading plot for PCA interpretation</span></span>
+<span id="cb42-752"><a href="#cb42-752" aria-hidden="true" tabindex="-1"></a><span class="fu">### Loading plot for PCA interpretation</span></span>
 <span id="cb42-753"><a href="#cb42-753" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-754"><a href="#cb42-754" aria-hidden="true" tabindex="-1"></a>The scree plot tells you *how many* components matter. The</span>
 <span id="cb42-755"><a href="#cb42-755" aria-hidden="true" tabindex="-1"></a>*loading plot* tells you *what each component means* by</span>
@@ -3033,7 +3030,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-787"><a href="#cb42-787" aria-hidden="true" tabindex="-1"></a>at 90 degrees are uncorrelated; variables in opposite</span>
 <span id="cb42-788"><a href="#cb42-788" aria-hidden="true" tabindex="-1"></a>directions are negatively correlated.</span>
 <span id="cb42-789"><a href="#cb42-789" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-790"><a href="#cb42-790" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bandwidth selection for KDE</span></span>
+<span id="cb42-790"><a href="#cb42-790" aria-hidden="true" tabindex="-1"></a><span class="fu">### Bandwidth selection for KDE</span></span>
 <span id="cb42-791"><a href="#cb42-791" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-792"><a href="#cb42-792" aria-hidden="true" tabindex="-1"></a>Silverman's rule (<span class="in">`bw='silverman'`</span>) is the default. For multimodal</span>
 <span id="cb42-793"><a href="#cb42-793" aria-hidden="true" tabindex="-1"></a>distributions, it may oversmooth. Cross-validation (leave-one-out</span>
@@ -3048,7 +3045,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-804"><a href="#cb42-804" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>bw_method<span class="sc">}</span><span class="ss">: bw = </span><span class="sc">{</span>kde_bw<span class="sc">.</span>bw<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb42-805"><a href="#cb42-805" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-806"><a href="#cb42-806" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-807"><a href="#cb42-807" aria-hidden="true" tabindex="-1"></a><span class="fu">## Leave-one-out cross-validation for bandwidth</span></span>
+<span id="cb42-807"><a href="#cb42-807" aria-hidden="true" tabindex="-1"></a><span class="fu">### Leave-one-out cross-validation for bandwidth</span></span>
 <span id="cb42-808"><a href="#cb42-808" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-809"><a href="#cb42-809" aria-hidden="true" tabindex="-1"></a>LOO-CV scores bandwidths by how well the KDE trained on</span>
 <span id="cb42-810"><a href="#cb42-810" aria-hidden="true" tabindex="-1"></a>$n-1$ points predicts the held-out point. This avoids</span>
@@ -3089,7 +3086,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-847"><a href="#cb42-847" aria-hidden="true" tabindex="-1"></a>($O(1)$ computation) but assumes unimodality; LOO-CV is</span>
 <span id="cb42-848"><a href="#cb42-848" aria-hidden="true" tabindex="-1"></a>$O(n^2)$ but data-driven.</span>
 <span id="cb42-849"><a href="#cb42-849" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-850"><a href="#cb42-850" aria-hidden="true" tabindex="-1"></a><span class="fu">## Residual diagnostics for kernel regression</span></span>
+<span id="cb42-850"><a href="#cb42-850" aria-hidden="true" tabindex="-1"></a><span class="fu">### Residual diagnostics for kernel regression</span></span>
 <span id="cb42-851"><a href="#cb42-851" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-852"><a href="#cb42-852" aria-hidden="true" tabindex="-1"></a>Residuals from kernel regression should show no systematic</span>
 <span id="cb42-853"><a href="#cb42-853" aria-hidden="true" tabindex="-1"></a>pattern. Structured residuals indicate the bandwidth is wrong</span>
@@ -3114,7 +3111,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-874"><a href="#cb42-874" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-875"><a href="#cb42-875" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-876"><a href="#cb42-876" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-877"><a href="#cb42-877" aria-hidden="true" tabindex="-1"></a><span class="fu">## When PCA fails: nonlinear manifolds</span></span>
+<span id="cb42-877"><a href="#cb42-877" aria-hidden="true" tabindex="-1"></a><span class="fu">### When PCA fails: nonlinear manifolds</span></span>
 <span id="cb42-878"><a href="#cb42-878" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-879"><a href="#cb42-879" aria-hidden="true" tabindex="-1"></a>PCA finds linear subspaces. If the data lies on a curved</span>
 <span id="cb42-880"><a href="#cb42-880" aria-hidden="true" tabindex="-1"></a>manifold (a Swiss roll, for example), PCA will spread the</span>
@@ -3131,7 +3128,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-891"><a href="#cb42-891" aria-hidden="true" tabindex="-1"></a>Ch. 14 for a treatment of nonlinear dimension reduction.</span>
 <span id="cb42-892"><a href="#cb42-892" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-893"><a href="#cb42-893" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-894"><a href="#cb42-894" aria-hidden="true" tabindex="-1"></a><span class="fu"># Computational Considerations {#sec-ch19-computation}</span></span>
+<span id="cb42-894"><a href="#cb42-894" aria-hidden="true" tabindex="-1"></a><span class="fu">## Computational Considerations {#sec-ch19-computation}</span></span>
 <span id="cb42-895"><a href="#cb42-895" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-896"><a href="#cb42-896" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Cost <span class="pp">|</span> Dimension limit <span class="pp">|</span></span>
 <span id="cb42-897"><a href="#cb42-897" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
@@ -3153,7 +3150,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-913"><a href="#cb42-913" aria-hidden="true" tabindex="-1"></a>for 1D KDE via the <span class="in">`fft`</span> parameter.</span>
 <span id="cb42-914"><a href="#cb42-914" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-915"><a href="#cb42-915" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-916"><a href="#cb42-916" aria-hidden="true" tabindex="-1"></a><span class="fu"># Worked Example {#sec-ch19-example}</span></span>
+<span id="cb42-916"><a href="#cb42-916" aria-hidden="true" tabindex="-1"></a><span class="fu">## Worked Example {#sec-ch19-example}</span></span>
 <span id="cb42-917"><a href="#cb42-917" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-918"><a href="#cb42-918" aria-hidden="true" tabindex="-1"></a>Exploring the California Housing dataset with PCA and nonparametric</span>
 <span id="cb42-919"><a href="#cb42-919" aria-hidden="true" tabindex="-1"></a>regression.</span>
@@ -3274,7 +3271,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-1042"><a href="#cb42-1042" aria-hidden="true" tabindex="-1"></a>rather than trusting the OLS slope.</span>
 <span id="cb42-1043"><a href="#cb42-1043" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1044"><a href="#cb42-1044" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1045"><a href="#cb42-1045" aria-hidden="true" tabindex="-1"></a><span class="fu"># Exercises {#sec-ch19-exercises}</span></span>
+<span id="cb42-1045"><a href="#cb42-1045" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises {#sec-ch19-exercises}</span></span>
 <span id="cb42-1046"><a href="#cb42-1046" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1047"><a href="#cb42-1047" aria-hidden="true" tabindex="-1"></a>**Exercise 19.1** ($\star\star$, diagnostic failure). Apply KDE with</span>
 <span id="cb42-1048"><a href="#cb42-1048" aria-hidden="true" tabindex="-1"></a>a very small bandwidth (bw=0.05) and a very large bandwidth (bw=2.0)</span>
@@ -3356,7 +3353,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-1130"><a href="#cb42-1130" aria-hidden="true" tabindex="-1"></a>%%</span>
 <span id="cb42-1131"><a href="#cb42-1131" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1132"><a href="#cb42-1132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1133"><a href="#cb42-1133" aria-hidden="true" tabindex="-1"></a><span class="fu"># Choosing Between Methods {#sec-ch19-choosing}</span></span>
+<span id="cb42-1133"><a href="#cb42-1133" aria-hidden="true" tabindex="-1"></a><span class="fu">## Choosing Between Methods {#sec-ch19-choosing}</span></span>
 <span id="cb42-1134"><a href="#cb42-1134" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1135"><a href="#cb42-1135" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Question <span class="pp">|</span> Method <span class="pp">|</span> Why <span class="pp">|</span></span>
 <span id="cb42-1136"><a href="#cb42-1136" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
@@ -3376,7 +3373,7 @@ statsmodels/(n-1):     [3.54 3.01 2.48]</code></pre>
 <span id="cb42-1150"><a href="#cb42-1150" aria-hidden="true" tabindex="-1"></a>methods when you have evidence the parametric model is correct.</span>
 <span id="cb42-1151"><a href="#cb42-1151" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1152"><a href="#cb42-1152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1153"><a href="#cb42-1153" aria-hidden="true" tabindex="-1"></a><span class="fu"># Bibliographic Notes {#sec-ch19-biblio}</span></span>
+<span id="cb42-1153"><a href="#cb42-1153" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bibliographic Notes {#sec-ch19-biblio}</span></span>
 <span id="cb42-1154"><a href="#cb42-1154" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1155"><a href="#cb42-1155" aria-hidden="true" tabindex="-1"></a>PCA: Pearson (1901), Hotelling (1933). The connection to the</span>
 <span id="cb42-1156"><a href="#cb42-1156" aria-hidden="true" tabindex="-1"></a>eigendecomposition of the covariance matrix is in Anderson (2003),</span>

@@ -702,8 +702,8 @@ window.Quarto = {
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">'assets/book.mplstyle'</span>)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="positive-definiteness" class="level1 unnumbered">
-<h1 class="unnumbered">Positive Definiteness</h1>
+<section id="positive-definiteness" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="positive-definiteness">Positive Definiteness</h2>
 <p>A symmetric matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{n \times n}\)</span> is <strong>positive definite</strong> (PD) if any of the following equivalent conditions holds:</p>
 <ol type="1">
 <li><span class="math inline">\(\mathbf{x}^\top \mathbf{A} \mathbf{x} &gt; 0\)</span> for every nonzero <span class="math inline">\(\mathbf{x} \in \mathbb{R}^n\)</span>.</li>
@@ -783,8 +783,8 @@ Now PD: True</code></pre>
 </div>
 <p>This arises frequently in Ch. 14 (mixed model covariance estimation) and Ch. 17 (VAR residual covariance matrices), where iterative algorithms can produce matrices that are numerically but not algebraically indefinite.</p>
 </section>
-<section id="cholesky-decomposition" class="level1 unnumbered">
-<h1 class="unnumbered">Cholesky Decomposition</h1>
+<section id="cholesky-decomposition" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="cholesky-decomposition">Cholesky Decomposition</h2>
 <p>Every positive definite matrix <span class="math inline">\(\mathbf{A}\)</span> admits a unique factorisation</p>
 <p><span class="math display">\[
 \mathbf{A} = \mathbf{L} \mathbf{L}^\top,
@@ -845,8 +845,8 @@ log|Sigma| via slogdet:  0.675492</code></pre>
 </div>
 </div>
 </section>
-<section id="singular-value-decomposition" class="level1 unnumbered">
-<h1 class="unnumbered">Singular Value Decomposition</h1>
+<section id="singular-value-decomposition" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="singular-value-decomposition">Singular Value Decomposition</h2>
 <p>Every matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span> has a factorisation</p>
 <p><span class="math display">\[
 \mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^\top,
@@ -940,8 +940,8 @@ Loadings (first 2 PCs):
 </div>
 </div>
 </section>
-<section id="eigendecomposition" class="level1 unnumbered">
-<h1 class="unnumbered">Eigendecomposition</h1>
+<section id="eigendecomposition" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="eigendecomposition">Eigendecomposition</h2>
 <p>A square matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{n \times n}\)</span> can be decomposed as</p>
 <p><span class="math display">\[
 \mathbf{A} = \mathbf{Q} \boldsymbol{\Lambda} \mathbf{Q}^{-1},
@@ -997,11 +997,11 @@ g(\lambda_n))\,\mathbf{Q}^\top\)</span>. This spectral mapping is used in Ch. 14
 \max_i |\lambda_i|\)</span> determines convergence of iterative methods and the stability of dynamic systems. Used in Ch. 15 (AR stationarity conditions) and Ch. 17 (VAR forecasting).</li>
 </ul>
 </section>
-<section id="matrix-calculus" class="level1 unnumbered">
-<h1 class="unnumbered">Matrix Calculus</h1>
+<section id="matrix-calculus" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="matrix-calculus">Matrix Calculus</h2>
 <p>Matrix calculus underlies every optimisation and maximum-likelihood derivation in the book. The convention throughout is the <strong>numerator layout</strong>: if <span class="math inline">\(f : \mathbb{R}^n \to \mathbb{R}\)</span>, then the gradient <span class="math inline">\(\nabla f(\mathbf{x}) = \partial f / \partial \mathbf{x}\)</span> is a column vector in <span class="math inline">\(\mathbb{R}^n\)</span>.</p>
-<section id="key-scalar-by-vector-results" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="key-scalar-by-vector-results">Key scalar-by-vector results</h2>
+<section id="key-scalar-by-vector-results" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="key-scalar-by-vector-results">Key scalar-by-vector results</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -1056,8 +1056,8 @@ f(\mathbf{x}) \approx f(\mathbf{x}_0) + \nabla f(\mathbf{x}_0)^\top
 <p>Setting the gradient of this quadratic to zero gives Newton’s step <span class="math inline">\(\mathbf{x} - \mathbf{x}_0 = -[\nabla^2 f(\mathbf{x}_0)]^{-1}
 \nabla f(\mathbf{x}_0)\)</span> — the foundation of all Newton-type methods in Ch. 2.</p>
 </section>
-<section id="key-matrix-by-matrix-results" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="key-matrix-by-matrix-results">Key matrix-by-matrix results</h2>
+<section id="key-matrix-by-matrix-results" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="key-matrix-by-matrix-results">Key matrix-by-matrix results</h3>
 <p>These appear in likelihood derivations where the parameter is a matrix (e.g., a covariance matrix):</p>
 <table class="caption-top table">
 <colgroup>
@@ -1169,8 +1169,8 @@ Max error: 1.83e-09</code></pre>
 </div>
 </section>
 </section>
-<section id="shermanmorrisonwoodbury-identity" class="level1 unnumbered">
-<h1 class="unnumbered">Sherman–Morrison–Woodbury Identity</h1>
+<section id="shermanmorrisonwoodbury-identity" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="shermanmorrisonwoodbury-identity">Sherman–Morrison–Woodbury Identity</h2>
 <p>The Woodbury identity gives the inverse of a matrix after a low-rank perturbation:</p>
 <p><span class="math display">\[
 (\mathbf{A} + \mathbf{U}\mathbf{C}\mathbf{V})^{-1}
@@ -1250,15 +1250,15 @@ Max error: 8.53e-14</code></pre>
 <span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  Speedup:        </span><span class="sc">{</span>t_direct<span class="op">/</span>t_woodbury<span class="sc">:.1f}</span><span class="ss">x"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>n=500, rank-5 update:
-  Direct inverse: 2.3 ms
+  Direct inverse: 1.9 ms
   Woodbury:       0.3 ms
-  Speedup:        6.9x</code></pre>
+  Speedup:        6.1x</code></pre>
 </div>
 </div>
 <p>The savings grow as <span class="math inline">\(k/n\)</span> shrinks. When <span class="math inline">\(\mathbf{A}^{-1}\)</span> is already available (as in the BFGS iteration), the Woodbury update costs <span class="math inline">\(O(n^2 k)\)</span> versus <span class="math inline">\(O(n^3)\)</span> for a fresh inverse.</p>
 </section>
-<section id="block-matrix-inversion-and-schur-complement" class="level1 unnumbered">
-<h1 class="unnumbered">Block Matrix Inversion and Schur Complement</h1>
+<section id="block-matrix-inversion-and-schur-complement" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="block-matrix-inversion-and-schur-complement">Block Matrix Inversion and Schur Complement</h2>
 <p>Consider a conformably partitioned matrix</p>
 <p><span class="math display">\[
 \mathbf{M} =
@@ -1335,8 +1335,8 @@ Determinant error:   5.68e-14</code></pre>
 </div>
 </div>
 </section>
-<section id="kronecker-products" class="level1 unnumbered">
-<h1 class="unnumbered">Kronecker Products</h1>
+<section id="kronecker-products" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="kronecker-products">Kronecker Products</h2>
 <p>The <strong>Kronecker product</strong> of <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span> and <span class="math inline">\(\mathbf{B} \in \mathbb{R}^{p \times q}\)</span> is the <span class="math inline">\(mp \times nq\)</span> block matrix</p>
 <p><span class="math display">\[
 \mathbf{A} \otimes \mathbf{B}
@@ -1353,8 +1353,8 @@ a_{m1}\mathbf{B} &amp; \cdots &amp; a_{mn}\mathbf{B}
 <li>Eigenvalues of <span class="math inline">\(\mathbf{A} \otimes \mathbf{B}\)</span> are all products <span class="math inline">\(\lambda_i(\mathbf{A}) \cdot \lambda_j(\mathbf{B})\)</span></li>
 <li><span class="math inline">\(\text{det}(\mathbf{A} \otimes \mathbf{B}) = (\text{det}\,\mathbf{A})^p \cdot (\text{det}\,\mathbf{B})^n\)</span> for <span class="math inline">\(\mathbf{A}\)</span> <span class="math inline">\(n \times n\)</span>, <span class="math inline">\(\mathbf{B}\)</span> <span class="math inline">\(p \times p\)</span></li>
 </ul>
-<section id="the-vec-operator-and-the-fundamental-identity" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="the-vec-operator-and-the-fundamental-identity">The vec operator and the fundamental identity</h2>
+<section id="the-vec-operator-and-the-fundamental-identity" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="the-vec-operator-and-the-fundamental-identity">The vec operator and the fundamental identity</h3>
 <p>The <strong>vec</strong> operator stacks the columns of a matrix into a single vector: <span class="math inline">\(\text{vec}(\mathbf{X})\)</span> for <span class="math inline">\(\mathbf{X} \in
 \mathbb{R}^{m \times n}\)</span> is an <span class="math inline">\(mn \times 1\)</span> vector. The central identity is:</p>
 <p><span class="math display">\[
@@ -1423,10 +1423,10 @@ Eigenvalue product error: 2.84e-14</code></pre>
 </div>
 </section>
 </section>
-<section id="trace-and-determinant" class="level1 unnumbered">
-<h1 class="unnumbered">Trace and Determinant</h1>
-<section id="trace" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="trace">Trace</h2>
+<section id="trace-and-determinant" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="trace-and-determinant">Trace and Determinant</h2>
+<section id="trace" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="trace">Trace</h3>
 <p>The trace of a square matrix <span class="math inline">\(\mathbf{A}\)</span> is the sum of its diagonal entries: <span class="math inline">\(\text{tr}(\mathbf{A}) = \sum_{i=1}^n a_{ii}\)</span>. Key properties:</p>
 <ul>
 <li><strong>Cyclic permutation:</strong> <span class="math inline">\(\text{tr}(\mathbf{A}\mathbf{B}\mathbf{C})
@@ -1444,8 +1444,8 @@ Eigenvalue product error: 2.84e-14</code></pre>
 \]</span></p>
 <p>This identity is the workhorse behind REML derivations (Ch. 14) and the expected value of chi-squared test statistics (Ch. 10).</p>
 </section>
-<section id="determinant" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="determinant">Determinant</h2>
+<section id="determinant" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="determinant">Determinant</h3>
 <p>Key determinant properties used in the book:</p>
 <ul>
 <li><span class="math inline">\(\det(\mathbf{A}\mathbf{B}) = \det(\mathbf{A})\det(\mathbf{B})\)</span></li>
@@ -1528,10 +1528,10 @@ Error: 4.55e-13</code></pre>
 </div>
 </section>
 </section>
-<section id="sec-norms" class="level1 unnumbered">
-<h1 class="unnumbered">Matrix Norms and Condition Number</h1>
-<section id="norms" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="norms">Norms</h2>
+<section id="sec-norms" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="sec-norms">Matrix Norms and Condition Number</h2>
+<section id="norms" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="norms">Norms</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -1570,8 +1570,8 @@ Error: 4.55e-13</code></pre>
 </table>
 <p>The Frobenius norm is the most common in statistical applications (e.g., measuring distance between covariance matrices). The spectral norm governs operator bounds and perturbation theory.</p>
 </section>
-<section id="condition-number" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="condition-number">Condition number</h2>
+<section id="condition-number" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="condition-number">Condition number</h3>
 <p>The <strong>condition number</strong> of a nonsingular matrix <span class="math inline">\(\mathbf{A}\)</span> is</p>
 <p><span class="math display">\[
 \kappa(\mathbf{A}) = \|\mathbf{A}\| \cdot \|\mathbf{A}^{-1}\|.
@@ -1686,8 +1686,8 @@ Figure&nbsp;B.1: Condition number of the Hilbert matrix grows exponentially with
 <p><strong>Practical implication.</strong> When you encounter a poorly conditioned matrix in a regression context, the right response is not to add a regularisation term blindly. First diagnose <em>which</em> directions are ill-conditioned (the small singular values of <span class="math inline">\(\mathbf{X}\)</span> or the eigenvalues of <span class="math inline">\(\mathbf{X}^\top\mathbf{X}\)</span>), then decide whether the collinearity reflects a genuine constraint in the data or a modelling choice. Ch. 11 covers this in detail.</p>
 </section>
 </section>
-<section id="projection-matrices" class="level1 unnumbered">
-<h1 class="unnumbered">Projection Matrices</h1>
+<section id="projection-matrices" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="projection-matrices">Projection Matrices</h2>
 <p>Given a full-column-rank design matrix <span class="math inline">\(\mathbf{X} \in
 \mathbb{R}^{n \times p}\)</span> (with <span class="math inline">\(n &gt; p\)</span>), the <strong>hat matrix</strong> is</p>
 <p><span class="math display">\[
@@ -1802,8 +1802,8 @@ Figure&nbsp;B.2: Leverage values <span class="math inline">\(h_{ii}\)</span> for
 </div>
 </div>
 </div>
-<section id="frischwaughlovell-theorem" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="frischwaughlovell-theorem">Frisch–Waugh–Lovell theorem</h2>
+<section id="frischwaughlovell-theorem" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="frischwaughlovell-theorem">Frisch–Waugh–Lovell theorem</h3>
 <p>The <strong>Frisch–Waugh–Lovell</strong> (FWL) theorem states that in the regression of <span class="math inline">\(\mathbf{y}\)</span> on <span class="math inline">\([\mathbf{X}_1 \; \mathbf{X}_2]\)</span>, the coefficient on <span class="math inline">\(\mathbf{X}_2\)</span> equals the coefficient from regressing the <span class="math inline">\(\mathbf{X}_1\)</span>-residuals of <span class="math inline">\(\mathbf{y}\)</span> on the <span class="math inline">\(\mathbf{X}_1\)</span>-residuals of <span class="math inline">\(\mathbf{X}_2\)</span>:</p>
 <p><span class="math display">\[
 \hat{\boldsymbol{\beta}}_2
@@ -1849,8 +1849,8 @@ Match: True</code></pre>
 </div>
 </section>
 </section>
-<section id="quick-reference" class="level1 unnumbered">
-<h1 class="unnumbered">Quick Reference</h1>
+<section id="quick-reference" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="quick-reference">Quick Reference</h2>
 <p>The table below maps each result to the chapters that use it most heavily.</p>
 <table class="caption-top table">
 <colgroup>
@@ -2428,7 +2428,7 @@ Match: True</code></pre>
 <span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-24"><a href="#cb44-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-25"><a href="#cb44-25" aria-hidden="true" tabindex="-1"></a><span class="fu"># Positive Definiteness {.unnumbered}</span></span>
+<span id="cb44-25"><a href="#cb44-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## Positive Definiteness {.unnumbered}</span></span>
 <span id="cb44-26"><a href="#cb44-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-27"><a href="#cb44-27" aria-hidden="true" tabindex="-1"></a>A symmetric matrix $\mathbf{A} \in \mathbb{R}^{n \times n}$ is</span>
 <span id="cb44-28"><a href="#cb44-28" aria-hidden="true" tabindex="-1"></a>**positive definite** (PD) if any of the following equivalent conditions</span>
@@ -2529,7 +2529,7 @@ Match: True</code></pre>
 <span id="cb44-127"><a href="#cb44-127" aria-hidden="true" tabindex="-1"></a>algebraically indefinite.</span>
 <span id="cb44-128"><a href="#cb44-128" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-129"><a href="#cb44-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-130"><a href="#cb44-130" aria-hidden="true" tabindex="-1"></a><span class="fu"># Cholesky Decomposition {.unnumbered}</span></span>
+<span id="cb44-130"><a href="#cb44-130" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cholesky Decomposition {.unnumbered}</span></span>
 <span id="cb44-131"><a href="#cb44-131" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-132"><a href="#cb44-132" aria-hidden="true" tabindex="-1"></a>Every positive definite matrix $\mathbf{A}$ admits a unique</span>
 <span id="cb44-133"><a href="#cb44-133" aria-hidden="true" tabindex="-1"></a>factorisation</span>
@@ -2598,7 +2598,7 @@ Match: True</code></pre>
 <span id="cb44-200"><a href="#cb44-200" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-201"><a href="#cb44-201" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-202"><a href="#cb44-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-203"><a href="#cb44-203" aria-hidden="true" tabindex="-1"></a><span class="fu"># Singular Value Decomposition {.unnumbered}</span></span>
+<span id="cb44-203"><a href="#cb44-203" aria-hidden="true" tabindex="-1"></a><span class="fu">## Singular Value Decomposition {.unnumbered}</span></span>
 <span id="cb44-204"><a href="#cb44-204" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-205"><a href="#cb44-205" aria-hidden="true" tabindex="-1"></a>Every matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$ has a</span>
 <span id="cb44-206"><a href="#cb44-206" aria-hidden="true" tabindex="-1"></a>factorisation</span>
@@ -2674,7 +2674,7 @@ Match: True</code></pre>
 <span id="cb44-280"><a href="#cb44-280" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-281"><a href="#cb44-281" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-282"><a href="#cb44-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-283"><a href="#cb44-283" aria-hidden="true" tabindex="-1"></a><span class="fu"># Eigendecomposition {.unnumbered}</span></span>
+<span id="cb44-283"><a href="#cb44-283" aria-hidden="true" tabindex="-1"></a><span class="fu">## Eigendecomposition {.unnumbered}</span></span>
 <span id="cb44-284"><a href="#cb44-284" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-285"><a href="#cb44-285" aria-hidden="true" tabindex="-1"></a>A square matrix $\mathbf{A} \in \mathbb{R}^{n \times n}$ can be</span>
 <span id="cb44-286"><a href="#cb44-286" aria-hidden="true" tabindex="-1"></a>decomposed as</span>
@@ -2754,7 +2754,7 @@ Match: True</code></pre>
 <span id="cb44-362"><a href="#cb44-362" aria-hidden="true" tabindex="-1"></a>  conditions) and Ch. 17 (VAR forecasting).</span>
 <span id="cb44-363"><a href="#cb44-363" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-364"><a href="#cb44-364" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-365"><a href="#cb44-365" aria-hidden="true" tabindex="-1"></a><span class="fu"># Matrix Calculus {.unnumbered}</span></span>
+<span id="cb44-365"><a href="#cb44-365" aria-hidden="true" tabindex="-1"></a><span class="fu">## Matrix Calculus {.unnumbered}</span></span>
 <span id="cb44-366"><a href="#cb44-366" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-367"><a href="#cb44-367" aria-hidden="true" tabindex="-1"></a>Matrix calculus underlies every optimisation and maximum-likelihood</span>
 <span id="cb44-368"><a href="#cb44-368" aria-hidden="true" tabindex="-1"></a>derivation in the book.  The convention throughout is the</span>
@@ -2762,7 +2762,7 @@ Match: True</code></pre>
 <span id="cb44-370"><a href="#cb44-370" aria-hidden="true" tabindex="-1"></a>gradient $\nabla f(\mathbf{x}) = \partial f / \partial \mathbf{x}$ is a</span>
 <span id="cb44-371"><a href="#cb44-371" aria-hidden="true" tabindex="-1"></a>column vector in $\mathbb{R}^n$.</span>
 <span id="cb44-372"><a href="#cb44-372" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-373"><a href="#cb44-373" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key scalar-by-vector results {.unnumbered}</span></span>
+<span id="cb44-373"><a href="#cb44-373" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key scalar-by-vector results {.unnumbered}</span></span>
 <span id="cb44-374"><a href="#cb44-374" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-375"><a href="#cb44-375" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Function <span class="pp">|</span> Gradient <span class="pp">|</span> Used in <span class="pp">|</span></span>
 <span id="cb44-376"><a href="#cb44-376" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
@@ -2809,7 +2809,7 @@ Match: True</code></pre>
 <span id="cb44-417"><a href="#cb44-417" aria-hidden="true" tabindex="-1"></a>\nabla f(\mathbf{x}_0)$ — the foundation of all Newton-type methods in</span>
 <span id="cb44-418"><a href="#cb44-418" aria-hidden="true" tabindex="-1"></a>Ch. 2.</span>
 <span id="cb44-419"><a href="#cb44-419" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-420"><a href="#cb44-420" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key matrix-by-matrix results {.unnumbered}</span></span>
+<span id="cb44-420"><a href="#cb44-420" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key matrix-by-matrix results {.unnumbered}</span></span>
 <span id="cb44-421"><a href="#cb44-421" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-422"><a href="#cb44-422" aria-hidden="true" tabindex="-1"></a>These appear in likelihood derivations where the parameter is a matrix</span>
 <span id="cb44-423"><a href="#cb44-423" aria-hidden="true" tabindex="-1"></a>(e.g., a covariance matrix):</span>
@@ -2884,7 +2884,7 @@ Match: True</code></pre>
 <span id="cb44-496"><a href="#cb44-496" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-497"><a href="#cb44-497" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-498"><a href="#cb44-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-499"><a href="#cb44-499" aria-hidden="true" tabindex="-1"></a><span class="fu"># Sherman–Morrison–Woodbury Identity {.unnumbered}</span></span>
+<span id="cb44-499"><a href="#cb44-499" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sherman–Morrison–Woodbury Identity {.unnumbered}</span></span>
 <span id="cb44-500"><a href="#cb44-500" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-501"><a href="#cb44-501" aria-hidden="true" tabindex="-1"></a>The Woodbury identity gives the inverse of a matrix after a low-rank</span>
 <span id="cb44-502"><a href="#cb44-502" aria-hidden="true" tabindex="-1"></a>perturbation:</span>
@@ -2984,7 +2984,7 @@ Match: True</code></pre>
 <span id="cb44-600"><a href="#cb44-600" aria-hidden="true" tabindex="-1"></a>$O(n^2 k)$ versus $O(n^3)$ for a fresh inverse.</span>
 <span id="cb44-601"><a href="#cb44-601" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-602"><a href="#cb44-602" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-603"><a href="#cb44-603" aria-hidden="true" tabindex="-1"></a><span class="fu"># Block Matrix Inversion and Schur Complement {.unnumbered}</span></span>
+<span id="cb44-603"><a href="#cb44-603" aria-hidden="true" tabindex="-1"></a><span class="fu">## Block Matrix Inversion and Schur Complement {.unnumbered}</span></span>
 <span id="cb44-604"><a href="#cb44-604" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-605"><a href="#cb44-605" aria-hidden="true" tabindex="-1"></a>Consider a conformably partitioned matrix</span>
 <span id="cb44-606"><a href="#cb44-606" aria-hidden="true" tabindex="-1"></a></span>
@@ -3074,7 +3074,7 @@ Match: True</code></pre>
 <span id="cb44-692"><a href="#cb44-692" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-693"><a href="#cb44-693" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-694"><a href="#cb44-694" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-695"><a href="#cb44-695" aria-hidden="true" tabindex="-1"></a><span class="fu"># Kronecker Products {.unnumbered}</span></span>
+<span id="cb44-695"><a href="#cb44-695" aria-hidden="true" tabindex="-1"></a><span class="fu">## Kronecker Products {.unnumbered}</span></span>
 <span id="cb44-696"><a href="#cb44-696" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-697"><a href="#cb44-697" aria-hidden="true" tabindex="-1"></a>The **Kronecker product** of $\mathbf{A} \in \mathbb{R}^{m \times n}$</span>
 <span id="cb44-698"><a href="#cb44-698" aria-hidden="true" tabindex="-1"></a>and $\mathbf{B} \in \mathbb{R}^{p \times q}$ is the $mp \times nq$</span>
@@ -3096,7 +3096,7 @@ Match: True</code></pre>
 <span id="cb44-714"><a href="#cb44-714" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Eigenvalues of $\mathbf{A} \otimes \mathbf{B}$ are all products $\lambda_i(\mathbf{A}) \cdot \lambda_j(\mathbf{B})$</span>
 <span id="cb44-715"><a href="#cb44-715" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\text{det}(\mathbf{A} \otimes \mathbf{B}) = (\text{det}\,\mathbf{A})^p \cdot (\text{det}\,\mathbf{B})^n$ for $\mathbf{A}$ $n \times n$, $\mathbf{B}$ $p \times p$</span>
 <span id="cb44-716"><a href="#cb44-716" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-717"><a href="#cb44-717" aria-hidden="true" tabindex="-1"></a><span class="fu">## The vec operator and the fundamental identity {.unnumbered}</span></span>
+<span id="cb44-717"><a href="#cb44-717" aria-hidden="true" tabindex="-1"></a><span class="fu">### The vec operator and the fundamental identity {.unnumbered}</span></span>
 <span id="cb44-718"><a href="#cb44-718" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-719"><a href="#cb44-719" aria-hidden="true" tabindex="-1"></a>The **vec** operator stacks the columns of a matrix into a single</span>
 <span id="cb44-720"><a href="#cb44-720" aria-hidden="true" tabindex="-1"></a>vector: $\text{vec}(\mathbf{X})$ for $\mathbf{X} \in</span>
@@ -3166,9 +3166,9 @@ Match: True</code></pre>
 <span id="cb44-788"><a href="#cb44-788" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-789"><a href="#cb44-789" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-790"><a href="#cb44-790" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-791"><a href="#cb44-791" aria-hidden="true" tabindex="-1"></a><span class="fu"># Trace and Determinant {.unnumbered}</span></span>
+<span id="cb44-791"><a href="#cb44-791" aria-hidden="true" tabindex="-1"></a><span class="fu">## Trace and Determinant {.unnumbered}</span></span>
 <span id="cb44-792"><a href="#cb44-792" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-793"><a href="#cb44-793" aria-hidden="true" tabindex="-1"></a><span class="fu">## Trace {.unnumbered}</span></span>
+<span id="cb44-793"><a href="#cb44-793" aria-hidden="true" tabindex="-1"></a><span class="fu">### Trace {.unnumbered}</span></span>
 <span id="cb44-794"><a href="#cb44-794" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-795"><a href="#cb44-795" aria-hidden="true" tabindex="-1"></a>The trace of a square matrix $\mathbf{A}$ is the sum of its diagonal</span>
 <span id="cb44-796"><a href="#cb44-796" aria-hidden="true" tabindex="-1"></a>entries: $\text{tr}(\mathbf{A}) = \sum_{i=1}^n a_{ii}$.  Key</span>
@@ -3199,7 +3199,7 @@ Match: True</code></pre>
 <span id="cb44-821"><a href="#cb44-821" aria-hidden="true" tabindex="-1"></a>This identity is the workhorse behind REML derivations (Ch. 14) and</span>
 <span id="cb44-822"><a href="#cb44-822" aria-hidden="true" tabindex="-1"></a>the expected value of chi-squared test statistics (Ch. 10).</span>
 <span id="cb44-823"><a href="#cb44-823" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-824"><a href="#cb44-824" aria-hidden="true" tabindex="-1"></a><span class="fu">## Determinant {.unnumbered}</span></span>
+<span id="cb44-824"><a href="#cb44-824" aria-hidden="true" tabindex="-1"></a><span class="fu">### Determinant {.unnumbered}</span></span>
 <span id="cb44-825"><a href="#cb44-825" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-826"><a href="#cb44-826" aria-hidden="true" tabindex="-1"></a>Key determinant properties used in the book:</span>
 <span id="cb44-827"><a href="#cb44-827" aria-hidden="true" tabindex="-1"></a></span>
@@ -3283,9 +3283,9 @@ Match: True</code></pre>
 <span id="cb44-909"><a href="#cb44-909" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-910"><a href="#cb44-910" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-911"><a href="#cb44-911" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-912"><a href="#cb44-912" aria-hidden="true" tabindex="-1"></a><span class="fu"># Matrix Norms and Condition Number {#sec-norms .unnumbered}</span></span>
+<span id="cb44-912"><a href="#cb44-912" aria-hidden="true" tabindex="-1"></a><span class="fu">## Matrix Norms and Condition Number {#sec-norms .unnumbered}</span></span>
 <span id="cb44-913"><a href="#cb44-913" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-914"><a href="#cb44-914" aria-hidden="true" tabindex="-1"></a><span class="fu">## Norms {.unnumbered}</span></span>
+<span id="cb44-914"><a href="#cb44-914" aria-hidden="true" tabindex="-1"></a><span class="fu">### Norms {.unnumbered}</span></span>
 <span id="cb44-915"><a href="#cb44-915" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-916"><a href="#cb44-916" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Norm <span class="pp">|</span> Definition <span class="pp">|</span> NumPy call <span class="pp">|</span></span>
 <span id="cb44-917"><a href="#cb44-917" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
@@ -3298,7 +3298,7 @@ Match: True</code></pre>
 <span id="cb44-924"><a href="#cb44-924" aria-hidden="true" tabindex="-1"></a>(e.g., measuring distance between covariance matrices).  The spectral</span>
 <span id="cb44-925"><a href="#cb44-925" aria-hidden="true" tabindex="-1"></a>norm governs operator bounds and perturbation theory.</span>
 <span id="cb44-926"><a href="#cb44-926" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-927"><a href="#cb44-927" aria-hidden="true" tabindex="-1"></a><span class="fu">## Condition number {.unnumbered}</span></span>
+<span id="cb44-927"><a href="#cb44-927" aria-hidden="true" tabindex="-1"></a><span class="fu">### Condition number {.unnumbered}</span></span>
 <span id="cb44-928"><a href="#cb44-928" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-929"><a href="#cb44-929" aria-hidden="true" tabindex="-1"></a>The **condition number** of a nonsingular matrix $\mathbf{A}$ is</span>
 <span id="cb44-930"><a href="#cb44-930" aria-hidden="true" tabindex="-1"></a></span>
@@ -3423,7 +3423,7 @@ Match: True</code></pre>
 <span id="cb44-1055"><a href="#cb44-1055" aria-hidden="true" tabindex="-1"></a>choice.  Ch. 11 covers this in detail.</span>
 <span id="cb44-1056"><a href="#cb44-1056" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-1057"><a href="#cb44-1057" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-1058"><a href="#cb44-1058" aria-hidden="true" tabindex="-1"></a><span class="fu"># Projection Matrices {.unnumbered}</span></span>
+<span id="cb44-1058"><a href="#cb44-1058" aria-hidden="true" tabindex="-1"></a><span class="fu">## Projection Matrices {.unnumbered}</span></span>
 <span id="cb44-1059"><a href="#cb44-1059" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-1060"><a href="#cb44-1060" aria-hidden="true" tabindex="-1"></a>Given a full-column-rank design matrix $\mathbf{X} \in</span>
 <span id="cb44-1061"><a href="#cb44-1061" aria-hidden="true" tabindex="-1"></a>\mathbb{R}^{n \times p}$ (with $n &gt; p$), the **hat matrix** is</span>
@@ -3504,7 +3504,7 @@ Match: True</code></pre>
 <span id="cb44-1140"><a href="#cb44-1140" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb44-1141"><a href="#cb44-1141" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-1142"><a href="#cb44-1142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-1143"><a href="#cb44-1143" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frisch–Waugh–Lovell theorem {.unnumbered}</span></span>
+<span id="cb44-1143"><a href="#cb44-1143" aria-hidden="true" tabindex="-1"></a><span class="fu">### Frisch–Waugh–Lovell theorem {.unnumbered}</span></span>
 <span id="cb44-1144"><a href="#cb44-1144" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-1145"><a href="#cb44-1145" aria-hidden="true" tabindex="-1"></a>The **Frisch–Waugh–Lovell** (FWL) theorem states that in the</span>
 <span id="cb44-1146"><a href="#cb44-1146" aria-hidden="true" tabindex="-1"></a>regression of $\mathbf{y}$ on $<span class="co">[</span><span class="ot">\mathbf{X}_1 \; \mathbf{X}_2</span><span class="co">]</span>$, the</span>
@@ -3561,7 +3561,7 @@ Match: True</code></pre>
 <span id="cb44-1199"><a href="#cb44-1199" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb44-1200"><a href="#cb44-1200" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-1201"><a href="#cb44-1201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-1202"><a href="#cb44-1202" aria-hidden="true" tabindex="-1"></a><span class="fu"># Quick Reference {.unnumbered}</span></span>
+<span id="cb44-1202"><a href="#cb44-1202" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quick Reference {.unnumbered}</span></span>
 <span id="cb44-1203"><a href="#cb44-1203" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-1204"><a href="#cb44-1204" aria-hidden="true" tabindex="-1"></a>The table below maps each result to the chapters that use it most</span>
 <span id="cb44-1205"><a href="#cb44-1205" aria-hidden="true" tabindex="-1"></a>heavily.</span>

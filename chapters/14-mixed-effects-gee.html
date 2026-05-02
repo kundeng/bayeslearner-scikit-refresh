@@ -637,53 +637,49 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#notation-for-this-chapter" id="toc-notation-for-this-chapter" class="nav-link active" data-scroll-target="#notation-for-this-chapter"><span class="header-section-number">14.1</span> Notation for this chapter</a></li>
-  <li><a href="#sec-ch14-motivation" id="toc-sec-ch14-motivation" class="nav-link" data-scroll-target="#sec-ch14-motivation"><span class="header-section-number">15</span> Motivation</a></li>
-  <li><a href="#sec-ch14-math" id="toc-sec-ch14-math" class="nav-link" data-scroll-target="#sec-ch14-math"><span class="header-section-number">16</span> Mathematical Foundation</a>
+  <li><a href="#notation-for-this-chapter" id="toc-notation-for-this-chapter" class="nav-link active" data-scroll-target="#notation-for-this-chapter"><span class="header-section-number">14.0.1</span> Notation for this chapter</a></li>
+  <li><a href="#sec-ch14-motivation" id="toc-sec-ch14-motivation" class="nav-link" data-scroll-target="#sec-ch14-motivation"><span class="header-section-number">14.1</span> Motivation</a></li>
+  <li><a href="#sec-ch14-math" id="toc-sec-ch14-math" class="nav-link" data-scroll-target="#sec-ch14-math"><span class="header-section-number">14.2</span> Mathematical Foundation</a>
   <ul class="collapse">
-  <li><a href="#the-linear-mixed-model" id="toc-the-linear-mixed-model" class="nav-link" data-scroll-target="#the-linear-mixed-model"><span class="header-section-number">16.1</span> The linear mixed model</a>
+  <li><a href="#the-linear-mixed-model" id="toc-the-linear-mixed-model" class="nav-link" data-scroll-target="#the-linear-mixed-model"><span class="header-section-number">14.2.1</span> The linear mixed model</a></li>
+  <li><a href="#gee-the-marginal-approach" id="toc-gee-the-marginal-approach" class="nav-link" data-scroll-target="#gee-the-marginal-approach"><span class="header-section-number">14.2.2</span> GEE: the marginal approach</a></li>
+  <li><a href="#sec-ch14-sandwich" id="toc-sec-ch14-sandwich" class="nav-link" data-scroll-target="#sec-ch14-sandwich"><span class="header-section-number">14.2.3</span> The sandwich variance</a></li>
+  </ul></li>
+  <li><a href="#sec-ch14-algorithm" id="toc-sec-ch14-algorithm" class="nav-link" data-scroll-target="#sec-ch14-algorithm"><span class="header-section-number">14.3</span> The Algorithm</a></li>
+  <li><a href="#sec-ch14-stats" id="toc-sec-ch14-stats" class="nav-link" data-scroll-target="#sec-ch14-stats"><span class="header-section-number">14.4</span> Statistical Properties</a>
   <ul class="collapse">
-  <li><a href="#sec-ch14-reml" id="toc-sec-ch14-reml" class="nav-link" data-scroll-target="#sec-ch14-reml"><span class="header-section-number">16.1.1</span> REML: correcting the variance bias</a></li>
-  <li><a href="#sec-ch14-blup" id="toc-sec-ch14-blup" class="nav-link" data-scroll-target="#sec-ch14-blup"><span class="header-section-number">16.1.2</span> BLUP: predicting the random effects</a></li>
+  <li><a href="#sec-ch14-attenuation" id="toc-sec-ch14-attenuation" class="nav-link" data-scroll-target="#sec-ch14-attenuation"><span class="header-section-number">14.4.1</span> Marginal ≠ conditional: a simulation</a></li>
   </ul></li>
-  <li><a href="#gee-the-marginal-approach" id="toc-gee-the-marginal-approach" class="nav-link" data-scroll-target="#gee-the-marginal-approach"><span class="header-section-number">16.2</span> GEE: the marginal approach</a></li>
-  <li><a href="#sec-ch14-sandwich" id="toc-sec-ch14-sandwich" class="nav-link" data-scroll-target="#sec-ch14-sandwich"><span class="header-section-number">16.3</span> The sandwich variance</a></li>
-  </ul></li>
-  <li><a href="#sec-ch14-algorithm" id="toc-sec-ch14-algorithm" class="nav-link" data-scroll-target="#sec-ch14-algorithm"><span class="header-section-number">17</span> The Algorithm</a></li>
-  <li><a href="#sec-ch14-stats" id="toc-sec-ch14-stats" class="nav-link" data-scroll-target="#sec-ch14-stats"><span class="header-section-number">18</span> Statistical Properties</a>
+  <li><a href="#sec-ch14-statsmodels" id="toc-sec-ch14-statsmodels" class="nav-link" data-scroll-target="#sec-ch14-statsmodels"><span class="header-section-number">14.5</span> Statsmodels Implementation</a>
   <ul class="collapse">
-  <li><a href="#sec-ch14-attenuation" id="toc-sec-ch14-attenuation" class="nav-link" data-scroll-target="#sec-ch14-attenuation"><span class="header-section-number">18.1</span> Marginal ≠ conditional: a simulation</a></li>
+  <li><a href="#mixedlm-linear-mixed-model" id="toc-mixedlm-linear-mixed-model" class="nav-link" data-scroll-target="#mixedlm-linear-mixed-model"><span class="header-section-number">14.5.1</span> <code>MixedLM</code>: linear mixed model</a></li>
+  <li><a href="#gee-marginal-model" id="toc-gee-marginal-model" class="nav-link" data-scroll-target="#gee-marginal-model"><span class="header-section-number">14.5.2</span> <code>GEE</code>: marginal model</a></li>
+  <li><a href="#mixed-model-vs-gee-comparison" id="toc-mixed-model-vs-gee-comparison" class="nav-link" data-scroll-target="#mixed-model-vs-gee-comparison"><span class="header-section-number">14.5.3</span> Mixed model vs GEE comparison</a></li>
   </ul></li>
-  <li><a href="#sec-ch14-statsmodels" id="toc-sec-ch14-statsmodels" class="nav-link" data-scroll-target="#sec-ch14-statsmodels"><span class="header-section-number">19</span> Statsmodels Implementation</a>
+  <li><a href="#sec-ch14-scratch" id="toc-sec-ch14-scratch" class="nav-link" data-scroll-target="#sec-ch14-scratch"><span class="header-section-number">14.6</span> From-Scratch Implementation</a>
   <ul class="collapse">
-  <li><a href="#mixedlm-linear-mixed-model" id="toc-mixedlm-linear-mixed-model" class="nav-link" data-scroll-target="#mixedlm-linear-mixed-model"><span class="header-section-number">19.1</span> <code>MixedLM</code>: linear mixed model</a></li>
-  <li><a href="#gee-marginal-model" id="toc-gee-marginal-model" class="nav-link" data-scroll-target="#gee-marginal-model"><span class="header-section-number">19.2</span> <code>GEE</code>: marginal model</a></li>
-  <li><a href="#mixed-model-vs-gee-comparison" id="toc-mixed-model-vs-gee-comparison" class="nav-link" data-scroll-target="#mixed-model-vs-gee-comparison"><span class="header-section-number">19.3</span> Mixed model vs GEE comparison</a></li>
+  <li><a href="#random-intercept-model-via-em" id="toc-random-intercept-model-via-em" class="nav-link" data-scroll-target="#random-intercept-model-via-em"><span class="header-section-number">14.6.1</span> Random intercept model via EM</a></li>
+  <li><a href="#blup-from-scratch" id="toc-blup-from-scratch" class="nav-link" data-scroll-target="#blup-from-scratch"><span class="header-section-number">14.6.2</span> BLUP from scratch</a></li>
+  <li><a href="#gee-from-scratch" id="toc-gee-from-scratch" class="nav-link" data-scroll-target="#gee-from-scratch"><span class="header-section-number">14.6.3</span> GEE from scratch</a></li>
   </ul></li>
-  <li><a href="#sec-ch14-scratch" id="toc-sec-ch14-scratch" class="nav-link" data-scroll-target="#sec-ch14-scratch"><span class="header-section-number">20</span> From-Scratch Implementation</a>
+  <li><a href="#sec-ch14-diagnostics" id="toc-sec-ch14-diagnostics" class="nav-link" data-scroll-target="#sec-ch14-diagnostics"><span class="header-section-number">14.7</span> Diagnostics</a>
   <ul class="collapse">
-  <li><a href="#random-intercept-model-via-em" id="toc-random-intercept-model-via-em" class="nav-link" data-scroll-target="#random-intercept-model-via-em"><span class="header-section-number">20.1</span> Random intercept model via EM</a></li>
-  <li><a href="#blup-from-scratch" id="toc-blup-from-scratch" class="nav-link" data-scroll-target="#blup-from-scratch"><span class="header-section-number">20.2</span> BLUP from scratch</a></li>
-  <li><a href="#gee-from-scratch" id="toc-gee-from-scratch" class="nav-link" data-scroll-target="#gee-from-scratch"><span class="header-section-number">20.3</span> GEE from scratch</a></li>
+  <li><a href="#icc-intraclass-correlation-coefficient" id="toc-icc-intraclass-correlation-coefficient" class="nav-link" data-scroll-target="#icc-intraclass-correlation-coefficient"><span class="header-section-number">14.7.1</span> ICC: Intraclass Correlation Coefficient</a></li>
+  <li><a href="#random-effects-diagnostics" id="toc-random-effects-diagnostics" class="nav-link" data-scroll-target="#random-effects-diagnostics"><span class="header-section-number">14.7.2</span> Random effects diagnostics</a></li>
+  <li><a href="#level-2-residual-diagnostics" id="toc-level-2-residual-diagnostics" class="nav-link" data-scroll-target="#level-2-residual-diagnostics"><span class="header-section-number">14.7.3</span> Level-2 residual diagnostics</a></li>
+  <li><a href="#comparing-working-correlations-qic" id="toc-comparing-working-correlations-qic" class="nav-link" data-scroll-target="#comparing-working-correlations-qic"><span class="header-section-number">14.7.4</span> Comparing working correlations (QIC)</a></li>
+  <li><a href="#sec-ch14-few-clusters" id="toc-sec-ch14-few-clusters" class="nav-link" data-scroll-target="#sec-ch14-few-clusters"><span class="header-section-number">14.7.5</span> The few-clusters problem</a></li>
+  <li><a href="#likelihood-ratio-test-for-random-effects" id="toc-likelihood-ratio-test-for-random-effects" class="nav-link" data-scroll-target="#likelihood-ratio-test-for-random-effects"><span class="header-section-number">14.7.6</span> Likelihood ratio test for random effects</a></li>
   </ul></li>
-  <li><a href="#sec-ch14-diagnostics" id="toc-sec-ch14-diagnostics" class="nav-link" data-scroll-target="#sec-ch14-diagnostics"><span class="header-section-number">21</span> Diagnostics</a>
+  <li><a href="#sec-ch14-computation" id="toc-sec-ch14-computation" class="nav-link" data-scroll-target="#sec-ch14-computation"><span class="header-section-number">14.8</span> Computational Considerations</a></li>
+  <li><a href="#sec-ch14-example" id="toc-sec-ch14-example" class="nav-link" data-scroll-target="#sec-ch14-example"><span class="header-section-number">14.9</span> Worked Example</a>
   <ul class="collapse">
-  <li><a href="#icc-intraclass-correlation-coefficient" id="toc-icc-intraclass-correlation-coefficient" class="nav-link" data-scroll-target="#icc-intraclass-correlation-coefficient"><span class="header-section-number">21.1</span> ICC: Intraclass Correlation Coefficient</a></li>
-  <li><a href="#random-effects-diagnostics" id="toc-random-effects-diagnostics" class="nav-link" data-scroll-target="#random-effects-diagnostics"><span class="header-section-number">21.2</span> Random effects diagnostics</a></li>
-  <li><a href="#level-2-residual-diagnostics" id="toc-level-2-residual-diagnostics" class="nav-link" data-scroll-target="#level-2-residual-diagnostics"><span class="header-section-number">21.3</span> Level-2 residual diagnostics</a></li>
-  <li><a href="#comparing-working-correlations-qic" id="toc-comparing-working-correlations-qic" class="nav-link" data-scroll-target="#comparing-working-correlations-qic"><span class="header-section-number">21.4</span> Comparing working correlations (QIC)</a></li>
-  <li><a href="#sec-ch14-few-clusters" id="toc-sec-ch14-few-clusters" class="nav-link" data-scroll-target="#sec-ch14-few-clusters"><span class="header-section-number">21.5</span> The few-clusters problem</a></li>
-  <li><a href="#likelihood-ratio-test-for-random-effects" id="toc-likelihood-ratio-test-for-random-effects" class="nav-link" data-scroll-target="#likelihood-ratio-test-for-random-effects"><span class="header-section-number">21.6</span> Likelihood ratio test for random effects</a></li>
+  <li><a href="#model-comparison-random-intercept-vs-random-slope" id="toc-model-comparison-random-intercept-vs-random-slope" class="nav-link" data-scroll-target="#model-comparison-random-intercept-vs-random-slope"><span class="header-section-number">14.9.1</span> Model comparison: random intercept vs random slope</a></li>
+  <li><a href="#prediction-plots-individual-trajectories" id="toc-prediction-plots-individual-trajectories" class="nav-link" data-scroll-target="#prediction-plots-individual-trajectories"><span class="header-section-number">14.9.2</span> Prediction plots: individual trajectories</a></li>
+  <li><a href="#gee-vs-mixedlm-coefficient-interpretation" id="toc-gee-vs-mixedlm-coefficient-interpretation" class="nav-link" data-scroll-target="#gee-vs-mixedlm-coefficient-interpretation"><span class="header-section-number">14.9.3</span> GEE vs MixedLM: coefficient interpretation</a></li>
   </ul></li>
-  <li><a href="#sec-ch14-computation" id="toc-sec-ch14-computation" class="nav-link" data-scroll-target="#sec-ch14-computation"><span class="header-section-number">22</span> Computational Considerations</a></li>
-  <li><a href="#sec-ch14-example" id="toc-sec-ch14-example" class="nav-link" data-scroll-target="#sec-ch14-example"><span class="header-section-number">23</span> Worked Example</a>
-  <ul class="collapse">
-  <li><a href="#model-comparison-random-intercept-vs-random-slope" id="toc-model-comparison-random-intercept-vs-random-slope" class="nav-link" data-scroll-target="#model-comparison-random-intercept-vs-random-slope"><span class="header-section-number">23.1</span> Model comparison: random intercept vs random slope</a></li>
-  <li><a href="#prediction-plots-individual-trajectories" id="toc-prediction-plots-individual-trajectories" class="nav-link" data-scroll-target="#prediction-plots-individual-trajectories"><span class="header-section-number">23.2</span> Prediction plots: individual trajectories</a></li>
-  <li><a href="#gee-vs-mixedlm-coefficient-interpretation" id="toc-gee-vs-mixedlm-coefficient-interpretation" class="nav-link" data-scroll-target="#gee-vs-mixedlm-coefficient-interpretation"><span class="header-section-number">23.3</span> GEE vs MixedLM: coefficient interpretation</a></li>
-  </ul></li>
-  <li><a href="#sec-ch14-exercises" id="toc-sec-ch14-exercises" class="nav-link" data-scroll-target="#sec-ch14-exercises"><span class="header-section-number">24</span> Exercises</a></li>
-  <li><a href="#sec-ch14-biblio" id="toc-sec-ch14-biblio" class="nav-link" data-scroll-target="#sec-ch14-biblio"><span class="header-section-number">25</span> Bibliographic Notes</a></li>
+  <li><a href="#sec-ch14-exercises" id="toc-sec-ch14-exercises" class="nav-link" data-scroll-target="#sec-ch14-exercises"><span class="header-section-number">14.10</span> Exercises</a></li>
+  <li><a href="#sec-ch14-biblio" id="toc-sec-ch14-biblio" class="nav-link" data-scroll-target="#sec-ch14-biblio"><span class="header-section-number">14.11</span> Bibliographic Notes</a></li>
   </ul>
 </nav>
     </div>
@@ -725,8 +721,8 @@ window.Quarto = {
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">'assets/book.mplstyle'</span>)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="notation-for-this-chapter" class="level2" data-number="14.1">
-<h2 data-number="14.1" class="anchored" data-anchor-id="notation-for-this-chapter"><span class="header-section-number">14.1</span> Notation for this chapter</h2>
+<section id="notation-for-this-chapter" class="level3" data-number="14.0.1">
+<h3 data-number="14.0.1" class="anchored" data-anchor-id="notation-for-this-chapter"><span class="header-section-number">14.0.1</span> Notation for this chapter</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 26%">
@@ -779,8 +775,8 @@ window.Quarto = {
 </tbody>
 </table>
 </section>
-<section id="sec-ch14-motivation" class="level1" data-number="15">
-<h1 data-number="15"><span class="header-section-number">15</span> Motivation</h1>
+<section id="sec-ch14-motivation" class="level2" data-number="14.1">
+<h2 data-number="14.1" class="anchored" data-anchor-id="sec-ch14-motivation"><span class="header-section-number">14.1</span> Motivation</h2>
 <p>Many datasets have <em>clustered</em> observations: students within schools, patients within hospitals, repeated measurements on the same subject. Standard OLS treats all observations as independent, which produces incorrect standard errors (usually too small) and invalid <span class="math inline">\(p\)</span>-values.</p>
 <p>Two paradigms address clustering:</p>
 <ol type="1">
@@ -789,18 +785,18 @@ window.Quarto = {
 </ol>
 <p><strong>The key difference:</strong> Mixed models and GEE estimate <em>different</em> quantities. For linear models with identity link, they give the same fixed-effects estimates. For nonlinear models (logistic, Poisson), they differ—and the choice between them is a modeling decision, not a computational one.</p>
 </section>
-<section id="sec-ch14-math" class="level1" data-number="16">
-<h1 data-number="16"><span class="header-section-number">16</span> Mathematical Foundation</h1>
-<section id="the-linear-mixed-model" class="level2" data-number="16.1">
-<h2 data-number="16.1" class="anchored" data-anchor-id="the-linear-mixed-model"><span class="header-section-number">16.1</span> The linear mixed model</h2>
+<section id="sec-ch14-math" class="level2" data-number="14.2">
+<h2 data-number="14.2" class="anchored" data-anchor-id="sec-ch14-math"><span class="header-section-number">14.2</span> Mathematical Foundation</h2>
+<section id="the-linear-mixed-model" class="level3" data-number="14.2.1">
+<h3 data-number="14.2.1" class="anchored" data-anchor-id="the-linear-mixed-model"><span class="header-section-number">14.2.1</span> The linear mixed model</h3>
 <p><span id="eq-lmm"><span class="math display">\[
 \mathbf{y}_i = \mathbf{X}_i\boldsymbol{\beta} + \mathbf{Z}_i\mathbf{b}_i + \boldsymbol{\varepsilon}_i,
 \quad \mathbf{b}_i \sim \mathcal{N}(\mathbf{0}, \mathbf{D}),
 \quad \boldsymbol{\varepsilon}_i \sim \mathcal{N}(\mathbf{0}, \sigma^2\mathbf{I}).
-\tag{16.1}\]</span></span></p>
+\tag{14.1}\]</span></span></p>
 <p>The marginal distribution of <span class="math inline">\(\mathbf{y}_i\)</span> (integrating out <span class="math inline">\(\mathbf{b}_i\)</span>) is: <span class="math inline">\(\mathbf{y}_i \sim \mathcal{N}(\mathbf{X}_i\boldsymbol{\beta}, \mathbf{V}_i)\)</span>, where <span class="math inline">\(\mathbf{V}_i = \mathbf{Z}_i\mathbf{D}\mathbf{Z}_i^\top + \sigma^2\mathbf{I}\)</span>.</p>
-<section id="sec-ch14-reml" class="level3" data-number="16.1.1">
-<h3 data-number="16.1.1" class="anchored" data-anchor-id="sec-ch14-reml"><span class="header-section-number">16.1.1</span> REML: correcting the variance bias</h3>
+<section id="sec-ch14-reml" class="level4" data-number="14.2.1.1">
+<h4 data-number="14.2.1.1" class="anchored" data-anchor-id="sec-ch14-reml"><span class="header-section-number">14.2.1.1</span> REML: correcting the variance bias</h4>
 <p><strong>REML (Restricted Maximum Likelihood)</strong> estimates the variance parameters <span class="math inline">\((\mathbf{D}, \sigma^2)\)</span> by maximizing a modified likelihood that removes the fixed effects.</p>
 <p>The ML log-likelihood for the marginal model <span class="math inline">\(\mathbf{y}_i \sim \mathcal{N}(\mathbf{X}_i\boldsymbol{\beta}, \mathbf{V}_i)\)</span> is:</p>
 <p><span id="eq-ml-lmm"><span class="math display">\[
@@ -810,7 +806,7 @@ window.Quarto = {
   \mathbf{V}_i^{-1}
   (\mathbf{y}_i - \mathbf{X}_i\boldsymbol{\beta})
 \right].
-\tag{16.2}\]</span></span></p>
+\tag{14.2}\]</span></span></p>
 <p>ML estimates <span class="math inline">\(\boldsymbol{\beta}\)</span> and the variance components <span class="math inline">\((\mathbf{D}, \sigma^2)\)</span> jointly. The problem: optimizing over <span class="math inline">\(\boldsymbol{\beta}\)</span> and variances simultaneously biases the variance estimates downward—the matrix analog of dividing by <span class="math inline">\(n\)</span> instead of <span class="math inline">\(n - p\)</span>.</p>
 <p>REML eliminates <span class="math inline">\(\boldsymbol{\beta}\)</span> before estimating variances. Project <span class="math inline">\(\mathbf{y}\)</span> into the <span class="math inline">\((n - p)\)</span>-dimensional space orthogonal to <span class="math inline">\(\mathbf{X}\)</span> via any full-rank matrix <span class="math inline">\(\mathbf{A}\)</span> satisfying <span class="math inline">\(\mathbf{A}^\top\mathbf{X} = \mathbf{0}\)</span>. Then <span class="math inline">\(\mathbf{A}^\top\mathbf{y} \sim \mathcal{N}(\mathbf{0},
 \mathbf{A}^\top\mathbf{V}\mathbf{A})\)</span>, and the REML log-likelihood is:</p>
@@ -820,12 +816,12 @@ window.Quarto = {
   \sum_{i=1}^G \mathbf{X}_i^\top
   \mathbf{V}_i^{-1}\mathbf{X}_i
 \right|.
-\tag{16.3}\]</span></span></p>
+\tag{14.3}\]</span></span></p>
 <p>The extra term accounts for the <span class="math inline">\(p\)</span> degrees of freedom consumed by estimating <span class="math inline">\(\boldsymbol{\beta}\)</span>. For balanced one-way ANOVA with <span class="math inline">\(G\)</span> groups of size <span class="math inline">\(m\)</span>, ML divides by <span class="math inline">\(G\)</span>; REML divides by <span class="math inline">\(G - 1\)</span>. This correction is negligible for large <span class="math inline">\(G\)</span> but substantial when <span class="math inline">\(G\)</span> is small—exactly the regime where variance estimation matters most. Statsmodels defaults to <code>reml=True</code> for this reason.</p>
 <p><strong>Practical consequence:</strong> REML likelihoods are valid for comparing models with different variance structures but the <em>same</em> fixed effects. To compare models with different fixed effects (e.g., adding a covariate), you must use ML (<code>reml=False</code>), as the REML likelihoods are not comparable across different <span class="math inline">\(\mathbf{X}\)</span> matrices.</p>
 </section>
-<section id="sec-ch14-blup" class="level3" data-number="16.1.2">
-<h3 data-number="16.1.2" class="anchored" data-anchor-id="sec-ch14-blup"><span class="header-section-number">16.1.2</span> BLUP: predicting the random effects</h3>
+<section id="sec-ch14-blup" class="level4" data-number="14.2.1.2">
+<h4 data-number="14.2.1.2" class="anchored" data-anchor-id="sec-ch14-blup"><span class="header-section-number">14.2.1.2</span> BLUP: predicting the random effects</h4>
 <p>The random effects <span class="math inline">\(\hat{\mathbf{b}}_i\)</span> are not estimated by MLE—they are <em>predicted</em> as the conditional mean <span class="math inline">\(\mathbb{E}[\mathbf{b}_i \mid \mathbf{y}_i]\)</span>. Under the joint normality of <span class="math inline">\((\mathbf{b}_i, \mathbf{y}_i)\)</span>, this conditional expectation has a closed form. Write the joint distribution:</p>
 <p><span id="eq-joint"><span class="math display">\[
 \begin{pmatrix} \mathbf{b}_i \\ \mathbf{y}_i \end{pmatrix}
@@ -836,19 +832,19 @@ window.Quarto = {
   \mathbf{D}\mathbf{Z}_i^\top \\
   \mathbf{Z}_i\mathbf{D} &amp; \mathbf{V}_i \end{pmatrix}
 \right).
-\tag{16.4}\]</span></span></p>
+\tag{14.4}\]</span></span></p>
 <p>Applying the standard formula for the conditional mean of a multivariate normal gives the BLUP:</p>
 <p><span id="eq-blup"><span class="math display">\[
 \hat{\mathbf{b}}_i
 = \mathbf{D}\mathbf{Z}_i^\top\mathbf{V}_i^{-1}
   (\mathbf{y}_i - \mathbf{X}_i\hat{\boldsymbol{\beta}}).
-\tag{16.5}\]</span></span></p>
-<p>For the random-intercept model (<span class="math inline">\(\mathbf{Z}_i = \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{D} = \sigma^2_b\)</span>), <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span>16.5</span></a> simplifies to a scalar shrinkage estimator:</p>
+\tag{14.5}\]</span></span></p>
+<p>For the random-intercept model (<span class="math inline">\(\mathbf{Z}_i = \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{D} = \sigma^2_b\)</span>), <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span>14.5</span></a> simplifies to a scalar shrinkage estimator:</p>
 <p><span id="eq-shrinkage"><span class="math display">\[
 \hat{b}_i
 = \underbrace{\frac{\sigma^2_b}{\sigma^2_b
   + \sigma^2_e / n_i}}_{\lambda_i}\;\bar{r}_i,
-\tag{16.6}\]</span></span></p>
+\tag{14.6}\]</span></span></p>
 <p>where <span class="math inline">\(\bar{r}_i = n_i^{-1}\sum_j(y_{ij}
 - \mathbf{x}_{ij}^\top\hat{\boldsymbol{\beta}})\)</span> is the cluster mean residual. The BLUP is a <em>weighted average</em> of the OLS cluster estimate <span class="math inline">\(\bar{r}_i\)</span> and the prior mean zero, with the weight <span class="math inline">\(\lambda_i\)</span> determined by the signal-to-noise ratio:</p>
 <ul>
@@ -901,8 +897,8 @@ window.Quarto = {
 </table>
 </section>
 </section>
-<section id="gee-the-marginal-approach" class="level2" data-number="16.2">
-<h2 data-number="16.2" class="anchored" data-anchor-id="gee-the-marginal-approach"><span class="header-section-number">16.2</span> GEE: the marginal approach</h2>
+<section id="gee-the-marginal-approach" class="level3" data-number="14.2.2">
+<h3 data-number="14.2.2" class="anchored" data-anchor-id="gee-the-marginal-approach"><span class="header-section-number">14.2.2</span> GEE: the marginal approach</h3>
 <p>GEE specifies only the first two moments of <span class="math inline">\(\mathbf{y}_i\)</span>:</p>
 <ul>
 <li>Mean: <span class="math inline">\(\mathbb{E}[y_{ij}] = g^{-1}(\mathbf{x}_{ij}^\top\boldsymbol{\beta})\)</span></li>
@@ -910,12 +906,12 @@ window.Quarto = {
 </ul>
 <p>The estimating equation is: <span id="eq-gee"><span class="math display">\[
 \sum_{i=1}^G \mathbf{X}_i^\top \mathbf{V}_i^{-1}(\mathbf{y}_i - \boldsymbol{\mu}_i) = \mathbf{0},
-\tag{16.7}\]</span></span></p>
+\tag{14.7}\]</span></span></p>
 <p>where <span class="math inline">\(\mathbf{V}_i = \mathbf{A}_i^{1/2} \mathbf{R}_i(\boldsymbol{\alpha}) \mathbf{A}_i^{1/2}\)</span> and <span class="math inline">\(\mathbf{A}_i = \text{diag}(\text{Var}(\mu_{ij}))\)</span>.</p>
 <p><strong>The key property:</strong> GEE is consistent for <span class="math inline">\(\boldsymbol{\beta}\)</span> <em>even when the working correlation is wrong</em>. The sandwich covariance corrects for the misspecification. This robustness is why GEE is popular in practice—you don’t need to know the true correlation structure, just a reasonable working guess.</p>
 </section>
-<section id="sec-ch14-sandwich" class="level2" data-number="16.3">
-<h2 data-number="16.3" class="anchored" data-anchor-id="sec-ch14-sandwich"><span class="header-section-number">16.3</span> The sandwich variance</h2>
+<section id="sec-ch14-sandwich" class="level3" data-number="14.2.3">
+<h3 data-number="14.2.3" class="anchored" data-anchor-id="sec-ch14-sandwich"><span class="header-section-number">14.2.3</span> The sandwich variance</h3>
 <p>GEE uses a sandwich (Huber–White) covariance estimator that provides valid inference even when the working correlation is misspecified. Define the model-based and empirical components:</p>
 <p><span id="eq-sandwich-components"><span class="math display">\[
 \mathbf{B} = \sum_{i=1}^G \mathbf{X}_i^\top
@@ -926,18 +922,18 @@ window.Quarto = {
   (\mathbf{y}_i - \boldsymbol{\mu}_i)
   (\mathbf{y}_i - \boldsymbol{\mu}_i)^\top
   \mathbf{V}_i^{-1}\mathbf{X}_i.
-\tag{16.8}\]</span></span></p>
+\tag{14.8}\]</span></span></p>
 <p>The sandwich covariance is:</p>
 <p><span id="eq-sandwich"><span class="math display">\[
 \widehat{\text{Var}}(\hat{\boldsymbol{\beta}})
 = \mathbf{B}^{-1}\mathbf{M}\mathbf{B}^{-1}.
-\tag{16.9}\]</span></span></p>
+\tag{14.9}\]</span></span></p>
 <p><strong>Why this works when the working correlation is wrong:</strong> <span class="math inline">\(\mathbf{B}\)</span> depends on the assumed working covariance <span class="math inline">\(\mathbf{V}_i\)</span>, which may be misspecified. But <span class="math inline">\(\mathbf{M}\)</span> uses the <em>actual</em> residuals <span class="math inline">\((\mathbf{y}_i - \boldsymbol{\mu}_i)\)</span> to capture the true variability. If the working correlation were correct, <span class="math inline">\(\mathbf{M} \to \mathbf{B}\)</span> and the sandwich collapses to the model-based variance <span class="math inline">\(\mathbf{B}^{-1}\)</span>—the usual GLS result. When the working correlation is wrong, <span class="math inline">\(\mathbf{M} \neq \mathbf{B}\)</span>, and the sandwich corrects for the discrepancy.</p>
-<p>The cost of this robustness: the sandwich estimator requires <span class="math inline">\(G \to \infty\)</span> for consistency (each cluster contributes one “observation” to <span class="math inline">\(\mathbf{M}\)</span>). With few clusters (<span class="math inline">\(G &lt; 30\)</span>), the sandwich underestimates variability and coverage drops below nominal. We demonstrate this failure in <a href="#sec-ch14-diagnostics" class="quarto-xref"><span>Chapter 21</span></a>.</p>
+<p>The cost of this robustness: the sandwich estimator requires <span class="math inline">\(G \to \infty\)</span> for consistency (each cluster contributes one “observation” to <span class="math inline">\(\mathbf{M}\)</span>). With few clusters (<span class="math inline">\(G &lt; 30\)</span>), the sandwich underestimates variability and coverage drops below nominal. We demonstrate this failure in <a href="#sec-ch14-diagnostics" class="quarto-xref"><span>Section 14.7</span></a>.</p>
 </section>
 </section>
-<section id="sec-ch14-algorithm" class="level1" data-number="17">
-<h1 data-number="17"><span class="header-section-number">17</span> The Algorithm</h1>
+<section id="sec-ch14-algorithm" class="level2" data-number="14.3">
+<h2 data-number="14.3" class="anchored" data-anchor-id="sec-ch14-algorithm"><span class="header-section-number">14.3</span> The Algorithm</h2>
 <div class="callout callout-style-simple callout-note no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -956,7 +952,7 @@ Algorithm 14.1: GEE (Iteratively Reweighted)
 <li><span class="math inline">\(\quad\)</span> Compute <span class="math inline">\(\boldsymbol{\mu}_i = g^{-1}(\mathbf{X}_i\boldsymbol{\beta}^{(k)})\)</span></li>
 <li><span class="math inline">\(\quad\)</span> Estimate <span class="math inline">\(\hat{\boldsymbol{\alpha}}\)</span> from Pearson residuals</li>
 <li><span class="math inline">\(\quad\)</span> Form <span class="math inline">\(\mathbf{V}_i = \mathbf{A}_i^{1/2}\mathbf{R}(\hat{\boldsymbol{\alpha}})\mathbf{A}_i^{1/2}\)</span></li>
-<li><span class="math inline">\(\quad\)</span> <span class="math inline">\(\boldsymbol{\beta}^{(k+1)} \leftarrow\)</span> solve <a href="#eq-gee" class="quarto-xref">Equation&nbsp;<span>16.7</span></a> (modified Fisher scoring)</li>
+<li><span class="math inline">\(\quad\)</span> <span class="math inline">\(\boldsymbol{\beta}^{(k+1)} \leftarrow\)</span> solve <a href="#eq-gee" class="quarto-xref">Equation&nbsp;<span>14.7</span></a> (modified Fisher scoring)</li>
 <li><span class="math inline">\(\quad\)</span> <strong>if</strong> <span class="math inline">\(\|\boldsymbol{\beta}^{(k+1)} - \boldsymbol{\beta}^{(k)}\| &lt; \epsilon\)</span> <strong>then break</strong></li>
 <li><strong>end for</strong></li>
 <li>Compute sandwich covariance (robust to working correlation misspecification)</li>
@@ -965,8 +961,8 @@ Algorithm 14.1: GEE (Iteratively Reweighted)
 </div>
 </div>
 </section>
-<section id="sec-ch14-stats" class="level1" data-number="18">
-<h1 data-number="18"><span class="header-section-number">18</span> Statistical Properties</h1>
+<section id="sec-ch14-stats" class="level2" data-number="14.4">
+<h2 data-number="14.4" class="anchored" data-anchor-id="sec-ch14-stats"><span class="header-section-number">14.4</span> Statistical Properties</h2>
 <p><strong>Mixed models vs GEE:</strong> For a binary outcome (logistic), the mixed-model <span class="math inline">\(\beta\)</span> and the GEE <span class="math inline">\(\beta\)</span> estimate different things:</p>
 <ul>
 <li>Mixed model: <span class="math inline">\(\log\frac{\Pr(y=1 \mid \mathbf{x}, b)}{1-\Pr(y=1 \mid \mathbf{x}, b)} = \mathbf{x}^\top\boldsymbol{\beta} + b\)</span> → <em>subject-specific</em> effect.</li>
@@ -974,8 +970,8 @@ Algorithm 14.1: GEE (Iteratively Reweighted)
 </ul>
 <p>The subject-specific <span class="math inline">\(\beta\)</span> is always larger in magnitude than the population-average <span class="math inline">\(\beta\)</span> (because averaging over the random effect attenuates the relationship). The ratio depends on the random-effect variance.</p>
 <p><strong>GEE robustness:</strong> The sandwich SE is consistent regardless of the working correlation. But the <em>efficiency</em> depends on how close the working correlation is to the truth. Exchangeable is often good enough; independence (ignoring clustering) gives valid inference but wider CIs.</p>
-<section id="sec-ch14-attenuation" class="level2" data-number="18.1">
-<h2 data-number="18.1" class="anchored" data-anchor-id="sec-ch14-attenuation"><span class="header-section-number">18.1</span> Marginal ≠ conditional: a simulation</h2>
+<section id="sec-ch14-attenuation" class="level3" data-number="14.4.1">
+<h3 data-number="14.4.1" class="anchored" data-anchor-id="sec-ch14-attenuation"><span class="header-section-number">14.4.1</span> Marginal ≠ conditional: a simulation</h3>
 <p>For linear models, MixedLM and GEE give the same <span class="math inline">\(\hat{\boldsymbol{\beta}}\)</span>. For nonlinear models, they estimate different quantities. The reason is Jensen’s inequality: for a nonlinear function <span class="math inline">\(g\)</span> and a random variable <span class="math inline">\(b\)</span>, <span class="math inline">\(\mathbb{E}[g(\eta + b)] \neq g(\eta + \mathbb{E}[b])\)</span>.</p>
 <p>In a logistic GLMM, the subject-specific probability is <span class="math inline">\(p(x, b) = \text{logit}^{-1}(\beta x + b)\)</span>. The population-average probability <span class="math inline">\(\bar{p}(x) = \mathbb{E}_b[\text{logit}^{-1}(\beta x + b)]\)</span> is <em>flatter</em> than the subject-specific curve because the S-shaped logistic function is averaged over a spread of intercepts. A flatter curve means a smaller effective slope.</p>
 <p>The Zeger–Liang–Albert (1988) approximation gives: <span class="math inline">\(\beta_{\text{GEE}} \approx \beta_{\text{GLMM}} / \sqrt{1 + c^2\sigma^2_b}\)</span>, where <span class="math inline">\(c^2 = 16\sqrt{3}/(15\pi) \approx 0.588\)</span>.</p>
@@ -1032,10 +1028,10 @@ averaging over random effects flattens the dose-response curve.</code></pre>
 <p>The attenuation grows with <span class="math inline">\(\sigma^2_b\)</span>: larger between-cluster variation means more averaging, which flattens the marginal curve further. This is not a bias—GEE and the GLMM are estimating <em>different</em> parameters. The choice between them is a modeling decision about which parameter answers your scientific question.</p>
 </section>
 </section>
-<section id="sec-ch14-statsmodels" class="level1" data-number="19">
-<h1 data-number="19"><span class="header-section-number">19</span> Statsmodels Implementation</h1>
-<section id="mixedlm-linear-mixed-model" class="level2" data-number="19.1">
-<h2 data-number="19.1" class="anchored" data-anchor-id="mixedlm-linear-mixed-model"><span class="header-section-number">19.1</span> <code>MixedLM</code>: linear mixed model</h2>
+<section id="sec-ch14-statsmodels" class="level2" data-number="14.5">
+<h2 data-number="14.5" class="anchored" data-anchor-id="sec-ch14-statsmodels"><span class="header-section-number">14.5</span> Statsmodels Implementation</h2>
+<section id="mixedlm-linear-mixed-model" class="level3" data-number="14.5.1">
+<h3 data-number="14.5.1" class="anchored" data-anchor-id="mixedlm-linear-mixed-model"><span class="header-section-number">14.5.1</span> <code>MixedLM</code>: linear mixed model</h3>
 <div id="mixedlm-demo" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate clustered data: students within schools</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>n_schools <span class="op">=</span> <span class="dv">30</span></span>
@@ -1090,10 +1086,10 @@ ICC: 0.057</code></pre>
 <li><code>reml=True</code> (default): REML estimation for variance components</li>
 <li><code>reml=False</code>: ML estimation (needed for LR tests comparing models with different fixed effects)</li>
 </ul>
-<p><strong>New cluster prediction:</strong> BLUPs for clusters <em>in the training data</em> use <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span>16.5</span></a>. For a <em>new</em> cluster not seen during fitting, <span class="math inline">\(\hat{\mathbf{b}}_{\text{new}} = \mathbf{0}\)</span>—the prediction reverts to the population average. This is by design: with no data from the new cluster, the best prediction is the prior mean.</p>
+<p><strong>New cluster prediction:</strong> BLUPs for clusters <em>in the training data</em> use <a href="#eq-blup" class="quarto-xref">Equation&nbsp;<span>14.5</span></a>. For a <em>new</em> cluster not seen during fitting, <span class="math inline">\(\hat{\mathbf{b}}_{\text{new}} = \mathbf{0}\)</span>—the prediction reverts to the population average. This is by design: with no data from the new cluster, the best prediction is the prior mean.</p>
 </section>
-<section id="gee-marginal-model" class="level2" data-number="19.2">
-<h2 data-number="19.2" class="anchored" data-anchor-id="gee-marginal-model"><span class="header-section-number">19.2</span> <code>GEE</code>: marginal model</h2>
+<section id="gee-marginal-model" class="level3" data-number="14.5.2">
+<h3 data-number="14.5.2" class="anchored" data-anchor-id="gee-marginal-model"><span class="header-section-number">14.5.2</span> <code>GEE</code>: marginal model</h3>
 <div id="gee-demo" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Same data, GEE approach</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> struct_name, struct <span class="kw">in</span> [</span>
@@ -1159,8 +1155,8 @@ ICC: 0.057</code></pre>
 </tbody>
 </table>
 </section>
-<section id="mixed-model-vs-gee-comparison" class="level2" data-number="19.3">
-<h2 data-number="19.3" class="anchored" data-anchor-id="mixed-model-vs-gee-comparison"><span class="header-section-number">19.3</span> Mixed model vs GEE comparison</h2>
+<section id="mixed-model-vs-gee-comparison" class="level3" data-number="14.5.3">
+<h3 data-number="14.5.3" class="anchored" data-anchor-id="mixed-model-vs-gee-comparison"><span class="header-section-number">14.5.3</span> Mixed model vs GEE comparison</h3>
 <div id="comparison" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">''</span><span class="sc">:&gt;14}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'MixedLM'</span><span class="sc">:&gt;10}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'GEE (Exch)'</span><span class="sc">:&gt;12}</span><span class="ss">"</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'aptitude'</span><span class="sc">:&gt;14}</span><span class="ss"> </span><span class="sc">{</span>mlm<span class="sc">.</span>fe_params[<span class="st">'aptitude'</span>]<span class="sc">:&gt;10.3f}</span><span class="ss"> "</span></span>
@@ -1180,10 +1176,10 @@ They would differ for logistic or Poisson models.</code></pre>
 </div>
 </section>
 </section>
-<section id="sec-ch14-scratch" class="level1" data-number="20">
-<h1 data-number="20"><span class="header-section-number">20</span> From-Scratch Implementation</h1>
-<section id="random-intercept-model-via-em" class="level2" data-number="20.1">
-<h2 data-number="20.1" class="anchored" data-anchor-id="random-intercept-model-via-em"><span class="header-section-number">20.1</span> Random intercept model via EM</h2>
+<section id="sec-ch14-scratch" class="level2" data-number="14.6">
+<h2 data-number="14.6" class="anchored" data-anchor-id="sec-ch14-scratch"><span class="header-section-number">14.6</span> From-Scratch Implementation</h2>
+<section id="random-intercept-model-via-em" class="level3" data-number="14.6.1">
+<h3 data-number="14.6.1" class="anchored" data-anchor-id="random-intercept-model-via-em"><span class="header-section-number">14.6.1</span> Random intercept model via EM</h3>
 <div id="lmm-scratch" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lmm_random_intercept(y, X, groups, maxiter<span class="op">=</span><span class="dv">100</span>, tol<span class="op">=</span><span class="fl">1e-6</span>):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Linear mixed model with random intercept via EM.</span></span>
@@ -1270,9 +1266,9 @@ They would differ for logistic or Poisson models.</code></pre>
 </div>
 </div>
 </section>
-<section id="blup-from-scratch" class="level2" data-number="20.2">
-<h2 data-number="20.2" class="anchored" data-anchor-id="blup-from-scratch"><span class="header-section-number">20.2</span> BLUP from scratch</h2>
-<p>The from-scratch EM above already computes BLUPs in its E-step. Here we verify the shrinkage formula <a href="#eq-shrinkage" class="quarto-xref">Equation&nbsp;<span>16.6</span></a> against statsmodels’ <code>.random_effects</code>.</p>
+<section id="blup-from-scratch" class="level3" data-number="14.6.2">
+<h3 data-number="14.6.2" class="anchored" data-anchor-id="blup-from-scratch"><span class="header-section-number">14.6.2</span> BLUP from scratch</h3>
+<p>The from-scratch EM above already computes BLUPs in its E-step. Here we verify the shrinkage formula <a href="#eq-shrinkage" class="quarto-xref">Equation&nbsp;<span>14.6</span></a> against statsmodels’ <code>.random_effects</code>.</p>
 <div id="blup-scratch" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sigma2_b_hat <span class="op">=</span> res_ours[<span class="st">'sigma2_b'</span>]</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>sigma2_e_hat <span class="op">=</span> res_ours[<span class="st">'sigma2_e'</span>]</span>
@@ -1315,8 +1311,8 @@ They would differ for logistic or Poisson models.</code></pre>
 </div>
 </div>
 </section>
-<section id="gee-from-scratch" class="level2" data-number="20.3">
-<h2 data-number="20.3" class="anchored" data-anchor-id="gee-from-scratch"><span class="header-section-number">20.3</span> GEE from scratch</h2>
+<section id="gee-from-scratch" class="level3" data-number="14.6.3">
+<h3 data-number="14.6.3" class="anchored" data-anchor-id="gee-from-scratch"><span class="header-section-number">14.6.3</span> GEE from scratch</h3>
 <p>One pass of the iteratively reweighted GEE, computing the sandwich covariance by hand.</p>
 <div id="gee-scratch" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gee_one_pass(y, X, groups, rho<span class="op">=</span><span class="fl">0.0</span>):</span>
@@ -1454,10 +1450,10 @@ Sandwich vs model-based SE:
 </div>
 </section>
 </section>
-<section id="sec-ch14-diagnostics" class="level1" data-number="21">
-<h1 data-number="21"><span class="header-section-number">21</span> Diagnostics</h1>
-<section id="icc-intraclass-correlation-coefficient" class="level2" data-number="21.1">
-<h2 data-number="21.1" class="anchored" data-anchor-id="icc-intraclass-correlation-coefficient"><span class="header-section-number">21.1</span> ICC: Intraclass Correlation Coefficient</h2>
+<section id="sec-ch14-diagnostics" class="level2" data-number="14.7">
+<h2 data-number="14.7" class="anchored" data-anchor-id="sec-ch14-diagnostics"><span class="header-section-number">14.7</span> Diagnostics</h2>
+<section id="icc-intraclass-correlation-coefficient" class="level3" data-number="14.7.1">
+<h3 data-number="14.7.1" class="anchored" data-anchor-id="icc-intraclass-correlation-coefficient"><span class="header-section-number">14.7.1</span> ICC: Intraclass Correlation Coefficient</h3>
 <div id="icc" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ICC = sigma2_b / (sigma2_b + sigma2_e)</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>icc <span class="op">=</span> mlm.cov_re.iloc[<span class="dv">0</span>,<span class="dv">0</span>] <span class="op">/</span> (mlm.cov_re.iloc[<span class="dv">0</span>,<span class="dv">0</span>] <span class="op">+</span> mlm.scale)</span>
@@ -1474,8 +1470,8 @@ ICC &gt; 0.05 generally justifies a mixed model over OLS.</code></pre>
 </div>
 </div>
 </section>
-<section id="random-effects-diagnostics" class="level2" data-number="21.2">
-<h2 data-number="21.2" class="anchored" data-anchor-id="random-effects-diagnostics"><span class="header-section-number">21.2</span> Random effects diagnostics</h2>
+<section id="random-effects-diagnostics" class="level3" data-number="14.7.2">
+<h3 data-number="14.7.2" class="anchored" data-anchor-id="random-effects-diagnostics"><span class="header-section-number">14.7.2</span> Random effects diagnostics</h3>
 <div id="cell-fig-re-diagnostics" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>re <span class="op">=</span> mlm.random_effects</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>re_vals <span class="op">=</span> np.array([re[g].iloc[<span class="dv">0</span>] <span class="cf">for</span> g <span class="kw">in</span> re])</span>
@@ -1509,15 +1505,15 @@ ICC &gt; 0.05 generally justifies a mixed model over OLS.</code></pre>
 <img src="14-mixed-effects-gee_files/figure-html/fig-re-diagnostics-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-re-diagnostics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;21.1: Random effect diagnostics. Left: predicted random intercepts (school effects) with 95% prediction intervals. Schools are sorted by their estimated effect. Right: QQ plot of random effects — normality assumption check.
+Figure&nbsp;14.1: Random effect diagnostics. Left: predicted random intercepts (school effects) with 95% prediction intervals. Schools are sorted by their estimated effect. Right: QQ plot of random effects — normality assumption check.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="level-2-residual-diagnostics" class="level2" data-number="21.3">
-<h2 data-number="21.3" class="anchored" data-anchor-id="level-2-residual-diagnostics"><span class="header-section-number">21.3</span> Level-2 residual diagnostics</h2>
+<section id="level-2-residual-diagnostics" class="level3" data-number="14.7.3">
+<h3 data-number="14.7.3" class="anchored" data-anchor-id="level-2-residual-diagnostics"><span class="header-section-number">14.7.3</span> Level-2 residual diagnostics</h3>
 <p>The random effects themselves are diagnostic targets. Plotting <span class="math inline">\(\hat{b}_i\)</span> against cluster-level covariates detects misspecified level-2 models (e.g., a missing cluster-level predictor).</p>
 <div id="cell-fig-level2-resid" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute school-level covariates</span></span>
@@ -1556,15 +1552,15 @@ Figure&nbsp;21.1: Random effect diagnostics. Left: predicted random intercepts (
 <img src="14-mixed-effects-gee_files/figure-html/fig-level2-resid-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-level2-resid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;21.2: Level-2 residual diagnostics. Left: predicted random intercepts vs mean class size per school. A trend here would suggest class size effects not captured by the fixed effects. Right: random intercepts vs school size (number of students). Smaller schools show more shrinkage toward zero.
+Figure&nbsp;14.2: Level-2 residual diagnostics. Left: predicted random intercepts vs mean class size per school. A trend here would suggest class size effects not captured by the fixed effects. Right: random intercepts vs school size (number of students). Smaller schools show more shrinkage toward zero.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="comparing-working-correlations-qic" class="level2" data-number="21.4">
-<h2 data-number="21.4" class="anchored" data-anchor-id="comparing-working-correlations-qic"><span class="header-section-number">21.4</span> Comparing working correlations (QIC)</h2>
+<section id="comparing-working-correlations-qic" class="level3" data-number="14.7.4">
+<h3 data-number="14.7.4" class="anchored" data-anchor-id="comparing-working-correlations-qic"><span class="header-section-number">14.7.4</span> Comparing working correlations (QIC)</h3>
 <p>The Quasi-likelihood under the Independence model Criterion (QIC) extends AIC to GEE. Lower QIC indicates a better working correlation. Unlike AIC for likelihood-based models, QIC uses the quasi-likelihood evaluated under independence, which makes values comparable across different working correlations.</p>
 <div id="corr-comparison" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'Structure'</span><span class="sc">:&lt;16}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'QIC'</span><span class="sc">:&gt;10}</span><span class="ss"> </span><span class="sc">{</span><span class="st">'QICu'</span><span class="sc">:&gt;10}</span><span class="ss">"</span>)</span>
@@ -1596,8 +1592,8 @@ Lower is better for both.</code></pre>
 </div>
 </div>
 </section>
-<section id="sec-ch14-few-clusters" class="level2" data-number="21.5">
-<h2 data-number="21.5" class="anchored" data-anchor-id="sec-ch14-few-clusters"><span class="header-section-number">21.5</span> The few-clusters problem</h2>
+<section id="sec-ch14-few-clusters" class="level3" data-number="14.7.5">
+<h3 data-number="14.7.5" class="anchored" data-anchor-id="sec-ch14-few-clusters"><span class="header-section-number">14.7.5</span> The few-clusters problem</h3>
 <p>The sandwich estimator is a large-<span class="math inline">\(G\)</span> result. With few clusters, it underestimates variability and confidence intervals are too narrow. This simulation demonstrates the coverage failure.</p>
 <div id="few-clusters-sim" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gee_coverage_sim(n_groups, n_per, n_sims<span class="op">=</span><span class="dv">500</span>):</span>
@@ -1648,8 +1644,8 @@ or small-sample corrections when G is small.</code></pre>
 </div>
 </div>
 </section>
-<section id="likelihood-ratio-test-for-random-effects" class="level2" data-number="21.6">
-<h2 data-number="21.6" class="anchored" data-anchor-id="likelihood-ratio-test-for-random-effects"><span class="header-section-number">21.6</span> Likelihood ratio test for random effects</h2>
+<section id="likelihood-ratio-test-for-random-effects" class="level3" data-number="14.7.6">
+<h3 data-number="14.7.6" class="anchored" data-anchor-id="likelihood-ratio-test-for-random-effects"><span class="header-section-number">14.7.6</span> Likelihood ratio test for random effects</h3>
 <p>To test whether random effects are needed at all (<span class="math inline">\(H_0: \sigma^2_b = 0\)</span>), compare ML fits with and without the random effect. Use ML, not REML, because the fixed-effects structure must be the same for both models.</p>
 <div id="lr-test-re" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit with ML (not REML) for LR test</span></span>
@@ -1691,8 +1687,8 @@ places H0 on the boundary of the parameter space.</code></pre>
 </div>
 </section>
 </section>
-<section id="sec-ch14-computation" class="level1" data-number="22">
-<h1 data-number="22"><span class="header-section-number">22</span> Computational Considerations</h1>
+<section id="sec-ch14-computation" class="level2" data-number="14.8">
+<h2 data-number="14.8" class="anchored" data-anchor-id="sec-ch14-computation"><span class="header-section-number">14.8</span> Computational Considerations</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -1725,8 +1721,8 @@ places H0 on the boundary of the parameter space.</code></pre>
 </table>
 <p>Both scale linearly in the number of groups <span class="math inline">\(G\)</span>. The bottleneck is the cluster-level operations (<span class="math inline">\(n_i^2\)</span> or <span class="math inline">\(n_i^3\)</span>), which become expensive for large clusters (e.g., many repeated measures per subject).</p>
 </section>
-<section id="sec-ch14-example" class="level1" data-number="23">
-<h1 data-number="23"><span class="header-section-number">23</span> Worked Example</h1>
+<section id="sec-ch14-example" class="level2" data-number="14.9">
+<h2 data-number="14.9" class="anchored" data-anchor-id="sec-ch14-example"><span class="header-section-number">14.9</span> Worked Example</h2>
 <p>Longitudinal study: repeated blood pressure measurements on patients, comparing mixed model vs GEE.</p>
 <div id="worked-data" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate longitudinal data</span></span>
@@ -1788,8 +1784,8 @@ patient    5.641 -1.099
 visit     -1.099  0.265</code></pre>
 </div>
 </div>
-<section id="model-comparison-random-intercept-vs-random-slope" class="level2" data-number="23.1">
-<h2 data-number="23.1" class="anchored" data-anchor-id="model-comparison-random-intercept-vs-random-slope"><span class="header-section-number">23.1</span> Model comparison: random intercept vs random slope</h2>
+<section id="model-comparison-random-intercept-vs-random-slope" class="level3" data-number="14.9.1">
+<h3 data-number="14.9.1" class="anchored" data-anchor-id="model-comparison-random-intercept-vs-random-slope"><span class="header-section-number">14.9.1</span> Model comparison: random intercept vs random slope</h3>
 <p>Does adding a random slope on <code>visit</code> improve the model? Compare a random-intercept-only model to the random-intercept-plus-slope model using a likelihood ratio test (with ML, not REML).</p>
 <div id="worked-comparison" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Random intercept only (ML for LR test)</span></span>
@@ -1830,8 +1826,8 @@ Int-slope correlation: -0.899</code></pre>
 </div>
 </div>
 </section>
-<section id="prediction-plots-individual-trajectories" class="level2" data-number="23.2">
-<h2 data-number="23.2" class="anchored" data-anchor-id="prediction-plots-individual-trajectories"><span class="header-section-number">23.2</span> Prediction plots: individual trajectories</h2>
+<section id="prediction-plots-individual-trajectories" class="level3" data-number="14.9.2">
+<h3 data-number="14.9.2" class="anchored" data-anchor-id="prediction-plots-individual-trajectories"><span class="header-section-number">14.9.2</span> Prediction plots: individual trajectories</h3>
 <p>The random slope model captures patient-specific rates of change. Plotting predicted trajectories for a sample of patients shows the shrinkage in action: patients with few or noisy observations have trajectories pulled toward the population average.</p>
 <div id="cell-fig-trajectories" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">5</span>))</span>
@@ -1884,15 +1880,15 @@ Int-slope correlation: -0.899</code></pre>
 <img src="14-mixed-effects-gee_files/figure-html/fig-trajectories-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-trajectories-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;23.1: Individual BP trajectories. Gray lines: observed data for 15 sampled patients. Colored lines: model-predicted trajectories using BLUPs. Dashed black: population-average trajectory (fixed effects only). The model smooths noisy individual trajectories toward the population trend.
+Figure&nbsp;14.3: Individual BP trajectories. Gray lines: observed data for 15 sampled patients. Colored lines: model-predicted trajectories using BLUPs. Dashed black: population-average trajectory (fixed effects only). The model smooths noisy individual trajectories toward the population trend.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="gee-vs-mixedlm-coefficient-interpretation" class="level2" data-number="23.3">
-<h2 data-number="23.3" class="anchored" data-anchor-id="gee-vs-mixedlm-coefficient-interpretation"><span class="header-section-number">23.3</span> GEE vs MixedLM: coefficient interpretation</h2>
+<section id="gee-vs-mixedlm-coefficient-interpretation" class="level3" data-number="14.9.3">
+<h3 data-number="14.9.3" class="anchored" data-anchor-id="gee-vs-mixedlm-coefficient-interpretation"><span class="header-section-number">14.9.3</span> GEE vs MixedLM: coefficient interpretation</h3>
 <div id="worked-interpretation" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"="</span><span class="op">*</span><span class="dv">56</span>)</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'Coefficient comparison'</span><span class="sc">:^56}</span><span class="ss">"</span>)</span>
@@ -1943,8 +1939,8 @@ scientific question:
 </div>
 </section>
 </section>
-<section id="sec-ch14-exercises" class="level1" data-number="24">
-<h1 data-number="24"><span class="header-section-number">24</span> Exercises</h1>
+<section id="sec-ch14-exercises" class="level2" data-number="14.10">
+<h2 data-number="14.10" class="anchored" data-anchor-id="sec-ch14-exercises"><span class="header-section-number">14.10</span> Exercises</h2>
 <p><strong>Exercise 14.1</strong> (<span class="math inline">\(\star\star\)</span>, diagnostic failure). Fit OLS (ignoring clustering) and MixedLM to the school data. Compare the standard errors. By what factor does OLS underestimate the SE for <code>class_size</code> (a between-cluster variable)? Why is the underestimation worse for between-cluster variables than within-cluster variables?</p>
 <p>%%</p>
 <div id="ex-14-1-solution" class="cell" data-execution_count="22">
@@ -2029,8 +2025,8 @@ With unequal sizes, small schools would be shrunk more:
 <p>The attenuation factor is approximately <span class="math inline">\(\beta_{\text{GEE}} \approx \beta_{\text{GLMM}} / \sqrt{1 + c^2 \sigma^2_b}\)</span>, where <span class="math inline">\(c \approx 16\sqrt{3}/(15\pi)\)</span> for the logit link. Larger random-effect variance means more attenuation.</p>
 <p>%%</p>
 </section>
-<section id="sec-ch14-biblio" class="level1" data-number="25">
-<h1 data-number="25"><span class="header-section-number">25</span> Bibliographic Notes</h1>
+<section id="sec-ch14-biblio" class="level2" data-number="14.11">
+<h2 data-number="14.11" class="anchored" data-anchor-id="sec-ch14-biblio"><span class="header-section-number">14.11</span> Bibliographic Notes</h2>
 <p>Linear mixed models: Laird and Ware (1982) for the modern formulation, Henderson (1950) for BLUP. REML: Patterson and Thompson (1971). The statsmodels <code>MixedLM</code> follows the Lindstrom and Bates (1988) profiled-likelihood approach.</p>
 <p>GEE: Liang and Zeger (1986). The sandwich covariance under misspecified working correlation: Liang and Zeger (1986), Theorem 2. QIC for working correlation selection: Pan (2001).</p>
 <p>The marginal vs conditional interpretation: Zeger, Liang, and Albert (1988). The attenuation of coefficients in nonlinear marginal models: Neuhaus, Kalbfleisch, and Hauck (1991).</p>
@@ -2538,7 +2534,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
 <span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notation for this chapter</span></span>
+<span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a><span class="fu">### Notation for this chapter</span></span>
 <span id="cb42-25"><a href="#cb42-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-26"><a href="#cb42-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Symbol <span class="pp">|</span> Meaning <span class="pp">|</span> statsmodels <span class="pp">|</span></span>
 <span id="cb42-27"><a href="#cb42-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------|-------------|</span></span>
@@ -2551,7 +2547,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-34"><a href="#cb42-34" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\mathbf{R}_i(\boldsymbol{\alpha})$ <span class="pp">|</span> Working correlation matrix (GEE) <span class="pp">|</span> <span class="in">`cov_struct`</span> <span class="pp">|</span></span>
 <span id="cb42-35"><a href="#cb42-35" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-36"><a href="#cb42-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-37"><a href="#cb42-37" aria-hidden="true" tabindex="-1"></a><span class="fu"># Motivation {#sec-ch14-motivation}</span></span>
+<span id="cb42-37"><a href="#cb42-37" aria-hidden="true" tabindex="-1"></a><span class="fu">## Motivation {#sec-ch14-motivation}</span></span>
 <span id="cb42-38"><a href="#cb42-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-39"><a href="#cb42-39" aria-hidden="true" tabindex="-1"></a>Many datasets have *clustered* observations: students within schools,</span>
 <span id="cb42-40"><a href="#cb42-40" aria-hidden="true" tabindex="-1"></a>patients within hospitals, repeated measurements on the same subject.</span>
@@ -2582,9 +2578,9 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-65"><a href="#cb42-65" aria-hidden="true" tabindex="-1"></a>computational one.</span>
 <span id="cb42-66"><a href="#cb42-66" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-67"><a href="#cb42-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a><span class="fu"># Mathematical Foundation {#sec-ch14-math}</span></span>
+<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mathematical Foundation {#sec-ch14-math}</span></span>
 <span id="cb42-69"><a href="#cb42-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-70"><a href="#cb42-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## The linear mixed model</span></span>
+<span id="cb42-70"><a href="#cb42-70" aria-hidden="true" tabindex="-1"></a><span class="fu">### The linear mixed model</span></span>
 <span id="cb42-71"><a href="#cb42-71" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-72"><a href="#cb42-72" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb42-73"><a href="#cb42-73" aria-hidden="true" tabindex="-1"></a>\mathbf{y}_i = \mathbf{X}_i\boldsymbol{\beta} + \mathbf{Z}_i\mathbf{b}_i + \boldsymbol{\varepsilon}_i,</span>
@@ -2597,7 +2593,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-80"><a href="#cb42-80" aria-hidden="true" tabindex="-1"></a>$\mathbf{y}_i \sim \mathcal{N}(\mathbf{X}_i\boldsymbol{\beta}, \mathbf{V}_i)$,</span>
 <span id="cb42-81"><a href="#cb42-81" aria-hidden="true" tabindex="-1"></a>where $\mathbf{V}_i = \mathbf{Z}_i\mathbf{D}\mathbf{Z}_i^\top + \sigma^2\mathbf{I}$.</span>
 <span id="cb42-82"><a href="#cb42-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-83"><a href="#cb42-83" aria-hidden="true" tabindex="-1"></a><span class="fu">### REML: correcting the variance bias {#sec-ch14-reml}</span></span>
+<span id="cb42-83"><a href="#cb42-83" aria-hidden="true" tabindex="-1"></a><span class="fu">#### REML: correcting the variance bias {#sec-ch14-reml}</span></span>
 <span id="cb42-84"><a href="#cb42-84" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-85"><a href="#cb42-85" aria-hidden="true" tabindex="-1"></a>**REML (Restricted Maximum Likelihood)** estimates the variance</span>
 <span id="cb42-86"><a href="#cb42-86" aria-hidden="true" tabindex="-1"></a>parameters $(\mathbf{D}, \sigma^2)$ by maximizing a modified likelihood</span>
@@ -2652,7 +2648,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-135"><a href="#cb42-135" aria-hidden="true" tabindex="-1"></a>likelihoods are not comparable across different $\mathbf{X}$</span>
 <span id="cb42-136"><a href="#cb42-136" aria-hidden="true" tabindex="-1"></a>matrices.</span>
 <span id="cb42-137"><a href="#cb42-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-138"><a href="#cb42-138" aria-hidden="true" tabindex="-1"></a><span class="fu">### BLUP: predicting the random effects {#sec-ch14-blup}</span></span>
+<span id="cb42-138"><a href="#cb42-138" aria-hidden="true" tabindex="-1"></a><span class="fu">#### BLUP: predicting the random effects {#sec-ch14-blup}</span></span>
 <span id="cb42-139"><a href="#cb42-139" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-140"><a href="#cb42-140" aria-hidden="true" tabindex="-1"></a>The random effects $\hat{\mathbf{b}}_i$ are not estimated by MLE---they</span>
 <span id="cb42-141"><a href="#cb42-141" aria-hidden="true" tabindex="-1"></a>are *predicted* as the conditional mean</span>
@@ -2725,7 +2721,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-208"><a href="#cb42-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> "I don't trust my correlation structure" <span class="pp">|</span> Must specify correctly <span class="pp">|</span> Robust to misspecification <span class="pp">|</span></span>
 <span id="cb42-209"><a href="#cb42-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> "My outcome is binary/count" <span class="pp">|</span> Coefficients differ from GEE <span class="pp">|</span> Simpler interpretation <span class="pp">|</span></span>
 <span id="cb42-210"><a href="#cb42-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-211"><a href="#cb42-211" aria-hidden="true" tabindex="-1"></a><span class="fu">## GEE: the marginal approach</span></span>
+<span id="cb42-211"><a href="#cb42-211" aria-hidden="true" tabindex="-1"></a><span class="fu">### GEE: the marginal approach</span></span>
 <span id="cb42-212"><a href="#cb42-212" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-213"><a href="#cb42-213" aria-hidden="true" tabindex="-1"></a>GEE specifies only the first two moments of $\mathbf{y}_i$:</span>
 <span id="cb42-214"><a href="#cb42-214" aria-hidden="true" tabindex="-1"></a></span>
@@ -2746,7 +2742,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-229"><a href="#cb42-229" aria-hidden="true" tabindex="-1"></a>popular in practice---you don't need to know the true correlation</span>
 <span id="cb42-230"><a href="#cb42-230" aria-hidden="true" tabindex="-1"></a>structure, just a reasonable working guess.</span>
 <span id="cb42-231"><a href="#cb42-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-232"><a href="#cb42-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## The sandwich variance {#sec-ch14-sandwich}</span></span>
+<span id="cb42-232"><a href="#cb42-232" aria-hidden="true" tabindex="-1"></a><span class="fu">### The sandwich variance {#sec-ch14-sandwich}</span></span>
 <span id="cb42-233"><a href="#cb42-233" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-234"><a href="#cb42-234" aria-hidden="true" tabindex="-1"></a>GEE uses a sandwich (Huber--White) covariance estimator that provides</span>
 <span id="cb42-235"><a href="#cb42-235" aria-hidden="true" tabindex="-1"></a>valid inference even when the working correlation is misspecified.</span>
@@ -2787,10 +2783,10 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-270"><a href="#cb42-270" aria-hidden="true" tabindex="-1"></a>nominal. We demonstrate this failure in @sec-ch14-diagnostics.</span>
 <span id="cb42-271"><a href="#cb42-271" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-272"><a href="#cb42-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-273"><a href="#cb42-273" aria-hidden="true" tabindex="-1"></a><span class="fu"># The Algorithm {#sec-ch14-algorithm}</span></span>
+<span id="cb42-273"><a href="#cb42-273" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Algorithm {#sec-ch14-algorithm}</span></span>
 <span id="cb42-274"><a href="#cb42-274" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-275"><a href="#cb42-275" aria-hidden="true" tabindex="-1"></a>::: {.callout-note appearance="minimal"}</span>
-<span id="cb42-276"><a href="#cb42-276" aria-hidden="true" tabindex="-1"></a><span class="fu">## Algorithm 14.1: GEE (Iteratively Reweighted)</span></span>
+<span id="cb42-276"><a href="#cb42-276" aria-hidden="true" tabindex="-1"></a><span class="fu">### Algorithm 14.1: GEE (Iteratively Reweighted)</span></span>
 <span id="cb42-277"><a href="#cb42-277" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-278"><a href="#cb42-278" aria-hidden="true" tabindex="-1"></a>**Input:** Data $<span class="sc">\{</span>(\mathbf{X}_i, \mathbf{y}_i)\}_{i=1}^G$, link $g$,</span>
 <span id="cb42-279"><a href="#cb42-279" aria-hidden="true" tabindex="-1"></a>working correlation structure, tolerance $\epsilon$</span>
@@ -2810,7 +2806,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-293"><a href="#cb42-293" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb42-294"><a href="#cb42-294" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-295"><a href="#cb42-295" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-296"><a href="#cb42-296" aria-hidden="true" tabindex="-1"></a><span class="fu"># Statistical Properties {#sec-ch14-stats}</span></span>
+<span id="cb42-296"><a href="#cb42-296" aria-hidden="true" tabindex="-1"></a><span class="fu">## Statistical Properties {#sec-ch14-stats}</span></span>
 <span id="cb42-297"><a href="#cb42-297" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-298"><a href="#cb42-298" aria-hidden="true" tabindex="-1"></a>**Mixed models vs GEE:** For a binary outcome (logistic), the</span>
 <span id="cb42-299"><a href="#cb42-299" aria-hidden="true" tabindex="-1"></a>mixed-model $\beta$ and the GEE $\beta$ estimate different things:</span>
@@ -2831,7 +2827,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-314"><a href="#cb42-314" aria-hidden="true" tabindex="-1"></a>enough; independence (ignoring clustering) gives valid inference but</span>
 <span id="cb42-315"><a href="#cb42-315" aria-hidden="true" tabindex="-1"></a>wider CIs.</span>
 <span id="cb42-316"><a href="#cb42-316" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-317"><a href="#cb42-317" aria-hidden="true" tabindex="-1"></a><span class="fu">## Marginal ≠ conditional: a simulation {#sec-ch14-attenuation}</span></span>
+<span id="cb42-317"><a href="#cb42-317" aria-hidden="true" tabindex="-1"></a><span class="fu">### Marginal ≠ conditional: a simulation {#sec-ch14-attenuation}</span></span>
 <span id="cb42-318"><a href="#cb42-318" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-319"><a href="#cb42-319" aria-hidden="true" tabindex="-1"></a>For linear models, MixedLM and GEE give the same $\hat{\boldsymbol{\beta}}$.</span>
 <span id="cb42-320"><a href="#cb42-320" aria-hidden="true" tabindex="-1"></a>For nonlinear models, they estimate different quantities.</span>
@@ -2900,9 +2896,9 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-385"><a href="#cb42-385" aria-hidden="true" tabindex="-1"></a>decision about which parameter answers your scientific question.</span>
 <span id="cb42-386"><a href="#cb42-386" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-387"><a href="#cb42-387" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-388"><a href="#cb42-388" aria-hidden="true" tabindex="-1"></a><span class="fu"># Statsmodels Implementation {#sec-ch14-statsmodels}</span></span>
+<span id="cb42-388"><a href="#cb42-388" aria-hidden="true" tabindex="-1"></a><span class="fu">## Statsmodels Implementation {#sec-ch14-statsmodels}</span></span>
 <span id="cb42-389"><a href="#cb42-389" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-390"><a href="#cb42-390" aria-hidden="true" tabindex="-1"></a><span class="fu">## `MixedLM`: linear mixed model</span></span>
+<span id="cb42-390"><a href="#cb42-390" aria-hidden="true" tabindex="-1"></a><span class="fu">### `MixedLM`: linear mixed model</span></span>
 <span id="cb42-391"><a href="#cb42-391" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-394"><a href="#cb42-394" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-395"><a href="#cb42-395" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: mixedlm-demo</span></span>
@@ -2961,7 +2957,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-448"><a href="#cb42-448" aria-hidden="true" tabindex="-1"></a>reverts to the population average. This is by design: with no</span>
 <span id="cb42-449"><a href="#cb42-449" aria-hidden="true" tabindex="-1"></a>data from the new cluster, the best prediction is the prior mean.</span>
 <span id="cb42-450"><a href="#cb42-450" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-451"><a href="#cb42-451" aria-hidden="true" tabindex="-1"></a><span class="fu">## `GEE`: marginal model</span></span>
+<span id="cb42-451"><a href="#cb42-451" aria-hidden="true" tabindex="-1"></a><span class="fu">### `GEE`: marginal model</span></span>
 <span id="cb42-452"><a href="#cb42-452" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-455"><a href="#cb42-455" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-456"><a href="#cb42-456" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: gee-demo</span></span>
@@ -2991,7 +2987,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-480"><a href="#cb42-480" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> AR(1) <span class="pp">|</span> <span class="in">`Autoregressive()`</span> <span class="pp">|</span> 1 ($\rho$) <span class="pp">|</span> Longitudinal (repeated measures) <span class="pp">|</span></span>
 <span id="cb42-481"><a href="#cb42-481" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Unstructured <span class="pp">|</span> <span class="in">`Unstructured()`</span> <span class="pp">|</span> $n_i(n_i-1)/2$ <span class="pp">|</span> Small clusters, many params <span class="pp">|</span></span>
 <span id="cb42-482"><a href="#cb42-482" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-483"><a href="#cb42-483" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mixed model vs GEE comparison</span></span>
+<span id="cb42-483"><a href="#cb42-483" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mixed model vs GEE comparison</span></span>
 <span id="cb42-484"><a href="#cb42-484" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-487"><a href="#cb42-487" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-488"><a href="#cb42-488" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: comparison</span></span>
@@ -3005,9 +3001,9 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-496"><a href="#cb42-496" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-497"><a href="#cb42-497" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-498"><a href="#cb42-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-499"><a href="#cb42-499" aria-hidden="true" tabindex="-1"></a><span class="fu"># From-Scratch Implementation {#sec-ch14-scratch}</span></span>
+<span id="cb42-499"><a href="#cb42-499" aria-hidden="true" tabindex="-1"></a><span class="fu">## From-Scratch Implementation {#sec-ch14-scratch}</span></span>
 <span id="cb42-500"><a href="#cb42-500" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-501"><a href="#cb42-501" aria-hidden="true" tabindex="-1"></a><span class="fu">## Random intercept model via EM</span></span>
+<span id="cb42-501"><a href="#cb42-501" aria-hidden="true" tabindex="-1"></a><span class="fu">### Random intercept model via EM</span></span>
 <span id="cb42-502"><a href="#cb42-502" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-505"><a href="#cb42-505" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-506"><a href="#cb42-506" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lmm-scratch</span></span>
@@ -3092,7 +3088,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-587"><a href="#cb42-587" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>mlm<span class="sc">.</span>scale<span class="sc">:&gt;14.3f}</span><span class="ss">"</span>)</span>
 <span id="cb42-588"><a href="#cb42-588" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-589"><a href="#cb42-589" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-590"><a href="#cb42-590" aria-hidden="true" tabindex="-1"></a><span class="fu">## BLUP from scratch</span></span>
+<span id="cb42-590"><a href="#cb42-590" aria-hidden="true" tabindex="-1"></a><span class="fu">### BLUP from scratch</span></span>
 <span id="cb42-591"><a href="#cb42-591" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-592"><a href="#cb42-592" aria-hidden="true" tabindex="-1"></a>The from-scratch EM above already computes BLUPs in its E-step.</span>
 <span id="cb42-593"><a href="#cb42-593" aria-hidden="true" tabindex="-1"></a>Here we verify the shrinkage formula @eq-shrinkage against</span>
@@ -3129,7 +3125,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-626"><a href="#cb42-626" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"</span><span class="sc">{</span>blup_sm[g]<span class="sc">:&gt;12.4f}</span><span class="ss"> </span><span class="sc">{</span>lam<span class="sc">:&gt;10.4f}</span><span class="ss">"</span>)</span>
 <span id="cb42-627"><a href="#cb42-627" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-628"><a href="#cb42-628" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-629"><a href="#cb42-629" aria-hidden="true" tabindex="-1"></a><span class="fu">## GEE from scratch</span></span>
+<span id="cb42-629"><a href="#cb42-629" aria-hidden="true" tabindex="-1"></a><span class="fu">### GEE from scratch</span></span>
 <span id="cb42-630"><a href="#cb42-630" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-631"><a href="#cb42-631" aria-hidden="true" tabindex="-1"></a>One pass of the iteratively reweighted GEE, computing the sandwich</span>
 <span id="cb42-632"><a href="#cb42-632" aria-hidden="true" tabindex="-1"></a>covariance by hand.</span>
@@ -3258,9 +3254,9 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-759"><a href="#cb42-759" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-760"><a href="#cb42-760" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-761"><a href="#cb42-761" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-762"><a href="#cb42-762" aria-hidden="true" tabindex="-1"></a><span class="fu"># Diagnostics {#sec-ch14-diagnostics}</span></span>
+<span id="cb42-762"><a href="#cb42-762" aria-hidden="true" tabindex="-1"></a><span class="fu">## Diagnostics {#sec-ch14-diagnostics}</span></span>
 <span id="cb42-763"><a href="#cb42-763" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-764"><a href="#cb42-764" aria-hidden="true" tabindex="-1"></a><span class="fu">## ICC: Intraclass Correlation Coefficient</span></span>
+<span id="cb42-764"><a href="#cb42-764" aria-hidden="true" tabindex="-1"></a><span class="fu">### ICC: Intraclass Correlation Coefficient</span></span>
 <span id="cb42-765"><a href="#cb42-765" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-768"><a href="#cb42-768" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-769"><a href="#cb42-769" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: icc</span></span>
@@ -3272,7 +3268,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-775"><a href="#cb42-775" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">ICC &gt; 0.05 generally justifies a mixed model over OLS."</span>)</span>
 <span id="cb42-776"><a href="#cb42-776" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-777"><a href="#cb42-777" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-778"><a href="#cb42-778" aria-hidden="true" tabindex="-1"></a><span class="fu">## Random effects diagnostics</span></span>
+<span id="cb42-778"><a href="#cb42-778" aria-hidden="true" tabindex="-1"></a><span class="fu">### Random effects diagnostics</span></span>
 <span id="cb42-779"><a href="#cb42-779" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-782"><a href="#cb42-782" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-783"><a href="#cb42-783" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-re-diagnostics</span></span>
@@ -3305,7 +3301,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-810"><a href="#cb42-810" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-811"><a href="#cb42-811" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-812"><a href="#cb42-812" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-813"><a href="#cb42-813" aria-hidden="true" tabindex="-1"></a><span class="fu">## Level-2 residual diagnostics</span></span>
+<span id="cb42-813"><a href="#cb42-813" aria-hidden="true" tabindex="-1"></a><span class="fu">### Level-2 residual diagnostics</span></span>
 <span id="cb42-814"><a href="#cb42-814" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-815"><a href="#cb42-815" aria-hidden="true" tabindex="-1"></a>The random effects themselves are diagnostic targets. Plotting</span>
 <span id="cb42-816"><a href="#cb42-816" aria-hidden="true" tabindex="-1"></a>$\hat{b}_i$ against cluster-level covariates detects misspecified</span>
@@ -3346,7 +3342,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-853"><a href="#cb42-853" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-854"><a href="#cb42-854" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-855"><a href="#cb42-855" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-856"><a href="#cb42-856" aria-hidden="true" tabindex="-1"></a><span class="fu">## Comparing working correlations (QIC)</span></span>
+<span id="cb42-856"><a href="#cb42-856" aria-hidden="true" tabindex="-1"></a><span class="fu">### Comparing working correlations (QIC)</span></span>
 <span id="cb42-857"><a href="#cb42-857" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-858"><a href="#cb42-858" aria-hidden="true" tabindex="-1"></a>The Quasi-likelihood under the Independence model Criterion (QIC)</span>
 <span id="cb42-859"><a href="#cb42-859" aria-hidden="true" tabindex="-1"></a>extends AIC to GEE. Lower QIC indicates a better working correlation.</span>
@@ -3375,7 +3371,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-884"><a href="#cb42-884" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Lower is better for both."</span>)</span>
 <span id="cb42-885"><a href="#cb42-885" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-886"><a href="#cb42-886" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-887"><a href="#cb42-887" aria-hidden="true" tabindex="-1"></a><span class="fu">## The few-clusters problem {#sec-ch14-few-clusters}</span></span>
+<span id="cb42-887"><a href="#cb42-887" aria-hidden="true" tabindex="-1"></a><span class="fu">### The few-clusters problem {#sec-ch14-few-clusters}</span></span>
 <span id="cb42-888"><a href="#cb42-888" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-889"><a href="#cb42-889" aria-hidden="true" tabindex="-1"></a>The sandwich estimator is a large-$G$ result. With few clusters,</span>
 <span id="cb42-890"><a href="#cb42-890" aria-hidden="true" tabindex="-1"></a>it underestimates variability and confidence intervals are too</span>
@@ -3419,7 +3415,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-930"><a href="#cb42-930" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"or small-sample corrections when G is small."</span>)</span>
 <span id="cb42-931"><a href="#cb42-931" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-932"><a href="#cb42-932" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-933"><a href="#cb42-933" aria-hidden="true" tabindex="-1"></a><span class="fu">## Likelihood ratio test for random effects</span></span>
+<span id="cb42-933"><a href="#cb42-933" aria-hidden="true" tabindex="-1"></a><span class="fu">### Likelihood ratio test for random effects</span></span>
 <span id="cb42-934"><a href="#cb42-934" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-935"><a href="#cb42-935" aria-hidden="true" tabindex="-1"></a>To test whether random effects are needed at all</span>
 <span id="cb42-936"><a href="#cb42-936" aria-hidden="true" tabindex="-1"></a>($H_0: \sigma^2_b = 0$), compare ML fits with and without the</span>
@@ -3458,7 +3454,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-971"><a href="#cb42-971" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-972"><a href="#cb42-972" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-973"><a href="#cb42-973" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-974"><a href="#cb42-974" aria-hidden="true" tabindex="-1"></a><span class="fu"># Computational Considerations {#sec-ch14-computation}</span></span>
+<span id="cb42-974"><a href="#cb42-974" aria-hidden="true" tabindex="-1"></a><span class="fu">## Computational Considerations {#sec-ch14-computation}</span></span>
 <span id="cb42-975"><a href="#cb42-975" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-976"><a href="#cb42-976" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Model <span class="pp">|</span> Cost <span class="pp">|</span> Memory <span class="pp">|</span> Notes <span class="pp">|</span></span>
 <span id="cb42-977"><a href="#cb42-977" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
@@ -3470,7 +3466,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-983"><a href="#cb42-983" aria-hidden="true" tabindex="-1"></a>for large clusters (e.g., many repeated measures per subject).</span>
 <span id="cb42-984"><a href="#cb42-984" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-985"><a href="#cb42-985" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-986"><a href="#cb42-986" aria-hidden="true" tabindex="-1"></a><span class="fu"># Worked Example {#sec-ch14-example}</span></span>
+<span id="cb42-986"><a href="#cb42-986" aria-hidden="true" tabindex="-1"></a><span class="fu">## Worked Example {#sec-ch14-example}</span></span>
 <span id="cb42-987"><a href="#cb42-987" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-988"><a href="#cb42-988" aria-hidden="true" tabindex="-1"></a>Longitudinal study: repeated blood pressure measurements on patients,</span>
 <span id="cb42-989"><a href="#cb42-989" aria-hidden="true" tabindex="-1"></a>comparing mixed model vs GEE.</span>
@@ -3528,7 +3524,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-1045"><a href="#cb42-1045" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(mlm_bp.cov_re.<span class="bu">round</span>(<span class="dv">3</span>))</span>
 <span id="cb42-1046"><a href="#cb42-1046" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-1047"><a href="#cb42-1047" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1048"><a href="#cb42-1048" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model comparison: random intercept vs random slope</span></span>
+<span id="cb42-1048"><a href="#cb42-1048" aria-hidden="true" tabindex="-1"></a><span class="fu">### Model comparison: random intercept vs random slope</span></span>
 <span id="cb42-1049"><a href="#cb42-1049" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1050"><a href="#cb42-1050" aria-hidden="true" tabindex="-1"></a>Does adding a random slope on <span class="in">`visit`</span> improve the model? Compare</span>
 <span id="cb42-1051"><a href="#cb42-1051" aria-hidden="true" tabindex="-1"></a>a random-intercept-only model to the random-intercept-plus-slope</span>
@@ -3566,7 +3562,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-1085"><a href="#cb42-1085" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>mlm_bp<span class="sc">.</span>cov_re<span class="sc">.</span>iloc[<span class="dv">0</span>,<span class="dv">1</span>] <span class="op">/</span> np<span class="sc">.</span>sqrt(mlm_bp.cov_re.iloc[<span class="dv">0</span>,<span class="dv">0</span>] <span class="op">*</span> mlm_bp.cov_re.iloc[<span class="dv">1</span>,<span class="dv">1</span>])<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
 <span id="cb42-1086"><a href="#cb42-1086" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-1087"><a href="#cb42-1087" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1088"><a href="#cb42-1088" aria-hidden="true" tabindex="-1"></a><span class="fu">## Prediction plots: individual trajectories</span></span>
+<span id="cb42-1088"><a href="#cb42-1088" aria-hidden="true" tabindex="-1"></a><span class="fu">### Prediction plots: individual trajectories</span></span>
 <span id="cb42-1089"><a href="#cb42-1089" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1090"><a href="#cb42-1090" aria-hidden="true" tabindex="-1"></a>The random slope model captures patient-specific rates of change.</span>
 <span id="cb42-1091"><a href="#cb42-1091" aria-hidden="true" tabindex="-1"></a>Plotting predicted trajectories for a sample of patients shows</span>
@@ -3622,7 +3618,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-1143"><a href="#cb42-1143" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-1144"><a href="#cb42-1144" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-1145"><a href="#cb42-1145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1146"><a href="#cb42-1146" aria-hidden="true" tabindex="-1"></a><span class="fu">## GEE vs MixedLM: coefficient interpretation</span></span>
+<span id="cb42-1146"><a href="#cb42-1146" aria-hidden="true" tabindex="-1"></a><span class="fu">### GEE vs MixedLM: coefficient interpretation</span></span>
 <span id="cb42-1147"><a href="#cb42-1147" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1150"><a href="#cb42-1150" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb42-1151"><a href="#cb42-1151" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: worked-interpretation</span></span>
@@ -3653,7 +3649,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-1176"><a href="#cb42-1176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-1177"><a href="#cb42-1177" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1178"><a href="#cb42-1178" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1179"><a href="#cb42-1179" aria-hidden="true" tabindex="-1"></a><span class="fu"># Exercises {#sec-ch14-exercises}</span></span>
+<span id="cb42-1179"><a href="#cb42-1179" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises {#sec-ch14-exercises}</span></span>
 <span id="cb42-1180"><a href="#cb42-1180" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1181"><a href="#cb42-1181" aria-hidden="true" tabindex="-1"></a>**Exercise 14.1** ($\star\star$, diagnostic failure). Fit OLS</span>
 <span id="cb42-1182"><a href="#cb42-1182" aria-hidden="true" tabindex="-1"></a>(ignoring clustering) and MixedLM to the school data. Compare the</span>
@@ -3799,7 +3795,7 @@ With unequal sizes, small schools would be shrunk more:
 <span id="cb42-1328"><a href="#cb42-1328" aria-hidden="true" tabindex="-1"></a>%%</span>
 <span id="cb42-1329"><a href="#cb42-1329" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1330"><a href="#cb42-1330" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-1331"><a href="#cb42-1331" aria-hidden="true" tabindex="-1"></a><span class="fu"># Bibliographic Notes {#sec-ch14-biblio}</span></span>
+<span id="cb42-1331"><a href="#cb42-1331" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bibliographic Notes {#sec-ch14-biblio}</span></span>
 <span id="cb42-1332"><a href="#cb42-1332" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1333"><a href="#cb42-1333" aria-hidden="true" tabindex="-1"></a>Linear mixed models: Laird and Ware (1982) for the modern formulation,</span>
 <span id="cb42-1334"><a href="#cb42-1334" aria-hidden="true" tabindex="-1"></a>Henderson (1950) for BLUP. REML: Patterson and Thompson (1971). The</span>

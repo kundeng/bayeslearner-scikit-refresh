@@ -637,47 +637,34 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#sec-ch22-motivation" id="toc-sec-ch22-motivation" class="nav-link active" data-scroll-target="#sec-ch22-motivation"><span class="header-section-number">23</span> Motivation</a></li>
-  <li><a href="#sec-ch22-math" id="toc-sec-ch22-math" class="nav-link" data-scroll-target="#sec-ch22-math"><span class="header-section-number">24</span> Mathematical Foundation</a>
+  <li><a href="#sec-ch22-motivation" id="toc-sec-ch22-motivation" class="nav-link active" data-scroll-target="#sec-ch22-motivation"><span class="header-section-number">22.1</span> Motivation</a></li>
+  <li><a href="#sec-ch22-math" id="toc-sec-ch22-math" class="nav-link" data-scroll-target="#sec-ch22-math"><span class="header-section-number">22.2</span> Mathematical Foundation</a>
   <ul class="collapse">
-  <li><a href="#rdd-why-the-cutoff-creates-quasi-randomization" id="toc-rdd-why-the-cutoff-creates-quasi-randomization" class="nav-link" data-scroll-target="#rdd-why-the-cutoff-creates-quasi-randomization"><span class="header-section-number">24.1</span> RDD: why the cutoff creates quasi-randomization</a>
+  <li><a href="#rdd-why-the-cutoff-creates-quasi-randomization" id="toc-rdd-why-the-cutoff-creates-quasi-randomization" class="nav-link" data-scroll-target="#rdd-why-the-cutoff-creates-quasi-randomization"><span class="header-section-number">22.2.1</span> RDD: why the cutoff creates quasi-randomization</a></li>
+  <li><a href="#did-why-parallel-trends-removes-confounding" id="toc-did-why-parallel-trends-removes-confounding" class="nav-link" data-scroll-target="#did-why-parallel-trends-removes-confounding"><span class="header-section-number">22.2.2</span> DiD: why parallel trends removes confounding</a></li>
+  <li><a href="#synthetic-control-the-counterfactual-as-an-optimization-problem" id="toc-synthetic-control-the-counterfactual-as-an-optimization-problem" class="nav-link" data-scroll-target="#synthetic-control-the-counterfactual-as-an-optimization-problem"><span class="header-section-number">22.2.3</span> Synthetic control: the counterfactual as an optimization problem</a></li>
+  </ul></li>
+  <li><a href="#sec-ch22-impl" id="toc-sec-ch22-impl" class="nav-link" data-scroll-target="#sec-ch22-impl"><span class="header-section-number">22.3</span> Statsmodels / From-Scratch Implementation</a>
   <ul class="collapse">
-  <li><a href="#identification-proof-sketch" id="toc-identification-proof-sketch" class="nav-link" data-scroll-target="#identification-proof-sketch"><span class="header-section-number">24.1.1</span> Identification proof sketch</a></li>
-  <li><a href="#fuzzy-rdd-as-instrumental-variables" id="toc-fuzzy-rdd-as-instrumental-variables" class="nav-link" data-scroll-target="#fuzzy-rdd-as-instrumental-variables"><span class="header-section-number">24.1.2</span> Fuzzy RDD as instrumental variables</a></li>
-  <li><a href="#optimal-bandwidth-selection" id="toc-optimal-bandwidth-selection" class="nav-link" data-scroll-target="#optimal-bandwidth-selection"><span class="header-section-number">24.1.3</span> Optimal bandwidth selection</a></li>
+  <li><a href="#rdd-from-scratch" id="toc-rdd-from-scratch" class="nav-link" data-scroll-target="#rdd-from-scratch"><span class="header-section-number">22.3.1</span> RDD from scratch</a></li>
+  <li><a href="#local-polynomial-rdd-from-scratch" id="toc-local-polynomial-rdd-from-scratch" class="nav-link" data-scroll-target="#local-polynomial-rdd-from-scratch"><span class="header-section-number">22.3.2</span> Local polynomial RDD from scratch</a></li>
+  <li><a href="#ik-bandwidth-selector-from-scratch" id="toc-ik-bandwidth-selector-from-scratch" class="nav-link" data-scroll-target="#ik-bandwidth-selector-from-scratch"><span class="header-section-number">22.3.3</span> IK bandwidth selector from scratch</a></li>
+  <li><a href="#fuzzy-rdd-from-scratch" id="toc-fuzzy-rdd-from-scratch" class="nav-link" data-scroll-target="#fuzzy-rdd-from-scratch"><span class="header-section-number">22.3.4</span> Fuzzy RDD from scratch</a></li>
+  <li><a href="#did-from-scratch" id="toc-did-from-scratch" class="nav-link" data-scroll-target="#did-from-scratch"><span class="header-section-number">22.3.5</span> DiD from scratch</a></li>
+  <li><a href="#event-study-did-from-scratch" id="toc-event-study-did-from-scratch" class="nav-link" data-scroll-target="#event-study-did-from-scratch"><span class="header-section-number">22.3.6</span> Event study DiD from scratch</a></li>
+  <li><a href="#synthetic-control-from-scratch" id="toc-synthetic-control-from-scratch" class="nav-link" data-scroll-target="#synthetic-control-from-scratch"><span class="header-section-number">22.3.7</span> Synthetic control from scratch</a></li>
+  <li><a href="#synthetic-control-placebo-tests" id="toc-synthetic-control-placebo-tests" class="nav-link" data-scroll-target="#synthetic-control-placebo-tests"><span class="header-section-number">22.3.8</span> Synthetic control placebo tests</a></li>
   </ul></li>
-  <li><a href="#did-why-parallel-trends-removes-confounding" id="toc-did-why-parallel-trends-removes-confounding" class="nav-link" data-scroll-target="#did-why-parallel-trends-removes-confounding"><span class="header-section-number">24.2</span> DiD: why parallel trends removes confounding</a>
+  <li><a href="#sec-ch22-diagnostics" id="toc-sec-ch22-diagnostics" class="nav-link" data-scroll-target="#sec-ch22-diagnostics"><span class="header-section-number">22.4</span> Variations, Diagnostics, and Pitfalls</a>
   <ul class="collapse">
-  <li><a href="#event-study-specification" id="toc-event-study-specification" class="nav-link" data-scroll-target="#event-study-specification"><span class="header-section-number">24.2.1</span> Event study specification</a></li>
-  <li><a href="#pre-trends-testing-pitfalls-roth-2022" id="toc-pre-trends-testing-pitfalls-roth-2022" class="nav-link" data-scroll-target="#pre-trends-testing-pitfalls-roth-2022"><span class="header-section-number">24.2.2</span> Pre-trends testing pitfalls (Roth 2022)</a></li>
-  <li><a href="#callaway-santanna-group-time-atts" id="toc-callaway-santanna-group-time-atts" class="nav-link" data-scroll-target="#callaway-santanna-group-time-atts"><span class="header-section-number">24.2.3</span> Callaway-Sant’Anna group-time ATTs</a></li>
+  <li><a href="#rdd-diagnostics" id="toc-rdd-diagnostics" class="nav-link" data-scroll-target="#rdd-diagnostics"><span class="header-section-number">22.4.1</span> RDD diagnostics</a></li>
+  <li><a href="#did-diagnostics" id="toc-did-diagnostics" class="nav-link" data-scroll-target="#did-diagnostics"><span class="header-section-number">22.4.2</span> DiD diagnostics</a></li>
+  <li><a href="#synthetic-control-diagnostics" id="toc-synthetic-control-diagnostics" class="nav-link" data-scroll-target="#synthetic-control-diagnostics"><span class="header-section-number">22.4.3</span> Synthetic control diagnostics</a></li>
+  <li><a href="#choosing-between-methods" id="toc-choosing-between-methods" class="nav-link" data-scroll-target="#choosing-between-methods"><span class="header-section-number">22.4.4</span> Choosing between methods</a></li>
   </ul></li>
-  <li><a href="#synthetic-control-the-counterfactual-as-an-optimization-problem" id="toc-synthetic-control-the-counterfactual-as-an-optimization-problem" class="nav-link" data-scroll-target="#synthetic-control-the-counterfactual-as-an-optimization-problem"><span class="header-section-number">24.3</span> Synthetic control: the counterfactual as an optimization problem</a>
-  <ul class="collapse">
-  <li><a href="#permutation-inference-for-synthetic-control" id="toc-permutation-inference-for-synthetic-control" class="nav-link" data-scroll-target="#permutation-inference-for-synthetic-control"><span class="header-section-number">24.3.1</span> Permutation inference for synthetic control</a></li>
-  </ul></li>
-  </ul></li>
-  <li><a href="#sec-ch22-impl" id="toc-sec-ch22-impl" class="nav-link" data-scroll-target="#sec-ch22-impl"><span class="header-section-number">25</span> Statsmodels / From-Scratch Implementation</a>
-  <ul class="collapse">
-  <li><a href="#rdd-from-scratch" id="toc-rdd-from-scratch" class="nav-link" data-scroll-target="#rdd-from-scratch"><span class="header-section-number">25.1</span> RDD from scratch</a></li>
-  <li><a href="#local-polynomial-rdd-from-scratch" id="toc-local-polynomial-rdd-from-scratch" class="nav-link" data-scroll-target="#local-polynomial-rdd-from-scratch"><span class="header-section-number">25.2</span> Local polynomial RDD from scratch</a></li>
-  <li><a href="#ik-bandwidth-selector-from-scratch" id="toc-ik-bandwidth-selector-from-scratch" class="nav-link" data-scroll-target="#ik-bandwidth-selector-from-scratch"><span class="header-section-number">25.3</span> IK bandwidth selector from scratch</a></li>
-  <li><a href="#fuzzy-rdd-from-scratch" id="toc-fuzzy-rdd-from-scratch" class="nav-link" data-scroll-target="#fuzzy-rdd-from-scratch"><span class="header-section-number">25.4</span> Fuzzy RDD from scratch</a></li>
-  <li><a href="#did-from-scratch" id="toc-did-from-scratch" class="nav-link" data-scroll-target="#did-from-scratch"><span class="header-section-number">25.5</span> DiD from scratch</a></li>
-  <li><a href="#event-study-did-from-scratch" id="toc-event-study-did-from-scratch" class="nav-link" data-scroll-target="#event-study-did-from-scratch"><span class="header-section-number">25.6</span> Event study DiD from scratch</a></li>
-  <li><a href="#synthetic-control-from-scratch" id="toc-synthetic-control-from-scratch" class="nav-link" data-scroll-target="#synthetic-control-from-scratch"><span class="header-section-number">25.7</span> Synthetic control from scratch</a></li>
-  <li><a href="#synthetic-control-placebo-tests" id="toc-synthetic-control-placebo-tests" class="nav-link" data-scroll-target="#synthetic-control-placebo-tests"><span class="header-section-number">25.8</span> Synthetic control placebo tests</a></li>
-  </ul></li>
-  <li><a href="#sec-ch22-diagnostics" id="toc-sec-ch22-diagnostics" class="nav-link" data-scroll-target="#sec-ch22-diagnostics"><span class="header-section-number">26</span> Variations, Diagnostics, and Pitfalls</a>
-  <ul class="collapse">
-  <li><a href="#rdd-diagnostics" id="toc-rdd-diagnostics" class="nav-link" data-scroll-target="#rdd-diagnostics"><span class="header-section-number">26.1</span> RDD diagnostics</a></li>
-  <li><a href="#did-diagnostics" id="toc-did-diagnostics" class="nav-link" data-scroll-target="#did-diagnostics"><span class="header-section-number">26.2</span> DiD diagnostics</a></li>
-  <li><a href="#synthetic-control-diagnostics" id="toc-synthetic-control-diagnostics" class="nav-link" data-scroll-target="#synthetic-control-diagnostics"><span class="header-section-number">26.3</span> Synthetic control diagnostics</a></li>
-  <li><a href="#choosing-between-methods" id="toc-choosing-between-methods" class="nav-link" data-scroll-target="#choosing-between-methods"><span class="header-section-number">26.4</span> Choosing between methods</a></li>
-  </ul></li>
-  <li><a href="#sec-ch22-computation" id="toc-sec-ch22-computation" class="nav-link" data-scroll-target="#sec-ch22-computation"><span class="header-section-number">27</span> Computational Considerations</a></li>
-  <li><a href="#sec-ch22-exercises" id="toc-sec-ch22-exercises" class="nav-link" data-scroll-target="#sec-ch22-exercises"><span class="header-section-number">28</span> Exercises</a></li>
-  <li><a href="#sec-ch22-biblio" id="toc-sec-ch22-biblio" class="nav-link" data-scroll-target="#sec-ch22-biblio"><span class="header-section-number">29</span> Bibliographic Notes</a></li>
+  <li><a href="#sec-ch22-computation" id="toc-sec-ch22-computation" class="nav-link" data-scroll-target="#sec-ch22-computation"><span class="header-section-number">22.5</span> Computational Considerations</a></li>
+  <li><a href="#sec-ch22-exercises" id="toc-sec-ch22-exercises" class="nav-link" data-scroll-target="#sec-ch22-exercises"><span class="header-section-number">22.6</span> Exercises</a></li>
+  <li><a href="#sec-ch22-biblio" id="toc-sec-ch22-biblio" class="nav-link" data-scroll-target="#sec-ch22-biblio"><span class="header-section-number">22.7</span> Bibliographic Notes</a></li>
   </ul>
 </nav>
     </div>
@@ -714,8 +701,8 @@ window.Quarto = {
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">'assets/book.mplstyle'</span>)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="sec-ch22-motivation" class="level1" data-number="23">
-<h1 data-number="23"><span class="header-section-number">23</span> Motivation</h1>
+<section id="sec-ch22-motivation" class="level2" data-number="22.1">
+<h2 data-number="22.1" class="anchored" data-anchor-id="sec-ch22-motivation"><span class="header-section-number">22.1</span> Motivation</h2>
 <p>Chapter 21 required unconfoundedness: treatment assignment is random conditional on observables. When unconfoundedness fails (unobserved confounders exist), we need <em>designs</em> that create quasi-randomization:</p>
 <ul>
 <li><strong>RDD:</strong> Treatment assigned by whether a running variable crosses a cutoff (test score → scholarship, age → eligibility)</li>
@@ -724,19 +711,19 @@ window.Quarto = {
 </ul>
 <p>All three exploit specific design features rather than assuming away confounders.</p>
 </section>
-<section id="sec-ch22-math" class="level1" data-number="24">
-<h1 data-number="24"><span class="header-section-number">24</span> Mathematical Foundation</h1>
-<section id="rdd-why-the-cutoff-creates-quasi-randomization" class="level2" data-number="24.1">
-<h2 data-number="24.1" class="anchored" data-anchor-id="rdd-why-the-cutoff-creates-quasi-randomization"><span class="header-section-number">24.1</span> RDD: why the cutoff creates quasi-randomization</h2>
+<section id="sec-ch22-math" class="level2" data-number="22.2">
+<h2 data-number="22.2" class="anchored" data-anchor-id="sec-ch22-math"><span class="header-section-number">22.2</span> Mathematical Foundation</h2>
+<section id="rdd-why-the-cutoff-creates-quasi-randomization" class="level3" data-number="22.2.1">
+<h3 data-number="22.2.1" class="anchored" data-anchor-id="rdd-why-the-cutoff-creates-quasi-randomization"><span class="header-section-number">22.2.1</span> RDD: why the cutoff creates quasi-randomization</h3>
 <p>In a sharp RDD, treatment is assigned by whether a <em>running variable</em> <span class="math inline">\(X_i\)</span> crosses a cutoff <span class="math inline">\(c\)</span>: <span class="math inline">\(D_i = \mathbb{1}(X_i \geq c)\)</span>. For example, students with test scores above 80 get a scholarship; those below don’t.</p>
 <p><strong>The key insight:</strong> Units just above and just below the cutoff are nearly identical — they differ by a tiny amount of the running variable. A student with a score of 80.1 is essentially the same as a student with 79.9, but one gets the scholarship and the other doesn’t. This creates a quasi-random experiment at the cutoff.</p>
 <p>The causal effect at the cutoff is: <span id="eq-rdd"><span class="math display">\[
 \tau_{\text{RDD}} = \lim_{x \downarrow c} \mathbb{E}[Y \mid X=x] - \lim_{x \uparrow c} \mathbb{E}[Y \mid X=x].
-\tag{24.1}\]</span></span></p>
+\tag{22.1}\]</span></span></p>
 <p><strong>What RDD does and doesn’t identify:</strong> RDD identifies the <em>local</em> treatment effect at the cutoff — for people whose running variable is right at <span class="math inline">\(c\)</span>. It does NOT identify the effect for people far from the cutoff. A scholarship might help marginal students (near the cutoff) differently from top students (far above it).</p>
 <p><strong>How to estimate it:</strong> Fit separate regressions on each side of the cutoff (local linear regression) and measure the jump. The <em>bandwidth</em> determines how far from the cutoff you include data: wider bandwidth = more data but more bias (the relationship may be nonlinear); narrower bandwidth = less bias but more variance.</p>
-<section id="identification-proof-sketch" class="level3" data-number="24.1.1">
-<h3 data-number="24.1.1" class="anchored" data-anchor-id="identification-proof-sketch"><span class="header-section-number">24.1.1</span> Identification proof sketch</h3>
+<section id="identification-proof-sketch" class="level4" data-number="22.2.1.1">
+<h4 data-number="22.2.1.1" class="anchored" data-anchor-id="identification-proof-sketch"><span class="header-section-number">22.2.1.1</span> Identification proof sketch</h4>
 <p>The RDD estimand relies on a <em>continuity</em> assumption. Suppose the potential outcomes <span class="math inline">\(\mathbb{E}[Y(0) \mid X=x]\)</span> and <span class="math inline">\(\mathbb{E}[Y(1) \mid X=x]\)</span> are both continuous functions of <span class="math inline">\(x\)</span> at the cutoff <span class="math inline">\(c\)</span>. Then:</p>
 <p><span class="math display">\[
 \lim_{x \downarrow c} \mathbb{E}[Y \mid X=x]
@@ -749,18 +736,18 @@ window.Quarto = {
 \]</span></p>
 <p>This is a <em>local</em> estimand: it tells you the treatment effect <em>only for units at the cutoff</em>. Extrapolating to units far from the cutoff requires additional assumptions (constant effects, parametric models) that the design alone does not justify. The from-scratch implementation below makes this concrete: the local linear regression literally restricts to a narrow window around <span class="math inline">\(c\)</span>.</p>
 </section>
-<section id="fuzzy-rdd-as-instrumental-variables" class="level3" data-number="24.1.2">
-<h3 data-number="24.1.2" class="anchored" data-anchor-id="fuzzy-rdd-as-instrumental-variables"><span class="header-section-number">24.1.2</span> Fuzzy RDD as instrumental variables</h3>
+<section id="fuzzy-rdd-as-instrumental-variables" class="level4" data-number="22.2.1.2">
+<h4 data-number="22.2.1.2" class="anchored" data-anchor-id="fuzzy-rdd-as-instrumental-variables"><span class="header-section-number">22.2.1.2</span> Fuzzy RDD as instrumental variables</h4>
 <p>In a sharp RDD, crossing the cutoff <em>perfectly</em> determines treatment: <span class="math inline">\(\Pr(D=1 \mid X=c+\epsilon) = 1\)</span> and <span class="math inline">\(\Pr(D=1 \mid X=c-\epsilon) = 0\)</span>. But in many applications, the cutoff creates a <em>jump</em> in the probability of treatment without making it deterministic. Students above a scholarship cutoff are <em>eligible</em> but may not all enroll; patients above a risk threshold are <em>recommended</em> surgery but some decline. This is a fuzzy RDD.</p>
 <p>In a fuzzy RDD, the cutoff indicator <span class="math inline">\(Z_i = \mathbb{1}(X_i \geq c)\)</span> serves as an <em>instrument</em> for the endogenous treatment <span class="math inline">\(D_i\)</span>. The fuzzy RDD estimand is:</p>
 <p><span id="eq-fuzzy-rdd"><span class="math display">\[
 \tau_{\text{fuzzy}} = \frac{\lim_{x \downarrow c} \mathbb{E}[Y \mid X=x] - \lim_{x \uparrow c} \mathbb{E}[Y \mid X=x]}
 {\lim_{x \downarrow c} \mathbb{E}[D \mid X=x] - \lim_{x \uparrow c} \mathbb{E}[D \mid X=x]}.
-\tag{24.2}\]</span></span></p>
+\tag{22.2}\]</span></span></p>
 <p>This is a Wald estimator — the ratio of the jump in the outcome to the jump in the treatment probability — which is exactly the IV estimand from Chapter 20. The implementation uses 2SLS restricted to observations near the cutoff.</p>
 </section>
-<section id="optimal-bandwidth-selection" class="level3" data-number="24.1.3">
-<h3 data-number="24.1.3" class="anchored" data-anchor-id="optimal-bandwidth-selection"><span class="header-section-number">24.1.3</span> Optimal bandwidth selection</h3>
+<section id="optimal-bandwidth-selection" class="level4" data-number="22.2.1.3">
+<h4 data-number="22.2.1.3" class="anchored" data-anchor-id="optimal-bandwidth-selection"><span class="header-section-number">22.2.1.3</span> Optimal bandwidth selection</h4>
 <p>The bandwidth <span class="math inline">\(h\)</span> controls the bias-variance tradeoff. Too narrow and variance explodes (few observations); too wide and bias dominates (nonlinear relationships get flattened). Imbens and Kalyanaraman (2012) derived the MSE-optimal bandwidth for a local linear estimator:</p>
 <p><span class="math display">\[
 h_{\text{IK}}^* = C_{\text{IK}} \cdot n^{-1/5},
@@ -774,36 +761,36 @@ h_{\text{IK}}^* = C_K \left(\frac{\hat{\sigma}^2(c)}{n \cdot \hat{f}(c)
 <p>where <span class="math inline">\(\hat{f}(c)\)</span> is the estimated density at the cutoff, <span class="math inline">\(\hat{m}''_{\pm}(c)\)</span> are estimated second derivatives on each side, <span class="math inline">\(\hat{\sigma}^2(c)\)</span> is the conditional variance at <span class="math inline">\(c\)</span>, and <span class="math inline">\(C_K\)</span> is a kernel-specific constant. We implement a simplified version from scratch below.</p>
 </section>
 </section>
-<section id="did-why-parallel-trends-removes-confounding" class="level2" data-number="24.2">
-<h2 data-number="24.2" class="anchored" data-anchor-id="did-why-parallel-trends-removes-confounding"><span class="header-section-number">24.2</span> DiD: why parallel trends removes confounding</h2>
+<section id="did-why-parallel-trends-removes-confounding" class="level3" data-number="22.2.2">
+<h3 data-number="22.2.2" class="anchored" data-anchor-id="did-why-parallel-trends-removes-confounding"><span class="header-section-number">22.2.2</span> DiD: why parallel trends removes confounding</h3>
 <p>Difference-in-differences compares <em>changes</em> rather than levels:</p>
 <p><span id="eq-did"><span class="math display">\[
 \tau_{\text{DiD}} = \underbrace{(\bar{Y}_{\text{treated,post}} - \bar{Y}_{\text{treated,pre}})}_{\text{change for treated}}
 - \underbrace{(\bar{Y}_{\text{control,post}} - \bar{Y}_{\text{control,pre}})}_{\text{change for control}}.
-\tag{24.3}\]</span></span></p>
+\tag{22.3}\]</span></span></p>
 <p><strong>Why it works:</strong> Suppose treated and control groups differ in <em>levels</em> (treated cities are richer) but would have followed the same <em>trend</em> absent treatment (both would have grown at the same rate). The first difference (post - pre) removes the level difference. The second difference (treated change - control change) removes the common trend. What’s left is the treatment effect.</p>
 <p><strong>The parallel trends assumption:</strong> The control group’s change is what would have happened to the treated group without treatment. This is untestable in the post-period, but you can check for <em>pre-trends</em>: if the two groups had parallel trends before treatment, it is more plausible they would have continued to.</p>
 <p><strong>The TWFE problem (Goodman-Bacon, 2021):</strong> The standard two-way fixed effects regression <span class="math inline">\(Y_{it} = \alpha_i + \gamma_t + \tau D_{it} + \varepsilon_{it}\)</span> works perfectly for the simple 2×2 case (two groups, two periods). But when treatment is <em>staggered</em> (different units treated at different times) and effects are <em>heterogeneous</em> (early vs late adopters have different effects), TWFE computes a weighted average of all possible 2×2 comparisons. Some of these comparisons use <em>already-treated</em> units as controls, and the resulting weights can be <em>negative</em>. This can produce an estimate with the wrong sign even when every individual treatment effect is positive.</p>
 <p><strong>The fix:</strong> Use estimators designed for staggered adoption: Callaway and Sant’Anna (2021) or Sun and Abraham (2021), which only use not-yet-treated units as controls.</p>
-<section id="event-study-specification" class="level3" data-number="24.2.1">
-<h3 data-number="24.2.1" class="anchored" data-anchor-id="event-study-specification"><span class="header-section-number">24.2.1</span> Event study specification</h3>
+<section id="event-study-specification" class="level4" data-number="22.2.2.1">
+<h4 data-number="22.2.2.1" class="anchored" data-anchor-id="event-study-specification"><span class="header-section-number">22.2.2.1</span> Event study specification</h4>
 <p>An event study estimates treatment effects at each time period relative to treatment onset. The regression model is:</p>
 <p><span id="eq-event-study"><span class="math display">\[
 Y_{it} = \alpha_i + \gamma_t + \sum_{k \neq -1} \delta_k \cdot \mathbb{1}(t - G_i = k) + \varepsilon_{it},
-\tag{24.4}\]</span></span></p>
+\tag{22.4}\]</span></span></p>
 <p>where <span class="math inline">\(G_i\)</span> is the period when unit <span class="math inline">\(i\)</span> is first treated, <span class="math inline">\(k\)</span> indexes periods relative to treatment (<span class="math inline">\(k &lt; 0\)</span> is pre-treatment, <span class="math inline">\(k \geq 0\)</span> is post-treatment), and <span class="math inline">\(k = -1\)</span> is the omitted reference period. The coefficients <span class="math inline">\(\delta_k\)</span> have two roles:</p>
 <ul>
 <li><strong>Pre-treatment (<span class="math inline">\(k &lt; 0\)</span>):</strong> These should be approximately zero. If they trend away from zero, parallel trends is violated.</li>
 <li><strong>Post-treatment (<span class="math inline">\(k \geq 0\)</span>):</strong> These estimate the dynamic treatment effect at each post-treatment horizon.</li>
 </ul>
 </section>
-<section id="pre-trends-testing-pitfalls-roth-2022" class="level3" data-number="24.2.2">
-<h3 data-number="24.2.2" class="anchored" data-anchor-id="pre-trends-testing-pitfalls-roth-2022"><span class="header-section-number">24.2.2</span> Pre-trends testing pitfalls (Roth 2022)</h3>
+<section id="pre-trends-testing-pitfalls-roth-2022" class="level4" data-number="22.2.2.2">
+<h4 data-number="22.2.2.2" class="anchored" data-anchor-id="pre-trends-testing-pitfalls-roth-2022"><span class="header-section-number">22.2.2.2</span> Pre-trends testing pitfalls (Roth 2022)</h4>
 <p>Testing for pre-trends sounds straightforward: if <span class="math inline">\(\delta_{-2},
 \delta_{-3}, \ldots\)</span> are insignificant, parallel trends holds. But Roth (2022) showed this creates <em>pre-test bias</em>: conditioning on passing the pre-trends test biases the post-treatment estimates. The intuition is selection — among the studies where the pre-test passes, the ones with real parallel-trends violations are overrepresented among those that happened to get small pre-treatment coefficients by chance. The practical takeaway: a non-significant pre-trends test does <em>not</em> validate the design. Report the pre-treatment coefficients honestly; do not condition on them.</p>
 </section>
-<section id="callaway-santanna-group-time-atts" class="level3" data-number="24.2.3">
-<h3 data-number="24.2.3" class="anchored" data-anchor-id="callaway-santanna-group-time-atts"><span class="header-section-number">24.2.3</span> Callaway-Sant’Anna group-time ATTs</h3>
+<section id="callaway-santanna-group-time-atts" class="level4" data-number="22.2.2.3">
+<h4 data-number="22.2.2.3" class="anchored" data-anchor-id="callaway-santanna-group-time-atts"><span class="header-section-number">22.2.2.3</span> Callaway-Sant’Anna group-time ATTs</h4>
 <p>The Callaway-Sant’Anna estimator defines group-time average treatment effects <span class="math inline">\(ATT(g, t)\)</span>: the effect at time <span class="math inline">\(t\)</span> for the group first treated at time <span class="math inline">\(g\)</span>. Each <span class="math inline">\(ATT(g, t)\)</span> is a simple DiD using only not-yet-treated (or never-treated) units as controls:</p>
 <p><span class="math display">\[
 ATT(g, t) = \mathbb{E}[Y_t - Y_{g-1} \mid G=g]
@@ -812,8 +799,8 @@ ATT(g, t) = \mathbb{E}[Y_t - Y_{g-1} \mid G=g]
 <p>where <span class="math inline">\(C=1\)</span> indicates the control group. These group-time effects are then aggregated into summary measures (overall ATT, dynamic effects by event time, group-specific effects) using explicit weighting. The key insight is that no already-treated unit ever serves as a control, avoiding the negative-weight problem entirely.</p>
 </section>
 </section>
-<section id="synthetic-control-the-counterfactual-as-an-optimization-problem" class="level2" data-number="24.3">
-<h2 data-number="24.3" class="anchored" data-anchor-id="synthetic-control-the-counterfactual-as-an-optimization-problem"><span class="header-section-number">24.3</span> Synthetic control: the counterfactual as an optimization problem</h2>
+<section id="synthetic-control-the-counterfactual-as-an-optimization-problem" class="level3" data-number="22.2.3">
+<h3 data-number="22.2.3" class="anchored" data-anchor-id="synthetic-control-the-counterfactual-as-an-optimization-problem"><span class="header-section-number">22.2.3</span> Synthetic control: the counterfactual as an optimization problem</h3>
 <p>When you have a <em>single</em> treated unit (one state that passed a law, one company that merged), you cannot compute a simple average of control outcomes. Synthetic control constructs the best possible counterfactual by weighting control units to match the treated unit’s pre-treatment trajectory:</p>
 <p><span class="math display">\[
 \hat{\mathbf{w}} = \arg\min_\mathbf{w} \|\mathbf{Y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}}\mathbf{w}\|^2
@@ -822,8 +809,8 @@ ATT(g, t) = \mathbb{E}[Y_t - Y_{g-1} \mid G=g]
 <p>The weights <span class="math inline">\(\hat{w}_j\)</span> tell you: “the counterfactual is 30% of California + 20% of Texas + …” The treatment effect is the gap between the actual outcome and the synthetic control in the post-period.</p>
 <p><strong>Why the constraints:</strong> Non-negative weights (<span class="math inline">\(w_j \geq 0\)</span>) and summing to 1 (<span class="math inline">\(\sum w_j = 1\)</span>) prevent extrapolation. The synthetic control is a <em>convex combination</em> of real units, so it stays within the range of observed data. This is more defensible than regression, which can extrapolate far outside the data.</p>
 <p><strong>Connection to optimization (Ch. 3):</strong> This is a constrained least-squares problem, solved by <code>scipy.optimize.minimize</code> with <code>LinearConstraint</code>. The optimization theory from Chapter 3 applies directly.</p>
-<section id="permutation-inference-for-synthetic-control" class="level3" data-number="24.3.1">
-<h3 data-number="24.3.1" class="anchored" data-anchor-id="permutation-inference-for-synthetic-control"><span class="header-section-number">24.3.1</span> Permutation inference for synthetic control</h3>
+<section id="permutation-inference-for-synthetic-control" class="level4" data-number="22.2.3.1">
+<h4 data-number="22.2.3.1" class="anchored" data-anchor-id="permutation-inference-for-synthetic-control"><span class="header-section-number">22.2.3.1</span> Permutation inference for synthetic control</h4>
 <p>Standard inference (confidence intervals, <span class="math inline">\(p\)</span>-values) does not apply to synthetic control — there is only one treated unit, so there is no sampling distribution. Instead, we use <em>permutation inference</em> (Abadie, Diamond, Hainmueller 2010):</p>
 <ol type="1">
 <li>Apply the synthetic control method to each control unit <span class="math inline">\(j\)</span>, pretending it was the treated unit (a “placebo” test).</li>
@@ -843,10 +830,10 @@ p = \frac{1}{J+1} \sum_{j=0}^{J} \mathbb{1}(r_j \geq r_0),
 </section>
 </section>
 </section>
-<section id="sec-ch22-impl" class="level1" data-number="25">
-<h1 data-number="25"><span class="header-section-number">25</span> Statsmodels / From-Scratch Implementation</h1>
-<section id="rdd-from-scratch" class="level2" data-number="25.1">
-<h2 data-number="25.1" class="anchored" data-anchor-id="rdd-from-scratch"><span class="header-section-number">25.1</span> RDD from scratch</h2>
+<section id="sec-ch22-impl" class="level2" data-number="22.3">
+<h2 data-number="22.3" class="anchored" data-anchor-id="sec-ch22-impl"><span class="header-section-number">22.3</span> Statsmodels / From-Scratch Implementation</h2>
+<section id="rdd-from-scratch" class="level3" data-number="22.3.1">
+<h3 data-number="22.3.1" class="anchored" data-anchor-id="rdd-from-scratch"><span class="header-section-number">22.3.1</span> RDD from scratch</h3>
 <p>In a sharp RDD, treatment is deterministic: everyone above the cutoff gets treated, everyone below does not. We estimate the treatment effect by comparing outcomes just above and just below the cutoff using local linear regression (OLS restricted to observations near the cutoff).</p>
 <div id="rdd-demo" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate sharp RDD: treatment assigned by whether x &gt;= 0</span></span>
@@ -895,15 +882,15 @@ True effect: 2.0</code></pre>
 <img src="22-rdd-did-synth-control_files/figure-html/fig-rdd-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rdd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;25.1: Regression discontinuity: the jump at the cutoff identifies the treatment effect. Local linear fits on each side of the cutoff estimate the discontinuity.
+Figure&nbsp;22.1: Regression discontinuity: the jump at the cutoff identifies the treatment effect. Local linear fits on each side of the cutoff estimate the discontinuity.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="local-polynomial-rdd-from-scratch" class="level2" data-number="25.2">
-<h2 data-number="25.2" class="anchored" data-anchor-id="local-polynomial-rdd-from-scratch"><span class="header-section-number">25.2</span> Local polynomial RDD from scratch</h2>
+<section id="local-polynomial-rdd-from-scratch" class="level3" data-number="22.3.2">
+<h3 data-number="22.3.2" class="anchored" data-anchor-id="local-polynomial-rdd-from-scratch"><span class="header-section-number">22.3.2</span> Local polynomial RDD from scratch</h3>
 <p>The RDD estimator above used OLS on observations near the cutoff. A proper local polynomial estimator uses <em>kernel weighting</em> — giving more weight to observations closer to the cutoff. This is weighted least squares with a triangular or Epanechnikov kernel.</p>
 <div id="local-poly-rdd" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> local_linear_rdd(y, x, cutoff, bandwidth, kernel<span class="op">=</span><span class="st">'triangular'</span>):</span>
@@ -956,8 +943,8 @@ True effect: 2.0</code></pre>
 </div>
 </div>
 </section>
-<section id="ik-bandwidth-selector-from-scratch" class="level2" data-number="25.3">
-<h2 data-number="25.3" class="anchored" data-anchor-id="ik-bandwidth-selector-from-scratch"><span class="header-section-number">25.3</span> IK bandwidth selector from scratch</h2>
+<section id="ik-bandwidth-selector-from-scratch" class="level3" data-number="22.3.3">
+<h3 data-number="22.3.3" class="anchored" data-anchor-id="ik-bandwidth-selector-from-scratch"><span class="header-section-number">22.3.3</span> IK bandwidth selector from scratch</h3>
 <p>The Imbens-Kalyanaraman bandwidth requires estimates of the density at the cutoff, the conditional variance, and the second derivatives of the regression function on each side. We implement a simplified version that captures the key ideas.</p>
 <div id="ik-bandwidth" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ik_bandwidth(y, x, cutoff, kernel<span class="op">=</span><span class="st">'triangular'</span>):</span>
@@ -1034,8 +1021,8 @@ True effect: 2.0</code></pre>
 </div>
 </div>
 </section>
-<section id="fuzzy-rdd-from-scratch" class="level2" data-number="25.4">
-<h2 data-number="25.4" class="anchored" data-anchor-id="fuzzy-rdd-from-scratch"><span class="header-section-number">25.4</span> Fuzzy RDD from scratch</h2>
+<section id="fuzzy-rdd-from-scratch" class="level3" data-number="22.3.4">
+<h3 data-number="22.3.4" class="anchored" data-anchor-id="fuzzy-rdd-from-scratch"><span class="header-section-number">22.3.4</span> Fuzzy RDD from scratch</h3>
 <p>When the cutoff creates a jump in the <em>probability</em> of treatment rather than a sharp switch, we have a fuzzy RDD. The estimator is 2SLS restricted to observations near the cutoff — the same IV machinery from Chapter 20, applied locally.</p>
 <div id="fuzzy-rdd" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate fuzzy RDD: cutoff increases treatment probability</span></span>
@@ -1086,8 +1073,8 @@ True effect: 3.0</code></pre>
 </div>
 </div>
 </section>
-<section id="did-from-scratch" class="level2" data-number="25.5">
-<h2 data-number="25.5" class="anchored" data-anchor-id="did-from-scratch"><span class="header-section-number">25.5</span> DiD from scratch</h2>
+<section id="did-from-scratch" class="level3" data-number="22.3.5">
+<h3 data-number="22.3.5" class="anchored" data-anchor-id="did-from-scratch"><span class="header-section-number">22.3.5</span> DiD from scratch</h3>
 <p>Difference-in-differences compares the <em>change</em> in outcomes for the treated group to the <em>change</em> for the control group. The identifying assumption is that both groups would have followed the same trend absent treatment (parallel trends). The treatment effect is the difference between the actual and counterfactual changes.</p>
 <div id="did-demo" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate a simple 2x2 DiD: 2 groups × 2 time periods</span></span>
@@ -1135,15 +1122,15 @@ Regression DiD: 1.538 (SE=0.265)</code></pre>
 <img src="22-rdd-did-synth-control_files/figure-html/fig-did-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-did-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;25.2: Difference-in-differences: the parallel trends assumption (dashed line) shows where the treated group would have been without treatment. The DiD estimate is the gap between actual and counterfactual.
+Figure&nbsp;22.2: Difference-in-differences: the parallel trends assumption (dashed line) shows where the treated group would have been without treatment. The DiD estimate is the gap between actual and counterfactual.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="event-study-did-from-scratch" class="level2" data-number="25.6">
-<h2 data-number="25.6" class="anchored" data-anchor-id="event-study-did-from-scratch"><span class="header-section-number">25.6</span> Event study DiD from scratch</h2>
+<section id="event-study-did-from-scratch" class="level3" data-number="22.3.6">
+<h3 data-number="22.3.6" class="anchored" data-anchor-id="event-study-did-from-scratch"><span class="header-section-number">22.3.6</span> Event study DiD from scratch</h3>
 <p>An event study specification estimates treatment effects at each period relative to the treatment date. This is the workhorse diagnostic for DiD: pre-treatment coefficients should be zero (validating parallel trends), and post-treatment coefficients trace out the dynamic effect.</p>
 <div id="event-study-did" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate panel: 50 units, 10 periods, treatment at t=5</span></span>
@@ -1252,15 +1239,15 @@ Figure&nbsp;25.2: Difference-in-differences: the parallel trends assumption (das
 <img src="22-rdd-did-synth-control_files/figure-html/fig-event-study-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-event-study-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;25.3: Event study plot: pre-treatment coefficients near zero validate parallel trends; post-treatment coefficients trace the growing treatment effect.
+Figure&nbsp;22.3: Event study plot: pre-treatment coefficients near zero validate parallel trends; post-treatment coefficients trace the growing treatment effect.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="synthetic-control-from-scratch" class="level2" data-number="25.7">
-<h2 data-number="25.7" class="anchored" data-anchor-id="synthetic-control-from-scratch"><span class="header-section-number">25.7</span> Synthetic control from scratch</h2>
+<section id="synthetic-control-from-scratch" class="level3" data-number="22.3.7">
+<h3 data-number="22.3.7" class="anchored" data-anchor-id="synthetic-control-from-scratch"><span class="header-section-number">22.3.7</span> Synthetic control from scratch</h3>
 <div id="synth-demo" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1329,15 +1316,15 @@ Avg treatment effect (post): 5.316 (true≈5)</code></pre>
 <img src="22-rdd-did-synth-control_files/figure-html/fig-synth-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-synth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;25.4: Synthetic control: the synthetic (dashed) closely tracks the treated unit pre-treatment. Post-treatment, the gap between actual and synthetic estimates the treatment effect.
+Figure&nbsp;22.4: Synthetic control: the synthetic (dashed) closely tracks the treated unit pre-treatment. Post-treatment, the gap between actual and synthetic estimates the treatment effect.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="synthetic-control-placebo-tests" class="level2" data-number="25.8">
-<h2 data-number="25.8" class="anchored" data-anchor-id="synthetic-control-placebo-tests"><span class="header-section-number">25.8</span> Synthetic control placebo tests</h2>
+<section id="synthetic-control-placebo-tests" class="level3" data-number="22.3.8">
+<h3 data-number="22.3.8" class="anchored" data-anchor-id="synthetic-control-placebo-tests"><span class="header-section-number">22.3.8</span> Synthetic control placebo tests</h3>
 <p>To assess whether the treated unit’s effect is “significant,” we apply the synthetic control method to each control unit (pretending it is treated) and compare the resulting gaps.</p>
 <div id="synth-placebo" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_synth(Y_treated_pre, Y_control_pre, Y_control_post):</span>
@@ -1447,7 +1434,7 @@ Permutation p-value: 0.167</code></pre>
 <img src="22-rdd-did-synth-control_files/figure-html/fig-synth-placebo-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-synth-placebo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;25.5: Placebo test: the treated unit’s gap (dark) should be larger than the placebo gaps (gray). If the treated line is not extreme, the effect is not significant by permutation inference.
+Figure&nbsp;22.5: Placebo test: the treated unit’s gap (dark) should be larger than the placebo gaps (gray). If the treated line is not extreme, the effect is not significant by permutation inference.
 </figcaption>
 </figure>
 </div>
@@ -1455,10 +1442,10 @@ Figure&nbsp;25.5: Placebo test: the treated unit’s gap (dark) should be larger
 </div>
 </section>
 </section>
-<section id="sec-ch22-diagnostics" class="level1" data-number="26">
-<h1 data-number="26"><span class="header-section-number">26</span> Variations, Diagnostics, and Pitfalls</h1>
-<section id="rdd-diagnostics" class="level2" data-number="26.1">
-<h2 data-number="26.1" class="anchored" data-anchor-id="rdd-diagnostics"><span class="header-section-number">26.1</span> RDD diagnostics</h2>
+<section id="sec-ch22-diagnostics" class="level2" data-number="22.4">
+<h2 data-number="22.4" class="anchored" data-anchor-id="sec-ch22-diagnostics"><span class="header-section-number">22.4</span> Variations, Diagnostics, and Pitfalls</h2>
+<section id="rdd-diagnostics" class="level3" data-number="22.4.1">
+<h3 data-number="22.4.1" class="anchored" data-anchor-id="rdd-diagnostics"><span class="header-section-number">22.4.1</span> RDD diagnostics</h3>
 <p><strong>Placebo tests:</strong> Run the RDD analysis at fake cutoffs where there is no treatment. The estimated “effect” should be zero. If you find significant effects at fake cutoffs, your specification is wrong.</p>
 <p><strong>Density test (McCrary test):</strong> Check whether observations bunch at the cutoff. If people can manipulate their running variable to be just above (or below) the cutoff, the quasi-random assignment breaks down. A discontinuity in the density of the running variable at the cutoff is evidence of manipulation.</p>
 <div id="mccrary-test" class="cell" data-execution_count="15">
@@ -1558,7 +1545,7 @@ No manipulation</code></pre>
 <img src="22-rdd-did-synth-control_files/figure-html/fig-bw-sensitivity-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bw-sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;26.1: Bandwidth sensitivity: the RDD estimate should be stable across a range of bandwidths. Large variation indicates sensitivity to specification.
+Figure&nbsp;22.6: Bandwidth sensitivity: the RDD estimate should be stable across a range of bandwidths. Large variation indicates sensitivity to specification.
 </figcaption>
 </figure>
 </div>
@@ -1586,8 +1573,8 @@ Balanced</code></pre>
 </div>
 </div>
 </section>
-<section id="did-diagnostics" class="level2" data-number="26.2">
-<h2 data-number="26.2" class="anchored" data-anchor-id="did-diagnostics"><span class="header-section-number">26.2</span> DiD diagnostics</h2>
+<section id="did-diagnostics" class="level3" data-number="22.4.2">
+<h3 data-number="22.4.2" class="anchored" data-anchor-id="did-diagnostics"><span class="header-section-number">22.4.2</span> DiD diagnostics</h3>
 <p><strong>Pre-trends test:</strong> Plot the outcome for treated and control groups in the pre-treatment period. Parallel pre-trends support (but do not prove) the parallel trends assumption. Diverging pre-trends are a red flag.</p>
 <p><strong>Event study plot:</strong> The event study from the implementation section already serves as the primary DiD diagnostic — pre-treatment coefficients near zero validate the design. Below, we examine the pre-treatment coefficients more formally.</p>
 <div id="pretrends-test" class="cell" data-execution_count="18">
@@ -1625,8 +1612,8 @@ Joint F-test on pre-treatment coefficients:
 </div>
 </div>
 </section>
-<section id="synthetic-control-diagnostics" class="level2" data-number="26.3">
-<h2 data-number="26.3" class="anchored" data-anchor-id="synthetic-control-diagnostics"><span class="header-section-number">26.3</span> Synthetic control diagnostics</h2>
+<section id="synthetic-control-diagnostics" class="level3" data-number="22.4.3">
+<h3 data-number="22.4.3" class="anchored" data-anchor-id="synthetic-control-diagnostics"><span class="header-section-number">22.4.3</span> Synthetic control diagnostics</h3>
 <p><strong>Pre-treatment fit:</strong> The synthetic control should closely match the treated unit in the pre-treatment period. A poor pre-treatment fit (large gap) means the synthetic control is not a credible counterfactual.</p>
 <p><strong>Placebo test (permutation inference):</strong> The placebo tests above give us the distribution of RMSPE ratios. We can formalize this.</p>
 <div id="cell-fig-rmspe-ratios" class="cell" data-execution_count="19">
@@ -1650,7 +1637,7 @@ Joint F-test on pre-treatment coefficients:
 <img src="22-rdd-did-synth-control_files/figure-html/fig-rmspe-ratios-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rmspe-ratios-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;26.2: Distribution of RMSPE ratios from placebo tests. The treated unit (vertical line) should be in the right tail; otherwise the effect is not distinguishable from noise.
+Figure&nbsp;22.7: Distribution of RMSPE ratios from placebo tests. The treated unit (vertical line) should be in the right tail; otherwise the effect is not distinguishable from noise.
 </figcaption>
 </figure>
 </div>
@@ -1685,8 +1672,8 @@ Weights on donor units:
 </div>
 </div>
 </section>
-<section id="choosing-between-methods" class="level2" data-number="26.4">
-<h2 data-number="26.4" class="anchored" data-anchor-id="choosing-between-methods"><span class="header-section-number">26.4</span> Choosing between methods</h2>
+<section id="choosing-between-methods" class="level3" data-number="22.4.4">
+<h3 data-number="22.4.4" class="anchored" data-anchor-id="choosing-between-methods"><span class="header-section-number">22.4.4</span> Choosing between methods</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -1726,8 +1713,8 @@ Weights on donor units:
 <p><strong>Rule of thumb:</strong> Use RDD when there is a clear eligibility cutoff; DiD when there is a clear before/after treatment date with a comparison group; synthetic control when there is a single treated unit and many potential controls.</p>
 </section>
 </section>
-<section id="sec-ch22-computation" class="level1" data-number="27">
-<h1 data-number="27"><span class="header-section-number">27</span> Computational Considerations</h1>
+<section id="sec-ch22-computation" class="level2" data-number="22.5">
+<h2 data-number="22.5" class="anchored" data-anchor-id="sec-ch22-computation"><span class="header-section-number">22.5</span> Computational Considerations</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -1761,8 +1748,8 @@ Weights on donor units:
 </table>
 <p>All methods are fast for typical quasi-experimental data. The challenge is not computation but <em>design</em>: finding the right comparison group or cutoff.</p>
 </section>
-<section id="sec-ch22-exercises" class="level1" data-number="28">
-<h1 data-number="28"><span class="header-section-number">28</span> Exercises</h1>
+<section id="sec-ch22-exercises" class="level2" data-number="22.6">
+<h2 data-number="22.6" class="anchored" data-anchor-id="sec-ch22-exercises"><span class="header-section-number">22.6</span> Exercises</h2>
 <p><strong>Exercise 22.1</strong> (<span class="math inline">\(\star\star\)</span>, diagnostic failure). Run a “placebo” RDD at a fake cutoff (where there is no treatment). Does the test reject? Repeat at 10 different fake cutoffs and report the rejection rate. It should be ≈5%.</p>
 <p>%%</p>
 <div id="ex-22-1" class="cell" data-execution_count="21">
@@ -1814,8 +1801,8 @@ Treatment effect: 5.316</code></pre>
 <p>Fix: Callaway–Sant’Anna (2021) or Sun–Abraham (2021) estimators that only use not-yet-treated units as controls.</p>
 <p>%%</p>
 </section>
-<section id="sec-ch22-biblio" class="level1" data-number="29">
-<h1 data-number="29"><span class="header-section-number">29</span> Bibliographic Notes</h1>
+<section id="sec-ch22-biblio" class="level2" data-number="22.7">
+<h2 data-number="22.7" class="anchored" data-anchor-id="sec-ch22-biblio"><span class="header-section-number">22.7</span> Bibliographic Notes</h2>
 <p>RDD: Thistlethwaite and Campbell (1960) introduced the idea; Hahn, Todd, and van der Klaauw (2001) formalized the identification argument. Imbens and Kalyanaraman (2012) derived the MSE-optimal bandwidth. Cattaneo, Idrobo, and Titiunik (2020) provide a modern practical guide. McCrary (2008) introduced the density test for manipulation. Lee and Lemieux (2010) is the standard reference for RDD practice. For fuzzy RDD, see Imbens and Angrist (1994) on the LATE interpretation and the connection to IV.</p>
 <p>DiD: Ashenfelter and Card (1985) for the canonical application. Goodman-Bacon (2021) demonstrated the decomposition problem with staggered adoption. Callaway and Sant’Anna (2021) and Sun and Abraham (2021) provide heterogeneity-robust estimators. Roth (2022) exposed the pre-test bias problem: conditioning on passing a pre-trends test biases post-treatment estimates. De Chaisemartin and d’Haultfoeuille (2020) provide an alternative robust estimator. Roth, Sant’Anna, Bilinski, and Poe (2023) survey the recent methodological advances.</p>
 <p>Synthetic control: Abadie and Gardeazabal (2003) for the original Basque Country application; Abadie, Diamond, and Hainmueller (2010) for the formal framework; Abadie, Diamond, and Hainmueller (2015) for permutation inference. Doudchenko and Imbens (2016) relax the non-negativity and sum-to-one constraints. Arkhangelsky et al. (2021) introduce the synthetic difference-in-differences estimator that combines synthetic control with DiD.</p>
@@ -2317,7 +2304,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
 <span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a><span class="fu"># Motivation {#sec-ch22-motivation}</span></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a><span class="fu">## Motivation {#sec-ch22-motivation}</span></span>
 <span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>Chapter 21 required unconfoundedness: treatment assignment is random</span>
 <span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>conditional on observables. When unconfoundedness fails (unobserved</span>
@@ -2334,9 +2321,9 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>confounders.</span>
 <span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-36"><a href="#cb38-36" aria-hidden="true" tabindex="-1"></a><span class="fu"># Mathematical Foundation {#sec-ch22-math}</span></span>
+<span id="cb38-36"><a href="#cb38-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mathematical Foundation {#sec-ch22-math}</span></span>
 <span id="cb38-37"><a href="#cb38-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-38"><a href="#cb38-38" aria-hidden="true" tabindex="-1"></a><span class="fu">## RDD: why the cutoff creates quasi-randomization</span></span>
+<span id="cb38-38"><a href="#cb38-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### RDD: why the cutoff creates quasi-randomization</span></span>
 <span id="cb38-39"><a href="#cb38-39" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-40"><a href="#cb38-40" aria-hidden="true" tabindex="-1"></a>In a sharp RDD, treatment is assigned by whether a *running variable*</span>
 <span id="cb38-41"><a href="#cb38-41" aria-hidden="true" tabindex="-1"></a>$X_i$ crosses a cutoff $c$: $D_i = \mathbb{1}(X_i \geq c)$. For</span>
@@ -2366,7 +2353,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-65"><a href="#cb38-65" aria-hidden="true" tabindex="-1"></a>= more data but more bias (the relationship may be nonlinear);</span>
 <span id="cb38-66"><a href="#cb38-66" aria-hidden="true" tabindex="-1"></a>narrower bandwidth = less bias but more variance.</span>
 <span id="cb38-67"><a href="#cb38-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-68"><a href="#cb38-68" aria-hidden="true" tabindex="-1"></a><span class="fu">### Identification proof sketch</span></span>
+<span id="cb38-68"><a href="#cb38-68" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Identification proof sketch</span></span>
 <span id="cb38-69"><a href="#cb38-69" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-70"><a href="#cb38-70" aria-hidden="true" tabindex="-1"></a>The RDD estimand relies on a *continuity* assumption. Suppose the</span>
 <span id="cb38-71"><a href="#cb38-71" aria-hidden="true" tabindex="-1"></a>potential outcomes $\mathbb{E}<span class="co">[</span><span class="ot">Y(0) \mid X=x</span><span class="co">]</span>$ and</span>
@@ -2394,7 +2381,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-93"><a href="#cb38-93" aria-hidden="true" tabindex="-1"></a>implementation below makes this concrete: the local linear regression</span>
 <span id="cb38-94"><a href="#cb38-94" aria-hidden="true" tabindex="-1"></a>literally restricts to a narrow window around $c$.</span>
 <span id="cb38-95"><a href="#cb38-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-96"><a href="#cb38-96" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fuzzy RDD as instrumental variables</span></span>
+<span id="cb38-96"><a href="#cb38-96" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Fuzzy RDD as instrumental variables</span></span>
 <span id="cb38-97"><a href="#cb38-97" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-98"><a href="#cb38-98" aria-hidden="true" tabindex="-1"></a>In a sharp RDD, crossing the cutoff *perfectly* determines treatment:</span>
 <span id="cb38-99"><a href="#cb38-99" aria-hidden="true" tabindex="-1"></a>$\Pr(D=1 \mid X=c+\epsilon) = 1$ and $\Pr(D=1 \mid X=c-\epsilon) = 0$.</span>
@@ -2418,7 +2405,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-117"><a href="#cb38-117" aria-hidden="true" tabindex="-1"></a>estimand from Chapter 20. The implementation uses 2SLS restricted to</span>
 <span id="cb38-118"><a href="#cb38-118" aria-hidden="true" tabindex="-1"></a>observations near the cutoff.</span>
 <span id="cb38-119"><a href="#cb38-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-120"><a href="#cb38-120" aria-hidden="true" tabindex="-1"></a><span class="fu">### Optimal bandwidth selection</span></span>
+<span id="cb38-120"><a href="#cb38-120" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Optimal bandwidth selection</span></span>
 <span id="cb38-121"><a href="#cb38-121" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-122"><a href="#cb38-122" aria-hidden="true" tabindex="-1"></a>The bandwidth $h$ controls the bias-variance tradeoff. Too narrow and</span>
 <span id="cb38-123"><a href="#cb38-123" aria-hidden="true" tabindex="-1"></a>variance explodes (few observations); too wide and bias dominates</span>
@@ -2448,7 +2435,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-147"><a href="#cb38-147" aria-hidden="true" tabindex="-1"></a>a kernel-specific constant. We implement a simplified version from</span>
 <span id="cb38-148"><a href="#cb38-148" aria-hidden="true" tabindex="-1"></a>scratch below.</span>
 <span id="cb38-149"><a href="#cb38-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-150"><a href="#cb38-150" aria-hidden="true" tabindex="-1"></a><span class="fu">## DiD: why parallel trends removes confounding</span></span>
+<span id="cb38-150"><a href="#cb38-150" aria-hidden="true" tabindex="-1"></a><span class="fu">### DiD: why parallel trends removes confounding</span></span>
 <span id="cb38-151"><a href="#cb38-151" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-152"><a href="#cb38-152" aria-hidden="true" tabindex="-1"></a>Difference-in-differences compares *changes* rather than levels:</span>
 <span id="cb38-153"><a href="#cb38-153" aria-hidden="true" tabindex="-1"></a></span>
@@ -2486,7 +2473,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-185"><a href="#cb38-185" aria-hidden="true" tabindex="-1"></a>and Sant'Anna (2021) or Sun and Abraham (2021), which only use</span>
 <span id="cb38-186"><a href="#cb38-186" aria-hidden="true" tabindex="-1"></a>not-yet-treated units as controls.</span>
 <span id="cb38-187"><a href="#cb38-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-188"><a href="#cb38-188" aria-hidden="true" tabindex="-1"></a><span class="fu">### Event study specification</span></span>
+<span id="cb38-188"><a href="#cb38-188" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Event study specification</span></span>
 <span id="cb38-189"><a href="#cb38-189" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-190"><a href="#cb38-190" aria-hidden="true" tabindex="-1"></a>An event study estimates treatment effects at each time period</span>
 <span id="cb38-191"><a href="#cb38-191" aria-hidden="true" tabindex="-1"></a>relative to treatment onset. The regression model is:</span>
@@ -2505,7 +2492,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-204"><a href="#cb38-204" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Post-treatment ($k \geq 0$):** These estimate the dynamic treatment</span>
 <span id="cb38-205"><a href="#cb38-205" aria-hidden="true" tabindex="-1"></a>  effect at each post-treatment horizon.</span>
 <span id="cb38-206"><a href="#cb38-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-207"><a href="#cb38-207" aria-hidden="true" tabindex="-1"></a><span class="fu">### Pre-trends testing pitfalls (Roth 2022)</span></span>
+<span id="cb38-207"><a href="#cb38-207" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Pre-trends testing pitfalls (Roth 2022)</span></span>
 <span id="cb38-208"><a href="#cb38-208" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-209"><a href="#cb38-209" aria-hidden="true" tabindex="-1"></a>Testing for pre-trends sounds straightforward: if $\delta_{-2},</span>
 <span id="cb38-210"><a href="#cb38-210" aria-hidden="true" tabindex="-1"></a>\delta_{-3}, \ldots$ are insignificant, parallel trends holds. But</span>
@@ -2518,7 +2505,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-217"><a href="#cb38-217" aria-hidden="true" tabindex="-1"></a>does *not* validate the design. Report the pre-treatment coefficients</span>
 <span id="cb38-218"><a href="#cb38-218" aria-hidden="true" tabindex="-1"></a>honestly; do not condition on them.</span>
 <span id="cb38-219"><a href="#cb38-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-220"><a href="#cb38-220" aria-hidden="true" tabindex="-1"></a><span class="fu">### Callaway-Sant'Anna group-time ATTs</span></span>
+<span id="cb38-220"><a href="#cb38-220" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Callaway-Sant'Anna group-time ATTs</span></span>
 <span id="cb38-221"><a href="#cb38-221" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-222"><a href="#cb38-222" aria-hidden="true" tabindex="-1"></a>The Callaway-Sant'Anna estimator defines group-time average treatment</span>
 <span id="cb38-223"><a href="#cb38-223" aria-hidden="true" tabindex="-1"></a>effects $ATT(g, t)$: the effect at time $t$ for the group first</span>
@@ -2536,7 +2523,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-235"><a href="#cb38-235" aria-hidden="true" tabindex="-1"></a>The key insight is that no already-treated unit ever serves as a</span>
 <span id="cb38-236"><a href="#cb38-236" aria-hidden="true" tabindex="-1"></a>control, avoiding the negative-weight problem entirely.</span>
 <span id="cb38-237"><a href="#cb38-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-238"><a href="#cb38-238" aria-hidden="true" tabindex="-1"></a><span class="fu">## Synthetic control: the counterfactual as an optimization problem</span></span>
+<span id="cb38-238"><a href="#cb38-238" aria-hidden="true" tabindex="-1"></a><span class="fu">### Synthetic control: the counterfactual as an optimization problem</span></span>
 <span id="cb38-239"><a href="#cb38-239" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-240"><a href="#cb38-240" aria-hidden="true" tabindex="-1"></a>When you have a *single* treated unit (one state that passed a law,</span>
 <span id="cb38-241"><a href="#cb38-241" aria-hidden="true" tabindex="-1"></a>one company that merged), you cannot compute a simple average of</span>
@@ -2565,7 +2552,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-264"><a href="#cb38-264" aria-hidden="true" tabindex="-1"></a><span class="in">`LinearConstraint`</span>. The optimization theory from Chapter 3 applies</span>
 <span id="cb38-265"><a href="#cb38-265" aria-hidden="true" tabindex="-1"></a>directly.</span>
 <span id="cb38-266"><a href="#cb38-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-267"><a href="#cb38-267" aria-hidden="true" tabindex="-1"></a><span class="fu">### Permutation inference for synthetic control</span></span>
+<span id="cb38-267"><a href="#cb38-267" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Permutation inference for synthetic control</span></span>
 <span id="cb38-268"><a href="#cb38-268" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-269"><a href="#cb38-269" aria-hidden="true" tabindex="-1"></a>Standard inference (confidence intervals, $p$-values) does not apply</span>
 <span id="cb38-270"><a href="#cb38-270" aria-hidden="true" tabindex="-1"></a>to synthetic control — there is only one treated unit, so there is no</span>
@@ -2597,9 +2584,9 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-296"><a href="#cb38-296" aria-hidden="true" tabindex="-1"></a>treatment — dividing by pre-RMSPE penalizes these spurious "effects."</span>
 <span id="cb38-297"><a href="#cb38-297" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-298"><a href="#cb38-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-299"><a href="#cb38-299" aria-hidden="true" tabindex="-1"></a><span class="fu"># Statsmodels / From-Scratch Implementation {#sec-ch22-impl}</span></span>
+<span id="cb38-299"><a href="#cb38-299" aria-hidden="true" tabindex="-1"></a><span class="fu">## Statsmodels / From-Scratch Implementation {#sec-ch22-impl}</span></span>
 <span id="cb38-300"><a href="#cb38-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-301"><a href="#cb38-301" aria-hidden="true" tabindex="-1"></a><span class="fu">## RDD from scratch</span></span>
+<span id="cb38-301"><a href="#cb38-301" aria-hidden="true" tabindex="-1"></a><span class="fu">### RDD from scratch</span></span>
 <span id="cb38-302"><a href="#cb38-302" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-303"><a href="#cb38-303" aria-hidden="true" tabindex="-1"></a>In a sharp RDD, treatment is deterministic: everyone above the cutoff</span>
 <span id="cb38-304"><a href="#cb38-304" aria-hidden="true" tabindex="-1"></a>gets treated, everyone below does not. We estimate the treatment</span>
@@ -2650,7 +2637,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-353"><a href="#cb38-353" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb38-354"><a href="#cb38-354" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-355"><a href="#cb38-355" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-356"><a href="#cb38-356" aria-hidden="true" tabindex="-1"></a><span class="fu">## Local polynomial RDD from scratch</span></span>
+<span id="cb38-356"><a href="#cb38-356" aria-hidden="true" tabindex="-1"></a><span class="fu">### Local polynomial RDD from scratch</span></span>
 <span id="cb38-357"><a href="#cb38-357" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-358"><a href="#cb38-358" aria-hidden="true" tabindex="-1"></a>The RDD estimator above used OLS on observations near the cutoff.</span>
 <span id="cb38-359"><a href="#cb38-359" aria-hidden="true" tabindex="-1"></a>A proper local polynomial estimator uses *kernel weighting* — giving</span>
@@ -2705,7 +2692,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-410"><a href="#cb38-410" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"True effect: 2.0"</span>)</span>
 <span id="cb38-411"><a href="#cb38-411" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-412"><a href="#cb38-412" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-413"><a href="#cb38-413" aria-hidden="true" tabindex="-1"></a><span class="fu">## IK bandwidth selector from scratch</span></span>
+<span id="cb38-413"><a href="#cb38-413" aria-hidden="true" tabindex="-1"></a><span class="fu">### IK bandwidth selector from scratch</span></span>
 <span id="cb38-414"><a href="#cb38-414" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-415"><a href="#cb38-415" aria-hidden="true" tabindex="-1"></a>The Imbens-Kalyanaraman bandwidth requires estimates of the density</span>
 <span id="cb38-416"><a href="#cb38-416" aria-hidden="true" tabindex="-1"></a>at the cutoff, the conditional variance, and the second derivatives</span>
@@ -2780,7 +2767,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-487"><a href="#cb38-487" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  h=</span><span class="sc">{</span>h<span class="sc">:.2f}{</span>label<span class="sc">}</span><span class="ss">: tau=</span><span class="sc">{</span>tau_h<span class="sc">:.3f}</span><span class="ss"> (SE=</span><span class="sc">{</span>se_h<span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
 <span id="cb38-488"><a href="#cb38-488" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-489"><a href="#cb38-489" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-490"><a href="#cb38-490" aria-hidden="true" tabindex="-1"></a><span class="fu">## Fuzzy RDD from scratch</span></span>
+<span id="cb38-490"><a href="#cb38-490" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fuzzy RDD from scratch</span></span>
 <span id="cb38-491"><a href="#cb38-491" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-492"><a href="#cb38-492" aria-hidden="true" tabindex="-1"></a>When the cutoff creates a jump in the *probability* of treatment</span>
 <span id="cb38-493"><a href="#cb38-493" aria-hidden="true" tabindex="-1"></a>rather than a sharp switch, we have a fuzzy RDD. The estimator is</span>
@@ -2831,7 +2818,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-540"><a href="#cb38-540" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"True effect: 3.0"</span>)</span>
 <span id="cb38-541"><a href="#cb38-541" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-542"><a href="#cb38-542" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-543"><a href="#cb38-543" aria-hidden="true" tabindex="-1"></a><span class="fu">## DiD from scratch</span></span>
+<span id="cb38-543"><a href="#cb38-543" aria-hidden="true" tabindex="-1"></a><span class="fu">### DiD from scratch</span></span>
 <span id="cb38-544"><a href="#cb38-544" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-545"><a href="#cb38-545" aria-hidden="true" tabindex="-1"></a>Difference-in-differences compares the *change* in outcomes for the</span>
 <span id="cb38-546"><a href="#cb38-546" aria-hidden="true" tabindex="-1"></a>treated group to the *change* for the control group. The identifying</span>
@@ -2880,7 +2867,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-593"><a href="#cb38-593" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb38-594"><a href="#cb38-594" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-595"><a href="#cb38-595" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-596"><a href="#cb38-596" aria-hidden="true" tabindex="-1"></a><span class="fu">## Event study DiD from scratch</span></span>
+<span id="cb38-596"><a href="#cb38-596" aria-hidden="true" tabindex="-1"></a><span class="fu">### Event study DiD from scratch</span></span>
 <span id="cb38-597"><a href="#cb38-597" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-598"><a href="#cb38-598" aria-hidden="true" tabindex="-1"></a>An event study specification estimates treatment effects at each</span>
 <span id="cb38-599"><a href="#cb38-599" aria-hidden="true" tabindex="-1"></a>period relative to the treatment date. This is the workhorse</span>
@@ -2995,7 +2982,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-712"><a href="#cb38-712" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb38-713"><a href="#cb38-713" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-714"><a href="#cb38-714" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-715"><a href="#cb38-715" aria-hidden="true" tabindex="-1"></a><span class="fu">## Synthetic control from scratch</span></span>
+<span id="cb38-715"><a href="#cb38-715" aria-hidden="true" tabindex="-1"></a><span class="fu">### Synthetic control from scratch</span></span>
 <span id="cb38-716"><a href="#cb38-716" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-719"><a href="#cb38-719" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb38-720"><a href="#cb38-720" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: synth-demo</span></span>
@@ -3060,7 +3047,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-781"><a href="#cb38-781" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb38-782"><a href="#cb38-782" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-783"><a href="#cb38-783" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-784"><a href="#cb38-784" aria-hidden="true" tabindex="-1"></a><span class="fu">## Synthetic control placebo tests</span></span>
+<span id="cb38-784"><a href="#cb38-784" aria-hidden="true" tabindex="-1"></a><span class="fu">### Synthetic control placebo tests</span></span>
 <span id="cb38-785"><a href="#cb38-785" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-786"><a href="#cb38-786" aria-hidden="true" tabindex="-1"></a>To assess whether the treated unit's effect is "significant," we</span>
 <span id="cb38-787"><a href="#cb38-787" aria-hidden="true" tabindex="-1"></a>apply the synthetic control method to each control unit (pretending</span>
@@ -3170,9 +3157,9 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-895"><a href="#cb38-895" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-896"><a href="#cb38-896" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-897"><a href="#cb38-897" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-898"><a href="#cb38-898" aria-hidden="true" tabindex="-1"></a><span class="fu"># Variations, Diagnostics, and Pitfalls {#sec-ch22-diagnostics}</span></span>
+<span id="cb38-898"><a href="#cb38-898" aria-hidden="true" tabindex="-1"></a><span class="fu">## Variations, Diagnostics, and Pitfalls {#sec-ch22-diagnostics}</span></span>
 <span id="cb38-899"><a href="#cb38-899" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-900"><a href="#cb38-900" aria-hidden="true" tabindex="-1"></a><span class="fu">## RDD diagnostics</span></span>
+<span id="cb38-900"><a href="#cb38-900" aria-hidden="true" tabindex="-1"></a><span class="fu">### RDD diagnostics</span></span>
 <span id="cb38-901"><a href="#cb38-901" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-902"><a href="#cb38-902" aria-hidden="true" tabindex="-1"></a>**Placebo tests:** Run the RDD analysis at fake cutoffs where there</span>
 <span id="cb38-903"><a href="#cb38-903" aria-hidden="true" tabindex="-1"></a>is no treatment. The estimated "effect" should be zero. If you find</span>
@@ -3299,7 +3286,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-1030"><a href="#cb38-1030" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span> <span class="st">"Imbalanced — RDD validity concern"</span>)</span>
 <span id="cb38-1031"><a href="#cb38-1031" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-1032"><a href="#cb38-1032" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-1033"><a href="#cb38-1033" aria-hidden="true" tabindex="-1"></a><span class="fu">## DiD diagnostics</span></span>
+<span id="cb38-1033"><a href="#cb38-1033" aria-hidden="true" tabindex="-1"></a><span class="fu">### DiD diagnostics</span></span>
 <span id="cb38-1034"><a href="#cb38-1034" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1035"><a href="#cb38-1035" aria-hidden="true" tabindex="-1"></a>**Pre-trends test:** Plot the outcome for treated and control groups</span>
 <span id="cb38-1036"><a href="#cb38-1036" aria-hidden="true" tabindex="-1"></a>in the pre-treatment period. Parallel pre-trends support (but do not</span>
@@ -3337,7 +3324,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-1070"><a href="#cb38-1070" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(should be ≈1 under H0)"</span>)</span>
 <span id="cb38-1071"><a href="#cb38-1071" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-1072"><a href="#cb38-1072" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-1073"><a href="#cb38-1073" aria-hidden="true" tabindex="-1"></a><span class="fu">## Synthetic control diagnostics</span></span>
+<span id="cb38-1073"><a href="#cb38-1073" aria-hidden="true" tabindex="-1"></a><span class="fu">### Synthetic control diagnostics</span></span>
 <span id="cb38-1074"><a href="#cb38-1074" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1075"><a href="#cb38-1075" aria-hidden="true" tabindex="-1"></a>**Pre-treatment fit:** The synthetic control should closely match the</span>
 <span id="cb38-1076"><a href="#cb38-1076" aria-hidden="true" tabindex="-1"></a>treated unit in the pre-treatment period. A poor pre-treatment fit</span>
@@ -3385,7 +3372,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-1122"><a href="#cb38-1122" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  Unit </span><span class="sc">{</span>j<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>w_synth[j]<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
 <span id="cb38-1123"><a href="#cb38-1123" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb38-1124"><a href="#cb38-1124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-1125"><a href="#cb38-1125" aria-hidden="true" tabindex="-1"></a><span class="fu">## Choosing between methods</span></span>
+<span id="cb38-1125"><a href="#cb38-1125" aria-hidden="true" tabindex="-1"></a><span class="fu">### Choosing between methods</span></span>
 <span id="cb38-1126"><a href="#cb38-1126" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1127"><a href="#cb38-1127" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Requires <span class="pp">|</span> Identifies <span class="pp">|</span> Limitation <span class="pp">|</span></span>
 <span id="cb38-1128"><a href="#cb38-1128" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
@@ -3399,7 +3386,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-1136"><a href="#cb38-1136" aria-hidden="true" tabindex="-1"></a>unit and many potential controls.</span>
 <span id="cb38-1137"><a href="#cb38-1137" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1138"><a href="#cb38-1138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-1139"><a href="#cb38-1139" aria-hidden="true" tabindex="-1"></a><span class="fu"># Computational Considerations {#sec-ch22-computation}</span></span>
+<span id="cb38-1139"><a href="#cb38-1139" aria-hidden="true" tabindex="-1"></a><span class="fu">## Computational Considerations {#sec-ch22-computation}</span></span>
 <span id="cb38-1140"><a href="#cb38-1140" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1141"><a href="#cb38-1141" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Cost <span class="pp">|</span> Notes <span class="pp">|</span></span>
 <span id="cb38-1142"><a href="#cb38-1142" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
@@ -3412,7 +3399,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-1149"><a href="#cb38-1149" aria-hidden="true" tabindex="-1"></a>comparison group or cutoff.</span>
 <span id="cb38-1150"><a href="#cb38-1150" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1151"><a href="#cb38-1151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-1152"><a href="#cb38-1152" aria-hidden="true" tabindex="-1"></a><span class="fu"># Exercises {#sec-ch22-exercises}</span></span>
+<span id="cb38-1152"><a href="#cb38-1152" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises {#sec-ch22-exercises}</span></span>
 <span id="cb38-1153"><a href="#cb38-1153" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1154"><a href="#cb38-1154" aria-hidden="true" tabindex="-1"></a>**Exercise 22.1** ($\star\star$, diagnostic failure). Run a "placebo"</span>
 <span id="cb38-1155"><a href="#cb38-1155" aria-hidden="true" tabindex="-1"></a>RDD at a fake cutoff (where there is no treatment). Does the test</span>
@@ -3494,7 +3481,7 @@ Treatment effect: 5.316</code></pre>
 <span id="cb38-1237"><a href="#cb38-1237" aria-hidden="true" tabindex="-1"></a>%%</span>
 <span id="cb38-1238"><a href="#cb38-1238" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1239"><a href="#cb38-1239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-1240"><a href="#cb38-1240" aria-hidden="true" tabindex="-1"></a><span class="fu"># Bibliographic Notes {#sec-ch22-biblio}</span></span>
+<span id="cb38-1240"><a href="#cb38-1240" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bibliographic Notes {#sec-ch22-biblio}</span></span>
 <span id="cb38-1241"><a href="#cb38-1241" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-1242"><a href="#cb38-1242" aria-hidden="true" tabindex="-1"></a>RDD: Thistlethwaite and Campbell (1960) introduced the idea; Hahn,</span>
 <span id="cb38-1243"><a href="#cb38-1243" aria-hidden="true" tabindex="-1"></a>Todd, and van der Klaauw (2001) formalized the identification</span>

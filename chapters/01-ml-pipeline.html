@@ -687,8 +687,8 @@ window.Quarto = {
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">'assets/book.mplstyle'</span>)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="sec-ch01-what" class="level1">
-<h1>What is SciPy?</h1>
+<section id="sec-ch01-what" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-what">What is SciPy?</h2>
 <p>SciPy is a collection of mathematical algorithms built on top of NumPy. Where NumPy gives you arrays and basic linear algebra, SciPy gives you optimization, statistics, signal processing, interpolation, and more — the tools that turn array arithmetic into scientific computation.</p>
 <p>This chapter introduces the SciPy modules you will use throughout the book. By the end, you will be able to:</p>
 <ul>
@@ -701,8 +701,8 @@ window.Quarto = {
 </ul>
 <p>We start simple and build up.</p>
 </section>
-<section id="sec-ch01-modules" class="level1">
-<h1>SciPy’s Module Structure</h1>
+<section id="sec-ch01-modules" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-modules">SciPy’s Module Structure</h2>
 <p>SciPy is organized into subpackages. The ones this book uses most:</p>
 <table class="caption-top table">
 <colgroup>
@@ -756,8 +756,8 @@ Available modules: ['LowLevelCallable', 'cluster', 'constants', 'datasets', 'fft
 </div>
 <p>Each module is imported separately — <code>import scipy</code> does not import the submodules. This is a deliberate design choice: you load only what you need.</p>
 </section>
-<section id="sec-ch01-first-opt" class="level1">
-<h1>Your First Optimization</h1>
+<section id="sec-ch01-first-opt" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-first-opt">Your First Optimization</h2>
 <p>The most important function in this book is <code>scipy.optimize.minimize</code>. It takes a Python function and finds the input value that makes the function as small as possible.</p>
 <p>Let’s start with the simplest case: minimizing a function of one variable.</p>
 <div id="first-minimize" class="cell" data-execution_count="3">
@@ -816,8 +816,8 @@ result.nfev:    6</code></pre>
 </div>
 <p><strong>Always check <code>result.success</code>.</strong> If it is <code>False</code>, the optimizer did not converge and <code>result.x</code> may not be a minimum. Common reasons: too few iterations allowed, a bad starting point, or a function that has no minimum (e.g., <span class="math inline">\(f(x) = -x\)</span>).</p>
 </section>
-<section id="sec-ch01-multivar" class="level1">
-<h1>Multivariate Optimization</h1>
+<section id="sec-ch01-multivar" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-multivar">Multivariate Optimization</h2>
 <p>Real problems have multiple parameters. Instead of minimizing over a single number <span class="math inline">\(x\)</span>, we minimize over a <em>vector</em> <span class="math inline">\(\mathbf{x} = (x_1, x_2, \ldots, x_p)\)</span>. The function still returns a single number; the input is now a numpy array.</p>
 <p>SciPy includes the <em>Rosenbrock function</em> as a built-in test problem. It is a 2D function with a narrow curved valley — hard for optimizers because the valley curves, so the direction of steepest descent does not point toward the minimum.</p>
 <div id="rosenbrock" class="cell" data-execution_count="5">
@@ -926,7 +926,7 @@ Gradient evals:  40</code></pre>
 <img src="01-ml-pipeline_files/figure-html/fig-optimization-path-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-optimization-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5.1: The optimizer’s progress on the Rosenbrock function. Each dot is one iteration. The function value drops steeply at first, then slowly approaches zero as the optimizer navigates the narrow valley.
+Figure&nbsp;1.1: The optimizer’s progress on the Rosenbrock function. Each dot is one iteration. The function value drops steeply at first, then slowly approaches zero as the optimizer navigates the narrow valley.
 </figcaption>
 </figure>
 </div>
@@ -934,8 +934,8 @@ Figure&nbsp;5.1: The optimizer’s progress on the Rosenbrock function. Each dot
 </div>
 <p>The log-scale y-axis reveals the convergence behavior: the function value drops rapidly at first (the optimizer finds the valley) then decreases more slowly (navigating along the narrow valley floor). Chapter 2 explains <em>why</em> BFGS behaves this way.</p>
 </section>
-<section id="sec-ch01-methods" class="level1">
-<h1>Choosing an Optimization Method</h1>
+<section id="sec-ch01-methods" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-methods">Choosing an Optimization Method</h2>
 <p><code>minimize</code> supports many algorithms. Here is how they compare on the Rosenbrock function:</p>
 <div id="method-comparison" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>x0 <span class="op">=</span> np.array([<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.0</span>])</span>
@@ -980,8 +980,8 @@ Newton-CG               83      105     True</code></pre>
 </ul>
 <p>Each of these algorithms is developed in depth in Chapters 2–5.</p>
 </section>
-<section id="sec-ch01-curvefit" class="level1">
-<h1>Fitting Models to Data: <code>curve_fit</code></h1>
+<section id="sec-ch01-curvefit" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-curvefit">Fitting Models to Data: <code>curve_fit</code></h2>
 <p>The most common use of optimization in science: you have data points <span class="math inline">\((x_i, y_i)\)</span> and a model <span class="math inline">\(y = f(x; a, b, c)\)</span> with unknown parameters. You want to find the parameters that make the model fit the data best (in the least-squares sense).</p>
 <p><code>scipy.optimize.curve_fit</code> does this. It wraps <code>minimize</code> internally — you don’t need to set up the objective function yourself.</p>
 <div id="curve-fit" class="cell" data-execution_count="8">
@@ -1039,7 +1039,7 @@ c         0.500     0.5501   0.0394</code></pre>
 <img src="01-ml-pipeline_files/figure-html/fig-curvefit-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-curvefit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7.1: Exponential decay model fitted to noisy data using curve_fit. The fitted curve (orange) closely tracks the true model (dashed gray). The standard errors from pcov quantify parameter uncertainty.
+Figure&nbsp;1.2: Exponential decay model fitted to noisy data using curve_fit. The fitted curve (orange) closely tracks the true model (dashed gray). The standard errors from pcov quantify parameter uncertainty.
 </figcaption>
 </figure>
 </div>
@@ -1047,8 +1047,8 @@ Figure&nbsp;7.1: Exponential decay model fitted to noisy data using curve_fit. T
 </div>
 <p><strong>What <code>curve_fit</code> does under the hood:</strong> It calls <code>scipy.optimize.least_squares</code> with the Levenberg–Marquardt algorithm. The <code>pcov</code> matrix comes from the Gauss–Newton approximation to the Hessian. Chapter 6 develops this in detail.</p>
 </section>
-<section id="sec-ch01-stats" class="level1">
-<h1>Probability Distributions: <code>scipy.stats</code></h1>
+<section id="sec-ch01-stats" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-stats">Probability Distributions: <code>scipy.stats</code></h2>
 <p>SciPy provides every standard probability distribution through a unified API. Once you learn the interface for one distribution, you know it for all of them.</p>
 <p>The pattern: create a <em>frozen</em> distribution object (with fixed parameters), then call methods on it.</p>
 <div id="stats-intro" class="cell" data-execution_count="10">
@@ -1169,7 +1169,7 @@ Poisson(5)         5.000    5.000     0.8753</code></pre>
 <img src="01-ml-pipeline_files/figure-html/fig-distributions-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8.1: Four distributions from scipy.stats, all accessed through the same API. The uniform interface makes it easy to switch distributions in your code.
+Figure&nbsp;1.3: Four distributions from scipy.stats, all accessed through the same API. The uniform interface makes it easy to switch distributions in your code.
 </figcaption>
 </figure>
 </div>
@@ -1248,8 +1248,8 @@ Welch's p:   0.0077</code></pre>
 </div>
 <p>The test returns a statistic and a two-sided <span class="math inline">\(p\)</span>-value. A small <span class="math inline">\(p\)</span>-value (below your significance level, typically 0.05) means the data are unlikely under the null hypothesis of equal means. Welch’s variant (<code>equal_var=False</code>) is generally safer — it does not assume the two groups share the same variance. Every test in <code>scipy.stats</code> follows this pattern: call a function, get back a statistic and a <span class="math inline">\(p\)</span>-value. Chapter 10 develops the theory behind these tests.</p>
 </section>
-<section id="sec-ch01-linalg" class="level1">
-<h1>Linear Algebra: <code>scipy.linalg</code></h1>
+<section id="sec-ch01-linalg" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-linalg">Linear Algebra: <code>scipy.linalg</code></h2>
 <p><code>scipy.linalg</code> extends NumPy’s linear algebra with more decompositions and solvers.</p>
 <div id="linalg-intro" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> linalg</span>
@@ -1332,8 +1332,8 @@ All positive → positive definite</code></pre>
 </div>
 <p>When you compute a covariance matrix from data, numerical issues can make it slightly non-positive-definite. Chapter 2 shows how this breaks BFGS, and Chapter 16 shows how the Kalman filter handles it. This book uses <code>scipy.linalg</code> throughout.</p>
 </section>
-<section id="sec-ch01-statsmodels" class="level1">
-<h1>From SciPy to Statsmodels</h1>
+<section id="sec-ch01-statsmodels" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-statsmodels">From SciPy to Statsmodels</h2>
 <p>SciPy gives you optimization and distributions. But when you fit a regression, you usually want more than just the coefficients — you want to know <em>how confident</em> you should be in them. That is what statsmodels provides.</p>
 <p>Statsmodels wraps scipy’s optimization and distribution tools into <em>statistical model</em> objects that report standard errors, <span class="math inline">\(p\)</span>-values, confidence intervals, and diagnostic tests.</p>
 <div id="statsmodels-intro" class="cell" data-execution_count="19">
@@ -1390,8 +1390,8 @@ x2            -1.5407      0.095    -16.200      0.000      -1.729      -1.352
 </ul>
 <p>Under the hood, statsmodels uses <code>scipy.linalg</code> for the matrix solve and <code>scipy.stats</code> for the <span class="math inline">\(t\)</span>-distribution <span class="math inline">\(p\)</span>-values. This book teaches you both layers: what statsmodels computes, and how scipy does the computation.</p>
 </section>
-<section id="sec-ch01-sklearn" class="level1">
-<h1>From SciPy to scikit-learn</h1>
+<section id="sec-ch01-sklearn" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-sklearn">From SciPy to scikit-learn</h2>
 <p>Scikit-learn is a <em>prediction</em> library built on top of scipy and numpy. Its API is designed around two operations: <code>.fit()</code> (learn from data) and <code>.predict()</code> (make predictions on new data).</p>
 <p>The key concept in sklearn is the <em>pipeline</em>: a sequence of preprocessing steps followed by a model. This ensures that preprocessing (e.g., centering and scaling) is applied consistently to both training and test data.</p>
 <div id="sklearn-intro" class="cell" data-execution_count="20">
@@ -1466,8 +1466,8 @@ statsmodels gives everything sklearn gives, plus:
 </div>
 </div>
 </section>
-<section id="sec-ch01-fit" class="level1">
-<h1>What <code>.fit()</code> Actually Calls</h1>
+<section id="sec-ch01-fit" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-fit">What <code>.fit()</code> Actually Calls</h2>
 <p>Let’s trace what happens when sklearn’s <code>LogisticRegression.fit()</code> runs:</p>
 <div id="fit-trace" class="cell" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sklearn's LogisticRegression uses scipy.optimize.minimize internally</span></span>
@@ -1515,8 +1515,8 @@ Match: True</code></pre>
 <p>The <code>C</code> parameter controls regularization: it adds a penalty <span class="math inline">\(\frac{1}{2C}\|\boldsymbol{\beta}\|^2\)</span> to the objective. Setting <code>C=1e15</code> (as above) effectively removes the penalty, making sklearn’s result match plain maximum likelihood.</p>
 <p>This pattern — a high-level library calling <code>scipy.optimize</code> internally — repeats throughout scientific Python. Statsmodels does the same for its MLE-based models (GLMs, ARIMA, mixed effects). When convergence fails in any of these libraries, the fix usually lives at the scipy level: better starting values, a different optimizer, or tighter tolerances. The algorithm is L-BFGS-B — a limited-memory quasi-Newton method developed in Chapter 4.</p>
 </section>
-<section id="sec-ch01-roadmap" class="level1">
-<h1>The Roadmap</h1>
+<section id="sec-ch01-roadmap" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-roadmap">The Roadmap</h2>
 <p>Now that you have seen the key scipy tools, here is where the book goes from here. Each chapter takes one method, develops the mathematics, re-implements the algorithm from scratch, and shows the diagnostics that the documentation never mentions.</p>
 <p><strong>Part II — Optimization</strong> builds the engine under <code>.fit()</code>:</p>
 <ul>
@@ -1559,8 +1559,8 @@ Match: True</code></pre>
 <li><strong>Ch. 23</strong> introduces heterogeneous treatment effects and double machine learning via Neyman orthogonality.</li>
 </ul>
 </section>
-<section id="sec-ch01-exercises" class="level1">
-<h1>Exercises</h1>
+<section id="sec-ch01-exercises" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-exercises">Exercises</h2>
 <p><strong>Exercise 1.1</strong> (<span class="math inline">\(\star\)</span>, getting started). Use <code>scipy.optimize.minimize</code> to find the minimum of <span class="math inline">\(f(x_1, x_2) = x_1^2 + 2x_2^2 - x_1 x_2\)</span> starting from <span class="math inline">\((5, 5)\)</span>. Print the solution, the function value, and the number of iterations. Try both <code>method='BFGS'</code> and <code>method='Nelder-Mead'</code> — which uses fewer function evaluations?</p>
 <p>%%</p>
 <div id="ex-1-1" class="cell" data-execution_count="23">
@@ -1669,8 +1669,8 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 </div>
 <p>%%</p>
 </section>
-<section id="sec-ch01-biblio" class="level1">
-<h1>Bibliographic Notes</h1>
+<section id="sec-ch01-biblio" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ch01-biblio">Bibliographic Notes</h2>
 <p>SciPy: Virtanen et al.&nbsp;(2020), <em>SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python</em>, Nature Methods. The definitive reference for the library’s scope and design.</p>
 <p>Statsmodels: Seabold and Perktold (2010). The <code>OLS</code> implementation uses QR decomposition via <code>scipy.linalg</code>.</p>
 <p>Scikit-learn: Pedregosa et al.&nbsp;(2011). The <code>LogisticRegression</code> implementation with <code>solver='lbfgs'</code> calls <code>scipy.optimize.minimize</code> with <code>method='L-BFGS-B'</code> — as demonstrated in the <code>.fit()</code> trace above.</p>
@@ -2174,7 +2174,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
 <span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a><span class="fu"># What is SciPy? {#sec-ch01-what}</span></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## What is SciPy? {#sec-ch01-what}</span></span>
 <span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>SciPy is a collection of mathematical algorithms built on top of</span>
 <span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>NumPy. Where NumPy gives you arrays and basic linear algebra, SciPy</span>
@@ -2195,7 +2195,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-38"><a href="#cb49-38" aria-hidden="true" tabindex="-1"></a>We start simple and build up.</span>
 <span id="cb49-39"><a href="#cb49-39" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-40"><a href="#cb49-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a><span class="fu"># SciPy's Module Structure {#sec-ch01-modules}</span></span>
+<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## SciPy's Module Structure {#sec-ch01-modules}</span></span>
 <span id="cb49-42"><a href="#cb49-42" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-43"><a href="#cb49-43" aria-hidden="true" tabindex="-1"></a>SciPy is organized into subpackages. The ones this book uses most:</span>
 <span id="cb49-44"><a href="#cb49-44" aria-hidden="true" tabindex="-1"></a></span>
@@ -2219,7 +2219,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-64"><a href="#cb49-64" aria-hidden="true" tabindex="-1"></a>you need.</span>
 <span id="cb49-65"><a href="#cb49-65" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-66"><a href="#cb49-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-67"><a href="#cb49-67" aria-hidden="true" tabindex="-1"></a><span class="fu"># Your First Optimization {#sec-ch01-first-opt}</span></span>
+<span id="cb49-67"><a href="#cb49-67" aria-hidden="true" tabindex="-1"></a><span class="fu">## Your First Optimization {#sec-ch01-first-opt}</span></span>
 <span id="cb49-68"><a href="#cb49-68" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-69"><a href="#cb49-69" aria-hidden="true" tabindex="-1"></a>The most important function in this book is</span>
 <span id="cb49-70"><a href="#cb49-70" aria-hidden="true" tabindex="-1"></a><span class="in">`scipy.optimize.minimize`</span>. It takes a Python function and finds the</span>
@@ -2286,7 +2286,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-135"><a href="#cb49-135" aria-hidden="true" tabindex="-1"></a>has no minimum (e.g., $f(x) = -x$).</span>
 <span id="cb49-136"><a href="#cb49-136" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-137"><a href="#cb49-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-138"><a href="#cb49-138" aria-hidden="true" tabindex="-1"></a><span class="fu"># Multivariate Optimization {#sec-ch01-multivar}</span></span>
+<span id="cb49-138"><a href="#cb49-138" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multivariate Optimization {#sec-ch01-multivar}</span></span>
 <span id="cb49-139"><a href="#cb49-139" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-140"><a href="#cb49-140" aria-hidden="true" tabindex="-1"></a>Real problems have multiple parameters. Instead of minimizing over a</span>
 <span id="cb49-141"><a href="#cb49-141" aria-hidden="true" tabindex="-1"></a>single number $x$, we minimize over a *vector*</span>
@@ -2370,7 +2370,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-223"><a href="#cb49-223" aria-hidden="true" tabindex="-1"></a>Chapter 2 explains *why* BFGS behaves this way.</span>
 <span id="cb49-224"><a href="#cb49-224" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-225"><a href="#cb49-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-226"><a href="#cb49-226" aria-hidden="true" tabindex="-1"></a><span class="fu"># Choosing an Optimization Method {#sec-ch01-methods}</span></span>
+<span id="cb49-226"><a href="#cb49-226" aria-hidden="true" tabindex="-1"></a><span class="fu">## Choosing an Optimization Method {#sec-ch01-methods}</span></span>
 <span id="cb49-227"><a href="#cb49-227" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-228"><a href="#cb49-228" aria-hidden="true" tabindex="-1"></a><span class="in">`minimize`</span> supports many algorithms. Here is how they compare on the</span>
 <span id="cb49-229"><a href="#cb49-229" aria-hidden="true" tabindex="-1"></a>Rosenbrock function:</span>
@@ -2416,7 +2416,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-271"><a href="#cb49-271" aria-hidden="true" tabindex="-1"></a>Each of these algorithms is developed in depth in Chapters 2--5.</span>
 <span id="cb49-272"><a href="#cb49-272" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-273"><a href="#cb49-273" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-274"><a href="#cb49-274" aria-hidden="true" tabindex="-1"></a><span class="fu"># Fitting Models to Data: `curve_fit` {#sec-ch01-curvefit}</span></span>
+<span id="cb49-274"><a href="#cb49-274" aria-hidden="true" tabindex="-1"></a><span class="fu">## Fitting Models to Data: `curve_fit` {#sec-ch01-curvefit}</span></span>
 <span id="cb49-275"><a href="#cb49-275" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-276"><a href="#cb49-276" aria-hidden="true" tabindex="-1"></a>The most common use of optimization in science: you have data points</span>
 <span id="cb49-277"><a href="#cb49-277" aria-hidden="true" tabindex="-1"></a>$(x_i, y_i)$ and a model $y = f(x; a, b, c)$ with unknown parameters.</span>
@@ -2481,7 +2481,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-340"><a href="#cb49-340" aria-hidden="true" tabindex="-1"></a>Hessian. Chapter 6 develops this in detail.</span>
 <span id="cb49-341"><a href="#cb49-341" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-342"><a href="#cb49-342" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-343"><a href="#cb49-343" aria-hidden="true" tabindex="-1"></a><span class="fu"># Probability Distributions: `scipy.stats` {#sec-ch01-stats}</span></span>
+<span id="cb49-343"><a href="#cb49-343" aria-hidden="true" tabindex="-1"></a><span class="fu">## Probability Distributions: `scipy.stats` {#sec-ch01-stats}</span></span>
 <span id="cb49-344"><a href="#cb49-344" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-345"><a href="#cb49-345" aria-hidden="true" tabindex="-1"></a>SciPy provides every standard probability distribution through a</span>
 <span id="cb49-346"><a href="#cb49-346" aria-hidden="true" tabindex="-1"></a>unified API. Once you learn the interface for one distribution, you</span>
@@ -2642,7 +2642,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-513"><a href="#cb49-513" aria-hidden="true" tabindex="-1"></a>these tests.</span>
 <span id="cb49-514"><a href="#cb49-514" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-515"><a href="#cb49-515" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-516"><a href="#cb49-516" aria-hidden="true" tabindex="-1"></a><span class="fu"># Linear Algebra: `scipy.linalg` {#sec-ch01-linalg}</span></span>
+<span id="cb49-516"><a href="#cb49-516" aria-hidden="true" tabindex="-1"></a><span class="fu">## Linear Algebra: `scipy.linalg` {#sec-ch01-linalg}</span></span>
 <span id="cb49-517"><a href="#cb49-517" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-518"><a href="#cb49-518" aria-hidden="true" tabindex="-1"></a><span class="in">`scipy.linalg`</span> extends NumPy's linear algebra with more decompositions</span>
 <span id="cb49-519"><a href="#cb49-519" aria-hidden="true" tabindex="-1"></a>and solvers.</span>
@@ -2728,7 +2728,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-605"><a href="#cb49-605" aria-hidden="true" tabindex="-1"></a>handles it. This book uses <span class="in">`scipy.linalg`</span> throughout.</span>
 <span id="cb49-606"><a href="#cb49-606" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-607"><a href="#cb49-607" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-608"><a href="#cb49-608" aria-hidden="true" tabindex="-1"></a><span class="fu"># From SciPy to Statsmodels {#sec-ch01-statsmodels}</span></span>
+<span id="cb49-608"><a href="#cb49-608" aria-hidden="true" tabindex="-1"></a><span class="fu">## From SciPy to Statsmodels {#sec-ch01-statsmodels}</span></span>
 <span id="cb49-609"><a href="#cb49-609" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-610"><a href="#cb49-610" aria-hidden="true" tabindex="-1"></a>SciPy gives you optimization and distributions. But when you fit a</span>
 <span id="cb49-611"><a href="#cb49-611" aria-hidden="true" tabindex="-1"></a>regression, you usually want more than just the coefficients --- you</span>
@@ -2805,7 +2805,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-684"><a href="#cb49-684" aria-hidden="true" tabindex="-1"></a>does the computation.</span>
 <span id="cb49-685"><a href="#cb49-685" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-686"><a href="#cb49-686" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-687"><a href="#cb49-687" aria-hidden="true" tabindex="-1"></a><span class="fu"># From SciPy to scikit-learn {#sec-ch01-sklearn}</span></span>
+<span id="cb49-687"><a href="#cb49-687" aria-hidden="true" tabindex="-1"></a><span class="fu">## From SciPy to scikit-learn {#sec-ch01-sklearn}</span></span>
 <span id="cb49-688"><a href="#cb49-688" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-689"><a href="#cb49-689" aria-hidden="true" tabindex="-1"></a>Scikit-learn is a *prediction* library built on top of scipy and</span>
 <span id="cb49-690"><a href="#cb49-690" aria-hidden="true" tabindex="-1"></a>numpy. Its API is designed around two operations: <span class="in">`.fit()`</span> (learn</span>
@@ -2877,7 +2877,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-760"><a href="#cb49-760" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb49-761"><a href="#cb49-761" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-762"><a href="#cb49-762" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-763"><a href="#cb49-763" aria-hidden="true" tabindex="-1"></a><span class="fu"># What `.fit()` Actually Calls {#sec-ch01-fit}</span></span>
+<span id="cb49-763"><a href="#cb49-763" aria-hidden="true" tabindex="-1"></a><span class="fu">## What `.fit()` Actually Calls {#sec-ch01-fit}</span></span>
 <span id="cb49-764"><a href="#cb49-764" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-765"><a href="#cb49-765" aria-hidden="true" tabindex="-1"></a>Let's trace what happens when sklearn's <span class="in">`LogisticRegression.fit()`</span> runs:</span>
 <span id="cb49-766"><a href="#cb49-766" aria-hidden="true" tabindex="-1"></a></span>
@@ -2943,7 +2943,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-828"><a href="#cb49-828" aria-hidden="true" tabindex="-1"></a>Chapter 4.</span>
 <span id="cb49-829"><a href="#cb49-829" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-830"><a href="#cb49-830" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-831"><a href="#cb49-831" aria-hidden="true" tabindex="-1"></a><span class="fu"># The Roadmap {#sec-ch01-roadmap}</span></span>
+<span id="cb49-831"><a href="#cb49-831" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Roadmap {#sec-ch01-roadmap}</span></span>
 <span id="cb49-832"><a href="#cb49-832" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-833"><a href="#cb49-833" aria-hidden="true" tabindex="-1"></a>Now that you have seen the key scipy tools, here is where the book</span>
 <span id="cb49-834"><a href="#cb49-834" aria-hidden="true" tabindex="-1"></a>goes from here. Each chapter takes one method, develops the</span>
@@ -3014,7 +3014,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-899"><a href="#cb49-899" aria-hidden="true" tabindex="-1"></a>  double machine learning via Neyman orthogonality.</span>
 <span id="cb49-900"><a href="#cb49-900" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-901"><a href="#cb49-901" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-902"><a href="#cb49-902" aria-hidden="true" tabindex="-1"></a><span class="fu"># Exercises {#sec-ch01-exercises}</span></span>
+<span id="cb49-902"><a href="#cb49-902" aria-hidden="true" tabindex="-1"></a><span class="fu">## Exercises {#sec-ch01-exercises}</span></span>
 <span id="cb49-903"><a href="#cb49-903" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-904"><a href="#cb49-904" aria-hidden="true" tabindex="-1"></a>**Exercise 1.1** ($\star$, getting started). Use <span class="in">`scipy.optimize.minimize`</span></span>
 <span id="cb49-905"><a href="#cb49-905" aria-hidden="true" tabindex="-1"></a>to find the minimum of $f(x_1, x_2) = x_1^2 + 2x_2^2 - x_1 x_2$</span>
@@ -3131,7 +3131,7 @@ Only statsmodels gives standard errors: [0.1033 0.098  0.0951]</code></pre>
 <span id="cb49-1024"><a href="#cb49-1024" aria-hidden="true" tabindex="-1"></a>%%</span>
 <span id="cb49-1025"><a href="#cb49-1025" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-1026"><a href="#cb49-1026" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-1027"><a href="#cb49-1027" aria-hidden="true" tabindex="-1"></a><span class="fu"># Bibliographic Notes {#sec-ch01-biblio}</span></span>
+<span id="cb49-1027"><a href="#cb49-1027" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bibliographic Notes {#sec-ch01-biblio}</span></span>
 <span id="cb49-1028"><a href="#cb49-1028" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-1029"><a href="#cb49-1029" aria-hidden="true" tabindex="-1"></a>SciPy: Virtanen et al. (2020), *SciPy 1.0: Fundamental Algorithms</span>
 <span id="cb49-1030"><a href="#cb49-1030" aria-hidden="true" tabindex="-1"></a>for Scientific Computing in Python*, Nature Methods. The definitive</span>
