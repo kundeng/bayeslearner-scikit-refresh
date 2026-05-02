@@ -5,13 +5,14 @@ coefficients come back. But *why* did they come back? What algorithm
 ran? What assumptions were made? What happens when those assumptions
 fail and the output is silently wrong?
 
-This book answers these questions. It is written for **developers and
-junior data scientists** who use scipy and statsmodels daily but want
-to understand what these libraries actually do under the hood ---
-not just *how* to call a function, but *what that function computes*
-and *why it works*. If you have ever stared at a convergence warning,
-a negative $R^2$, or standard errors that seem too small, this book
-gives you the tools to diagnose and fix the problem.
+This book answers these questions. It is written for **junior
+developers, beginning data analysts, and fresh graduate students**
+who use scipy and statsmodels but want to understand what these
+libraries actually do under the hood --- not just *how* to call a
+function, but *what that function computes* and *why it works*. If
+you have ever stared at a convergence warning, a negative $R^2$, or
+standard errors that seem too small, this book gives you the tools
+to diagnose and fix the problem.
 
 Every chapter takes a method, develops the mathematics that justify
 it, re-implements the core algorithm from scratch so you can see
@@ -22,12 +23,15 @@ code matches to 6 digits, the theory is validated. No hand-waving,
 no "it can be shown" --- just clear explanations backed by runnable
 code.
 
-**Who this book is for.** You write Python comfortably, use NumPy
-for array computation, and have taken at least one statistics course.
-Prior experience with scipy or statsmodels is *not* assumed ---
-Chapter 1 teaches these from the ground up. The appendices provide
-refreshers on probability, matrix algebra, and the scientific Python
-stack for readers who need them.
+**Who this book is for.** Junior developers building data pipelines,
+beginning data analysts moving beyond pandas and charts, and fresh
+graduate students who want to understand the methods they use in
+research. You write Python comfortably, use NumPy for array
+computation, and have taken at least one statistics course. Prior
+experience with scipy or statsmodels is *not* assumed --- Chapter 1
+teaches these from the ground up. The appendices provide refreshers
+on the scientific Python stack, probability, and matrix algebra for
+readers who need them.
 
 ## How to Read This Book
 
