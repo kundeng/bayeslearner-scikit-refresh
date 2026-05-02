@@ -1,9 +1,33 @@
 # Preface {.unnumbered}
 
-This book gives a rigorous, code-grounded treatment of the advanced methods
-that underlie SciPy and statsmodels -- the theory they never fully explained.
-Every theorem is proved or cited. Every code block runs. Every figure earns
-its place.
+You call `minimize`, `OLS`, or `LogisticRegression.fit()` and the
+coefficients come back. But *why* did they come back? What algorithm
+ran? What assumptions were made? What happens when those assumptions
+fail and the output is silently wrong?
+
+This book answers these questions. It is written for **developers and
+junior data scientists** who use scipy and statsmodels daily but want
+to understand what these libraries actually do under the hood ---
+not just *how* to call a function, but *what that function computes*
+and *why it works*. If you have ever stared at a convergence warning,
+a negative $R^2$, or standard errors that seem too small, this book
+gives you the tools to diagnose and fix the problem.
+
+Every chapter takes a method, develops the mathematics that justify
+it, re-implements the core algorithm from scratch so you can see
+every moving part, and then covers the diagnostics and failure modes
+that the documentation never mentions. The from-scratch
+implementation is verified against the library output --- if the
+code matches to 6 digits, the theory is validated. No hand-waving,
+no "it can be shown" --- just clear explanations backed by runnable
+code.
+
+**Who this book is for.** You write Python comfortably, use NumPy
+for array computation, and have taken at least one statistics course.
+Prior experience with scipy or statsmodels is *not* assumed ---
+Chapter 1 teaches these from the ground up. The appendices provide
+refreshers on probability, matrix algebra, and the scientific Python
+stack for readers who need them.
 
 ## How to Read This Book
 

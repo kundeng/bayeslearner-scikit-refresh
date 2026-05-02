@@ -6,7 +6,9 @@ project:
 book:
   title: "Advanced Methods in SciPy and Statsmodels"
   subtitle: "The Theory They Never Fully Explained"
-  author: "Kunden G"
+  author:
+    - "Kun Deng"
+    - "Claude (Anthropic)"
   date: today
   chapters:
     - index.qmd
