@@ -1,5 +1,5 @@
 ---
-title: "Appendix A: Probability and Mathematical Statistics"
+title: "Probability and Mathematical Statistics"
 ---
 
 This appendix collects the probability and mathematical statistics

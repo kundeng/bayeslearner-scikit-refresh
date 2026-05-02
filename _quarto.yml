@@ -48,9 +48,9 @@ book:
         - chapters/22-rdd-did-synth-control.qmd
         - chapters/23-hte-double-ml.qmd
   appendices:
+      - chapters/appendix-prerequisites.qmd
       - chapters/appendix-probability-stats.qmd
       - chapters/appendix-matrix-algebra.qmd
-      - chapters/appendix-prerequisites.qmd
 
 format:
   html:
@@ -114,9 +114,9 @@ format:
     documentclass: scrbook
     papersize: letter
     fontsize: 11pt
-    mainfont: "Latin Modern Roman"
-    monofont: "JuliaMono"
-    mathfont: "Latin Modern Math"
+    mainfont: "STIX Two Text"
+    monofont: "Menlo"
+    mathfont: "STIX Two Math"
     keep-tex: true
     number-sections: true
     toc: true
@@ -126,6 +126,11 @@ format:
     linkcolor: "NavyBlue"
     citecolor: "ForestGreen"
     urlcolor: "Maroon"
+    geometry:
+      - top=1.2cm
+      - bottom=1.2cm
+      - left=1.5cm
+      - right=1.5cm
     include-in-header:
       text: |
         \usepackage{amsmath,amssymb,amsthm}

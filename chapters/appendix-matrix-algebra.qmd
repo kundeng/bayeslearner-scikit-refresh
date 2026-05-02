@@ -1,5 +1,5 @@
 ---
-title: "Appendix B: Matrix Algebra for Statistics"
+title: "Matrix Algebra for Statistics"
 ---
 
 This appendix collects the matrix algebra results used throughout the

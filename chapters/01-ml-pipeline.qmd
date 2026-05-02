@@ -242,9 +242,22 @@ res = minimize(rosen, x0, method='Newton-CG', jac=rosen_der,
 print(f"{'Newton-CG':<15} {res.nit:>10} {res.nfev:>8} {str(res.success):>8}")
 ```
 
-Notice that methods using more derivative information (BFGS, Newton-CG)
-generally need fewer iterations than Nelder-Mead, which uses no
-derivatives at all. The tradeoff: gradient computation has a cost too.
+Two columns in the table deserve attention: **Iterations** counts
+major algorithmic steps --- each step proposes a new candidate
+solution by combining information from previous evaluations.
+**f-evals** counts how many times the optimizer called
+`rosen(x)`. These numbers differ because a single iteration may
+require several function evaluations (e.g., Nelder-Mead evaluates
+$f$ at multiple simplex vertices per step; finite-difference
+gradient estimation calls $f$ once per dimension). BFGS needs
+fewer iterations *and* fewer total function evaluations than
+Nelder-Mead because each BFGS step uses the gradient to compute
+a descent direction analytically, whereas Nelder-Mead explores
+blindly by comparing function values at simplex vertices. The
+tradeoff is that gradient computation has a cost too --- if the
+gradient is expensive to evaluate (or unavailable), a
+derivative-free method like Nelder-Mead may win on wall-clock
+time even though it uses more iterations.
 
 **Rules of thumb:**
 
@@ -299,6 +312,23 @@ for name, true, est, se in zip(
 ):
     print(f"{name:<6} {true:>8.3f} {est:>10.4f} {se:>8.4f}")
 ```
+
+**Understanding `pcov`:** The covariance matrix `pcov` is a
+$k \times k$ matrix (here $3 \times 3$, one row/column per
+parameter). The diagonal entries `pcov[i, i]` give the *variance*
+of each parameter estimate --- how much each estimate would
+scatter if you repeated the experiment many times. That is why
+`np.sqrt(np.diag(pcov))` gives the standard errors: standard
+error is the standard deviation of the sampling distribution, and
+standard deviation is the square root of variance. The
+off-diagonal entries `pcov[i, j]` give the *covariance* between
+parameters $i$ and $j$. A large off-diagonal value means the two
+parameters are hard to separate from the data --- changing one
+can be compensated by changing the other without much effect on
+the fit. In the exponential decay model, $a$ (amplitude) and $b$
+(rate) are often negatively correlated: a faster decay rate can
+be partially offset by a larger amplitude, producing a similar
+curve over the observed range.
 
 ```{python}
 #| label: fig-curvefit
@@ -607,6 +637,20 @@ ols = sm.OLS(y, X).fit()
 print(ols.summary().tables[1])
 ```
 
+**Why you must call `sm.add_constant` yourself.** Unlike
+scikit-learn's `LinearRegression`, which silently adds an
+intercept column, statsmodels requires you to build the design
+matrix $\mathbf{X}$ explicitly. This is a deliberate design
+choice: the design matrix is the mathematical object that defines
+the model, and statsmodels wants you to see exactly what it
+contains. If you forget `add_constant`, the model will still
+run --- but it will fit $y = \beta_1 x_1 + \beta_2 x_2$ instead
+of $y = \beta_0 + \beta_1 x_1 + \beta_2 x_2$, forcing the
+regression plane through the origin. The coefficients will be
+biased, the residuals will be wrong, and $R^2$ may even be
+negative. This is one of the most common statsmodels mistakes,
+and it produces no error message --- only quietly wrong results.
+
 The summary output deserves a careful read. Each row is one
 coefficient; the columns tell you everything about that estimate:
 
@@ -756,6 +800,37 @@ print(f"Match: {np.allclose(lr_sk.coef_.ravel(), result.x[:-1], atol=1e-3)}")
 ```
 
 The coefficients match because sklearn *is* calling scipy.
+
+**Walking through `neg_ll_and_grad` line by line.** This function
+computes the negative log-likelihood and its gradient for binary
+logistic regression. Here is what each line does:
+
+- `beta, b = params[:-1], params[-1]` --- splits the parameter
+  vector into feature weights `beta` (a 2-element array for our
+  two features) and the scalar intercept `b`.
+- `z = X @ beta + b` --- computes the *linear predictor* for
+  every observation. For observation $i$, $z_i = \mathbf{x}_i
+  ^\top \boldsymbol{\beta} + b$. This is the log-odds: the model
+  says $\log\bigl(P(y=1)/P(y=0)\bigr) = z$.
+- `sigma = 1.0 / (1.0 + np.exp(-np.clip(z, -500, 500)))` ---
+  applies the sigmoid function $\sigma(z) = 1/(1 + e^{-z})$ to
+  convert log-odds into predicted probabilities. The `np.clip`
+  prevents overflow when $|z|$ is large.
+- `nll = np.sum(np.logaddexp(0, z) - y * z)` --- the negative
+  log-likelihood. For each observation, the log-likelihood
+  contribution is $y_i \log \sigma(z_i) + (1 - y_i)
+  \log(1 - \sigma(z_i))$, which simplifies algebraically to
+  $y_i z_i - \log(1 + e^{z_i})$. Negating and summing gives the
+  expression above; `np.logaddexp(0, z)` computes
+  $\log(1 + e^z)$ in a numerically stable way.
+- `grad = np.append(X.T @ (sigma - y), (sigma - y).sum())` ---
+  the gradient of the NLL with respect to all parameters. The
+  term $(\sigma - y)$ is the vector of prediction errors (how far
+  each predicted probability is from the true label). Multiplying
+  by $\mathbf{X}^\top$ aggregates these errors across features to
+  get $\partial \text{NLL}/\partial \boldsymbol{\beta}$. The
+  intercept gradient is simply the sum of errors,
+  $\sum_i (\sigma_i - y_i)$.
 
 **The connection in detail.** When you call
 `LogisticRegression(solver='lbfgs').fit(X, y)`, sklearn:

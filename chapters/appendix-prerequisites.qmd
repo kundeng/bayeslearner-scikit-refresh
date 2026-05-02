@@ -1,5 +1,5 @@
 ---
-title: "Appendix C: Python Scientific Computing Reference"
+title: "Python Scientific Computing Reference"
 ---
 
 This appendix is a *reference*, not a tutorial. It gathers the
@@ -115,6 +115,80 @@ print("Column means after centering:",
 Broadcasting is used throughout the book --- centering data
 (Ch. 11), evaluating densities on grids (Ch. 7), and computing
 pairwise distances (Ch. 19) all rely on it.
+
+### Common pitfalls
+
+Three NumPy traps catch even experienced users. Recognizing them
+early saves hours of silent-bug debugging.
+
+**1. Views vs copies.** Basic slicing returns a *view* that shares
+memory with the original array. Modifying the slice modifies the
+original --- sometimes intentionally, often not:
+
+```{python}
+#| label: np-pitfall-views
+original = np.array([10, 20, 30, 40, 50])
+view_slice = original[1:4]   # basic slice -> view
+view_slice[0] = 999
+# The original is now corrupted:
+print(f"original after view mutation: {original}")
+
+# Safe pattern: call .copy() when you need independence
+original = np.array([10, 20, 30, 40, 50])
+safe_copy = original[1:4].copy()
+safe_copy[0] = 999
+print(f"original after copy mutation: {original}")
+```
+
+Boolean and fancy indexing always return copies, so
+`a[a > 0] = 0` modifies `a` in-place but `b = a[a > 0]`
+produces an independent array. See the expanded discussion later
+in this appendix.
+
+**2. Integer vs float arrays.** NumPy infers dtype from the input.
+An array created from integers will silently truncate floats:
+
+```{python}
+#| label: np-pitfall-dtype
+int_array = np.array([1, 2, 3])       # dtype: int64
+int_array[0] = 1.9
+# The 1.9 is truncated to 1, no warning:
+print(f"int array after assigning 1.9: {int_array}")
+print(f"dtype: {int_array.dtype}")
+
+# Safe pattern: specify float dtype at creation
+float_array = np.array([1, 2, 3], dtype=float)
+float_array[0] = 1.9
+print(f"float array: {float_array}")
+```
+
+This trap surfaces when building arrays from counts or indices and
+later assigning computed values. Always create numerical arrays
+with `dtype=float` when they will hold non-integer results.
+
+**3. Shape `(n,)` vs `(n, 1)`.** A 1-D array with shape `(n,)` is
+*not* a column vector. Matrix operations that expect a column
+vector --- or code that relies on 2-D broadcasting rules --- will
+silently produce wrong shapes:
+
+```{python}
+#| label: np-pitfall-shape
+v = np.array([1, 2, 3])               # shape (3,)
+print(f"v.shape:       {v.shape}")
+print(f"v.T.shape:     {v.T.shape}")  # transpose is a no-op!
+
+# Outer product attempt: v @ v.T gives a scalar, not a matrix
+print(f"v @ v.T:       {v @ v.T}")    # dot product = 14
+
+# Fix: reshape to (3,1) to get a true column vector
+v_col = v.reshape(-1, 1)              # shape (3, 1)
+print(f"v_col @ v_col.T:\n{v_col @ v_col.T}")  # 3x3 outer product
+```
+
+When statsmodels or scipy expects a 2-D array and receives a 1-D
+array, the result is often a confusing shape mismatch error. Use
+`x.reshape(-1, 1)` to promote a 1-D array to a column vector, or
+`np.atleast_2d(x).T` for the same effect.
 
 ### Reshape, ravel, and transpose
 
@@ -323,6 +397,37 @@ axes[1, 2].set_title("Errorbar (estimates)")
 fig.tight_layout()
 plt.show()
 ```
+
+**When to use each plot type:**
+
+- **Line plot** --- use for any quantity that evolves over an
+  ordered index: optimization convergence traces (objective value
+  vs iteration), power curves, or time series. The x-axis implies
+  ordering.
+- **Scatter plot** --- use to reveal the *relationship* between
+  two continuous variables: residuals vs fitted values, observed
+  vs predicted, or bivariate distributions. No ordering is
+  implied; the eye looks for correlation, clusters, or outliers.
+- **Step plot** --- use for quantities that jump at discrete
+  points: empirical CDFs (Ch. 9), Kaplan--Meier survival curves
+  (Ch. 18), or any piecewise-constant function. `where="post"`
+  means the step rises at the data point and stays flat until the
+  next one.
+- **Histogram** --- use to visualize the *distribution* of a
+  single variable: MCMC posterior samples (Ch. 8), bootstrap
+  replications (Ch. 9), or residual distributions (Ch. 11). Set
+  `density=True` to normalize the area to 1 so the histogram is
+  comparable to a PDF overlay.
+- **fill_between** --- use to show *uncertainty bands* around a
+  curve: confidence intervals for regression lines (Ch. 11),
+  credible intervals for posterior predictions (Ch. 8), or
+  pointwise bootstrap bands (Ch. 9). The shaded region
+  communicates "the true curve likely lies in here."
+- **Errorbar** --- use to display *point estimates with error
+  bars*: coefficient estimates $\pm$ standard errors (Ch. 10),
+  treatment effects with confidence intervals (Ch. 21--23), or
+  any setting where you want to compare several estimates
+  side-by-side with their uncertainty.
 
 ### Contour plots
 
@@ -1127,6 +1232,71 @@ print(f"BIC:           {results.bic:.1f}")
 print(f"Log-likelihood:{results.llf:.1f}")
 print(f"Residuals:     {results.resid[:5].round(3)}")
 ```
+
+### Complete worked example: fit, read, extract
+
+The following example walks through the full OLS workflow ---
+fitting a model, reading the summary table column by column, and
+extracting specific quantities programmatically for downstream
+use.
+
+```{python}
+#| label: sm-worked-example
+# Generate data with known coefficients
+n_ex = 200
+rng_ex = np.random.default_rng(99)
+x1_ex = rng_ex.standard_normal(n_ex)
+x2_ex = rng_ex.uniform(0, 10, n_ex)
+# True model: y = 5 + 2*x1 - 0.3*x2 + noise
+y_ex = (5.0 + 2.0 * x1_ex - 0.3 * x2_ex
+        + rng_ex.standard_normal(n_ex))
+
+# Build design matrix and fit
+X_ex = sm.add_constant(
+    np.column_stack([x1_ex, x2_ex])
+)
+res_ex = sm.OLS(endog=y_ex, exog=X_ex).fit()
+
+# --- Reading the summary table ---
+print(res_ex.summary().tables[1])
+print()
+
+# Column-by-column explanation:
+#   coef     = point estimate (beta-hat)
+#   std err  = standard error of the estimate
+#   t        = coef / std err (Wald statistic)
+#   P>|t|    = two-sided p-value for H0: coef = 0
+#   [0.025   = lower bound of 95% confidence interval
+#   0.975]   = upper bound of 95% confidence interval
+
+# --- Extracting specific values ---
+# Coefficient for x1 (index 1, since index 0 is intercept)
+beta1_hat = res_ex.params[1]
+se1 = res_ex.bse[1]
+pval1 = res_ex.pvalues[1]
+print(f"x1 coefficient:  {beta1_hat:.4f}")
+print(f"x1 std error:    {se1:.4f}")
+print(f"x1 p-value:      {pval1:.6f}")
+
+# Confidence interval for x2 (index 2)
+ci = res_ex.conf_int(alpha=0.05)
+print(f"x2 95% CI:       [{ci[2, 0]:.4f}, "
+      f"{ci[2, 1]:.4f}]")
+
+# Model-level: R-squared and F-test
+print(f"R-squared:       {res_ex.rsquared:.4f}")
+print(f"F-statistic:     {res_ex.fvalue:.2f}")
+print(f"F p-value:       {res_ex.f_pvalue:.2e}")
+```
+
+The key pattern: `results.params[j]` gives the $j$-th coefficient,
+`results.bse[j]` its standard error, `results.pvalues[j]` its
+$p$-value, and `results.conf_int()[j]` its confidence interval.
+Index 0 is always the intercept (if `add_constant` was used).
+These programmatic accessors are essential when you need to feed
+regression output into further computation --- plotting
+coefficient comparisons, computing marginal effects manually, or
+building test statistics from multiple models.
 
 ### Covariance type options
 
