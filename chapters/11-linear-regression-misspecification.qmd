@@ -21,7 +21,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -40,7 +40,7 @@ rng = np.random.default_rng(42)
 | $g$ | Cluster index, $g = 1, \ldots, G$ | `groups` in `cov_type='cluster'` |
 
 
-# Motivation {#sec-ch11-motivation}
+## Motivation {#sec-ch11-motivation}
 
 In Chapter 1, we showed that scikit-learn's `Ridge` gives you
 coefficients but no standard errors, no $p$-values, no diagnostics.
@@ -62,9 +62,9 @@ it fails. This chapter walks through all five, showing what breaks,
 how to detect it, and how to repair inference.
 
 
-# Mathematical Foundation {#sec-ch11-math}
+## Mathematical Foundation {#sec-ch11-math}
 
-## What OLS actually estimates
+### What OLS actually estimates
 
 Even when the model is wrong (the true conditional expectation is not
 linear), OLS estimates the *best linear predictor*:
@@ -78,7 +78,7 @@ $\boldsymbol{\beta}^*$ regardless of whether the model is correctly
 specified. The question is not "does OLS work?" but "what are you
 estimating, and are your standard errors correct?"
 
-## The Gauss--Markov theorem (intuition)
+### The Gauss--Markov theorem (intuition)
 
 Under assumptions 1--5, OLS is the Best Linear Unbiased Estimator
 (BLUE): no other linear unbiased estimator has smaller variance.
@@ -89,7 +89,7 @@ the model-based variance $\hat{\sigma}^2(\mathbf{X}^\top\mathbf{X})^{-1}$
 is correct and efficient. The robust alternatives (HC0--HC3) sacrifice
 some efficiency for validity under misspecification.
 
-## The sandwich variance (recap from Ch. 10)
+### The sandwich variance (recap from Ch. 10)
 
 When homoscedasticity fails, the model-based SE is wrong. The sandwich
 estimator (HC0) from @eq-sandwich is valid under heteroscedasticity:
@@ -112,7 +112,7 @@ The HC1--HC3 variants apply corrections for small samples:
 HC3 downweights high-leverage observations most aggressively and
 generally has the best size control in small samples.
 
-## Why the sandwich works: a derivation {#sec-ch11-sandwich-deriv}
+### Why the sandwich works: a derivation {#sec-ch11-sandwich-deriv}
 
 The sandwich formula is not handed down by fiat. It follows from one
 algebraic identity. Start from the OLS estimator:
@@ -151,7 +151,7 @@ consistent because $\hat{e}_i^2 \xrightarrow{p} \sigma_i^2$ for each
 $i$ as $n \to \infty$, so the estimated meat converges to the
 population meat.
 
-## HAC: what autocorrelation does to the meat {#sec-ch11-hac}
+### HAC: what autocorrelation does to the meat {#sec-ch11-hac}
 
 When errors are autocorrelated --- common in time-series cross-sections
 or spatially ordered data --- the covariance matrix
@@ -188,7 +188,7 @@ guarantee. The bandwidth $L$ controls the bias-variance trade-off:
 too small misses genuine autocorrelation, too large inflates SEs
 by estimating noise.
 
-## Cluster-robust standard errors {#sec-ch11-cluster}
+### Cluster-robust standard errors {#sec-ch11-cluster}
 
 When observations are grouped into $G$ clusters (students within
 schools, employees within firms, counties within states), errors are
@@ -216,7 +216,7 @@ over-rejecting the null. Cameron, Gelbach, and Miller (2008) recommend
 the wild cluster bootstrap when $G < 50$. We demonstrate this bias
 in the simulation below.
 
-## Influence functions and the connection to Chapter 12 {#sec-ch11-influence}
+### Influence functions and the connection to Chapter 12 {#sec-ch11-influence}
 
 Cook's distance measures how much the *entire* coefficient vector moves
 when observation $i$ is deleted. It can be computed without refitting
@@ -251,13 +251,13 @@ influence function in its full generality for M-estimators, where
 Cook's D is a special case.
 
 
-# The Algorithm {#sec-ch11-algorithm}
+## The Algorithm {#sec-ch11-algorithm}
 
 OLS is not iterative: $\hat{\boldsymbol{\beta}} = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$.
 But the diagnostics that follow are algorithms in their own right.
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 11.1: OLS with Diagnostic Suite
+### Algorithm 11.1: OLS with Diagnostic Suite
 
 **Input:** Data $(\mathbf{X}, \mathbf{y})$
 
@@ -276,7 +276,7 @@ But the diagnostics that follow are algorithms in their own right.
 :::
 
 
-# Statistical Properties {#sec-ch11-stats}
+## Statistical Properties {#sec-ch11-stats}
 
 **Under correct specification:** OLS is BLUE. Standard errors are
 valid. $t$-tests and $F$-tests have exact distributions under
@@ -296,9 +296,9 @@ wrong $\boldsymbol{\beta}^*$. No variance correction helps. The fix is
 instrumental variables (Chapter 20).
 
 
-# Statsmodels Implementation {#sec-ch11-statsmodels}
+## Statsmodels Implementation {#sec-ch11-statsmodels}
 
-## The full OLS workflow
+### The full OLS workflow
 
 ```{python}
 #| label: ols-workflow
@@ -313,7 +313,7 @@ ols = sm.OLS(y, X_sm).fit(cov_type='HC1')
 print(ols.summary().tables[1])
 ```
 
-## Heteroscedasticity tests
+### Heteroscedasticity tests
 
 ```{python}
 #| label: het-tests
@@ -330,7 +330,7 @@ if bp_pval < 0.05:
     print("\nHeteroscedasticity detected → use HC1+ standard errors.")
 ```
 
-## Specification test (Ramsey RESET)
+### Specification test (Ramsey RESET)
 
 ```{python}
 #| label: reset-test
@@ -345,7 +345,7 @@ if reset_pval < 0.05:
           "or missing variables.")
 ```
 
-## Multicollinearity (VIF)
+### Multicollinearity (VIF)
 
 ```{python}
 #| label: vif
@@ -356,7 +356,7 @@ for j in range(1, X_sm.shape[1]):
     print(f"{X.columns[j-1]:<12} {vif:>8.2f}")
 ```
 
-## Influence diagnostics
+### Influence diagnostics
 
 ```{python}
 #| label: fig-influence
@@ -386,7 +386,7 @@ print(f"High leverage: {n_high_lev} ({n_high_lev/n:.1%})")
 print(f"High Cook's D: {n_high_cook} ({n_high_cook/n:.1%})")
 ```
 
-## WLS: weighted least squares
+### WLS: weighted least squares
 
 ```{python}
 #| label: wls-demo
@@ -406,9 +406,9 @@ print(wls.summary().tables[1])
 ```
 
 
-# From-Scratch Implementation {#sec-ch11-scratch}
+## From-Scratch Implementation {#sec-ch11-scratch}
 
-## Cook's distance
+### Cook's distance
 
 ```{python}
 #| label: cooks-scratch
@@ -448,7 +448,7 @@ for i in top5:
     print(f"  obs {i}: D={D_ours[i]:.4f}, leverage={lev_ours[i]:.4f}")
 ```
 
-## HC0--HC3: all four variants from scratch
+### HC0--HC3: all four variants from scratch
 
 The HC variants differ only in how they weight the squared residuals
 in the sandwich meat. Here is a single function that computes all four.
@@ -507,7 +507,7 @@ for ct in ['HC0', 'HC1', 'HC2', 'HC3']:
     print(f"{ct:<6} {str(match):>6}  {rel:>14.2e}")
 ```
 
-## HAC (Newey--West) from scratch
+### HAC (Newey--West) from scratch
 
 ```{python}
 #| label: hac-scratch
@@ -595,7 +595,7 @@ implementation follows the textbook formula. The point is that both
 are computing the same Bartlett-kernel-weighted sum of autocovariance
 matrices.
 
-## Cluster-robust SEs from scratch
+### Cluster-robust SEs from scratch
 
 ```{python}
 #| label: cluster-scratch
@@ -682,7 +682,7 @@ print(f"Ratio (cluster/naive): {se_ours_cl[1]/se_naive[1]:.2f}")
 print("Ignoring clusters underestimates uncertainty.")
 ```
 
-## Simulation: HC variant size control at n=50 {#sec-ch11-hc-sim}
+### Simulation: HC variant size control at n=50 {#sec-ch11-hc-sim}
 
 With a small sample, the choice of HC variant matters. This simulation
 generates data under heteroscedasticity and measures the actual
@@ -742,9 +742,9 @@ stays closest to the 5% nominal level. This is the practical reason
 to prefer HC3 in small samples.
 
 
-# Diagnostics {#sec-ch11-diagnostics}
+## Diagnostics {#sec-ch11-diagnostics}
 
-## The five-check protocol
+### The five-check protocol
 
 After every OLS fit, run these five diagnostic checks. Each tests one
 of the Gauss-Markov assumptions and tells you what to do if it fails:
@@ -801,7 +801,7 @@ def ols_diagnostic_suite(result, X):
 diag = ols_diagnostic_suite(ols_nr, X_sm)
 ```
 
-## Added variable plots (partial regression) {#sec-ch11-avplot}
+### Added variable plots (partial regression) {#sec-ch11-avplot}
 
 An added variable plot (also called a partial regression plot) isolates
 the marginal relationship between $y$ and predictor $x_j$ after
@@ -851,7 +851,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## CUSUM test for structural breaks {#sec-ch11-cusum}
+### CUSUM test for structural breaks {#sec-ch11-cusum}
 
 The CUSUM (cumulative sum) test detects parameter instability by
 examining whether the cumulative sum of recursive residuals stays
@@ -887,7 +887,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Coverage simulation: what happens without robust SEs {#sec-ch11-coverage-sim}
+### Coverage simulation: what happens without robust SEs {#sec-ch11-coverage-sim}
 
 This simulation shows the practical consequence of using nonrobust SEs
 when the errors are heteroscedastic: the 95% confidence interval
@@ -948,7 +948,7 @@ applied researchers default to HC-robust SEs regardless of whether the
 Breusch--Pagan test rejects.
 
 
-# Computational Considerations {#sec-ch11-computation}
+## Computational Considerations {#sec-ch11-computation}
 
 | Operation | Cost | Notes |
 |---|---|---|
@@ -967,7 +967,7 @@ For large $n$ with many predictors, the $O(np^2)$ cost of the hat
 matrix and HC corrections becomes the bottleneck.
 
 
-# Worked Example {#sec-ch11-example}
+## Worked Example {#sec-ch11-example}
 
 Diagnosing and fixing a misspecified housing price model.
 
@@ -1014,7 +1014,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-### Step 4: DFBETAS --- which observations distort which coefficients?
+#### Step 4: DFBETAS --- which observations distort which coefficients?
 
 Cook's distance tells us *that* an observation is influential.
 DFBETAS tells us *where* the influence lands.
@@ -1034,7 +1034,7 @@ for j, name in enumerate(['const'] + list(X.columns)):
           f"{n_exceed/len(y):>8.1%}")
 ```
 
-### Step 5: Compare robust SE approaches
+#### Step 5: Compare robust SE approaches
 
 The California Housing data has geographic structure --- observations
 within the same census block group share unobserved neighborhood
@@ -1084,7 +1084,7 @@ HAC(10) gives larger SEs than HC3 for most coefficients, reflecting
 the additional uncertainty from spatial autocorrelation that the
 heteroscedasticity-only corrections miss.
 
-### Step 6: Specification check via added variable plots
+#### Step 6: Specification check via added variable plots
 
 ```{python}
 #| label: fig-worked-avplot
@@ -1123,7 +1123,7 @@ plt.show()
 ```
 
 
-# Exercises {#sec-ch11-exercises}
+## Exercises {#sec-ch11-exercises}
 
 **Exercise 11.1** ($\star\star$, diagnostic failure). Generate data
 with a quadratic true relationship: $y = \beta_0 + \beta_1 x + \beta_2 x^2 + \varepsilon$,
@@ -1277,7 +1277,7 @@ for the true covariance.
 %%
 
 
-# Bibliographic Notes {#sec-ch11-biblio}
+## Bibliographic Notes {#sec-ch11-biblio}
 
 The Gauss--Markov theorem is proved in most linear models textbooks;
 see Davidson and MacKinnon (2004), Chapter 1, for a treatment aligned

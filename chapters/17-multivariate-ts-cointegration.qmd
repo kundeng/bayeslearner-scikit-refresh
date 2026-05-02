@@ -17,7 +17,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -30,7 +30,7 @@ rng = np.random.default_rng(42)
 | $\boldsymbol{\alpha}$ | Adjustment speeds | `vecm.alpha` |
 
 
-# Motivation {#sec-ch17-motivation}
+## Motivation {#sec-ch17-motivation}
 
 Chapter 15 modeled one variable at a time. But economic and financial
 variables move together: interest rates affect exchange rates, GDP
@@ -56,9 +56,9 @@ neither price is. This is the basis of pairs trading and error
 correction models.
 
 
-# Mathematical Foundation {#sec-ch17-math}
+## Mathematical Foundation {#sec-ch17-math}
 
-## The VAR(p) model
+### The VAR(p) model
 
 The VAR(p) generalizes AR(p) to $K$ variables:
 
@@ -88,7 +88,7 @@ applies equation by equation.
 companion matrix lie inside the unit circle. Statsmodels checks this
 automatically.
 
-## Granger causality: predictive, not causal
+### Granger causality: predictive, not causal
 
 Variable $A$ *Granger-causes* variable $B$ if the coefficients on
 $A$'s lags in the equation for $B$ are jointly non-zero. Formally,
@@ -107,7 +107,7 @@ predictive relationships (useful for forecasting), but you cannot
 interpret them as evidence that changing $A$ would change $B$
 (that requires the methods of Chapters 20--23).
 
-## Impulse response functions: how shocks propagate
+### Impulse response functions: how shocks propagate
 
 If variable $k$ receives a one-unit shock at time $t$ (an unexpected
 increase in $u_{kt}$), how does this affect all $K$ variables over the
@@ -135,7 +135,7 @@ Cholesky decomposition of $\boldsymbol{\Sigma}_u$, which imposes a
 recursive ordering. The choice of ordering can affect the results ---
 this is the structural identification problem.
 
-## Cointegration: long-run equilibrium
+### Cointegration: long-run equilibrium
 
 Two $I(1)$ series (each non-stationary with a unit root) are
 *cointegrated* if there exists a linear combination that is $I(0)$
@@ -166,7 +166,7 @@ $\boldsymbol{\beta}$ are the cointegrating vectors (the long-run
 equilibria). $\boldsymbol{\alpha}$ contains the adjustment speeds
 (how fast each variable reverts when the equilibrium is disturbed).
 
-## The Johansen test: how many cointegrating relationships?
+### The Johansen test: how many cointegrating relationships?
 
 The Johansen test determines the cointegrating rank $r$ by testing a
 sequence of hypotheses: $H_0: r = 0$ vs $H_1: r > 0$; then
@@ -174,7 +174,7 @@ $H_0: r \leq 1$ vs $H_1: r > 1$; etc. It uses the *trace statistic*
 or *maximum eigenvalue statistic*, which have non-standard
 distributions (like the ADF test in Chapter 15).
 
-## VAR stability via the companion matrix
+### VAR stability via the companion matrix
 
 A VAR($p$) can always be rewritten as a VAR(1) in a higher-dimensional
 state vector. Stack $p$ lags into a single $Kp$-dimensional vector
@@ -211,7 +211,7 @@ diagnose instabilities. An eigenvalue near 1 means a near-unit root
 in the system --- the VAR behaves almost like a non-stationary process,
 and forecasts will have very slow decay.
 
-## Wold representation: from VAR to impulse responses
+### Wold representation: from VAR to impulse responses
 
 Every stationary VAR has an MA($\infty$) representation (the
 **Wold decomposition**):
@@ -234,7 +234,7 @@ $k$ at time $t$. This recursive formula is how statsmodels computes
 IRFs internally: no matrix inversion, just a forward recursion from
 the estimated $\boldsymbol{\Phi}_j$ matrices.
 
-## Forecast error variance decomposition (FEVD)
+### Forecast error variance decomposition (FEVD)
 
 The Wold representation also tells us how much of the $h$-step-ahead
 forecast uncertainty in variable $j$ is attributable to shocks from
@@ -260,7 +260,7 @@ $h \to \infty$, the FEVD converges to the *unconditional* variance
 decomposition --- this tells you which shocks are most important for
 long-run variability.
 
-## Engle--Granger two-step vs Johansen
+### Engle--Granger two-step vs Johansen
 
 Two approaches test for cointegration. They differ in scope and
 efficiency:
@@ -290,7 +290,7 @@ vectors simultaneously, and is asymptotically efficient. Use
 Engle--Granger for quick exploratory checks with two variables;
 use Johansen for anything serious.
 
-## Structural VAR and the identification problem
+### Structural VAR and the identification problem
 
 The orthogonalized IRFs from the Cholesky decomposition impose a
 **recursive causal ordering**: the first variable in the system can
@@ -315,9 +315,9 @@ alternative identification strategies (sign restrictions, external
 instruments) that are beyond our scope.
 
 
-# The Algorithm and SciPy Implementation {#sec-ch17-algorithm}
+## The Algorithm and SciPy Implementation {#sec-ch17-algorithm}
 
-## Step 1: Simulate a VAR
+### Step 1: Simulate a VAR
 
 ```{python}
 #| label: var-simulate
@@ -337,7 +337,7 @@ print(Phi)
 print(f"\nShape: {y_var.shape} (T={T} observations, K=2 variables)")
 ```
 
-## Step 1b: Verify stability via companion eigenvalues
+### Step 1b: Verify stability via companion eigenvalues
 
 For a VAR(1), the companion matrix is $\boldsymbol{\Phi}_1$ itself.
 Stationarity requires all eigenvalues inside the unit circle.
@@ -372,7 +372,7 @@ have two $5 \times 5$ coefficient matrices. Checking stability means
 building the $10 \times 10$ companion and computing its eigenvalues
 --- not checking each $\boldsymbol{\Phi}_i$ separately.
 
-## Step 2: Select lag order and fit
+### Step 2: Select lag order and fit
 
 ```{python}
 #| label: var-fit
@@ -398,7 +398,7 @@ coefficient matrix at lag 1. Element $(j,k)$ is the effect of
 variable $k$ at lag 1 on variable $j$ today. Our estimates are close
 to the true values.
 
-## Step 3: Granger causality
+### Step 3: Granger causality
 
 ```{python}
 #| label: granger
@@ -420,7 +420,7 @@ print(f"True Phi[0,1] (y2→y1) = {Phi[0,1]:.1f} — "
       f"{'significant' if gc_21.pvalue < 0.05 else 'not significant'}")
 ```
 
-## Step 4: Impulse response functions
+### Step 4: Impulse response functions
 
 ```{python}
 #| label: fig-irf
@@ -454,7 +454,7 @@ A shock to y1 has a positive but transient effect on y2 (top-right)
 --- this is because $\Phi_{21} = -0.1$ (slightly negative), but the
 indirect effect through the system creates a richer dynamic.
 
-## Step 5: Cointegration and VECM
+### Step 5: Cointegration and VECM
 
 ```{python}
 #| label: cointegration
@@ -507,7 +507,7 @@ print(f"equilibrium, y1 adjusts down by {vecm.alpha[0,0]:.3f} per period")
 print(f"and y2 adjusts up by {vecm.alpha[1,0]:.3f} per period.")
 ```
 
-## Step 6: Forecast error variance decomposition
+### Step 6: Forecast error variance decomposition
 
 FEVD decomposes the forecast uncertainty of each variable into
 contributions from each shock source. It answers: at horizon $h$, how
@@ -536,7 +536,7 @@ cross-variable contributions increase --- reflecting the dynamic
 interdependence captured by the off-diagonal elements of
 $\boldsymbol{\Phi}$.
 
-## Step 7: Structural VAR and Cholesky ordering
+### Step 7: Structural VAR and Cholesky ordering
 
 The Cholesky decomposition of $\boldsymbol{\Sigma}_u$ orthogonalizes
 the innovations. The ordering of variables determines the causal
@@ -603,7 +603,7 @@ diagonal (innovations are nearly uncorrelated), the ordering barely
 matters. When innovations are highly correlated, the ordering matters
 a lot --- and you need theory to pick it.
 
-## Step 8: Engle--Granger two-step cointegration test
+### Step 8: Engle--Granger two-step cointegration test
 
 The simplest cointegration test: regress one I(1) variable on another,
 then test whether the residuals are stationary.
@@ -635,7 +635,7 @@ print(f"  ADF p-value: {adf_rev[1]:.4f}")
 print(f"  Normalization matters — Johansen avoids this issue.")
 ```
 
-## Step 9: VECM forecasting
+### Step 9: VECM forecasting
 
 Once the VECM is fitted, forecasts incorporate both the short-run
 dynamics ($\boldsymbol{\Gamma}_i$) and the error correction term
@@ -661,9 +661,9 @@ print(f"and y2 drifts up until the equilibrium is restored.")
 ```
 
 
-# Variations, Diagnostics, and Pitfalls {#sec-ch17-variations}
+## Variations, Diagnostics, and Pitfalls {#sec-ch17-variations}
 
-## Spurious regression: the biggest pitfall
+### Spurious regression: the biggest pitfall
 
 If you run OLS of one random walk on another, you will often get a
 "significant" relationship --- even though the two series are
@@ -692,7 +692,7 @@ print(f"Non-stationary residuals → the regression is meaningless.")
 cointegrated, the relationship is real (use VECM). If not, difference
 both series before modeling (use VAR in differences).
 
-## Stability diagnostics
+### Stability diagnostics
 
 ```{python}
 #| label: stability
@@ -704,7 +704,7 @@ print(f"|eigenvalues|: {np.abs(eigs).round(3)}")
 print(f"All inside unit circle: {np.all(np.abs(eigs) < 1)} → stable")
 ```
 
-## Residual diagnostics
+### Residual diagnostics
 
 ```{python}
 #| label: portmanteau
@@ -715,7 +715,7 @@ print(f"Portmanteau test: stat = {pt.test_statistic:.2f}, "
 print(f"{'Residuals are white noise ✓' if pt.pvalue > 0.05 else 'Residual autocorrelation detected ✗'}")
 ```
 
-## Residual cross-correlation matrix
+### Residual cross-correlation matrix
 
 Beyond the portmanteau test, inspecting the cross-correlation
 structure of residuals reveals whether specific variable pairs have
@@ -732,7 +732,7 @@ print(f"the contemporaneous dependence structure adequately.")
 print(f"|corr(u1, u2)| = {abs(corr_mat[0, 1]):.3f}")
 ```
 
-## Stability roots plot
+### Stability roots plot
 
 Plotting the companion matrix eigenvalues in the complex plane gives
 an immediate visual check: all roots must lie inside the unit circle.
@@ -770,7 +770,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Multivariate normality test
+### Multivariate normality test
 
 The Jarque--Bera test generalizes to the multivariate case. Under
 the null of multivariate normality, the test statistic follows a
@@ -805,7 +805,7 @@ Non-normality does not invalidate the VAR coefficient estimates (OLS
 is consistent regardless), but it affects the confidence intervals
 on IRFs and the coverage of bootstrap intervals.
 
-## Forecast evaluation: VAR vs univariate ARIMA
+### Forecast evaluation: VAR vs univariate ARIMA
 
 A VAR is worth the extra parameters only if it forecasts better than
 simple univariate models. Compare out-of-sample RMSE.
@@ -846,7 +846,7 @@ print(f"If ARIMA wins, the VAR may be overfitting or the")
 print(f"cross-variable effects are too weak to help.")
 ```
 
-## Common mistakes
+### Common mistakes
 
 1. **VAR in levels on non-stationary data:** Gives inconsistent
    estimates unless the series are cointegrated. Always test for
@@ -864,9 +864,9 @@ print(f"cross-variable effects are too weak to help.")
    ordering. Try multiple orderings and check robustness.
 
 
-# From-Scratch Implementation {#sec-ch17-scratch}
+## From-Scratch Implementation {#sec-ch17-scratch}
 
-## VAR(1) estimation by OLS
+### VAR(1) estimation by OLS
 
 The VAR(1) can be estimated equation by equation via OLS. This is
 identical to running $K$ separate regressions, each with the same
@@ -918,7 +918,7 @@ print(f"\nTrue Phi:")
 print(Phi)
 ```
 
-## Impulse response functions from scratch
+### Impulse response functions from scratch
 
 The IRF follows directly from the Wold recursion
 (@eq-psi-recursion). Starting from $\boldsymbol{\Psi}_0 = \mathbf{I}$,
@@ -974,7 +974,7 @@ print(f"IRF at h=5 (statsmodels):")
 print(irf_sm.irfs[5].round(4))
 ```
 
-## Engle--Granger cointegration test from scratch
+### Engle--Granger cointegration test from scratch
 
 The two-step procedure is straightforward to implement: OLS on
 levels, then ADF on residuals.
@@ -1032,7 +1032,7 @@ print(f"Match: {abs(eg['beta'] - ols_eg.params[1]) < 1e-10}")
 ```
 
 
-# Computational Considerations {#sec-ch17-computation}
+## Computational Considerations {#sec-ch17-computation}
 
 | Model | Parameters | Estimation cost | Notes |
 |---|---|---|---|
@@ -1045,7 +1045,7 @@ consider shrinkage methods (Bayesian VAR, Lasso-VAR) or factor models
 to reduce dimensionality.
 
 
-# Worked Example {#sec-ch17-example}
+## Worked Example {#sec-ch17-example}
 
 Testing whether consumption and income are cointegrated.
 
@@ -1077,7 +1077,7 @@ if r_w > 0:
     print(f"relative to income, it adjusts downward.")
 ```
 
-### Full Johansen procedure walkthrough
+#### Full Johansen procedure walkthrough
 
 The Johansen output has several components. Let's read each one.
 
@@ -1114,7 +1114,7 @@ exceeds the critical value, reject $H_0: r = 0$ and move to
 $H_0: r \leq 1$. Continue until you fail to reject. The last rejected
 rank is $r$.
 
-### Error correction interpretation
+#### Error correction interpretation
 
 The VECM decomposes dynamics into two parts: the error correction
 term ($\boldsymbol{\alpha}\boldsymbol{\beta}^\top\mathbf{y}_{t-1}$)
@@ -1150,7 +1150,7 @@ if r_w > 0:
               f"(α = {alpha_w[1]:.3f})")
 ```
 
-### VECM forecast vs VAR in differences
+#### VECM forecast vs VAR in differences
 
 Forecasting with the VECM preserves the long-run equilibrium
 relationship. A VAR in differences cannot: it models changes only
@@ -1190,7 +1190,7 @@ if r_w > 0:
 ```
 
 
-# Exercises {#sec-ch17-exercises}
+## Exercises {#sec-ch17-exercises}
 
 **Exercise 17.1** ($\star\star$, diagnostic failure). Run a VAR on two
 *independent* random walks (no cointegration). Test Granger causality.
@@ -1285,7 +1285,7 @@ periods. A trader uses this to size positions and set stop-losses.
 %%
 
 
-# Bibliographic Notes {#sec-ch17-biblio}
+## Bibliographic Notes {#sec-ch17-biblio}
 
 VAR: Sims (1980) introduced the methodology to macroeconomics.
 Lütkepohl (2005) is the definitive textbook and covers the companion

@@ -20,7 +20,7 @@ rng = np.random.default_rng(42)
 ```
 
 
-# Positive Definiteness {.unnumbered}
+## Positive Definiteness {.unnumbered}
 
 A symmetric matrix $\mathbf{A} \in \mathbb{R}^{n \times n}$ is
 **positive definite** (PD) if any of the following equivalent conditions
@@ -121,7 +121,7 @@ algorithms can produce matrices that are numerically but not
 algebraically indefinite.
 
 
-# Cholesky Decomposition {.unnumbered}
+## Cholesky Decomposition {.unnumbered}
 
 Every positive definite matrix $\mathbf{A}$ admits a unique
 factorisation
@@ -190,7 +190,7 @@ print("Cholesky solve error:",
 ```
 
 
-# Singular Value Decomposition {.unnumbered}
+## Singular Value Decomposition {.unnumbered}
 
 Every matrix $\mathbf{A} \in \mathbb{R}^{m \times n}$ has a
 factorisation
@@ -266,7 +266,7 @@ print(Vt[:2, :].round(4))
 ```
 
 
-# Eigendecomposition {.unnumbered}
+## Eigendecomposition {.unnumbered}
 
 A square matrix $\mathbf{A} \in \mathbb{R}^{n \times n}$ can be
 decomposed as
@@ -346,7 +346,7 @@ continuous-time state-space models.
   conditions) and Ch. 17 (VAR forecasting).
 
 
-# Matrix Calculus {.unnumbered}
+## Matrix Calculus {.unnumbered}
 
 Matrix calculus underlies every optimisation and maximum-likelihood
 derivation in the book.  The convention throughout is the
@@ -354,7 +354,7 @@ derivation in the book.  The convention throughout is the
 gradient $\nabla f(\mathbf{x}) = \partial f / \partial \mathbf{x}$ is a
 column vector in $\mathbb{R}^n$.
 
-## Key scalar-by-vector results {.unnumbered}
+### Key scalar-by-vector results {.unnumbered}
 
 | Function | Gradient | Used in |
 |---|---|---|
@@ -401,7 +401,7 @@ $\mathbf{x} - \mathbf{x}_0 = -[\nabla^2 f(\mathbf{x}_0)]^{-1}
 \nabla f(\mathbf{x}_0)$ — the foundation of all Newton-type methods in
 Ch. 2.
 
-## Key matrix-by-matrix results {.unnumbered}
+### Key matrix-by-matrix results {.unnumbered}
 
 These appear in likelihood derivations where the parameter is a matrix
 (e.g., a covariance matrix):
@@ -476,7 +476,7 @@ print(f"Max error: "
 ```
 
 
-# Sherman–Morrison–Woodbury Identity {.unnumbered}
+## Sherman–Morrison–Woodbury Identity {.unnumbered}
 
 The Woodbury identity gives the inverse of a matrix after a low-rank
 perturbation:
@@ -576,7 +576,7 @@ available (as in the BFGS iteration), the Woodbury update costs
 $O(n^2 k)$ versus $O(n^3)$ for a fresh inverse.
 
 
-# Block Matrix Inversion and Schur Complement {.unnumbered}
+## Block Matrix Inversion and Schur Complement {.unnumbered}
 
 Consider a conformably partitioned matrix
 
@@ -666,7 +666,7 @@ print(f"Determinant error:   {abs(det_full - det_schur):.2e}")
 ```
 
 
-# Kronecker Products {.unnumbered}
+## Kronecker Products {.unnumbered}
 
 The **Kronecker product** of $\mathbf{A} \in \mathbb{R}^{m \times n}$
 and $\mathbf{B} \in \mathbb{R}^{p \times q}$ is the $mp \times nq$
@@ -688,7 +688,7 @@ $$
 - Eigenvalues of $\mathbf{A} \otimes \mathbf{B}$ are all products $\lambda_i(\mathbf{A}) \cdot \lambda_j(\mathbf{B})$
 - $\text{det}(\mathbf{A} \otimes \mathbf{B}) = (\text{det}\,\mathbf{A})^p \cdot (\text{det}\,\mathbf{B})^n$ for $\mathbf{A}$ $n \times n$, $\mathbf{B}$ $p \times p$
 
-## The vec operator and the fundamental identity {.unnumbered}
+### The vec operator and the fundamental identity {.unnumbered}
 
 The **vec** operator stacks the columns of a matrix into a single
 vector: $\text{vec}(\mathbf{X})$ for $\mathbf{X} \in
@@ -758,9 +758,9 @@ print(f"vec(AXB) = (B' ⊗ A)vec(X) error: "
 ```
 
 
-# Trace and Determinant {.unnumbered}
+## Trace and Determinant {.unnumbered}
 
-## Trace {.unnumbered}
+### Trace {.unnumbered}
 
 The trace of a square matrix $\mathbf{A}$ is the sum of its diagonal
 entries: $\text{tr}(\mathbf{A}) = \sum_{i=1}^n a_{ii}$.  Key
@@ -791,7 +791,7 @@ $$
 This identity is the workhorse behind REML derivations (Ch. 14) and
 the expected value of chi-squared test statistics (Ch. 10).
 
-## Determinant {.unnumbered}
+### Determinant {.unnumbered}
 
 Key determinant properties used in the book:
 
@@ -875,9 +875,9 @@ print(f"Error: {abs(det_direct - det_lemma):.2e}")
 ```
 
 
-# Matrix Norms and Condition Number {#sec-norms .unnumbered}
+## Matrix Norms and Condition Number {#sec-norms .unnumbered}
 
-## Norms {.unnumbered}
+### Norms {.unnumbered}
 
 | Norm | Definition | NumPy call |
 |---|---|---|
@@ -890,7 +890,7 @@ The Frobenius norm is the most common in statistical applications
 (e.g., measuring distance between covariance matrices).  The spectral
 norm governs operator bounds and perturbation theory.
 
-## Condition number {.unnumbered}
+### Condition number {.unnumbered}
 
 The **condition number** of a nonsingular matrix $\mathbf{A}$ is
 
@@ -1015,7 +1015,7 @@ collinearity reflects a genuine constraint in the data or a modelling
 choice.  Ch. 11 covers this in detail.
 
 
-# Projection Matrices {.unnumbered}
+## Projection Matrices {.unnumbered}
 
 Given a full-column-rank design matrix $\mathbf{X} \in
 \mathbb{R}^{n \times p}$ (with $n > p$), the **hat matrix** is
@@ -1096,7 +1096,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-## Frisch–Waugh–Lovell theorem {.unnumbered}
+### Frisch–Waugh–Lovell theorem {.unnumbered}
 
 The **Frisch–Waugh–Lovell** (FWL) theorem states that in the
 regression of $\mathbf{y}$ on $[\mathbf{X}_1 \; \mathbf{X}_2]$, the
@@ -1153,7 +1153,7 @@ print("Match:",
 ```
 
 
-# Quick Reference {.unnumbered}
+## Quick Reference {.unnumbered}
 
 The table below maps each result to the chapters that use it most
 heavily.

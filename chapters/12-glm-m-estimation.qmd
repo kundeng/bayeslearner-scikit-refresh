@@ -14,7 +14,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -27,7 +27,7 @@ rng = np.random.default_rng(42)
 | $\rho_\tau(u) = u(\tau - \mathbb{1}(u < 0))$ | Check loss (quantile regression) | |
 
 
-# Motivation {#sec-ch12-motivation}
+## Motivation {#sec-ch12-motivation}
 
 Chapters 10--11 covered linear regression: $y = \mathbf{x}^\top\boldsymbol{\beta} + \varepsilon$
 with continuous $y$ and constant variance. But many response variables
@@ -56,9 +56,9 @@ support Wald/score/LR tests from Chapter 10, and all three have the
 same asymptotic theory. Learn it once, use it everywhere.
 
 
-# Mathematical Foundation {#sec-ch12-math}
+## Mathematical Foundation {#sec-ch12-math}
 
-## The GLM framework
+### The GLM framework
 
 A GLM has three components:
 
@@ -84,7 +84,7 @@ $S(\boldsymbol{\beta}) = \mathbf{X}^\top(\mathbf{y} - \boldsymbol{\mu})$.
 | Gamma | $-\ln(-\theta)$ | Inverse: $1/\mu$ | $\mu^2$ |
 | Negative Binomial | $-r\ln(1-e^\theta)$ | Log | $\mu + \mu^2/r$ |
 
-### Why the cumulant function determines everything
+#### Why the cumulant function determines everything
 
 The cumulant function $b(\theta)$ is not just bookkeeping --- it
 encodes the mean and variance of the distribution. Differentiating
@@ -125,7 +125,7 @@ the residuals are orthogonal to every predictor. The canonical link
 makes the GLM score look like linear regression's normal equations,
 which is why `statsmodels` uses canonical links as defaults.
 
-## IRLS: how statsmodels fits GLMs
+### IRLS: how statsmodels fits GLMs
 
 GLM fitting uses Iteratively Reweighted Least Squares (IRLS), which
 is Fisher scoring (Newton's method with expected information):
@@ -144,7 +144,7 @@ the negative log-likelihood, using the expected information instead of
 the observed information. Each iteration costs $O(np^2)$, the same as
 OLS.
 
-### Fisher scoring vs. Newton's method
+#### Fisher scoring vs. Newton's method
 
 Newton's method uses the observed Hessian
 $\nabla^2 \ell(\boldsymbol{\beta})$, which depends on the particular
@@ -173,7 +173,7 @@ observed and expected information are equal. For non-canonical
 links (e.g., identity link with Poisson), they differ, and Fisher
 scoring is the safer choice.
 
-## M-estimation: the unifying framework
+### M-estimation: the unifying framework
 
 An M-estimator solves:
 $$
@@ -201,7 +201,7 @@ For correctly specified GLMs, the bread and meat simplify to
 $\mathcal{I}^{-1}$ (the information matrix inverse). Under
 misspecification, they don't --- and the sandwich is needed.
 
-## Robust regression: bounding the influence
+### Robust regression: bounding the influence
 
 The influence function measures how much an estimator changes when you
 add one observation at $(x_0, y_0)$:
@@ -246,7 +246,7 @@ Chapter 21 and the DML estimator in Chapter 23 both achieve
 semiparametric efficiency because their moment conditions use the
 efficient influence function. See Appendix A for a fuller discussion.
 
-### Breakdown point {#sec-ch12-breakdown}
+#### Breakdown point {#sec-ch12-breakdown}
 
 The breakdown point is the largest fraction of contaminated
 observations an estimator can tolerate before the estimate becomes
@@ -266,7 +266,7 @@ higher breakdown point. The MM-estimator (not in statsmodels' `RLM`,
 but available in R's `lmrob`) achieves 50% breakdown *and* high
 efficiency --- a strictly better tradeoff.
 
-## Quantile regression: the check loss
+### Quantile regression: the check loss
 
 Quantile regression estimates the conditional $\tau$-th quantile by
 minimizing the *check loss*:
@@ -306,10 +306,10 @@ is robust to outliers and provides a complete picture of how
 predictors affect the distribution, not just its center.
 
 
-# The Algorithm {#sec-ch12-algorithm}
+## The Algorithm {#sec-ch12-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 12.1: IRLS for GLMs
+### Algorithm 12.1: IRLS for GLMs
 
 **Input:** $(\mathbf{X}, \mathbf{y})$, family, link, tolerance $\epsilon$
 
@@ -327,7 +327,7 @@ predictors affect the distribution, not just its center.
 :::
 
 
-# Statistical Properties {#sec-ch12-stats}
+## Statistical Properties {#sec-ch12-stats}
 
 **GLM inference reuses the trinity.** The Wald, score, and LR tests
 from Chapter 10 apply directly to GLMs. The deviance
@@ -349,9 +349,9 @@ when the fraction of outliers is small --- the classic
 bias-robustness tradeoff.
 
 
-# Statsmodels Implementation {#sec-ch12-statsmodels}
+## Statsmodels Implementation {#sec-ch12-statsmodels}
 
-## GLM: the exponential family
+### GLM: the exponential family
 
 ```{python}
 #| label: glm-demo
@@ -386,7 +386,7 @@ print(f"AIC: {glm_pois.aic:.2f}")
 - `cov_type='nonrobust'`: model-based covariance. Use `'HC1'` for
   heteroscedasticity-robust (just like OLS).
 
-## Gamma GLM: positive continuous data
+### Gamma GLM: positive continuous data
 
 When the response is positive and right-skewed --- insurance claim
 amounts, hospital lengths of stay, reaction times --- the Gamma
@@ -421,7 +421,7 @@ scale (a one-unit increase in $x_1$ multiplies the mean by
 $e^{\beta_1}$). Statsmodels estimates the dispersion $\phi = 1/k$
 (where $k$ is the shape parameter) from the Pearson statistic.
 
-## Robust regression: `RLM`
+### Robust regression: `RLM`
 
 ```{python}
 #| label: rlm-demo
@@ -448,7 +448,7 @@ OLS is pulled toward the outliers. Huber downweights them. Tukey
 biweight completely ignores them (bounded influence). The tradeoff:
 Tukey is more robust but has lower efficiency under the normal model.
 
-### Tuning the robustness--efficiency tradeoff
+#### Tuning the robustness--efficiency tradeoff
 
 The Huber tuning constant $t$ controls where the loss transitions
 from quadratic to linear. Statsmodels defaults to $t = 1.345$, which
@@ -475,7 +475,7 @@ for t in [1.0, 1.345, 2.0]:
 | $t = 1.345$ | 95% (default) | General-purpose robust fit |
 | $t = 2.0$ | ~98% | Mild outlier protection |
 
-## Quantile regression
+### Quantile regression
 
 ```{python}
 #| label: quantreg-demo
@@ -494,7 +494,7 @@ shifts); the slopes are roughly constant (homoscedastic data has
 parallel quantile lines). With heteroscedastic data, the slopes
 differ --- this is where quantile regression earns its keep.
 
-## Quantile regression with heteroscedastic data
+### Quantile regression with heteroscedastic data
 
 ```{python}
 #| label: fig-quantreg-hetero
@@ -532,9 +532,9 @@ report OLS, you miss that the effect of $x_1$ is much larger in the
 upper tail of the distribution.
 
 
-# From-Scratch Implementation {#sec-ch12-scratch}
+## From-Scratch Implementation {#sec-ch12-scratch}
 
-## IRLS for Poisson regression
+### IRLS for Poisson regression
 
 ```{python}
 #| label: irls-scratch
@@ -576,7 +576,7 @@ print(f"statsmodels:  {glm_pois.params.round(4)}, "
 print(f"Match: {np.allclose(res_ours['params'], glm_pois.params, atol=1e-3)}")
 ```
 
-## Huber M-estimator via IRLS
+### Huber M-estimator via IRLS
 
 Huber's estimator uses IRLS too, but with a different weight
 function. Where the residual exceeds $\pm c$, the loss switches
@@ -632,7 +632,7 @@ inside the threshold (treated as OLS) and shrink toward 0 for
 outliers. This is the operational meaning of "bounded influence"
 --- outliers get downweighted, not discarded.
 
-## Sandwich covariance from scratch
+### Sandwich covariance from scratch
 
 The sandwich covariance (@eq-m-sandwich) is the universal standard
 error for M-estimators. Let's verify it for the Poisson GLM.
@@ -674,9 +674,9 @@ misspecification --- the bread and meat disagree, just as
 Exercise 12.4 explains.
 
 
-# Diagnostics {#sec-ch12-diagnostics}
+## Diagnostics {#sec-ch12-diagnostics}
 
-## Deviance residuals
+### Deviance residuals
 
 ```{python}
 #| label: fig-deviance-resid
@@ -697,7 +697,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Overdispersion check
+### Overdispersion check
 
 ```{python}
 #| label: overdispersion
@@ -714,7 +714,7 @@ if pearson_disp > 1.5:
     print(f"  Quasi SE:   {glm_quasi.bse.round(4)}")
 ```
 
-## Deviance vs. Pearson residuals
+### Deviance vs. Pearson residuals
 
 GLMs have two natural residual types, and using the wrong one can
 hide problems.
@@ -748,7 +748,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Link function diagnostic
+### Link function diagnostic
 
 Choosing the wrong link function is a form of misspecification
 that residual plots can detect. Compare the log link (canonical
@@ -793,7 +793,7 @@ predictor is not the right transformation of $\mu$. The log link
 removes this curvature because the true data-generating process
 uses an exponential mean function.
 
-## Quantile process plot
+### Quantile process plot
 
 A quantile process plot shows how regression coefficients change
 across quantiles $\tau \in (0, 1)$. It is the signature diagnostic
@@ -833,7 +833,7 @@ the effect of $x_1$ is roughly 1.5 at $\tau = 0.10$ but over 2.5
 at $\tau = 0.90$. OLS averages these into a single number and
 misses the story.
 
-## When to use which M-estimator
+### When to use which M-estimator
 
 | Situation | Method | Why |
 |---|---|---|
@@ -844,7 +844,7 @@ misses the story.
 | Count data, overdispersed | Negative Binomial or quasi-Poisson | Poisson assumes Var = mean |
 
 
-# Computational Considerations {#sec-ch12-computation}
+## Computational Considerations {#sec-ch12-computation}
 
 | Method | Per-iteration cost | Iterations | Notes |
 |---|---|---|---|
@@ -857,7 +857,7 @@ convergence). Robust regression converges more slowly because the
 weights change discontinuously near the Huber threshold.
 
 
-# Worked Example {#sec-ch12-example}
+## Worked Example {#sec-ch12-example}
 
 Modeling insurance claims: comparing Poisson, Negative Binomial,
 and robust approaches.
@@ -902,7 +902,7 @@ print(f"{'Quasi-Pois':<12} {'N/A':>8} "
 ```
 
 
-# Exercises {#sec-ch12-exercises}
+## Exercises {#sec-ch12-exercises}
 
 **Exercise 12.1** ($\star\star$, diagnostic failure). Fit a Poisson
 GLM to data that is actually negative binomial (overdispersed). Compare
@@ -1070,7 +1070,7 @@ sandwich.
 %%
 
 
-# Bibliographic Notes {#sec-ch12-biblio}
+## Bibliographic Notes {#sec-ch12-biblio}
 
 GLMs were introduced by Nelder and Wedderburn (1972). The definitive
 reference is McCullagh and Nelder (1989). IRLS as Fisher scoring for

@@ -14,7 +14,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning |
 |--------|---------|
@@ -25,7 +25,7 @@ rng = np.random.default_rng(42)
 | $e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{x})$ | Propensity score |
 
 
-# Motivation {#sec-ch21-motivation}
+## Motivation {#sec-ch21-motivation}
 
 Regression (Chapters 10-14) tells you about associations: "people who
 take the drug have better outcomes." Causal inference asks the harder
@@ -56,9 +56,9 @@ Four estimators, all built from scipy/statsmodels/sklearn components:
    "double robustness"
 
 
-# Mathematical Foundation {#sec-ch21-math}
+## Mathematical Foundation {#sec-ch21-math}
 
-## The fundamental problem of causal inference
+### The fundamental problem of causal inference
 
 For each unit $i$, there are two *potential outcomes*:
 
@@ -81,7 +81,7 @@ $$
 We cannot compute this directly because we never observe both
 potential outcomes for the same unit. This is the fundamental problem.
 
-## Why naive comparison fails
+### Why naive comparison fails
 
 The naive estimator $\hat{\tau}_{\text{naive}} = \bar{Y}_{\text{treated}} - \bar{Y}_{\text{control}}$
 is biased whenever treatment assignment depends on characteristics
@@ -96,7 +96,7 @@ that also affect the outcome. For example:
 This is *confounding*: a variable that affects both treatment
 assignment and the outcome.
 
-## Identification under unconfoundedness
+### Identification under unconfoundedness
 
 To estimate causal effects from observational data, we need three
 assumptions:
@@ -122,7 +122,7 @@ $$
 \tau = \mathbb{E}\!\left[\frac{D_i Y_i}{e(\mathbf{X}_i)} - \frac{(1-D_i)Y_i}{1-e(\mathbf{X}_i)}\right]
 $$ {#eq-ipw}
 
-## The propensity score
+### The propensity score
 
 The propensity score $e(\mathbf{x}) = \Pr(D=1 \mid \mathbf{X}=\mathbf{x})$
 is the probability of receiving treatment given covariates. It is a
@@ -137,7 +137,7 @@ for a single number --- the propensity score.
 In practice, we estimate $e(\mathbf{x})$ using logistic regression
 or other classifiers (sklearn's `LogisticRegression`).
 
-### Proof of the Rosenbaum-Rubin theorem
+#### Proof of the Rosenbaum-Rubin theorem
 
 The theorem is worth proving because the proof *is* the design
 principle: it shows exactly why propensity-score methods work and
@@ -189,7 +189,7 @@ reweight on this single number instead of the full covariate vector.
 This is why IPW works --- it reweights by $1/\hat{e}$ rather than
 requiring nonparametric adjustment in the full $\mathbf{X}$ space.
 
-### Positivity violations
+#### Positivity violations
 
 Positivity requires $0 < e(\mathbf{x}) < 1$ for all $\mathbf{x}$.
 When this fails --- some covariate strata have $e(\mathbf{x})
@@ -225,9 +225,9 @@ where one group's distribution has mass but the other's does not.
 3. **AIPW:** Less sensitive to extreme weights because the outcome
    model handles the regions where $e(\mathbf{x})$ is extreme.
 
-## The four estimators
+### The four estimators
 
-### Matching
+#### Matching
 
 The oldest approach: for each treated unit, find one or more control
 units with similar covariates and compare their outcomes. The ATE
@@ -253,7 +253,7 @@ the same control unit may be matched multiple times, inflating its
 influence. Matching quality degrades in high dimensions (the
 "curse of dimensionality").
 
-### Regression adjustment
+#### Regression adjustment
 
 Fit separate outcome models for treated and control units:
 $\hat{\mu}_1(\mathbf{x}) = \hat{\mathbb{E}}[Y \mid \mathbf{X}=\mathbf{x}, D=1]$
@@ -265,7 +265,7 @@ $\hat{\tau}_{\text{reg}} = \frac{1}{n}\sum_i [\hat{\mu}_1(\mathbf{X}_i) - \hat{\
 
 **Limitation:** If the outcome model is wrong, the estimate is biased.
 
-### Inverse Probability Weighting (IPW)
+#### Inverse Probability Weighting (IPW)
 
 Reweight each observation by the inverse of its propensity score.
 Treated units with low $e(\mathbf{x})$ (unlikely to be treated) get
@@ -308,7 +308,7 @@ variance than the unnormalized Horvitz-Thompson estimator when the
 sample size varies across strata. It is slightly biased in finite
 samples but the bias is $O(1/n)$.
 
-### AIPW (Augmented IPW): double robustness
+#### AIPW (Augmented IPW): double robustness
 
 AIPW combines both approaches:
 
@@ -329,7 +329,7 @@ regression is perfect ($\hat{\mu}_d = \mu_d$), the corrections have
 mean zero and don't hurt. If the regression is wrong but the
 propensity is right, the corrections fix the bias.
 
-### Proof of double robustness {#sec-ch21-dr-proof}
+#### Proof of double robustness {#sec-ch21-dr-proof}
 
 This proof is worth giving in full because it reveals the mechanism
 behind the estimator's resilience --- and shows exactly what "double
@@ -402,10 +402,10 @@ removes any first-order bias from the regression, but only needs
 Neyman-orthogonality property exploited by DML in Chapter 23.
 
 
-# The Algorithm {#sec-ch21-algorithm}
+## The Algorithm {#sec-ch21-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 21.1: AIPW Estimator
+### Algorithm 21.1: AIPW Estimator
 
 **Input:** Data $(\mathbf{X}, D, Y)$
 
@@ -432,7 +432,7 @@ Neyman-orthogonality property exploited by DML in Chapter 23.
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 21.2: Nearest-Neighbor Matching
+### Algorithm 21.2: Nearest-Neighbor Matching
 
 **Input:** Data $(\mathbf{X}, D, Y)$, distance metric $d$,
 number of matches $M$
@@ -457,7 +457,7 @@ number of matches $M$
 :::
 
 
-# Statistical Properties {#sec-ch21-stats}
+## Statistical Properties {#sec-ch21-stats}
 
 **Regression adjustment** is consistent when the outcome model is
 correctly specified. It is the most efficient estimator when the model
@@ -479,9 +479,9 @@ The first two terms reflect the cost of not observing both potential
 outcomes; the third reflects treatment effect heterogeneity.
 
 
-# Implementation {#sec-ch21-impl}
+## Implementation {#sec-ch21-impl}
 
-## Simulating observational data
+### Simulating observational data
 
 To understand these estimators, we simulate data where we *control*
 everything and know the true ATE. This lets us see exactly how and
@@ -523,7 +523,7 @@ treated and the outcome. People with higher $x_1$ are both more
 likely to be treated *and* have higher $Y(0)$. The naive comparison
 picks up both the treatment effect and the selection effect.
 
-## Step-by-step: regression adjustment
+### Step-by-step: regression adjustment
 
 ```{python}
 #| label: reg-adjustment
@@ -551,7 +551,7 @@ potential outcomes. For a treated unit, we observe $Y(1)$ and predict
 $Y(0)$. For a control unit, we observe $Y(0)$ and predict $Y(1)$. The
 estimated ATE is the average of these predicted differences.
 
-## Step-by-step: IPW
+### Step-by-step: IPW
 
 ```{python}
 #| label: ipw
@@ -581,7 +581,7 @@ print(f"Effective sample size: {(weights.sum())**2 / (weights**2).sum():.0f} / {
 assignment is "as if random." The weights balance the covariates
 between treated and control groups.
 
-## Step-by-step: AIPW
+### Step-by-step: AIPW
 
 ```{python}
 #| label: aipw
@@ -614,7 +614,7 @@ residual bias from the outcome model. If the outcome model is perfect,
 the corrections are noise around zero. If the outcome model is wrong
 but the propensity is right, the corrections fix the bias.
 
-## Step-by-step: stabilized (Hajek) IPW
+### Step-by-step: stabilized (Hajek) IPW
 
 ```{python}
 #| label: hajek-ipw
@@ -646,7 +646,7 @@ weights $w_i^{\text{stab}} = D_i \cdot \bar{D} / e_i +
 (1-D_i) \cdot (1 - \bar{D}) / (1-e_i)$ where $\bar{D}$ is the
 marginal treatment rate.
 
-## Step-by-step: matching with Mahalanobis distance
+### Step-by-step: matching with Mahalanobis distance
 
 ```{python}
 #| label: matching
@@ -729,7 +729,7 @@ transparent --- production implementations use $k$-d trees. The
 single-match estimator is noisier than $M=3$ because each
 counterfactual depends on one neighbor.
 
-## Comparison of all estimators
+### Comparison of all estimators
 
 ```{python}
 #| label: comparison
@@ -754,9 +754,9 @@ print(f"{'AIPW':<20} {ate_aipw:>8.3f} "
 ```
 
 
-# Diagnostics {#sec-ch21-diagnostics}
+## Diagnostics {#sec-ch21-diagnostics}
 
-## Balance diagnostics
+### Balance diagnostics
 
 The most important diagnostic: after weighting or matching, are the
 treated and control groups balanced on covariates? The *standardized
@@ -809,7 +809,7 @@ plt.show()
 If any covariate remains imbalanced, the treatment effect estimate
 may still be confounded.
 
-## Sensitivity analysis: Rosenbaum bounds
+### Sensitivity analysis: Rosenbaum bounds
 
 Unconfoundedness is *untestable* --- it assumes no unobserved
 confounders. Sensitivity analysis asks: "How strong would an
@@ -957,7 +957,7 @@ print(f"would shift the estimate by "
 ```
 
 
-# Computational Considerations {#sec-ch21-computation}
+## Computational Considerations {#sec-ch21-computation}
 
 | Method | Cost | Memory | Notes |
 |---|---|---|---|
@@ -971,7 +971,7 @@ All four estimators are fast for typical observational studies
 estimators with machine learning nuisance models (Chapter 23, DML).
 
 
-# Worked Example {#sec-ch21-example}
+## Worked Example {#sec-ch21-example}
 
 Estimating the effect of job training on earnings.
 
@@ -1075,7 +1075,7 @@ print(f"{'AIPW':<20} {ate_w:>10,.0f} "
       f"{ate_w - tau_w:>10,.0f}")
 ```
 
-## Diagnostic suite for the worked example
+### Diagnostic suite for the worked example
 
 The diagnostic suite answers three questions: (1) is the propensity
 model adequate? (2) do the treated and control groups overlap? (3)
@@ -1218,7 +1218,7 @@ plt.show()
   the propensity model is misspecified --- IPW will be biased.
 
 
-# Exercises {#sec-ch21-exercises}
+## Exercises {#sec-ch21-exercises}
 
 **Exercise 21.1** ($\star\star$, diagnostic failure). Simulate data
 with a positivity violation: $e(\mathbf{x}) \approx 0$ for some
@@ -1366,7 +1366,7 @@ where $\sigma_d^2(\mathbf{x}) = \text{Var}(Y(d) \mid \mathbf{X}=\mathbf{x})$.
 %%
 
 
-# Bibliographic Notes {#sec-ch21-biblio}
+## Bibliographic Notes {#sec-ch21-biblio}
 
 Potential outcomes: Neyman (1923) for randomized experiments, Rubin
 (1974) for the extension to observational studies. The framework is

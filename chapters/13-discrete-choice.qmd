@@ -20,7 +20,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -31,7 +31,7 @@ rng = np.random.default_rng(42)
 | AME, MEM | Average marginal effect, marginal effect at means | `at='overall'`, `at='mean'` |
 
 
-# Motivation {#sec-ch13-motivation}
+## Motivation {#sec-ch13-motivation}
 
 Many outcomes in applied statistics are not continuous: a customer
 defaults or doesn't, a patient chooses one of three treatments, a
@@ -58,9 +58,9 @@ This chapter covers:
 - **Counts:** Poisson, Negative Binomial, zero-inflated models
 
 
-# Mathematical Foundation {#sec-ch13-math}
+## Mathematical Foundation {#sec-ch13-math}
 
-## Binary choice: the latent-utility model
+### Binary choice: the latent-utility model
 
 The logit and probit models can be derived from a latent variable:
 $$
@@ -86,7 +86,7 @@ where $f = \Lambda'$ (logit) or $f = \phi$ (probit). This marginal
 effect varies with $\mathbf{x}$ --- it is largest at
 $\Pr(y=1) = 0.5$ and approaches zero at the extremes.
 
-## Identification {#sec-ch13-identification}
+### Identification {#sec-ch13-identification}
 
 The latent-variable model has two identification problems. Both
 explain API design choices and constrain how you interpret output.
@@ -119,7 +119,7 @@ gives $\pi/\sqrt{3} \approx 1.81$). Report AMEs instead of raw
 coefficients --- the link-function derivative absorbs the scale
 difference, making AMEs comparable regardless of the link.
 
-## Marginal effects
+### Marginal effects
 
 Two conventions:
 
@@ -163,7 +163,7 @@ $\hat{\boldsymbol{\beta}}$. The from-scratch implementation in
 @sec-ch13-scratch computes this Jacobian element by element and
 verifies it against `get_margeff()`.
 
-## Count models and zero-inflation
+### Count models and zero-inflation
 
 Poisson regression (Chapter 12) assumes $\text{Var}(y) = \mu$. When
 the data has more variance (overdispersion) or more zeros
@@ -177,7 +177,7 @@ the data has more variance (overdispersion) or more zeros
 - **Hurdle model:** separates the zero/nonzero decision from the count
   given nonzero. Logit for the hurdle, truncated Poisson for the count.
 
-## Separation and perfect prediction {#sec-ch13-separation}
+### Separation and perfect prediction {#sec-ch13-separation}
 
 When a predictor perfectly separates the two outcomes --- every
 observation with $x_j > c$ has $y = 1$ and every observation with
@@ -206,7 +206,7 @@ method; the practical response is to detect separation, then drop
 the offending predictor, combine sparse categories, or use a
 Bayesian logit with weakly informative priors.
 
-## Multinomial logit likelihood {#sec-ch13-mnlogit-math}
+### Multinomial logit likelihood {#sec-ch13-mnlogit-math}
 
 With $J$ unordered outcomes, the multinomial logit assigns
 $$
@@ -241,7 +241,7 @@ significant test statistic means IIA is violated --- consider
 nested logit or mixed logit, which allow correlated errors across
 alternatives.
 
-## Zero-inflation as a finite mixture {#sec-ch13-zip-math}
+### Zero-inflation as a finite mixture {#sec-ch13-zip-math}
 
 The ZIP treats the population as a mixture of two types: a
 "structural zero" group (probability $\pi_i$) that always produces
@@ -273,14 +273,14 @@ determine whether a zero is structural need not be the same
 factors that determine the count magnitude.
 
 
-# The Algorithm {#sec-ch13-algorithm}
+## The Algorithm {#sec-ch13-algorithm}
 
 All models in this chapter are fit by MLE using Newton-Raphson or
 BFGS (Chapter 2). The key computational step is the log-likelihood
 gradient (score), which statsmodels computes analytically.
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 13.1: Marginal Effects (AME)
+### Algorithm 13.1: Marginal Effects (AME)
 
 **Input:** Fitted model, design matrix $\mathbf{X}$
 
@@ -297,7 +297,7 @@ gradient (score), which statsmodels computes analytically.
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 13.2: Logit MLE via Newton-Raphson
+### Algorithm 13.2: Logit MLE via Newton-Raphson
 
 **Input:** Design matrix $\mathbf{X}$, response $\mathbf{y}$,
 initial $\boldsymbol{\beta}_0 = \mathbf{0}$, tolerance $\varepsilon$
@@ -336,7 +336,7 @@ with an analytic Hessian (Chapter 2 covers Newton-Raphson in the
 general optimization context).
 
 
-# Statistical Properties {#sec-ch13-stats}
+## Statistical Properties {#sec-ch13-stats}
 
 **Logit vs Probit:** In practice, they give nearly identical predicted
 probabilities. The logit coefficients are approximately 1.6× the
@@ -360,9 +360,9 @@ where $\hat{\mathbf{V}}$ is the covariance of $\hat{\boldsymbol{\beta}}$.
 Statsmodels' `get_margeff()` computes this automatically.
 
 
-# Statsmodels Implementation {#sec-ch13-statsmodels}
+## Statsmodels Implementation {#sec-ch13-statsmodels}
 
-## Logit and marginal effects
+### Logit and marginal effects
 
 ```{python}
 #| label: logit-demo
@@ -400,7 +400,7 @@ changes the probability of default by `AME` percentage points. This
 is directly interpretable; the logit coefficient is not (it's in
 log-odds units).
 
-## Probit comparison
+### Probit comparison
 
 ```{python}
 #| label: probit-comparison
@@ -414,7 +414,7 @@ for j in range(3):
 print(f"\nRatio ≈ 1.6 (logistic variance π²/3 vs normal variance 1)")
 ```
 
-## Count models: Poisson vs NegBin vs ZIP
+### Count models: Poisson vs NegBin vs ZIP
 
 ```{python}
 #| label: count-demo
@@ -449,7 +449,7 @@ for name, res in [('Poisson', pois_res), ('NegBin', nb_res), ('ZIP', zip_res)]:
     print(f"{name:<8} {res.aic:>8.1f} {res.params[1]:>8.3f} {'':>14}")
 ```
 
-## Ordered model
+### Ordered model
 
 ```{python}
 #| label: ordered-demo
@@ -470,7 +470,7 @@ print(f"\nPredicted probs (first 3 obs):")
 print(pred_probs[:3].round(3))
 ```
 
-## MNLogit: multinomial outcomes
+### MNLogit: multinomial outcomes
 
 ```{python}
 #| label: mnlogit-demo
@@ -508,7 +508,7 @@ coefficients gives the log-odds of that outcome relative to the
 base category. The coefficient on income for "car" is positive:
 higher income increases the log-odds of choosing car over bus.
 
-## Marginal effects: continuous vs discrete variables
+### Marginal effects: continuous vs discrete variables
 
 ```{python}
 #| label: margeff-types
@@ -538,7 +538,7 @@ print("For dummy variables, always use the discrete "
       "change, not the calculus derivative.")
 ```
 
-## Predicted probability comparison
+### Predicted probability comparison
 
 ```{python}
 #| label: fig-prob-comparison
@@ -579,7 +579,7 @@ across the entire range of $\mathbf{x}$. Logit and probit avoid
 both problems at the cost of requiring the marginal-effects
 calculation for interpretation.
 
-## ZIP parameter interpretation
+### ZIP parameter interpretation
 
 ```{python}
 #| label: zip-params
@@ -607,9 +607,9 @@ probability scale --- they are on the log-odds scale, just like
 binary logit coefficients.
 
 
-# From-Scratch Implementation {#sec-ch13-scratch}
+## From-Scratch Implementation {#sec-ch13-scratch}
 
-## Logit MLE via Newton-Raphson
+### Logit MLE via Newton-Raphson
 
 ```{python}
 #| label: newton-scratch
@@ -685,7 +685,7 @@ comparison, BFGS (a quasi-Newton method that approximates the
 Hessian) typically needs more iterations but avoids the
 $O(p^3)$ cost of solving the Newton system at each step.
 
-## Marginal effects via the delta method
+### Marginal effects via the delta method
 
 ```{python}
 #| label: margeff-scratch
@@ -738,9 +738,9 @@ for j in range(len(mfx_sm.margeff)):
 ```
 
 
-# Diagnostics {#sec-ch13-diagnostics}
+## Diagnostics {#sec-ch13-diagnostics}
 
-## Checking predicted probabilities
+### Checking predicted probabilities
 
 ```{python}
 #| label: fig-calibration
@@ -766,7 +766,7 @@ ax.set_title("Calibration plot")
 plt.show()
 ```
 
-## Hosmer-Lemeshow goodness-of-fit test
+### Hosmer-Lemeshow goodness-of-fit test
 
 The calibration plot above is visual. The Hosmer-Lemeshow test
 formalizes it: group observations into deciles of predicted
@@ -807,7 +807,7 @@ else:
     print("Model may be miscalibrated (reject H0)")
 ```
 
-## ROC curve and classification accuracy
+### ROC curve and classification accuracy
 
 ```{python}
 #| label: fig-roc
@@ -836,7 +836,7 @@ ax.set_aspect('equal')
 plt.show()
 ```
 
-## Overdispersion test for Poisson
+### Overdispersion test for Poisson
 
 When fitting a Poisson model, the key assumption
 $\text{Var}(y) = \mu$ should be checked. The Pearson dispersion
@@ -858,7 +858,7 @@ if dispersion > 1.5:
           "or ZIP")
 ```
 
-## Separation detection
+### Separation detection
 
 ```{python}
 #| label: separation-detection
@@ -889,7 +889,7 @@ print("\nRed flags: coefficient magnitude >> 5, "
 print("predicted probs at 0 or 1.")
 ```
 
-## Vuong test for non-nested model comparison
+### Vuong test for non-nested model comparison
 
 When comparing Poisson vs ZIP (non-nested), the LR test does not
 apply. The Vuong test compares the pointwise log-likelihood ratios:
@@ -914,7 +914,7 @@ else:
 ```
 
 
-# Computational Considerations {#sec-ch13-computation}
+## Computational Considerations {#sec-ch13-computation}
 
 | Model | Parameters | Optimization | Notes |
 |---|---|---|---|
@@ -929,7 +929,7 @@ parameter count is $(J-1) \times p$. For many categories, consider
 sequential logit or random-utility models.
 
 
-# Worked Example {#sec-ch13-example}
+## Worked Example {#sec-ch13-example}
 
 Modeling loan default with logit: a complete analysis from
 specification to marginal effects.
@@ -995,7 +995,7 @@ plt.show()
 ```
 
 
-# Exercises {#sec-ch13-exercises}
+## Exercises {#sec-ch13-exercises}
 
 **Exercise 13.1** ($\star\star$, diagnostic failure). Fit a Poisson
 model to data that is actually zero-inflated. Examine the residual
@@ -1171,7 +1171,7 @@ mixed logit relax IIA.
 %%
 
 
-# Bibliographic Notes {#sec-ch13-biblio}
+## Bibliographic Notes {#sec-ch13-biblio}
 
 The latent-variable derivation of logit and probit is in McFadden
 (1974). The multinomial logit and IIA: McFadden (1974); the

@@ -11,7 +11,7 @@ from scipy.optimize import minimize
 plt.style.use('assets/book.mplstyle')
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning |
 |--------|---------|
@@ -33,7 +33,7 @@ plt.style.use('assets/book.mplstyle')
 | $\partial g(\mathbf{x})$ | Subdifferential of $g$ at $\mathbf{x}$ |
 
 
-# Motivation {#sec-ch04-motivation}
+## Motivation {#sec-ch04-motivation}
 
 Chapter 2 showed that BFGS converges superlinearly and Newton converges
 quadratically. So why would anyone use a method with merely *linear*
@@ -68,12 +68,12 @@ $O(1/k^2)$ for Nesterov's accelerated method---and the proof that
 $O(1/k^2)$ is optimal among first-order methods.
 
 
-# Mathematical Foundation {#sec-ch04-math}
+## Mathematical Foundation {#sec-ch04-math}
 
-## Standing assumptions
+### Standing assumptions
 
 ::: {.callout-important}
-## Assumption 4.1 (Lipschitz gradient)
+### Assumption 4.1 (Lipschitz gradient)
 $f: \mathbb{R}^p \to \mathbb{R}$ is convex and differentiable, with
 $L$-Lipschitz continuous gradient:
 $$
@@ -91,7 +91,7 @@ the key to everything in this chapter---gradient descent minimizes it,
 and the $O(1/k)$ rate follows from telescoping.
 
 ::: {.callout-important}
-## Assumption 4.2 (Strong convexity, optional)
+### Assumption 4.2 (Strong convexity, optional)
 $f$ is $\mu$-strongly convex with $\mu > 0$:
 $$
 f(\mathbf{y}) \geq f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y} - \mathbf{x}) + \frac{\mu}{2}\|\mathbf{y} - \mathbf{x}\|^2.
@@ -101,10 +101,10 @@ function is merely convex.
 :::
 
 
-## Gradient descent: the $O(1/k)$ rate
+### Gradient descent: the $O(1/k)$ rate
 
 ::: {.callout-note}
-## Theorem 4.1 (Convergence of gradient descent)
+### Theorem 4.1 (Convergence of gradient descent)
 Under Assumption 4.1, gradient descent with step size $\eta = 1/L$
 produces iterates satisfying
 $$
@@ -150,7 +150,7 @@ Telescoping: $\frac{1}{\delta_k} \geq \frac{k}{2LR^2}$, giving
 $\delta_k \leq \frac{2LR^2}{k}$. $\square$
 
 ::: {.callout-warning}
-## The $O(1/k)$ rate is slow but unavoidable
+### The $O(1/k)$ rate is slow but unavoidable
 For a function with Lipschitz gradient $L$, gradient descent achieves
 $f(\mathbf{x}_k) - f^* = O(L R^2 / k)$. This means 100 correct digits
 require $10^{100}$ iterations. Nesterov showed this is optimal among
@@ -162,7 +162,7 @@ modification: momentum.
 :::
 
 
-## Nesterov acceleration: the $O(1/k^2)$ rate
+### Nesterov acceleration: the $O(1/k^2)$ rate
 
 Nesterov's accelerated gradient method achieves $O(1/k^2)$
 convergence---a quadratic improvement over gradient descent---by
@@ -170,7 +170,7 @@ evaluating the gradient at an *extrapolated* point rather than the
 current iterate.
 
 ::: {.callout-note}
-## Theorem 4.2 (Nesterov's accelerated gradient method)
+### Theorem 4.2 (Nesterov's accelerated gradient method)
 Under Assumption 4.1, the iterates of Nesterov's method:
 \begin{align}
 \mathbf{v}_k &= \mathbf{x}_k + \frac{k-1}{k+2}(\mathbf{x}_k - \mathbf{x}_{k-1}), \\
@@ -198,7 +198,7 @@ not achieve the optimal rate on the full class of smooth convex
 functions. See @nesterov2004, §2.2 for the complete proof.
 
 
-## The proximal operator
+### The proximal operator
 
 When the objective is composite, $F(\mathbf{x}) = f(\mathbf{x}) + g(\mathbf{x})$,
 with $f$ smooth and $g$ nonsmooth, gradient descent cannot be applied
@@ -206,7 +206,7 @@ directly. The *proximal gradient* method replaces the gradient step
 with a proximal step that handles $g$ exactly.
 
 ::: {.callout-tip}
-## Definition 4.1 (Proximal operator)
+### Definition 4.1 (Proximal operator)
 The proximal operator of a convex function $g$ with step size $\eta > 0$
 is
 $$
@@ -230,7 +230,7 @@ Lasso: it sets small coefficients to exactly zero, producing the
 sparsity that $\ell_1$ regularization is famous for.
 
 ::: {.callout-note}
-## Theorem 4.3 (Proximal operator as resolvent)
+### Theorem 4.3 (Proximal operator as resolvent)
 The proximal operator satisfies $\operatorname{prox}_{\eta g} = (\mathbf{I} + \eta \partial g)^{-1}$,
 where $\partial g$ is the subdifferential of $g$. That is,
 $\mathbf{x} = \operatorname{prox}_{\eta g}(\mathbf{v})$ if and only if
@@ -251,10 +251,10 @@ operator theory---the mathematical framework underlying splitting
 methods like ADMM.
 
 
-## The Moreau envelope
+### The Moreau envelope
 
 ::: {.callout-tip}
-## Definition 4.2 (Moreau envelope)
+### Definition 4.2 (Moreau envelope)
 The Moreau envelope of $g$ with parameter $\eta > 0$ is
 $$
 \mathcal{M}_\eta g(\mathbf{x}) = \min_{\mathbf{z}} \left\{g(\mathbf{z}) + \frac{1}{2\eta}\|\mathbf{z} - \mathbf{x}\|^2\right\}.
@@ -271,10 +271,10 @@ $f + \mathcal{M}_\eta g$. This interpretation is crucial for
 understanding convergence.
 
 
-## Proximal gradient convergence
+### Proximal gradient convergence
 
 ::: {.callout-note}
-## Theorem 4.4 (Convergence of proximal gradient)
+### Theorem 4.4 (Convergence of proximal gradient)
 Under Assumption 4.1 on $f$, and with $g$ convex, lower semicontinuous,
 and proper, the proximal gradient iterates
 $$
@@ -335,7 +335,7 @@ Shrinkage-Thresholding Algorithm) applies the momentum trick to the
 proximal gradient step and achieves $O(1/k^2)$.
 
 
-## ADMM convergence
+### ADMM convergence
 
 The Alternating Direction Method of Multipliers (ADMM) solves problems
 of the form $\min f(\mathbf{x}) + g(\mathbf{z})$ subject to
@@ -344,7 +344,7 @@ alternating between optimizing over $\mathbf{x}$ and $\mathbf{z}$,
 then updating a dual variable.
 
 ::: {.callout-note}
-## Theorem 4.5 (ADMM convergence)
+### Theorem 4.5 (ADMM convergence)
 Under convexity of $f$ and $g$, and with the augmented Lagrangian
 $L_\rho(\mathbf{x}, \mathbf{z}, \mathbf{u}) = f(\mathbf{x}) + g(\mathbf{z}) + \frac{\rho}{2}\|\mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{z} - \mathbf{c} + \mathbf{u}\|^2$,
 the ADMM iterates:
@@ -373,10 +373,10 @@ dual convergence, and vice versa. See Boyd et al. (2011), §3.2 for
 the full Lyapunov argument.
 
 
-## Coordinate descent
+### Coordinate descent
 
 ::: {.callout-note}
-## Theorem 4.6 (Coordinate descent for separable regularizers)
+### Theorem 4.6 (Coordinate descent for separable regularizers)
 If $g(\mathbf{x}) = \sum_j g_j(x_j)$ is separable and each $g_j$ is
 convex, then coordinate descent---updating one coordinate at a time by
 minimizing $F$ over $x_j$ with all other coordinates fixed---converges
@@ -421,10 +421,10 @@ update reduces to soft thresholding. It is also the core of
 statsmodels' `fit_regularized` for GLMs.
 
 
-# The Algorithm {#sec-ch04-algorithm}
+## The Algorithm {#sec-ch04-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 4.1: Gradient Descent
+### Algorithm 4.1: Gradient Descent
 
 **Input:** $f$, $\nabla f$, $\mathbf{x}_0$, step size $\eta = 1/L$,
 tolerance $\epsilon$
@@ -438,7 +438,7 @@ tolerance $\epsilon$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 4.2: Nesterov Accelerated Gradient
+### Algorithm 4.2: Nesterov Accelerated Gradient
 
 **Input:** $f$, $\nabla f$, $\mathbf{x}_0$, step size $\eta = 1/L$,
 tolerance $\epsilon$
@@ -455,7 +455,7 @@ tolerance $\epsilon$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 4.3: ISTA (Proximal Gradient)
+### Algorithm 4.3: ISTA (Proximal Gradient)
 
 **Input:** $f$, $\nabla f$, $g$, $\operatorname{prox}_g$, $\mathbf{x}_0$,
 step size $\eta = 1/L$, tolerance $\epsilon$
@@ -469,7 +469,7 @@ step size $\eta = 1/L$, tolerance $\epsilon$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 4.4: FISTA (Accelerated Proximal Gradient)
+### Algorithm 4.4: FISTA (Accelerated Proximal Gradient)
 
 **Input:** $f$, $\nabla f$, $g$, $\operatorname{prox}_g$, $\mathbf{x}_0$,
 step size $\eta = 1/L$, tolerance $\epsilon$
@@ -486,7 +486,7 @@ step size $\eta = 1/L$, tolerance $\epsilon$
 :::
 
 
-# Statistical Properties {#sec-ch04-stats}
+## Statistical Properties {#sec-ch04-stats}
 
 The convergence rates of this chapter have direct consequences for
 statistical computation.
@@ -528,7 +528,7 @@ evaluations. These are the methods behind sklearn's
 `SGDClassifier` and `SGDRegressor`.
 
 
-# SciPy Implementation {#sec-ch04-scipy}
+## SciPy Implementation {#sec-ch04-scipy}
 
 SciPy does not directly provide proximal gradient or ADMM. For
 large-scale composite optimization, the ecosystem is:
@@ -568,9 +568,9 @@ property of L1 regularization. The coordinate descent algorithm that
 achieves this is developed below.
 
 
-# From-Scratch Implementation {#sec-ch04-scratch}
+## From-Scratch Implementation {#sec-ch04-scratch}
 
-## Gradient descent
+### Gradient descent
 
 The simplest first-order method. Each step moves in the negative
 gradient direction with a fixed step size.
@@ -604,7 +604,7 @@ def gradient_descent(grad, x0, step_size, n_iters=1000):
     return x, np.array(history)
 ```
 
-## Nesterov accelerated gradient
+### Nesterov accelerated gradient
 
 Adds momentum to gradient descent. The key: evaluate the gradient at
 an *extrapolated* point, not the current point.
@@ -636,7 +636,7 @@ def nesterov_accelerated(grad, x0, step_size, n_iters=1000):
     return x, np.array(history)
 ```
 
-## Comparing GD vs Nesterov
+### Comparing GD vs Nesterov
 
 ```{python}
 #| label: fig-gd-vs-nesterov
@@ -674,7 +674,7 @@ ax.set_title(f'Condition number κ = {eigvals.max()/eigvals.min():.0f}')
 plt.show()
 ```
 
-## Proximal gradient (ISTA) for the Lasso
+### Proximal gradient (ISTA) for the Lasso
 
 The Lasso objective is $\frac{1}{2n}\|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|^2 + \lambda\|\boldsymbol{\beta}\|_1$.
 The smooth part is the least-squares loss; the nonsmooth part is the
@@ -731,7 +731,7 @@ def ista_lasso(X, y, lam, step_size=None, n_iters=1000):
     return beta, history
 ```
 
-## FISTA (accelerated proximal gradient)
+### FISTA (accelerated proximal gradient)
 
 FISTA adds Nesterov momentum to ISTA, achieving $O(1/k^2)$ convergence.
 
@@ -770,7 +770,7 @@ def fista_lasso(X, y, lam, step_size=None, n_iters=1000):
     return beta, history
 ```
 
-## Coordinate descent for Lasso
+### Coordinate descent for Lasso
 
 This is what sklearn's `Lasso` actually uses. Update one coefficient
 at a time, holding all others fixed.
@@ -805,7 +805,7 @@ def coordinate_descent_lasso(X, y, lam, n_iters=100):
     return beta, history
 ```
 
-## Verification against sklearn
+### Verification against sklearn
 
 ```{python}
 #| label: lasso-verify
@@ -850,9 +850,9 @@ plt.show()
 ```
 
 
-# Diagnostics {#sec-ch04-diagnostics}
+## Diagnostics {#sec-ch04-diagnostics}
 
-## Convergence monitoring
+### Convergence monitoring
 
 For first-order methods, convergence is typically slow. Monitor the
 objective value and the gradient norm:
@@ -866,7 +866,7 @@ print(f"Relative objective gap: "
       f"{abs(hist_fista[-1] - sk_loss) / sk_loss:.2e}")
 ```
 
-## Regularization path
+### Regularization path
 
 The most important diagnostic for Lasso: how do the coefficients
 change as $\lambda$ varies?
@@ -894,7 +894,7 @@ plt.show()
 ```
 
 
-# Computational Considerations {#sec-ch04-computation}
+## Computational Considerations {#sec-ch04-computation}
 
 | Method | Per-iteration cost | Convergence | Best for |
 |---|---|---|---|
@@ -910,7 +910,7 @@ costs only $O(n)$ and the active set (nonzero coefficients) is usually
 small. This is why sklearn uses it.
 
 
-# Worked Example {#sec-ch04-example}
+## Worked Example {#sec-ch04-example}
 
 Sparse regression on California Housing: which features matter?
 
@@ -938,7 +938,7 @@ meaning the Lasso determines they add no predictive value given the
 other features.
 
 
-# Exercises {#sec-ch04-exercises}
+## Exercises {#sec-ch04-exercises}
 
 **Exercise 4.1** ($\star\star$, diagnostic failure). Run gradient
 descent on a quadratic with condition number $\kappa = 1000$. Compare
@@ -1048,7 +1048,7 @@ L1's hard cutoff at $\lambda$ is what creates sparsity.
 %%
 
 
-# Bibliographic Notes {#sec-ch04-biblio}
+## Bibliographic Notes {#sec-ch04-biblio}
 
 Gradient descent: Cauchy (1847). Nesterov acceleration: Nesterov
 (1983); the estimating-sequence proof is in Nesterov (2004). FISTA:

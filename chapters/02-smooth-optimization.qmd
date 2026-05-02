@@ -14,7 +14,7 @@ from scipy.optimize import line_search
 plt.style.use('assets/book.mplstyle')
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | scipy parameter |
 |--------|---------|-----------------|
@@ -39,7 +39,7 @@ plt.style.use('assets/book.mplstyle')
 | $c_1, c_2$ | Wolfe condition parameters | (scipy: `c1`, `c2`) |
 
 
-# Motivation {#sec-ch02-motivation}
+## Motivation {#sec-ch02-motivation}
 
 In Chapter 1, we traced `LogisticRegression.fit(solver='lbfgs')` to a
 call to `scipy.optimize.minimize(method='L-BFGS-B')`. The coefficients
@@ -76,14 +76,14 @@ proofs are not exercises in mathematical maturity---they are the tools
 you need when the optimizer fails and you have to diagnose why.
 
 
-# Mathematical Foundation {#sec-ch02-math}
+## Mathematical Foundation {#sec-ch02-math}
 
-## Assumptions
+### Assumptions
 
 We work under two standing assumptions throughout the chapter.
 
 ::: {.callout-important}
-## Assumption 2.1 (Smoothness)
+### Assumption 2.1 (Smoothness)
 $f: \mathbb{R}^p \to \mathbb{R}$ is twice continuously differentiable
 ($f \in C^2$), and $\nabla f$ is Lipschitz continuous with constant
 $L > 0$:
@@ -94,7 +94,7 @@ $$
 :::
 
 ::: {.callout-important}
-## Assumption 2.2 (Bounded below)
+### Assumption 2.2 (Bounded below)
 $f$ is bounded below: $\inf_{\mathbf{x}} f(\mathbf{x}) > -\infty$.
 :::
 
@@ -114,7 +114,7 @@ to a stationary point; whether that stationary point is a local
 minimizer depends on the problem.
 
 
-## Line search: the Wolfe conditions
+### Line search: the Wolfe conditions
 
 The simplest line search is *backtracking*: try $\alpha = 1$, and if
 the function value did not decrease enough, shrink $\alpha$ by a factor
@@ -122,7 +122,7 @@ and try again. "Enough" is formalized by the *Armijo condition*
 (sufficient decrease):
 
 ::: {.callout-tip}
-## Definition 2.1 (Armijo condition)
+### Definition 2.1 (Armijo condition)
 A step size $\alpha_k > 0$ satisfies the Armijo condition along
 direction $\mathbf{p}_k$ if
 $$
@@ -137,7 +137,7 @@ causing the BFGS update to degenerate. The *curvature condition*
 prevents this:
 
 ::: {.callout-tip}
-## Definition 2.2 (Curvature condition)
+### Definition 2.2 (Curvature condition)
 A step size $\alpha_k > 0$ satisfies the curvature condition if
 $$
 \nabla f(\mathbf{x}_k + \alpha_k \mathbf{p}_k)^\top \mathbf{p}_k \geq c_2 \nabla f(\mathbf{x}_k)^\top \mathbf{p}_k,
@@ -161,7 +161,7 @@ negative. The strong form is harder to satisfy but produces better
 step sizes in practice.
 
 ::: {.callout-note}
-## Theorem 2.1 (Existence of Wolfe step sizes)
+### Theorem 2.1 (Existence of Wolfe step sizes)
 Under Assumptions 2.1 and 2.2, if $\mathbf{p}_k$ is a descent
 direction ($\nabla f_k^\top \mathbf{p}_k < 0$), then there exist step
 sizes $\alpha_k$ satisfying the Wolfe conditions.
@@ -191,7 +191,7 @@ so it satisfies Armijo. Therefore $\bar{\alpha}$ satisfies both
 Wolfe conditions. $\square$
 
 
-## Zoutendijk's theorem
+### Zoutendijk's theorem
 
 Zoutendijk's theorem is the workhorse convergence result for line
 search methods. It says: if the search directions are not too far from
@@ -199,7 +199,7 @@ the gradient direction, and the step sizes satisfy the Wolfe conditions,
 then the gradients must eventually become small.
 
 ::: {.callout-note}
-## Theorem 2.2 (Zoutendijk, 1970)
+### Theorem 2.2 (Zoutendijk, 1970)
 Under Assumptions 2.1 and 2.2, suppose that at each iteration $k$,
 the step size $\alpha_k$ satisfies the Wolfe conditions, and the
 search direction $\mathbf{p}_k$ satisfies
@@ -215,7 +215,7 @@ $$ {#eq-zoutendijk}
 *Why it holds.* The Wolfe conditions force each step to achieve sufficient decrease proportional to $\cos^2\theta_k \|\nabla f_k\|^2$. Summing over iterations, the total decrease is bounded by $f_0 - f^* < \infty$ (Assumption 2.2), so the series must converge. The Lipschitz condition (Assumption 2.1) is what ties the curvature condition to a lower bound on the step size, closing the argument. See @nocedal2006numerical, Theorem 3.2 for the full proof.
 
 ::: {.callout-warning}
-## What Zoutendijk does and does not say
+### What Zoutendijk does and does not say
 The theorem guarantees $\liminf_{k\to\infty} \|\nabla f_k\| = 0$
 provided $\cos\theta_k$ is bounded away from zero. It does *not*
 guarantee convergence to a local minimum, convergence of $\mathbf{x}_k$
@@ -233,7 +233,7 @@ of $\nabla^2 f(\mathbf{x}^*)$. For ill-conditioned problems
 ($\kappa \gg 1$), steepest descent is arbitrarily slow.
 
 
-## Newton's method
+### Newton's method
 
 Newton's method uses the exact Hessian to define the search direction:
 $$
@@ -243,7 +243,7 @@ This is the unique direction that minimizes the second-order Taylor
 approximation of $f$ at $\mathbf{x}_k$.
 
 ::: {.callout-note}
-## Theorem 2.3 (Local quadratic convergence of Newton's method)
+### Theorem 2.3 (Local quadratic convergence of Newton's method)
 Suppose $f \in C^2$, $\mathbf{x}^*$ is a local minimizer with
 $\nabla^2 f(\mathbf{x}^*)$ positive definite, and $\nabla^2 f$ is
 Lipschitz continuous near $\mathbf{x}^*$ with constant $M$. Then
@@ -285,7 +285,7 @@ the statistical applications in this book, $p$ ranges from tens
 form is practical only for the former.
 
 
-## The BFGS update
+### The BFGS update
 
 The Broyden--Fletcher--Goldfarb--Shanno (BFGS) method replaces the
 exact Hessian with an approximation $\mathbf{B}_k$ that is updated at
@@ -304,7 +304,7 @@ from two requirements:
    $W$ is any matrix satisfying $W \mathbf{y}_k = \mathbf{s}_k$.
 
 ::: {.callout-note}
-## Theorem 2.4 (Secant equation)
+### Theorem 2.4 (Secant equation)
 If $f \in C^2$ and $\nabla^2 f$ is continuous, then for small
 $\|\mathbf{s}_k\|$:
 $$
@@ -320,7 +320,7 @@ $\nabla f(\mathbf{x}_{k+1}) = \nabla f(\mathbf{x}_k) + \nabla^2 f(\mathbf{x}_k)(
 Therefore $\mathbf{y}_k = \nabla^2 f(\mathbf{x}_k)\mathbf{s}_k + O(\|\mathbf{s}_k\|^2)$. $\square$
 
 ::: {.callout-note}
-## Theorem 2.5 (BFGS update formula)
+### Theorem 2.5 (BFGS update formula)
 The unique solution to the closest-update problem is:
 $$
 \mathbf{B}_{k+1} = \mathbf{B}_k
@@ -380,7 +380,7 @@ $$ {#eq-bfgs-inverse}
 This is what scipy's BFGS implementation computes at each iteration.
 
 
-## Superlinear convergence: the Dennis--Moré theorem
+### Superlinear convergence: the Dennis--Moré theorem
 
 BFGS does not achieve Newton's quadratic convergence---its Hessian
 approximation $\mathbf{B}_k$ is not the exact Hessian. But it achieves
@@ -389,7 +389,7 @@ $\|\mathbf{x}_{k+1} - \mathbf{x}^*\| / \|\mathbf{x}_k - \mathbf{x}^*\| \to 0$.
 The Dennis--Moré theorem characterizes exactly when this happens.
 
 ::: {.callout-note}
-## Theorem 2.6 (Dennis and Moré, 1974)
+### Theorem 2.6 (Dennis and Moré, 1974)
 Suppose $\mathbf{x}^*$ is a local minimizer with
 $\nabla^2 f(\mathbf{x}^*)$ positive definite, $\nabla^2 f$ is
 Lipschitz continuous near $\mathbf{x}^*$, and
@@ -413,7 +413,7 @@ because the directions that matter most are sampled most often. See
 @dennis1974characterization and @nocedal2006numerical, Theorem 3.6 for the full proof.
 
 
-## Trust-region methods
+### Trust-region methods
 
 The trust-region approach replaces the line search with a constrained
 subproblem. At each iteration, we minimize the quadratic model
@@ -428,7 +428,7 @@ $$
 $$ {#eq-tr-ratio}
 
 ::: {.callout-note}
-## Theorem 2.7 (Cauchy point and sufficient decrease)
+### Theorem 2.7 (Cauchy point and sufficient decrease)
 The *Cauchy point* is the minimizer of $m_k$ along the steepest
 descent direction, clipped to the trust region:
 $$
@@ -499,7 +499,7 @@ derivative, which requires only first-order finite differencing with
 $O(\epsilon^{1/2})$ accuracy.
 
 
-# The Algorithm {#sec-ch02-algorithm}
+## The Algorithm {#sec-ch02-algorithm}
 
 We present four algorithms. The first two (backtracking line search
 and BFGS update) are components; the last two (BFGS and trust-region
@@ -517,7 +517,7 @@ from-scratch implementation (§6) uses the simpler Armijo backtracking
 to keep the code pedagogical.
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 2.1: Backtracking Line Search (Armijo)
+### Algorithm 2.1: Backtracking Line Search (Armijo)
 
 **Input:** $f$, $\nabla f_k$, $\mathbf{x}_k$, $\mathbf{p}_k$,
 $\bar{\alpha} > 0$, $c_1 \in (0, 1)$, $\rho \in (0, 1)$
@@ -532,7 +532,7 @@ $\bar{\alpha} > 0$, $c_1 \in (0, 1)$, $\rho \in (0, 1)$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 2.2: BFGS Inverse Hessian Update
+### Algorithm 2.2: BFGS Inverse Hessian Update
 
 **Input:** $\mathbf{H}_k$, $\mathbf{s}_k = \mathbf{x}_{k+1} - \mathbf{x}_k$,
 $\mathbf{y}_k = \nabla f_{k+1} - \nabla f_k$
@@ -546,7 +546,7 @@ $\mathbf{y}_k = \nabla f_{k+1} - \nabla f_k$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 2.3: BFGS with Backtracking Line Search
+### Algorithm 2.3: BFGS with Backtracking Line Search
 
 **Input:** $f$, $\nabla f$, $\mathbf{x}_0$, tolerance $\epsilon > 0$
 
@@ -567,7 +567,7 @@ $\mathbf{y}_k = \nabla f_{k+1} - \nabla f_k$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 2.4: Trust-Region Newton
+### Algorithm 2.4: Trust-Region Newton
 
 **Input:** $f$, $\nabla f$, $\nabla^2 f$, $\mathbf{x}_0$, $\Delta_0 > 0$,
 $\eta \in (0, \tfrac{1}{4})$, tolerance $\epsilon > 0$
@@ -597,7 +597,7 @@ $\eta \in (0, \tfrac{1}{4})$, tolerance $\epsilon > 0$
 :::
 
 
-# Statistical Properties {#sec-ch02-stats}
+## Statistical Properties {#sec-ch02-stats}
 
 The convergence rates derived above have direct consequences for
 statistical computation.
@@ -640,14 +640,14 @@ BFGS converge fast. When these regularity conditions fail
 the optimizer's behavior is the first symptom.
 
 
-# SciPy Implementation {#sec-ch02-scipy}
+## SciPy Implementation {#sec-ch02-scipy}
 
 All five methods covered in this chapter are accessed through a single
 entry point: `scipy.optimize.minimize`. The method is selected by the
 `method` parameter; the derivative information is supplied via `jac`,
 `hess`, or `hessp`.
 
-## Mapping table
+### Mapping table
 
 | Book notation | scipy parameter | Notes |
 |---|---|---|
@@ -659,7 +659,7 @@ entry point: `scipy.optimize.minimize`. The method is selected by the
 | $\epsilon$ (gradient tolerance) | `tol` | Maps to `gtol` internally for BFGS/L-BFGS-B |
 | $c_1, c_2$ | `options={'c1': ..., 'c2': ...}` | Wolfe parameters (BFGS only) |
 
-## Method comparison
+### Method comparison
 
 ```{python}
 #| label: method-comparison
@@ -686,7 +686,7 @@ for name, kwargs in methods.items():
           f" {nhev:>5} {str(res.success):>8}")
 ```
 
-## Key defaults
+### Key defaults
 
 **BFGS** (pure Python, `scipy/optimize/_optimize.py`):
 
@@ -762,7 +762,7 @@ print(f"max|grad| = {np.max(np.abs(res.jac)):.2e}")
 ```
 
 
-# From-Scratch Implementation {#sec-ch02-scratch}
+## From-Scratch Implementation {#sec-ch02-scratch}
 
 We implement BFGS with backtracking line search (Algorithm 2.3). The
 implementation corresponds line-by-line to the pseudocode; readability
@@ -850,7 +850,7 @@ def bfgs_minimize(fun, grad, x0, tol=1e-5, maxiter=1000,
     }
 ```
 
-## Verification against scipy
+### Verification against scipy
 
 ```{python}
 #| label: bfgs-verify
@@ -878,7 +878,7 @@ scipy's Moré--Thuente line search uses polynomial interpolation to
 find a good step in fewer evaluations. The final solutions agree: both
 reach the Rosenbrock minimum at $(1, 1)$.
 
-## Convergence trajectory
+### Convergence trajectory
 
 ```{python}
 #| label: fig-convergence
@@ -906,13 +906,13 @@ plt.show()
 ```
 
 
-# Diagnostics {#sec-ch02-diagnostics}
+## Diagnostics {#sec-ch02-diagnostics}
 
 When `scipy.optimize.minimize` returns, the first thing to check is
 whether it succeeded. The result object carries all the information
 you need.
 
-## The result object
+### The result object
 
 ```{python}
 #| label: diagnostics-result
@@ -943,7 +943,7 @@ or the null model). A negative log-likelihood that is suspiciously
 small may indicate a degenerate solution (cf. Exercise 1.1 on perfect
 separation).
 
-## Gradient verification
+### Gradient verification
 
 When you supply an analytical gradient, verify it against finite
 differences before trusting the optimization:
@@ -961,7 +961,7 @@ is expected from finite-difference comparison. Errors larger than
 $10^{-4}$ indicate a bug in the gradient. This check is cheap and
 should be run at least once during development.
 
-## Convergence failures
+### Convergence failures
 
 Three patterns to recognize:
 
@@ -979,7 +979,7 @@ Three patterns to recognize:
    exact Hessian can help.
 
 
-# Computational Considerations {#sec-ch02-computation}
+## Computational Considerations {#sec-ch02-computation}
 
 The methods in this chapter differ in their storage and per-iteration
 costs. The right choice depends on $p$ (the number of parameters).
@@ -1021,7 +1021,7 @@ count. Trust-region methods avoid line searches entirely, using one
 function evaluation per iteration plus the subproblem solve.
 
 
-# Worked Example {#sec-ch02-example}
+## Worked Example {#sec-ch02-example}
 
 We return to the logistic regression problem from Chapter 1: maximum
 likelihood estimation for a binary classifier on the Iris dataset. In
@@ -1030,7 +1030,7 @@ L-BFGS-B. Here, we solve the same problem from theory: write the
 negative log-likelihood, supply the gradient, and compare all five
 methods.
 
-## Setup
+### Setup
 
 ```{python}
 #| label: worked-setup
@@ -1044,7 +1044,7 @@ n, p = X.shape
 print(f"n = {n}, p = {p}")
 ```
 
-## Negative log-likelihood and gradient
+### Negative log-likelihood and gradient
 
 ```{python}
 #| label: worked-nll
@@ -1082,7 +1082,7 @@ def neg_log_lik_hessp(params, v, X, y):
     return X_aug.T @ (w * (X_aug @ v))
 ```
 
-## Method comparison
+### Method comparison
 
 ```{python}
 #| label: worked-comparison
@@ -1134,7 +1134,7 @@ the Hessian is cheap ($3 \times 3$) and the second-order methods converge
 in fewer iterations. The advantage of second-order methods becomes more
 pronounced as $p$ grows and the Hessian is ill-conditioned.
 
-## Our from-scratch BFGS
+### Our from-scratch BFGS
 
 ```{python}
 #| label: worked-scratch
@@ -1155,7 +1155,7 @@ print(f"  f  = {results['BFGS'].fun:.4f}")
 print(f"\nMatch: {np.allclose(res_scratch['x'], results['BFGS'].x, atol=1e-4)}")
 ```
 
-## What happens with a bad starting point
+### What happens with a bad starting point
 
 ```{python}
 #| label: fig-bad-start
@@ -1194,7 +1194,7 @@ print(f"Converged: {res_bad['success']}, iters: {res_bad['nit']}")
 ```
 
 
-# Exercises {#sec-ch02-exercises}
+## Exercises {#sec-ch02-exercises}
 
 **Exercise 2.1** ($\star\star$, diagnostic failure). Optimize the
 Rosenbrock function starting from $\mathbf{x}_0 = (-1.2, 1.0)$ using
@@ -1434,7 +1434,7 @@ $\mathbf{B}_{k+1}\mathbf{s}_k = \mathbf{y}_k$.
 %%
 
 
-# Bibliographic Notes {#sec-ch02-biblio}
+## Bibliographic Notes {#sec-ch02-biblio}
 
 The material in this chapter follows Nocedal and Wright (2006),
 Chapters 3--7, which is the standard reference for the field. We note

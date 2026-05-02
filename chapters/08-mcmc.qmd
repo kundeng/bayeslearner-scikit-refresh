@@ -30,7 +30,7 @@ def effective_sample_size(chain):
     return n / tau_int, tau_int
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning |
 |--------|---------|
@@ -42,7 +42,7 @@ def effective_sample_size(chain):
 | $n_{\text{eff}}$ | Effective sample size |
 
 
-# Motivation {#sec-ch08-motivation}
+## Motivation {#sec-ch08-motivation}
 
 Chapter 7 computed expectations by drawing independent samples. That
 works when you can sample from the distribution directly. But in
@@ -67,9 +67,9 @@ not used; the from-scratch implementations ground the intuition that
 makes production tools interpretable.
 
 
-# Mathematical Foundation {#sec-ch08-math}
+## Mathematical Foundation {#sec-ch08-math}
 
-## The key idea: detailed balance
+### The key idea: detailed balance
 
 A Markov chain with transition kernel $T(\mathbf{x}' \mid \mathbf{x})$
 has $\pi$ as its stationary distribution if
@@ -89,7 +89,7 @@ Detailed balance is a *sufficient* condition for stationarity, not
 necessary. But it is the condition that Metropolis--Hastings is
 designed to satisfy.
 
-## The Metropolis--Hastings acceptance ratio
+### The Metropolis--Hastings acceptance ratio
 
 Given a proposal $q(\mathbf{x}' \mid \mathbf{x})$, the MH algorithm
 accepts $\mathbf{x}'$ with probability
@@ -109,7 +109,7 @@ $\pi(\mathbf{x}')/\pi(\mathbf{x})$, so the normalizing constant of
 $\pi$ cancels. This is why MCMC works for Bayesian posteriors where
 the marginal likelihood $p(\mathbf{y})$ is intractable.
 
-## Gibbs sampling as a special case
+### Gibbs sampling as a special case
 
 Gibbs sampling updates one coordinate at a time from its full
 conditional:
@@ -120,7 +120,7 @@ conditional, and the MH ratio simplifies to 1. The advantage: no
 tuning. The limitation: you need the full conditionals in closed form,
 which restricts the models you can use.
 
-## Why chains get stuck
+### Why chains get stuck
 
 Two failure modes dominate:
 
@@ -137,7 +137,7 @@ $d$-dimensional target is approximately 0.234 (Roberts, Gelman, and
 Gilks, 1997). This is the basis for adaptive MCMC: tune the proposal
 variance during burn-in to achieve ~23% acceptance.
 
-## Hamiltonian Monte Carlo (intuition)
+### Hamiltonian Monte Carlo (intuition)
 
 HMC treats the target $\pi(\mathbf{x})$ as a potential energy
 $U(\mathbf{x}) = -\log \pi(\mathbf{x})$ and introduces auxiliary
@@ -183,10 +183,10 @@ length, eliminating HMC's most sensitive tuning parameter. NUTS is the
 default sampler in PyMC and Stan.
 
 
-# The Algorithm {#sec-ch08-algorithm}
+## The Algorithm {#sec-ch08-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 8.1: Metropolis--Hastings
+### Algorithm 8.1: Metropolis--Hastings
 
 **Input:** Target $\pi$ (unnormalized), proposal $q$, initial
 $\mathbf{x}_0$, number of samples $N$
@@ -203,7 +203,7 @@ $\mathbf{x}_0$, number of samples $N$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 8.2: Gibbs Sampling
+### Algorithm 8.2: Gibbs Sampling
 
 **Input:** Target $\pi$, full conditionals $\pi(x_j \mid \mathbf{x}_{-j})$,
 initial $\mathbf{x}_0$, number of samples $N$
@@ -218,7 +218,7 @@ initial $\mathbf{x}_0$, number of samples $N$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 8.3: Slice Sampling
+### Algorithm 8.3: Slice Sampling
 
 **Input:** Target $\pi$ (unnormalized), initial $x_0$, step-out width
 $w$, number of samples $N$
@@ -247,7 +247,7 @@ slice sampling a useful default when you have no good intuition for the
 proposal variance, which is exactly when random-walk MH struggles most.
 
 
-# Statistical Properties {#sec-ch08-stats}
+## Statistical Properties {#sec-ch08-stats}
 
 **The MCMC CLT.** Under regularity conditions (geometric ergodicity),
 the MCMC estimator $\hat{\mu}_N = \frac{1}{N}\sum_{t=1}^N h(\mathbf{x}_t)$
@@ -288,9 +288,9 @@ at least exponentially decaying tails, and fail for heavy-tailed targets
 like the Cauchy.
 
 
-# From-Scratch Implementation {#sec-ch08-scratch}
+## From-Scratch Implementation {#sec-ch08-scratch}
 
-## Metropolis--Hastings
+### Metropolis--Hastings
 
 ```{python}
 #| label: mh-scratch
@@ -347,7 +347,7 @@ def metropolis_hastings(log_target, x0, proposal_std, n_samples,
     }
 ```
 
-## Gibbs sampler
+### Gibbs sampler
 
 ```{python}
 #| label: gibbs-scratch
@@ -378,7 +378,7 @@ def gibbs_bivariate_normal(mu, Sigma, n_samples, seed=42):
     return samples
 ```
 
-## Slice sampler
+### Slice sampler
 
 ```{python}
 #| label: slice-scratch
@@ -460,7 +460,7 @@ tuning --- the step-out width $w = 1$ works because the shrinking
 procedure adapts. A random-walk MH with the wrong proposal variance
 would either get stuck in one mode or reject most proposals.
 
-## Hamiltonian Monte Carlo
+### Hamiltonian Monte Carlo
 
 ```{python}
 #| label: hmc-scratch
@@ -562,7 +562,7 @@ the gradient along the ellipse, producing near-independent samples.
 This advantage grows with dimension --- in $d = 100$ with moderate
 correlations, MH is essentially useless while HMC remains practical.
 
-## Demonstration: sampling a banana-shaped distribution
+### Demonstration: sampling a banana-shaped distribution
 
 ```{python}
 #| label: fig-mh-banana
@@ -605,12 +605,12 @@ plt.show()
 ```
 
 
-# Diagnostics {#sec-ch08-diagnostics}
+## Diagnostics {#sec-ch08-diagnostics}
 
 This is the most important section of the chapter. Getting MCMC
 right means getting diagnostics right.
 
-## Trace plots
+### Trace plots
 
 ```{python}
 #| label: fig-trace
@@ -637,7 +637,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Proposal tuning: the 0.234 rule
+### Proposal tuning: the 0.234 rule
 
 The optimal acceptance rate for a Gaussian random-walk proposal on a
 $d$-dimensional target is approximately 0.234 (Roberts, Gelman, and
@@ -679,7 +679,7 @@ Saksman, and Tamminen, 2001) automate this by estimating the target
 covariance from the chain's history and adjusting the proposal. PyMC's
 NUTS does something similar for the step size $\epsilon$.
 
-## Autocorrelation and effective sample size
+### Autocorrelation and effective sample size
 
 ```{python}
 #| label: ess-demo
@@ -705,7 +705,7 @@ for res, label in [(res_good, "Well-tuned"), (res_bad, "Poorly-tuned")]:
           f"ESS/N={ess/9000:.3f}")
 ```
 
-## Autocorrelation plots
+### Autocorrelation plots
 
 The ESS number tells you *how much* autocorrelation there is. The
 autocorrelation plot tells you *where* it comes from --- whether the
@@ -743,7 +743,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## The $\hat{R}$ diagnostic
+### The $\hat{R}$ diagnostic
 
 The Gelman--Rubin $\hat{R}$ compares within-chain variance to
 between-chain variance across multiple chains started from different
@@ -793,7 +793,7 @@ rhat = gelman_rubin(chains)
 print(f"R-hat = {rhat:.4f} (target: < 1.01)")
 ```
 
-## Rank plots
+### Rank plots
 
 Trace plots are useful but subjective --- two analysts can disagree
 about whether a trace looks "hairy enough." Rank plots (Vehtari et al.,
@@ -837,7 +837,7 @@ high or low ranks --- indicate convergence failure that trace plots
 might miss, especially when chains have different variances but similar
 means.
 
-## The diagnostic checklist
+### The diagnostic checklist
 
 After running MCMC, check in this order:
 
@@ -847,7 +847,7 @@ After running MCMC, check in this order:
 4. **Acceptance rate.** ~23% for random-walk MH, ~65% for HMC.
 
 
-## When MCMC fails {#sec-ch08-failures}
+### When MCMC fails {#sec-ch08-failures}
 
 The diagnostic checklist catches most problems, but some failure modes
 deserve explicit treatment because they are common, subtle, and often
@@ -942,7 +942,7 @@ computational cost), reparameterize, or use a non-centered
 parameterization for hierarchical models.
 
 
-# Computational Considerations {#sec-ch08-computation}
+## Computational Considerations {#sec-ch08-computation}
 
 | Method | Per-step cost | Tuning | Best for |
 |---|---|---|---|
@@ -957,7 +957,7 @@ diagnostics, and parallelism. The from-scratch implementations above
 are for understanding, not for use.
 
 
-# Worked Example {#sec-ch08-example}
+## Worked Example {#sec-ch08-example}
 
 Bayesian linear regression with conjugate priors, comparing Gibbs
 sampling to the known analytical posterior.
@@ -1052,7 +1052,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Diagnostics for the worked example
+### Diagnostics for the worked example
 
 ```{python}
 #| label: worked-diagnostics
@@ -1070,7 +1070,7 @@ for j in range(p):
 ```
 
 
-# Exercises {#sec-ch08-exercises}
+## Exercises {#sec-ch08-exercises}
 
 **Exercise 8.1** ($\star\star$, diagnostic failure). Run
 Metropolis--Hastings on the banana distribution with proposal standard
@@ -1291,7 +1291,7 @@ diffusing across it.
 %%
 
 
-# Bibliographic Notes {#sec-ch08-biblio}
+## Bibliographic Notes {#sec-ch08-biblio}
 
 The Metropolis algorithm was introduced by Metropolis, Rosenbluth,
 Rosenbluth, Teller, and Teller (1953); Hastings (1970) generalized it

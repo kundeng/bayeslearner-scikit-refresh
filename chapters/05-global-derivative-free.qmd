@@ -14,7 +14,7 @@ from scipy.optimize import (
 plt.style.use('assets/book.mplstyle')
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning |
 |--------|---------|
@@ -27,7 +27,7 @@ plt.style.use('assets/book.mplstyle')
 | $K_f$ | Lipschitz constant of $f$ |
 
 
-# Motivation {#sec-ch05-motivation}
+## Motivation {#sec-ch05-motivation}
 
 Chapters 2--4 solved smooth optimization problems. The methods
 converge quickly---superlinearly or even quadratically---but they find
@@ -69,12 +69,12 @@ needed, the first question should be: can I make the problem easier
 knowledge)?
 
 
-# Mathematical Foundation {#sec-ch05-math}
+## Mathematical Foundation {#sec-ch05-math}
 
-## The hardness of global optimization
+### The hardness of global optimization
 
 ::: {.callout-important}
-## Assumption 5.1 (Lipschitz continuity)
+### Assumption 5.1 (Lipschitz continuity)
 $f: \Omega \to \mathbb{R}$ is Lipschitz continuous on a bounded domain
 $\Omega \subset \mathbb{R}^p$:
 $$
@@ -96,7 +96,7 @@ function evaluations. The function could have an arbitrarily deep,
 narrow well at a point the algorithm never queries.
 
 
-## Simulated annealing
+### Simulated annealing
 
 Simulated annealing is a stochastic method inspired by the physical
 process of slow cooling in metallurgy. At each iteration, a candidate
@@ -109,7 +109,7 @@ $\exp(-(f(\mathbf{x}') - f(\mathbf{x}_k))/T_k)$, where $T_k$ is the
 low temperature makes them unlikely (exploitation).
 
 ::: {.callout-note}
-## Theorem 5.1 (Simulated annealing convergence under logarithmic cooling)
+### Theorem 5.1 (Simulated annealing convergence under logarithmic cooling)
 Let $f: \Omega \to \mathbb{R}$ be continuous on a compact set $\Omega$,
 and let $\{T_k\}$ be a temperature schedule satisfying
 $T_k \geq C / \ln(k + 2)$ for a sufficiently large constant $C$
@@ -136,7 +136,7 @@ necessary and sufficient condition for convergence is precisely that
 the escape probabilities form a divergent series.
 
 ::: {.callout-warning}
-## The logarithmic cooling schedule is useless in practice
+### The logarithmic cooling schedule is useless in practice
 Theorem 5.1 guarantees convergence, but the rate is
 $O(1/\ln k)$---slower than any polynomial. To reduce
 $\Pr(\mathbf{x}_k \notin \Omega^*_\epsilon)$ to $0.01$ requires
@@ -151,7 +151,7 @@ annealing is a useful heuristic, not a reliable global optimizer.
 :::
 
 
-## DIRECT: deterministic global search under Lipschitz continuity
+### DIRECT: deterministic global search under Lipschitz continuity
 
 The DIRECT algorithm (Dividing Rectangles, Jones et al. 1993)
 systematically partitions $\Omega$ into hyperrectangles, evaluates $f$
@@ -160,7 +160,7 @@ at the center of each, and identifies which rectangles are
 for some Lipschitz constant $K_f$.
 
 ::: {.callout-note}
-## Theorem 5.2 (DIRECT correctness on Lipschitz functions)
+### Theorem 5.2 (DIRECT correctness on Lipschitz functions)
 Under Assumption 5.1, the DIRECT algorithm samples a dense subset of
 $\Omega$: the set of evaluated points $\{\mathbf{x}_1, \mathbf{x}_2, \ldots\}$
 is dense in $\Omega$ as the number of evaluations $N \to \infty$.
@@ -202,7 +202,7 @@ $N \sim (K_f/\epsilon)^{10}$ evaluations. This is why DIRECT is
 practical only for low-dimensional problems ($p \leq 5$--$10$).
 
 
-## Nelder--Mead: a method without guarantees
+### Nelder--Mead: a method without guarantees
 
 The Nelder--Mead simplex method maintains a simplex of $p + 1$ points
 in $\mathbb{R}^p$ and deforms it through reflection, expansion,
@@ -214,7 +214,7 @@ convergence guarantee*---not even to a local minimum, not even for
 smooth convex functions in dimension $p \geq 2$.
 
 ::: {.callout-warning}
-## Counterexample 5.1 (McKinnon, 1998)
+### Counterexample 5.1 (McKinnon, 1998)
 McKinnon constructed a smooth, strictly convex function
 $f: \mathbb{R}^2 \to \mathbb{R}$ and a starting simplex from which
 Nelder--Mead converges to a non-stationary point. The function is:
@@ -284,10 +284,10 @@ practical problems when $p$ is small ($p \leq 10$). It is scipy's
 default method when no gradient is supplied.
 
 
-# The Algorithm {#sec-ch05-algorithm}
+## The Algorithm {#sec-ch05-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 5.1: Simulated Annealing (Metropolis--Hastings)
+### Algorithm 5.1: Simulated Annealing (Metropolis--Hastings)
 
 **Input:** $f$, starting point $\mathbf{x}_0$, initial temperature $T_0$,
 cooling schedule $\{T_k\}$, proposal distribution $q(\cdot | \mathbf{x})$
@@ -312,7 +312,7 @@ cooling schedule $\{T_k\}$, proposal distribution $q(\cdot | \mathbf{x})$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 5.2: Nelder--Mead Simplex
+### Algorithm 5.2: Nelder--Mead Simplex
 
 **Input:** $f$, initial simplex $\mathcal{S}_0 = \{\mathbf{v}_0, \ldots, \mathbf{v}_p\}$,
 parameters $\alpha_r = 1$ (reflection), $\alpha_e = 2$ (expansion),
@@ -342,7 +342,7 @@ $\alpha_c = 1/2$ (contraction), $\alpha_s = 1/2$ (shrinkage)
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 5.3: Differential Evolution (DE/rand/1/bin)
+### Algorithm 5.3: Differential Evolution (DE/rand/1/bin)
 
 **Input:** $f$, bounds $\Omega$, population size $N_{\text{pop}}$,
 mutation factor $F \in (0, 2)$, crossover probability
@@ -385,7 +385,7 @@ defaults to $15 \times p$, which is generous for low-dimensional
 problems but necessary for high-dimensional ones.
 
 
-# Statistical Properties {#sec-ch05-stats}
+## Statistical Properties {#sec-ch05-stats}
 
 The methods in this chapter arise in statistics when the objective
 landscape is nonconvex or the gradient is unavailable.
@@ -416,7 +416,7 @@ convergence theory is weak, but the practical alternative is often no
 inference at all.
 
 
-# SciPy Implementation {#sec-ch05-scipy}
+## SciPy Implementation {#sec-ch05-scipy}
 
 SciPy provides five global/derivative-free optimizers, all accessed
 through different entry points (not `minimize` for most of them).
@@ -434,7 +434,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Nelder-Mead (derivative-free local)
+### Nelder-Mead (derivative-free local)
 
 ```{python}
 #| label: nelder-mead
@@ -452,7 +452,7 @@ print(f"Nelder-Mead: x = {res_nm.x.round(4)}, f = {res_nm.fun:.4f}")
 print(f"This is a LOCAL minimum — Nelder-Mead doesn't search globally")
 ```
 
-## `differential_evolution` (stochastic global)
+### `differential_evolution` (stochastic global)
 
 ```{python}
 #| label: diff-evol
@@ -471,7 +471,7 @@ print(f"Global minimum found (x ≈ -2.9035)")
 print(f"Function evaluations: {res_de.nfev}")
 ```
 
-## `dual_annealing` (generalized simulated annealing)
+### `dual_annealing` (generalized simulated annealing)
 
 ```{python}
 #| label: dual-anneal
@@ -485,7 +485,7 @@ print(f"Dual annealing: x = {res_da.x.round(4)}, f = {res_da.fun:.4f}")
 print(f"Function evaluations: {res_da.nfev}")
 ```
 
-## `direct` (deterministic global)
+### `direct` (deterministic global)
 
 ```{python}
 #| label: direct-demo
@@ -501,7 +501,7 @@ print(f"DIRECT: x = {res_dir.x.round(4)}, f = {res_dir.fun:.4f}")
 print(f"Function evaluations: {res_dir.nfev}")
 ```
 
-## `shgo` (simplicial homology global optimization)
+### `shgo` (simplicial homology global optimization)
 
 `shgo` partitions the domain into simplices and uses topological
 methods to identify all local minima. Unlike DE and SA, it can
@@ -519,7 +519,7 @@ print(f"Function evaluations: {res_shgo.nfev}")
 print(f"Local minima found: {len(res_shgo.xl)}")
 ```
 
-## `basinhopping` (stochastic local-restart)
+### `basinhopping` (stochastic local-restart)
 
 Basin-hopping applies simulated annealing at the *basin* level:
 perturb the current point randomly, run a local optimizer to the
@@ -547,7 +547,7 @@ print(f"Basin-hopping: x = {res_bh.x.round(4)}, "
 print(f"Function evaluations: {res_bh.nfev}")
 ```
 
-## Monitoring convergence with callbacks
+### Monitoring convergence with callbacks
 
 All scipy global optimizers accept a `callback` argument for
 monitoring progress. Differential evolution passes the best
@@ -582,7 +582,7 @@ ax.set_yscale('log')
 plt.show()
 ```
 
-## Method comparison
+### Method comparison
 
 ```{python}
 #| label: fig-method-comp
@@ -607,9 +607,9 @@ for name, res in methods.items():
 ```
 
 
-# From-Scratch Implementation {#sec-ch05-scratch}
+## From-Scratch Implementation {#sec-ch05-scratch}
 
-## Simulated annealing
+### Simulated annealing
 
 ```{python}
 #| label: sa-scratch
@@ -686,7 +686,7 @@ ax.set_title('Simulated annealing convergence')
 plt.show()
 ```
 
-## Nelder--Mead simplex
+### Nelder--Mead simplex
 
 ```{python}
 #| label: nm-scratch
@@ -794,7 +794,7 @@ print(f"scipy NM:        x = {res_nm.x.round(4)}, "
 print(f"Both find the same local minimum")
 ```
 
-## Differential evolution
+### Differential evolution
 
 ```{python}
 #| label: de-scratch
@@ -888,12 +888,12 @@ print(f"scipy DE:        x = {res_de.x.round(4)}, "
 ```
 
 
-# Diagnostics {#sec-ch05-diagnostics}
+## Diagnostics {#sec-ch05-diagnostics}
 
 Global optimization diagnostics are fundamentally different from local
 methods: you can never be sure you found the *global* minimum.
 
-## Multi-start comparison
+### Multi-start comparison
 
 The best practical diagnostic: run the optimizer multiple times from
 different starting points and compare results.
@@ -913,7 +913,7 @@ print("If results disagree, the problem has multiple local minima")
 print("and the optimizer is not reliably finding the global one.")
 ```
 
-## Nelder-Mead failure detection
+### Nelder-Mead failure detection
 
 ```{python}
 #| label: nm-failure
@@ -932,7 +932,7 @@ print("\nNelder-Mead degrades rapidly above d ≈ 10.")
 print("Use BFGS with gradients instead for smooth high-d problems.")
 ```
 
-## Landscape visualization
+### Landscape visualization
 
 Visualizing the objective---when the problem is 2D or can be
 projected to 2D---is the single most informative diagnostic. It
@@ -975,7 +975,7 @@ ax.legend(loc='upper right')
 plt.show()
 ```
 
-## When to stop: budget allocation
+### When to stop: budget allocation
 
 Global optimizers lack a reliable stopping criterion. Unlike
 gradient-based methods, there is no norm of the gradient to test.
@@ -1015,7 +1015,7 @@ for budget in budgets:
 ```
 
 
-# Computational Considerations {#sec-ch05-computation}
+## Computational Considerations {#sec-ch05-computation}
 
 | Method | Cost per iteration | Global guarantee | Dimension limit |
 |---|---|---|---|
@@ -1030,7 +1030,7 @@ for budget in budgets:
 Use gradient-based methods (Ch. 2-4) with multiple random restarts.
 
 
-# Worked Example {#sec-ch05-example}
+## Worked Example {#sec-ch05-example}
 
 Finding the global minimum of a multi-modal function that models a
 real problem: maximizing the negative log-likelihood of a Gaussian
@@ -1072,7 +1072,7 @@ print(f"True:      pi=0.40, mu1=-2.0, s1=0.5, mu2=3.0, s2=1.0")
 ```
 
 
-# Exercises {#sec-ch05-exercises}
+## Exercises {#sec-ch05-exercises}
 
 **Exercise 5.1** ($\star\star$, diagnostic failure). Run Nelder-Mead
 on the 50-dimensional sphere function $f(\mathbf{x}) = \sum x_i^2$
@@ -1183,7 +1183,7 @@ restarts, or exploit problem structure (e.g., convexity, separability).
 %%
 
 
-# Bibliographic Notes {#sec-ch05-biblio}
+## Bibliographic Notes {#sec-ch05-biblio}
 
 Nelder-Mead: Nelder and Mead (1965). The McKinnon counterexample:
 McKinnon (1998), "Convergence of the Nelder--Mead simplex method to

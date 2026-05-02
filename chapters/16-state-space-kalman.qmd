@@ -22,7 +22,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -39,7 +39,7 @@ rng = np.random.default_rng(42)
 | $S_t$ | Regime indicator (Markov switching) | `.smoothed_marginal_probabilities` |
 
 
-# Motivation {#sec-ch16-motivation}
+## Motivation {#sec-ch16-motivation}
 
 Chapter 15 introduced ARIMA and exponential smoothing as separate
 methods. This chapter reveals that they are *both* special cases of
@@ -68,9 +68,9 @@ markets, recession vs expansion). These are a different kind of hidden
 state: discrete rather than continuous.
 
 
-# Mathematical Foundation {#sec-ch16-math}
+## Mathematical Foundation {#sec-ch16-math}
 
-## The linear Gaussian state-space model
+### The linear Gaussian state-space model
 
 The state-space model has two equations:
 
@@ -108,7 +108,7 @@ Here $T = Z = 1$, $Q = \sigma^2_\eta$ (state noise), $H = \sigma^2_\varepsilon$
 (observation noise). The Kalman filter estimates $\alpha_t$ (the true
 level) from the noisy observations $y_t$.
 
-## Why ARIMA and ETS are state-space models
+### Why ARIMA and ETS are state-space models
 
 **ARIMA as state-space:** An ARIMA(1,1,1) model
 $\Delta y_t = \phi \Delta y_{t-1} + \varepsilon_t + \theta \varepsilon_{t-1}$
@@ -130,7 +130,7 @@ all with a single code path. Understanding the Kalman filter means
 understanding what `SARIMAX.fit()`, `ExponentialSmoothing.fit()`,
 and `UnobservedComponents.fit()` are doing under the hood.
 
-## The Kalman filter: predict, then update
+### The Kalman filter: predict, then update
 
 The Kalman filter processes observations sequentially. At each time
 step $t$, it performs two operations:
@@ -174,7 +174,7 @@ how much to trust the prediction vs the observation:
 Kalman gain** for a local level model. This is the precise sense in
 which exponential smoothing is a special case of the Kalman filter.
 
-## Deriving the update from joint Gaussian conditioning
+### Deriving the update from joint Gaussian conditioning
 
 The Kalman update formulas are not arbitrary --- they follow from
 a single fact about multivariate Gaussians. If a joint distribution
@@ -224,7 +224,7 @@ conditioning identity. The Kalman filter is not a clever heuristic
 --- it is exact Bayesian inference for a model that happens to stay
 Gaussian at every step.
 
-## Why the Kalman filter is optimal
+### Why the Kalman filter is optimal
 
 For the linear Gaussian model (@eq-state, @eq-obs), the Kalman filter
 produces the *minimum-variance unbiased* state estimate given all
@@ -243,7 +243,7 @@ cycle is recursive application of Bayes' rule to the Gaussian prior
 the Bayesian posterior is exact and closed-form --- the Kalman filter
 computes this closed form at each step.
 
-## How MLE works for state-space models
+### How MLE works for state-space models
 
 The Kalman filter also produces the *likelihood* of the data given the
 model parameters. The prediction error $\mathbf{v}_t$ at each step is
@@ -264,7 +264,7 @@ from Chapter 2).
 a given set of ARIMA parameters, computes @eq-kalman-ll, and uses
 L-BFGS-B to find the parameters that maximize it.
 
-## EM as an alternative to direct optimization
+### EM as an alternative to direct optimization
 
 Direct numerical optimization of the innovations likelihood can be
 fragile --- the surface is often flat in some directions, and
@@ -298,7 +298,7 @@ Statsmodels uses direct optimization by default, but
 `fit(method='em')` is available for `UnobservedComponents` when
 convergence is difficult.
 
-## Smoothing: using the future to improve the past
+### Smoothing: using the future to improve the past
 
 The Kalman *filter* uses only observations up to time $t$ to estimate
 $\boldsymbol{\alpha}_t$. The Kalman *smoother* uses ALL observations
@@ -338,7 +338,7 @@ MSE) because they use strictly more data.
 
 Statsmodels gives both: `.filtered_state` and `.smoothed_state`.
 
-## Markov regime switching
+### Markov regime switching
 
 Sometimes the *parameters* of a time series change over time. In a
 Markov switching model, the parameters switch between $K$ discrete
@@ -386,9 +386,9 @@ between expansion and recession. Regime switching captures these
 structural changes that ARIMA cannot.
 
 
-# The Algorithm and SciPy Implementation {#sec-ch16-algorithm}
+## The Algorithm and SciPy Implementation {#sec-ch16-algorithm}
 
-## The Kalman filter algorithm
+### The Kalman filter algorithm
 
 ```
 Input: observations y_1, ..., y_T; system matrices T, Z, Q, H, R
@@ -418,7 +418,7 @@ for t = 1, ..., T:
 return {α_{t|t}}, ℓ
 ```
 
-## `UnobservedComponents`: structural time series
+### `UnobservedComponents`: structural time series
 
 `UnobservedComponents` decomposes a time series into interpretable
 parts using a state-space model. Each component (level, trend, cycle,
@@ -487,7 +487,7 @@ Kalman smoother "knows" the cycle because it uses future observations
 to inform past estimates --- that is why the smoothed cycle is cleaner
 than what you'd get from a simple filter.
 
-## Custom state-space models via `MLEModel`
+### Custom state-space models via `MLEModel`
 
 `UnobservedComponents` covers common decompositions, but
 statsmodels' real power is `MLEModel` --- the base class that lets
@@ -541,7 +541,7 @@ works internally --- `UnobservedComponents`, `SARIMAX`, and
 `DynamicFactor` are all `MLEModel` subclasses with pre-built
 `update` methods.
 
-## `DynamicFactor`: shared latent dynamics
+### `DynamicFactor`: shared latent dynamics
 
 When multiple time series move together, a **dynamic factor model**
 explains the co-movement through a small number of latent factors.
@@ -574,7 +574,7 @@ fac_corr = np.corrcoef(
 print(f"\nFactor-true correlation: {fac_corr:.4f}")
 ```
 
-## `MarkovRegression`: regime switching
+### `MarkovRegression`: regime switching
 
 ```{python}
 #| label: markov-demo
@@ -645,7 +645,7 @@ volatile (mean ≈ 0, high variance). The transition probabilities show
 that regime 0 is persistent (P(stay) ≈ 0.98) while regime 1 is less
 so (P(stay) ≈ 0.95).
 
-## `MarkovAutoregression`: regime-dependent dynamics
+### `MarkovAutoregression`: regime-dependent dynamics
 
 `MarkovRegression` switches the mean and variance across regimes but
 assumes no serial dependence within each regime. When the
@@ -688,9 +688,9 @@ the idea that not just the *level* changes across regimes, but the
 *dynamics* --- how strongly the series depends on its own past.
 
 
-# Variations, Diagnostics, and Pitfalls {#sec-ch16-variations}
+## Variations, Diagnostics, and Pitfalls {#sec-ch16-variations}
 
-## Choosing the right structural model
+### Choosing the right structural model
 
 | Model | State | Best for |
 |---|---|---|
@@ -715,7 +715,7 @@ print(f"{'Local linear trend':<25} {uc_llt.aic:>8.1f} {uc_llt.bic:>8.1f}")
 print(f"{'Level + cycle':<25} {uc_full.aic:>8.1f} {uc_full.bic:>8.1f}")
 ```
 
-## Filtering vs smoothing: what the future buys you
+### Filtering vs smoothing: what the future buys you
 
 The difference between filtered and smoothed states is diagnostic
 itself. Large discrepancies indicate periods where future data
@@ -757,7 +757,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Diagnostics: standardized prediction errors
+### Diagnostics: standardized prediction errors
 
 For a well-specified state-space model, the prediction errors
 $v_t / \sqrt{F_t}$ should be i.i.d. $\mathcal{N}(0, 1)$. Check this
@@ -791,7 +791,7 @@ lb = acorr_ljungbox(std_resid, lags=10, return_df=True)
 print(f"Ljung-Box: all p > 0.05? {(lb['lb_pvalue'] > 0.05).all()}")
 ```
 
-## Common pitfalls
+### Common pitfalls
 
 1. **Convergence warnings:** State-space MLE is nonconvex. If
    `fit()` warns about convergence, try different starting values
@@ -806,9 +806,9 @@ print(f"Ljung-Box: all p > 0.05? {(lb['lb_pvalue'] > 0.05).all()}")
    solutions (e.g., a variance component estimated at exactly 0).
 
 
-# From-Scratch Implementation {#sec-ch16-scratch}
+## From-Scratch Implementation {#sec-ch16-scratch}
 
-## Kalman filter for the local level model
+### Kalman filter for the local level model
 
 ```{python}
 #| label: kalman-scratch
@@ -873,7 +873,7 @@ def kalman_local_level(y, sigma2_eta, sigma2_eps):
     return alpha_filt, P_filt, ll
 ```
 
-## Innovations likelihood from scratch
+### Innovations likelihood from scratch
 
 The from-scratch Kalman filter above already computes the
 log-likelihood, but let us isolate the innovations likelihood to
@@ -937,7 +937,7 @@ print(f"  sigma2_eps = {opt.x[1]:.4f}")
 print(f"  Log-likelihood = {-opt.fun:.2f}")
 ```
 
-## Hamilton filter from scratch
+### Hamilton filter from scratch
 
 The Hamilton filter for a two-regime model with switching mean and
 variance. This mirrors the Kalman filter's predict-update logic, but
@@ -1029,7 +1029,7 @@ print(f"\nFiltered prob correlation (regime 1):")
 print(f"  {xi_corr:.6f}")
 ```
 
-## Verification against statsmodels
+### Verification against statsmodels
 
 ```{python}
 #| label: kalman-verify
@@ -1050,7 +1050,7 @@ print(f"\nFiltered state correlation: "
       f"{np.corrcoef(alpha_ours, uc_verify.level.filtered)[0,1]:.6f}")
 ```
 
-## Understanding the Kalman gain
+### Understanding the Kalman gain
 
 ```{python}
 #| label: fig-kalman-gain
@@ -1075,7 +1075,7 @@ plt.show()
 ```
 
 
-# Computational Considerations {#sec-ch16-computation}
+## Computational Considerations {#sec-ch16-computation}
 
 | Model | Filter cost per step | Total | Memory |
 |---|---|---|---|
@@ -1090,7 +1090,7 @@ state-space models is the state dimension $m$, not the number of
 observations.
 
 
-# Worked Example {#sec-ch16-example}
+## Worked Example {#sec-ch16-example}
 
 Detecting a structural break using both UC and Markov switching.
 
@@ -1154,7 +1154,7 @@ policy intervention, a financial crisis), use Markov switching. If the
 change was gradual (demographic shifts, technological change), use UC.
 
 
-# Exercises {#sec-ch16-exercises}
+## Exercises {#sec-ch16-exercises}
 
 **Exercise 16.1** ($\star\star$, diagnostic failure). Fit a local level
 model to data that actually has a deterministic linear trend
@@ -1263,7 +1263,7 @@ of the signal-to-noise ratio in the underlying state-space model.
 %%
 
 
-# Bibliographic Notes {#sec-ch16-biblio}
+## Bibliographic Notes {#sec-ch16-biblio}
 
 The Kalman filter: Kalman (1960). The connection to recursive Bayesian
 estimation was recognized immediately. The state-space representation

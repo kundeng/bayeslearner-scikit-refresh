@@ -14,7 +14,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | linearmodels |
 |--------|---------|-------------|
@@ -24,7 +24,7 @@ rng = np.random.default_rng(42)
 | $\mathbf{Z}$ | Instruments (excluded from outcome equation) | `instruments` |
 
 
-# Motivation {#sec-ch20-motivation}
+## Motivation {#sec-ch20-motivation}
 
 Chapter 11 showed that OLS is inconsistent under endogeneity (when
 $\text{Cov}(\varepsilon, X) \neq 0$). Endogeneity arises from omitted
@@ -42,9 +42,9 @@ This chapter covers the `linearmodels` package, which provides
 statsmodels does not.
 
 
-# Mathematical Foundation {#sec-ch20-math}
+## Mathematical Foundation {#sec-ch20-math}
 
-## The endogeneity problem
+### The endogeneity problem
 
 In standard regression (Ch. 11), OLS is consistent because
 $\mathbb{E}[\varepsilon \mid \mathbf{X}] = 0$ --- the errors are
@@ -73,7 +73,7 @@ In all three cases, $\text{Cov}(X, \varepsilon) \neq 0$, and OLS gives
 $\hat{\beta}_{\text{OLS}} \to \beta + \frac{\text{Cov}(X, \varepsilon)}{\text{Var}(X)}$
 --- biased by the ratio of the endogeneity to the variance of $X$.
 
-## IV identification: the key insight
+### IV identification: the key insight
 
 An *instrument* $Z$ is a variable that:
 
@@ -102,7 +102,7 @@ schooling laws) but plausibly doesn't affect earnings directly
 (exclusion). The IV estimate uses only the variation in education
 caused by birth timing.
 
-## 2SLS: the two-stage approach
+### 2SLS: the two-stage approach
 
 Two-Stage Least Squares operationalizes the IV idea:
 
@@ -117,7 +117,7 @@ $\hat{\beta}_{2\text{SLS}} = (\hat{\mathbf{X}}^\top\hat{\mathbf{X}})^{-1}\hat{\m
 **Why it works:** The predicted $\hat{X}$ contains only the exogenous variation in $X$
 (the part driven by $Z$), so the second-stage regression is consistent.
 
-## LATE: what IV actually estimates {#sec-ch20-late}
+### LATE: what IV actually estimates {#sec-ch20-late}
 
 With a *homogeneous* treatment effect ($\beta$ is the same for everyone),
 IV recovers $\beta$ --- end of story. But when effects are
@@ -200,7 +200,7 @@ print(f"Wald (IV) est:   {wald:.3f}")
 print(f"IV ≈ complier LATE, not population ATE")
 ```
 
-## GMM framework {#sec-ch20-gmm}
+### GMM framework {#sec-ch20-gmm}
 
 With a single instrument and a single endogenous variable, 2SLS
 is the natural estimator. But with *more instruments than endogenous
@@ -258,7 +258,7 @@ weighting matrix. This means everything we know about 2SLS (consistency,
 asymptotic normality, weak-instrument problems) carries over to GMM ---
 GMM inherits the same fragility to weak instruments.
 
-## Weak instruments: deeper theory {#sec-ch20-weak-theory}
+### Weak instruments: deeper theory {#sec-ch20-weak-theory}
 
 When $Z$ is weakly correlated with $X$, IV estimation breaks down. The
 canonical treatment is Staiger and Stock (1997), who proposed a
@@ -322,9 +322,9 @@ the test. The AR confidence set is the set of all $\beta_0$ values
 that the test does not reject.
 
 
-# Statsmodels / linearmodels Implementation {#sec-ch20-impl}
+## Statsmodels / linearmodels Implementation {#sec-ch20-impl}
 
-## Simulating endogenous data
+### Simulating endogenous data
 
 To understand IV, let's simulate data where we *know* the true causal
 effect and can see why OLS gets it wrong.
@@ -354,7 +354,7 @@ print(f"OLS estimate: {sm.OLS(y, sm.add_constant(x)).fit().params[1]:.3f}")
 print(f"OLS is biased upward because Cov(x, u) > 0")
 ```
 
-## 2SLS with `linearmodels`
+### 2SLS with `linearmodels`
 
 The `linearmodels` package provides `IV2SLS` for two-stage least
 squares. The formula syntax `y ~ 1 + [x ~ z]` means: regress $y$ on
@@ -379,7 +379,7 @@ print(f"First-stage F: {iv.first_stage.diagnostics['f.stat'].iloc[0]:.1f}")
 - OLS was biased upward (~1.7) due to the confounder
 - The first-stage F > 10 indicates the instrument is strong
 
-## LIML: less biased under weak instruments
+### LIML: less biased under weak instruments
 
 LIML (Limited Information Maximum Likelihood) is a *k-class estimator*
 --- a family that nests 2SLS and OLS. The k-class estimator replaces
@@ -437,7 +437,7 @@ With a strong instrument, all three estimators agree closely. The
 differences emerge under weak instruments (see @sec-ch20-diagnostics)
 and overidentification.
 
-## Overidentification: the J-test
+### Overidentification: the J-test
 
 When you have more instruments than endogenous variables, the
 extra moment conditions provide a testable restriction. The
@@ -487,7 +487,7 @@ If *all* instruments are invalid in the same direction, $J$ is small
 and the test does not reject. The exclusion restriction is fundamentally
 untestable --- it must be argued on substantive grounds.
 
-## First-stage diagnostics: partial F and beyond
+### First-stage diagnostics: partial F and beyond
 
 The first-stage F-statistic tests joint significance of the *excluded*
 instruments in the first-stage regression of $X$ on $Z$ (and controls).
@@ -522,7 +522,7 @@ for col in diag_over.columns:
         print(f"  {col}: {val}")
 ```
 
-## Anderson--Rubin confidence sets
+### Anderson--Rubin confidence sets
 
 The AR test provides valid inference under weak instruments by
 inverting a grid search. For each candidate $\beta_0$, we test
@@ -570,7 +570,7 @@ print(f"Wald CI (from 2SLS): "
 print(f"Both cover true beta=1.5 (strong instrument)")
 ```
 
-## Weak instrument diagnostics
+### Weak instrument diagnostics
 
 A *weak instrument* is one that barely predicts the endogenous
 variable. With a weak instrument, 2SLS is biased toward OLS (the
@@ -614,9 +614,9 @@ may be very wide (or even unbounded), honestly reflecting the
 lack of identification.
 
 
-# From-Scratch Implementation {#sec-ch20-scratch}
+## From-Scratch Implementation {#sec-ch20-scratch}
 
-## 2SLS from scratch
+### 2SLS from scratch
 
 ```{python}
 #| label: 2sls-scratch
@@ -644,7 +644,7 @@ print(f"linearmodels:      beta={iv.params.iloc[1]:.3f}")
 print(f"Match: {np.isclose(beta_scratch[1], iv.params.iloc[1], atol=0.01)}")
 ```
 
-## Two-step GMM from scratch
+### Two-step GMM from scratch
 
 GMM extends 2SLS to handle overidentification efficiently. The
 two-step procedure:
@@ -707,7 +707,7 @@ estimators (our scratch version uses a simple heteroscedasticity-robust
 estimator; `linearmodels` uses its own implementation). The coefficient
 estimates agree closely.
 
-## Anderson--Rubin test from scratch
+### Anderson--Rubin test from scratch
 
 The AR test works by inverting a reduced-form regression. For each
 candidate $\beta_0$, compute $\tilde{y} = y - X\beta_0$ and test
@@ -764,13 +764,13 @@ print(f"\nWeak-IV AR set is much wider, "
 ```
 
 
-# Diagnostics {#sec-ch20-diagnostics}
+## Diagnostics {#sec-ch20-diagnostics}
 
 IV estimation has more ways to go wrong than OLS. Three checks are
 essential; a fourth (simulation) builds intuition for *how* things
 go wrong.
 
-## First-stage F-statistic
+### First-stage F-statistic
 
 The most important diagnostic. Tests whether the instrument actually
 predicts the endogenous variable. **Rule of thumb: F > 10 is
@@ -791,7 +791,7 @@ print(f"  First-stage F = "
 print(f"  F < 10: instrument is WEAK — 2SLS is unreliable")
 ```
 
-## Hausman test (endogeneity check)
+### Hausman test (endogeneity check)
 
 Compares OLS and 2SLS. If they agree, there is no endogeneity and
 you should use the more efficient OLS. If they disagree, endogeneity
@@ -808,14 +808,14 @@ print(f"Gap:  {abs(ols_est - iv_est):.3f}")
 print(f"If the gap is large → endogeneity is present → use IV")
 ```
 
-## Sargan/Hansen J-test
+### Sargan/Hansen J-test
 
 For overidentified models (more instruments than endogenous variables).
 Tests whether the *extra* instruments are valid. A rejection means
 at least one instrument is invalid. See the implementation in
 @sec-ch20-impl for a worked code example.
 
-## Simulation: 2SLS bias under weak instruments
+### Simulation: 2SLS bias under weak instruments
 
 The Bound--Jaeger--Baker formula says 2SLS bias is approximately
 $1/F$ of OLS bias. Let's verify this by simulation, varying the
@@ -901,7 +901,7 @@ The plot confirms: 2SLS bias tracks the $1/F$ curve closely. LIML
 has less median bias across all instrument strengths, which is why
 it is preferred when instruments may be weak.
 
-## Sampling distribution under weak instruments
+### Sampling distribution under weak instruments
 
 Under strong instruments, the 2SLS estimator is approximately
 normal. Under weak instruments, the distribution is skewed, heavy-
@@ -960,7 +960,7 @@ instruments (right panel), both are approximately normal and centered
 on the true value.
 
 
-# Computational Considerations {#sec-ch20-computation}
+## Computational Considerations {#sec-ch20-computation}
 
 | Method | Cost | Parameters | When to use |
 |---|---|---|---|
@@ -973,7 +973,7 @@ $p < 100$). The computational bottleneck is usually not the estimation
 but the *thinking*: finding a valid instrument is the hard part.
 
 
-# Worked Example {#sec-ch20-example}
+## Worked Example {#sec-ch20-example}
 
 **Effect of class size on test scores.**
 
@@ -1043,7 +1043,7 @@ size because school quality confounds the relationship. 2SLS, using
 the enrollment-based instrument, recovers an estimate closer to the
 true effect. The first-stage F > 10 confirms the instrument is strong.
 
-## Full diagnostic suite
+### Full diagnostic suite
 
 A serious IV analysis does not stop at the point estimate. We run
 every diagnostic from this chapter on the Maimonides example.
@@ -1089,7 +1089,7 @@ print(f"   Wald 95% CI: "
 print(f"   AR and Wald agree (strong instrument)")
 ```
 
-## Overidentification: adding a second instrument
+### Overidentification: adding a second instrument
 
 Suppose we also observe a second instrument --- for example, a
 policy reform variable. With two instruments we can run the J-test
@@ -1136,7 +1136,7 @@ print(f"J p-value:     {gmm_cs.j_stat.pval:.4f}")
 print(f"p > 0.05 → cannot reject instrument validity")
 ```
 
-## What if the instrument is weak?
+### What if the instrument is weak?
 
 To see the consequences of weak instruments in this applied setting,
 we degrade the Maimonides Rule instrument by adding noise.
@@ -1183,7 +1183,7 @@ print(f"  - LIML is less biased but noisier")
 ```
 
 
-# Exercises {#sec-ch20-exercises}
+## Exercises {#sec-ch20-exercises}
 
 **Exercise 20.1** ($\star\star$, diagnostic failure). Simulate data
 with a weak instrument (first-stage F ≈ 3). Compare OLS, 2SLS, and
@@ -1273,7 +1273,7 @@ untestable — it must be argued on substantive grounds.
 %%
 
 
-# Bibliographic Notes {#sec-ch20-biblio}
+## Bibliographic Notes {#sec-ch20-biblio}
 
 **IV foundations.** Wright (1928) introduced IV estimation for supply
 and demand systems. Angrist and Krueger (2001) survey the modern

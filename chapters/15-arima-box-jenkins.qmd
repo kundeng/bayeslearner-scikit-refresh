@@ -20,7 +20,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -34,7 +34,7 @@ rng = np.random.default_rng(42)
 | $\varepsilon_t$ | White noise innovation | `.resid` |
 
 
-# Motivation {#sec-ch15-motivation}
+## Motivation {#sec-ch15-motivation}
 
 Everything in Chapters 10--14 assumed independent observations. Time
 series breaks this: today's stock price depends on yesterday's, this
@@ -66,9 +66,9 @@ ARIMA combines both and adds differencing for non-stationary series.
 - How `statsmodels.tsa` implements all of this
 
 
-# Mathematical Foundation {#sec-ch15-math}
+## Mathematical Foundation {#sec-ch15-math}
 
-## Stationarity: the foundation of everything
+### Stationarity: the foundation of everything
 
 A time series $\{y_t\}$ is *weakly stationary* if:
 
@@ -97,7 +97,7 @@ trend, $\Delta y_t = y_t - y_{t-1}$ may be stationary. If
 $\Delta y_t$ still has a trend, try $\Delta^2 y_t$. The $d$ in
 ARIMA$(p,d,q)$ is the number of differences needed.
 
-## The AR model: today depends on yesterday
+### The AR model: today depends on yesterday
 
 The autoregressive model of order $p$, denoted AR$(p)$:
 
@@ -142,7 +142,7 @@ measures the correlation between $y_t$ and $y_{t-k}$ *after removing*
 the influence of all intermediate lags. In an AR($p$), once you
 account for lags 1 through $p$, lag $p+1$ adds no new information.
 
-## The MA model: today depends on past shocks
+### The MA model: today depends on past shocks
 
 The moving average model of order $q$, denoted MA$(q)$:
 
@@ -162,7 +162,7 @@ The ACF cuts off sharply at lag $q$: $\rho(k) = 0$ for $k > q$.
 The PACF decays gradually. This is the *mirror image* of the AR
 pattern.
 
-## ARMA and ARIMA
+### ARMA and ARIMA
 
 ARMA$(p,q)$ combines both:
 $$
@@ -175,7 +175,7 @@ This makes ARMA harder to identify than pure AR or pure MA.
 ARIMA$(p,d,q)$ applies ARMA to the $d$-th difference of the series:
 $(1-B)^d y_t$ follows an ARMA$(p,q)$.
 
-## The Wold decomposition: why this framework is complete
+### The Wold decomposition: why this framework is complete
 
 A fundamental theorem: *every* stationary process with finite variance
 can be represented as
@@ -191,7 +191,7 @@ This is why the ARIMA framework is so powerful: it is not an arbitrary
 modeling choice, but a principled approximation to the most general
 class of stationary processes.
 
-## Unit root testing: why you can't use a $t$-test
+### Unit root testing: why you can't use a $t$-test
 
 To test whether $\phi = 1$ in $y_t = \phi y_{t-1} + \varepsilon_t$
 (i.e., whether the series is a random walk), you might try the
@@ -220,7 +220,7 @@ stationary. Using both tests together gives more information:
 | Both reject | | Trend-stationary → detrend |
 | Neither rejects | | Inconclusive |
 
-## How ARIMA estimation works
+### How ARIMA estimation works
 
 Statsmodels estimates ARIMA parameters by *maximum likelihood*. The
 likelihood of an ARIMA model is computed via the *Kalman filter*
@@ -234,9 +234,9 @@ are chosen to maximize this log-likelihood, using numerical
 optimization (L-BFGS-B or Newton, Chapter 2).
 
 
-# The Algorithm and SciPy Implementation {#sec-ch15-algorithm}
+## The Algorithm and SciPy Implementation {#sec-ch15-algorithm}
 
-## The Box-Jenkins workflow
+### The Box-Jenkins workflow
 
 The Box-Jenkins methodology is a systematic approach to ARIMA modeling:
 
@@ -264,7 +264,7 @@ and return to Step 3.
 
 Let's walk through each step with code.
 
-## Step 1: Simulate and test stationarity
+### Step 1: Simulate and test stationarity
 
 ```{python}
 #| label: ar-simulate
@@ -298,7 +298,7 @@ print(f"  → {'Reject H0: non-stationary' if kpss_result[1] < 0.05 else 'Cannot
 Both tests confirm stationarity: ADF rejects the unit root null, KPSS
 does not reject the stationarity null. We can proceed with $d = 0$.
 
-## Step 2: Identify model order via ACF and PACF
+### Step 2: Identify model order via ACF and PACF
 
 ```{python}
 #| label: fig-acf-pacf
@@ -325,7 +325,7 @@ plt.show()
 significant spikes (at lags 1 and 2) and then falls within the
 confidence band. This pattern says: AR(2).
 
-## Step 3: Estimate the model
+### Step 3: Estimate the model
 
 ```{python}
 #| label: arima-fit
@@ -351,7 +351,7 @@ print(f"  BIC = {model.bic:.1f}")
 - `params[3]` is $\hat{\sigma}^2$, the estimated innovation variance.
 - AIC and BIC are for model comparison: lower is better.
 
-## Step 4: Model selection with information criteria
+### Step 4: Model selection with information criteria
 
 How do we know AR(2) is the right model? We can fit several candidates
 and compare AIC/BIC:
@@ -377,7 +377,7 @@ print(f"\nBest by AIC: {best_order}")
 print(f"True order:  (2, 0, 0)")
 ```
 
-## Step 5: Residual diagnostics
+### Step 5: Residual diagnostics
 
 ```{python}
 #| label: fig-diagnostics
@@ -479,9 +479,9 @@ If the diagnostics pass, the model is adequate. If they fail, go back
 to Step 3 and try a different order.
 
 
-# Variations, Diagnostics, and Pitfalls {#sec-ch15-variations}
+## Variations, Diagnostics, and Pitfalls {#sec-ch15-variations}
 
-## Non-stationary series: what happens when you don't difference
+### Non-stationary series: what happens when you don't difference
 
 ```{python}
 #| label: non-stationary-failure
@@ -505,7 +505,7 @@ AR(1) to a random walk gives $\hat{\phi} \approx 1$ with misleading
 confidence intervals (because the standard $t$-test doesn't apply for
 near-unit-root processes).
 
-## Seasonal ARIMA (SARIMAX)
+### Seasonal ARIMA (SARIMAX)
 
 Many real-world series have seasonal patterns: ice cream sales peak
 every summer, unemployment rises every January. SARIMAX extends ARIMA
@@ -559,7 +559,7 @@ ax.legend()
 plt.show()
 ```
 
-## Exponential smoothing: a different philosophy
+### Exponential smoothing: a different philosophy
 
 Exponential smoothing takes a different approach from ARIMA: instead
 of modeling the autocorrelation structure, it decomposes the series
@@ -619,7 +619,7 @@ In practice, fit both and compare out-of-sample forecast accuracy.
 The next section shows how.
 
 
-## Forecast evaluation: expanding-window comparison
+### Forecast evaluation: expanding-window comparison
 
 Information criteria (AIC, BIC) measure in-sample fit penalized for
 complexity. But forecasting is an out-of-sample problem: the real
@@ -719,9 +719,9 @@ plt.show()
 ```
 
 
-# From-Scratch Implementation {#sec-ch15-scratch}
+## From-Scratch Implementation {#sec-ch15-scratch}
 
-## AR(p) via the Yule-Walker equations
+### AR(p) via the Yule-Walker equations
 
 The Yule-Walker equations relate the AR coefficients to the
 autocorrelation function. For AR($p$):
@@ -797,7 +797,7 @@ Yule-Walker is fast (no iteration) but less efficient than MLE. For
 small samples, the difference can be substantial. For large samples,
 they converge to the same estimates.
 
-## One-step-ahead forecast from scratch
+### One-step-ahead forecast from scratch
 
 ```{python}
 #| label: forecast-scratch
@@ -821,7 +821,7 @@ print(f"This is the mean-reversion property of stationary AR models.")
 ```
 
 
-# Computational Considerations {#sec-ch15-computation}
+## Computational Considerations {#sec-ch15-computation}
 
 | Method | Cost | Notes |
 |---|---|---|
@@ -835,7 +835,7 @@ becomes expensive. Consider the CSS (conditional sum of squares)
 approximation or fast AR estimation via Yule-Walker.
 
 
-# Worked Example {#sec-ch15-example}
+## Worked Example {#sec-ch15-example}
 
 The complete Box-Jenkins workflow on a seasonal dataset.
 
@@ -907,7 +907,7 @@ plt.show()
 ```
 
 
-# Exercises {#sec-ch15-exercises}
+## Exercises {#sec-ch15-exercises}
 
 **Exercise 15.1** ($\star\star$, diagnostic failure). Fit AR(1) to a
 random walk ($y_t = y_{t-1} + \varepsilon_t$) without differencing.
@@ -1029,7 +1029,7 @@ case (near-unit-root or structural break).
 %%
 
 
-# Bibliographic Notes {#sec-ch15-biblio}
+## Bibliographic Notes {#sec-ch15-biblio}
 
 The Box-Jenkins methodology: Box and Jenkins (1970), updated in Box,
 Jenkins, Reinsel, and Ljung (2015). Still the definitive reference.

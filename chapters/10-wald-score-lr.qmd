@@ -13,7 +13,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -27,7 +27,7 @@ rng = np.random.default_rng(42)
 | $\Lambda$ | Likelihood-ratio statistic | `compare_lr_test()` |
 
 
-# Motivation {#sec-ch10-motivation}
+## Motivation {#sec-ch10-motivation}
 
 Every time you look at a $p$-value in a statsmodels summary table, you
 are using the Wald test. Every time you compare nested models with AIC,
@@ -57,9 +57,9 @@ statsmodels computes them, implements the key quantities from scratch,
 and demonstrates when each test is the right choice.
 
 
-# Mathematical Foundation {#sec-ch10-math}
+## Mathematical Foundation {#sec-ch10-math}
 
-## The MLE and its asymptotic distribution
+### The MLE and its asymptotic distribution
 
 Under standard regularity conditions (the parameter space is open,
 the model is identifiable, the log-likelihood is smooth, and the
@@ -126,7 +126,7 @@ Wald test built on $\mathbf{A}^{-1}$ alone (the model-based variance)
 has incorrect size; the robust Wald test built on the sandwich
 restores it. This is why `cov_type='HC1'` matters.
 
-## The three test statistics
+### The three test statistics
 
 For testing $H_0: R\boldsymbol{\theta} = \mathbf{r}$ (a set of $q$
 linear restrictions):
@@ -172,7 +172,7 @@ under-reject (conservative). The LR test is usually the best
 compromise. This ordering is not guaranteed but is common for
 well-behaved likelihoods.
 
-## Boundary parameters: Chernoff's theorem
+### Boundary parameters: Chernoff's theorem
 
 When the null hypothesis places the parameter on the boundary of the
 parameter space (e.g., testing $\sigma^2 = 0$ for a variance
@@ -189,7 +189,7 @@ compared to the interior case. This matters in mixed models (Chapter
 14) where testing for a zero random-effects variance is the canonical
 boundary problem.
 
-## Information criteria
+### Information criteria
 
 AIC and BIC provide model comparison without requiring nested models:
 
@@ -212,7 +212,7 @@ $$ {#eq-aic-bic}
   is consistent: it selects the true model (if it is in the candidate
   set) with probability $\to 1$.
 
-## Vuong's test for non-nested models
+### Vuong's test for non-nested models
 
 The LR test requires nested models (one is a special case of the
 other). For non-nested models --- say, a Poisson versus a negative
@@ -237,14 +237,14 @@ LR test, and it is available in `linearmodels` and straightforward to
 compute from scratch.
 
 
-# The Algorithm {#sec-ch10-algorithm}
+## The Algorithm {#sec-ch10-algorithm}
 
 The "algorithm" for this chapter is the computation of the three test
 statistics. These are not iterative algorithms but closed-form
 expressions evaluated at the fitted parameters.
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 10.1: Wald Test
+### Algorithm 10.1: Wald Test
 
 **Input:** Unrestricted MLE $\hat{\boldsymbol{\theta}}$, estimated
 covariance $\hat{\mathbf{V}} = \hat{\mathcal{I}}^{-1}$, restriction
@@ -259,7 +259,7 @@ matrix $R$, restriction value $\mathbf{r}$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 10.2: Likelihood-Ratio Test
+### Algorithm 10.2: Likelihood-Ratio Test
 
 **Input:** Unrestricted log-likelihood $\ell(\hat{\boldsymbol{\theta}})$,
 restricted log-likelihood $\ell(\tilde{\boldsymbol{\theta}})$
@@ -272,7 +272,7 @@ restricted log-likelihood $\ell(\tilde{\boldsymbol{\theta}})$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 10.3: Score Test
+### Algorithm 10.3: Score Test
 
 **Input:** Restricted MLE $\tilde{\boldsymbol{\theta}}$, full-model
 score $S(\tilde{\boldsymbol{\theta}})$, information matrix
@@ -290,7 +290,7 @@ The gradient of the full model at the restricted estimates tells you
 whether there is "pressure" to move toward the unrestricted MLE.
 
 
-# Statistical Properties {#sec-ch10-stats}
+## Statistical Properties {#sec-ch10-stats}
 
 **Asymptotic equivalence:** Under $H_0$ and standard regularity,
 $W$, $S_{\text{score}}$, and $\Lambda$ all converge to $\chi^2_q$.
@@ -311,9 +311,9 @@ size but changes the power properties. Chapter 11 develops this in
 detail.
 
 
-# Statsmodels Implementation {#sec-ch10-statsmodels}
+## Statsmodels Implementation {#sec-ch10-statsmodels}
 
-## Mapping table
+### Mapping table
 
 | Book notation | statsmodels | Notes |
 |---|---|---|
@@ -328,7 +328,7 @@ detail.
 | AIC | `result.aic` | $-2\ell + 2p$ |
 | BIC | `result.bic` | $-2\ell + p\ln n$ |
 
-## The summary table IS a Wald test
+### The summary table IS a Wald test
 
 ```{python}
 #| label: ols-summary
@@ -351,7 +351,7 @@ zero), the $p$-value should be non-significant. But note: these
 standard errors assume homoscedastic errors. Since we generated
 heteroscedastic data, the standard errors are wrong.
 
-## Robust (sandwich) standard errors
+### Robust (sandwich) standard errors
 
 ```{python}
 #| label: robust-se
@@ -379,7 +379,7 @@ $$
 (\mathbf{X}^\top\mathbf{X})^{-1}.
 $$ {#eq-sandwich}
 
-## Joint Wald test (F-test)
+### Joint Wald test (F-test)
 
 ```{python}
 #| label: f-test
@@ -391,7 +391,7 @@ print(f"p-value:     {f_result.pvalue:.4f}")
 print(f"df:          ({f_result.df_num:.0f}, {f_result.df_denom:.0f})")
 ```
 
-## The `wald_test` and `wald_test_terms` API
+### The `wald_test` and `wald_test_terms` API
 
 The summary table tests each parameter individually. For joint
 hypotheses, `wald_test` accepts an $R$ matrix directly, and
@@ -429,7 +429,7 @@ robust) covariance. `wald_test_terms` is convenience --- it builds
 the $R$ matrices for you and tests each term individually and
 jointly.
 
-## Likelihood-ratio test with `compare_lr_test`
+### Likelihood-ratio test with `compare_lr_test`
 
 ```{python}
 #| label: lr-test
@@ -461,7 +461,7 @@ print(f"Manual:          LR={lr_stat:.4f}, "
 \ell_{\text{restricted}})$ statistic. The restricted model must be
 nested within the full model --- the method does not check this.
 
-## AIC and BIC
+### AIC and BIC
 
 ```{python}
 #| label: aic-bic
@@ -485,7 +485,7 @@ AIC and BIC often agree. When they disagree, AIC picks the larger
 model (optimizes prediction) and BIC picks the smaller one (selects
 the true model). For large $n$, BIC's heavier penalty dominates.
 
-## Profile likelihood and confidence intervals
+### Profile likelihood and confidence intervals
 
 The Wald confidence interval $\hat{\theta}_j \pm z_{\alpha/2}
 \hat{\text{se}}_j$ is a quadratic approximation to the likelihood.
@@ -541,9 +541,9 @@ print("For OLS the two nearly coincide (Gaussian "
 ```
 
 
-# From-Scratch Implementation {#sec-ch10-scratch}
+## From-Scratch Implementation {#sec-ch10-scratch}
 
-## Wald test from scratch
+### Wald test from scratch
 
 ```{python}
 #| label: wald-scratch
@@ -593,7 +593,7 @@ print(f"statsmodels:  t²={ols.tvalues[2]**2:.4f}, p={ols.pvalues[2]:.4f}")
 print(f"Match: {np.isclose(stat_ours, ols.tvalues[2]**2, atol=0.01)}")
 ```
 
-## Score test from scratch
+### Score test from scratch
 
 ```{python}
 #| label: score-scratch
@@ -648,7 +648,7 @@ The three statistics test the same hypothesis but will generally
 differ in finite samples. Under $H_0$, all three are approximately
 $\chi^2_1$.
 
-## Trinity from scratch: logistic regression
+### Trinity from scratch: logistic regression
 
 OLS likelihoods are quadratic, so the three tests are nearly
 identical by construction. Logistic regression reveals the
@@ -726,7 +726,7 @@ print("\nThe three converge as n grows. "
       "At n=30, the gap can be substantial.")
 ```
 
-## Verifying the information matrix equality
+### Verifying the information matrix equality
 
 The IME (@eq-info-equality) says that the variance of the score
 equals the negative expected Hessian under the true model. We verify
@@ -773,9 +773,9 @@ print("IME holds: both sides of Eq. (10.2) agree.")
 ```
 
 
-# Diagnostics {#sec-ch10-diagnostics}
+## Diagnostics {#sec-ch10-diagnostics}
 
-## When to distrust the Wald test
+### When to distrust the Wald test
 
 1. **Heteroscedasticity.** If the variance of $y$ depends on $X$,
    the model-based SEs are wrong. Use `cov_type='HC1'` or higher.
@@ -834,7 +834,7 @@ print("\nLR correctly reports strong evidence; "
 $p$-value is *larger* than the LR $p$-value, the Hauck-Donner effect
 is likely in play. Use the LR test.
 
-## LR test workflow for nested models
+### LR test workflow for nested models
 
 The LR test is the standard tool for comparing nested models. The
 workflow:
@@ -855,7 +855,7 @@ over-rejects; the score test under-rejects. For the summary table
 of a single model, you are stuck with Wald. For model comparison,
 prefer LR.
 
-## Comparing the three tests
+### Comparing the three tests
 
 ```{python}
 #| label: fig-trinity
@@ -901,7 +901,7 @@ plt.show()
 ```
 
 
-# Computational Considerations {#sec-ch10-computation}
+## Computational Considerations {#sec-ch10-computation}
 
 | Test | Models to fit | Cost | When to use |
 |---|---|---|---|
@@ -917,7 +917,7 @@ is useful when the full model might not converge --- you only need to
 fit the simpler restricted model.
 
 
-# Worked Example {#sec-ch10-example}
+## Worked Example {#sec-ch10-example}
 
 Testing whether education and experience jointly predict wages, using
 all three tests.
@@ -986,7 +986,7 @@ for mask in [[True, False], [False, True], [True, True]]:
 ```
 
 
-# Exercises {#sec-ch10-exercises}
+## Exercises {#sec-ch10-exercises}
 
 **Exercise 10.1** ($\star\star$, diagnostic failure). Generate data
 with heteroscedastic errors: $y = X\beta + \epsilon$ where
@@ -1166,7 +1166,7 @@ to the model-based variance.
 %%
 
 
-# Bibliographic Notes {#sec-ch10-biblio}
+## Bibliographic Notes {#sec-ch10-biblio}
 
 The Wald test is from Wald (1943). The score (Lagrange multiplier) test
 is from Rao (1948). The likelihood-ratio test has roots in Neyman and

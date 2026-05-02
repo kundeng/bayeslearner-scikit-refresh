@@ -13,7 +13,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning |
 |--------|---------|
@@ -28,7 +28,7 @@ rng = np.random.default_rng(42)
 | $\sigma_k^2$ | Within-stratum variance |
 
 
-# Motivation {#sec-ch07-motivation}
+## Motivation {#sec-ch07-motivation}
 
 Monte Carlo integration is the workhorse of computational statistics.
 Every time you compute a bootstrap confidence interval, every time you
@@ -56,9 +56,9 @@ technique reduces the constant in the $O(1/\sqrt{n})$ rate --- sometimes
 dramatically.
 
 
-# Mathematical Foundation {#sec-ch07-math}
+## Mathematical Foundation {#sec-ch07-math}
 
-## The plain MC estimator
+### The plain MC estimator
 
 For $X \sim p$ and $h: \mathbb{R}^d \to \mathbb{R}$:
 $$
@@ -81,7 +81,7 @@ reduction exploits: any transformation that computes the same $\mu$
 with a smaller effective $\sigma_h$ achieves the same accuracy with
 fewer samples.
 
-## Importance sampling
+### Importance sampling
 
 To estimate $\mu = \mathbb{E}_p[h(X)] = \int h(x) p(x)\, dx$, sample
 from a different distribution $q$ and reweight:
@@ -129,7 +129,7 @@ $$
 \bar{w}_i = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}.
 $$
 
-## Control variates
+### Control variates
 
 If $c(X)$ is a function with known mean $\mathbb{E}[c(X)] = \mu_c$, then
 $$
@@ -159,7 +159,7 @@ regression. Each additional control variate can only help (or be
 neutral), never hurt --- the optimal $\boldsymbol{\beta}$ vector
 simply sets unused controls to zero.
 
-## Antithetic variates
+### Antithetic variates
 
 If $X$ and $X'$ are identically distributed but negatively correlated
 (e.g., $X \sim U(0,1)$ and $X' = 1 - X$), then
@@ -183,7 +183,7 @@ extends to normal samples via $X$ and $-X$ (both
 $\sim \mathcal{N}(0,1)$), and to multivariate settings by negating
 all components.
 
-## Stratified sampling
+### Stratified sampling
 
 Partition the sample space into $K$ strata $S_1, \ldots, S_K$ with
 probabilities $p_k = \Pr(X \in S_k)$. Draw $n_k$ samples from each
@@ -207,7 +207,7 @@ overall mean $\mu$, the larger the gain. In the extreme where $h$ is
 constant within each stratum ($\sigma_k^2 = 0$), the estimator has
 zero variance.
 
-## Rao--Blackwellization
+### Rao--Blackwellization
 
 If $X = (X_1, X_2)$ and you can compute
 $g(x_1) = \mathbb{E}[h(X) \mid X_1 = x_1]$ analytically, then
@@ -224,7 +224,7 @@ has structure that permits partial analytic integration --- for
 example, integrating out one component of a multivariate normal
 while sampling the others.
 
-## Quasi-Monte Carlo
+### Quasi-Monte Carlo
 
 Quasi-random sequences (Sobol, Halton) replace random samples with
 deterministic low-discrepancy points that fill the unit cube more
@@ -237,10 +237,10 @@ nearly $O(1/n)$ in low dimensions, much better than MC's $O(1/\sqrt{n})$.
 Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 
 
-# The Algorithm {#sec-ch07-algorithm}
+## The Algorithm {#sec-ch07-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 7.1: Plain Monte Carlo
+### Algorithm 7.1: Plain Monte Carlo
 
 **Input:** $h$, distribution $p$, sample size $n$
 
@@ -253,7 +253,7 @@ Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 7.2: Importance Sampling
+### Algorithm 7.2: Importance Sampling
 
 **Input:** $h$, target $p$, proposal $q$, sample size $n$
 
@@ -267,7 +267,7 @@ Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 7.3: Self-Normalized Importance Sampling
+### Algorithm 7.3: Self-Normalized Importance Sampling
 
 **Input:** $h$, unnormalized target $\tilde{p}$, proposal $q$, sample size $n$
 
@@ -282,7 +282,7 @@ Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 7.4: Control Variate Estimator
+### Algorithm 7.4: Control Variate Estimator
 
 **Input:** samples $h(X_i)$, control values $c(X_i)$, known mean $\mu_c$
 
@@ -295,7 +295,7 @@ Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 7.5: Stratified Sampling
+### Algorithm 7.5: Stratified Sampling
 
 **Input:** $h$, strata boundaries $a_0 < a_1 < \cdots < a_K$, total $n$
 
@@ -311,7 +311,7 @@ Scipy provides `qmc.Sobol`, `qmc.Halton`, and `qmc.LatinHypercube`.
 :::
 
 
-# Statistical Properties {#sec-ch07-stats}
+## Statistical Properties {#sec-ch07-stats}
 
 The $O(1/\sqrt{n})$ rate is both Monte Carlo's greatest strength
 (dimension-free) and its greatest weakness (slow). For context:
@@ -327,9 +327,9 @@ sampling reduces $\sigma^2_h$ by a factor of 100, you need 100x fewer
 samples --- equivalent to two extra digits for free.
 
 
-# SciPy Implementation {#sec-ch07-scipy}
+## SciPy Implementation {#sec-ch07-scipy}
 
-## `scipy.stats.qmc`: quasi-random sequences
+### `scipy.stats.qmc`: quasi-random sequences
 
 ```{python}
 #| label: qmc-demo
@@ -367,7 +367,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## MC vs QMC: integration accuracy
+### MC vs QMC: integration accuracy
 
 ```{python}
 #| label: fig-mc-vs-qmc
@@ -406,9 +406,9 @@ plt.show()
 ```
 
 
-# From-Scratch Implementation {#sec-ch07-scratch}
+## From-Scratch Implementation {#sec-ch07-scratch}
 
-## Plain MC with standard error
+### Plain MC with standard error
 
 ```{python}
 #| label: mc-scratch
@@ -437,7 +437,7 @@ def mc_integrate(h, sampler, n, seed=42):
     return values.mean(), values.std(ddof=1) / np.sqrt(n)
 ```
 
-## Importance sampling
+### Importance sampling
 
 ```{python}
 #| label: is-scratch
@@ -472,7 +472,7 @@ def importance_sampling(h, p_logpdf, q_logpdf, q_sampler, n, seed=42):
     return estimate, ess
 ```
 
-## Control variates
+### Control variates
 
 ```{python}
 #| label: cv-scratch
@@ -503,7 +503,7 @@ def control_variate(h_samples, c_samples, c_mean):
     return adjusted.mean(), plain_var / cv_var
 ```
 
-## Self-normalized importance sampling
+### Self-normalized importance sampling
 
 ```{python}
 #| label: snis-scratch
@@ -544,7 +544,7 @@ def self_normalized_is(
     return estimate, ess
 ```
 
-## Stratified sampling
+### Stratified sampling
 
 ```{python}
 #| label: stratified-scratch
@@ -594,7 +594,7 @@ def stratified_mc(h, inv_cdf, n, n_strata=10, seed=42):
     return estimate, se, vrf
 ```
 
-## Demonstration: all techniques on one problem
+### Demonstration: all techniques on one problem
 
 ```{python}
 #| label: variance-reduction-demo
@@ -663,9 +663,9 @@ print(f"\nTrue value: {true_val:.4f}")
 ```
 
 
-# Diagnostics {#sec-ch07-diagnostics}
+## Diagnostics {#sec-ch07-diagnostics}
 
-## Checking MC convergence
+### Checking MC convergence
 
 ```{python}
 #| label: fig-mc-convergence
@@ -690,7 +690,7 @@ ax.set_xlim(1, 5000)
 plt.show()
 ```
 
-## MC error estimation: batch means
+### MC error estimation: batch means
 
 The standard error $\hat{\sigma}/\sqrt{n}$ assumes independent samples.
 When samples are correlated (e.g., from MCMC), it underestimates the
@@ -725,14 +725,14 @@ print(f"Batch means SE: {bm_se:.4f}")
 print("(Should agree for iid samples)")
 ```
 
-## Diagnosing importance sampling
+### Diagnosing importance sampling
 
 The effective sample size (ESS) tells you how many of your $n$ samples
 are actually contributing. If $\text{ESS} \ll n$, your proposal $q$ is
 a poor match and the estimate is dominated by a few large weights.
 Rule of thumb: $\text{ESS} < n/5$ is a warning sign.
 
-### Weight degeneracy detection
+#### Weight degeneracy detection
 
 The most direct diagnostic is to look at the weight distribution.
 When IS is working well, weights are spread across many samples. When
@@ -794,7 +794,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-### Running ESS monitor
+#### Running ESS monitor
 
 For sequential or iterative IS applications, monitoring ESS over time
 reveals when the proposal drifts away from the target. A declining
@@ -836,7 +836,7 @@ ax.legend()
 plt.show()
 ```
 
-### IS diagnostic checklist
+#### IS diagnostic checklist
 
 | Symptom | Diagnosis | Remedy |
 |---|---|---|
@@ -846,7 +846,7 @@ plt.show()
 | ESS declines with $n$ | Proposal tails lighter than $p \cdot |h|$ | Use $t$-distribution or mixture proposal |
 
 
-# Computational Considerations {#sec-ch07-computation}
+## Computational Considerations {#sec-ch07-computation}
 
 | Method | Variance reduction | Extra cost per sample | Best when |
 |---|---|---|---|
@@ -872,7 +872,7 @@ $(\log n)^d$ factor grows. Above $d \approx 20$, plain MC with variance
 reduction typically outperforms QMC.
 
 
-# Worked Example {#sec-ch07-example}
+## Worked Example {#sec-ch07-example}
 
 Estimating the probability that a portfolio loses more than 10% in one
 day (Value at Risk).
@@ -923,7 +923,7 @@ print(f"IS:       P(loss > 2%) = {is_est:.6f} +/- {is_se:.6f}")
 print(f"ESS: {ess:.0f} / {n_sim} ({ess/n_sim*100:.1f}%)")
 ```
 
-## Higher-dimensional integration: expected shortfall
+### Higher-dimensional integration: expected shortfall
 
 Extending the portfolio example, we estimate the expected shortfall
 (conditional value at risk) --- the expected loss given that the loss
@@ -970,7 +970,7 @@ print(f"ES (IS):       {es_is:.6f} "
       f"+/- {es_is_se:.6f}")
 ```
 
-## Comparing all methods: convergence in practice
+### Comparing all methods: convergence in practice
 
 ```{python}
 #| label: fig-variance-reduction-convergence
@@ -1056,7 +1056,7 @@ for this smooth, monotone integrand --- achieving with 1,000 samples
 what plain MC needs 10,000--50,000 for.
 
 
-# Exercises {#sec-ch07-exercises}
+## Exercises {#sec-ch07-exercises}
 
 **Exercise 7.1** ($\star\star$, diagnostic failure). Estimate
 $\mathbb{E}[X^4]$ where $X \sim \text{Cauchy}(0,1)$ using plain MC
@@ -1226,7 +1226,7 @@ higher for deep in-the-money.
 %%
 
 
-# Bibliographic Notes {#sec-ch07-biblio}
+## Bibliographic Notes {#sec-ch07-biblio}
 
 Monte Carlo integration dates to the Manhattan Project (Metropolis and
 Ulam, 1949). The $1/\sqrt{n}$ rate was already understood; the

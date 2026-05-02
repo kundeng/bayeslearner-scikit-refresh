@@ -16,7 +16,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-# Motivation {#sec-ch19-motivation}
+## Motivation {#sec-ch19-motivation}
 
 Two related problems: (1) reducing the dimensionality of multivariate
 data (PCA, factor analysis, CCA), and (2) estimating relationships
@@ -28,9 +28,9 @@ PCA, factor analysis, CCA, and MANOVA; `statsmodels.nonparametric`
 for LOWESS, kernel regression, and kernel density estimation.
 
 
-# Mathematical Foundation {#sec-ch19-math}
+## Mathematical Foundation {#sec-ch19-math}
 
-## PCA: why variance maximization works
+### PCA: why variance maximization works
 
 PCA asks: if you could only keep $k$ linear combinations of your $p$
 variables, which ones would preserve the most information?
@@ -63,7 +63,7 @@ vs component number). The "elbow" --- where eigenvalues drop from
 large to small --- suggests the number of true underlying factors.
 Components after the elbow are noise.
 
-## Factor analysis: latent variables behind observed data
+### Factor analysis: latent variables behind observed data
 
 PCA finds directions of maximum variance, but it does not
 model *why* those directions exist. Factor analysis does: it
@@ -116,7 +116,7 @@ variance ($\boldsymbol{\Psi}$). When $\boldsymbol{\Psi}
 \to \mathbf{0}$ (no unique variance), factor analysis
 reduces to PCA.
 
-## Canonical correlation analysis (CCA)
+### Canonical correlation analysis (CCA)
 
 CCA generalizes correlation to two *sets* of variables.
 Given $\mathbf{X}_1 \in \mathbb{R}^{n \times p_1}$ and
@@ -150,7 +150,7 @@ vectors, mapped back through $\boldsymbol{\Sigma}_{11}^{-1/2}$
 and $\boldsymbol{\Sigma}_{22}^{-1/2}$, give the canonical
 weight vectors $\mathbf{a}$ and $\mathbf{b}$.
 
-## Kernel density estimation: putting bumps at data points
+### Kernel density estimation: putting bumps at data points
 
 The histogram is the simplest density estimator, but it depends on
 bin placement. KDE improves on it by placing a smooth "bump" (kernel)
@@ -175,7 +175,7 @@ bias-variance tradeoff:
   becomes smooth. High bias (fine structure is smeared out) but low
   variance. The KDE is *smooth*.
 
-### The AMISE derivation
+#### The AMISE derivation
 
 The optimal bandwidth minimizes the *mean integrated squared error*
 (MISE), defined as $\text{MISE}(h) = \mathbb{E}\!\left[\int
@@ -225,7 +225,7 @@ multimodal distributions --- the Gaussian reference has small
 $R(f'')$, so the rule picks a bandwidth too wide for data with
 sharp features.
 
-## LOWESS and kernel regression
+### LOWESS and kernel regression
 
 LOWESS (LOcally WEighted Scatterplot Smoothing) estimates
 $\mathbb{E}[Y \mid X = x]$ by fitting a *separate* linear regression
@@ -242,7 +242,7 @@ weighting instead of LOWESS's tricube weights. Both converge to the
 true conditional expectation, but at the nonparametric rate
 $O(n^{-2/(d+4)})$.
 
-## Local linear regression and boundary bias
+### Local linear regression and boundary bias
 
 The Nadaraya-Watson estimator (local constant kernel regression)
 takes a weighted average of nearby $Y$ values:
@@ -279,7 +279,7 @@ is *design-adaptive*: it automatically handles boundaries,
 uneven spacing, and heterogeneous density of the $X$ values
 without manual adjustment.
 
-## The curse of dimensionality
+### The curse of dimensionality
 
 The convergence rate $O(n^{-2/(d+4)})$ reveals a fundamental problem:
 for $d$-dimensional inputs, you need *exponentially more data* to
@@ -298,9 +298,9 @@ higher dimensions, use parametric models or dimension reduction (PCA)
 first.
 
 
-# Statsmodels Implementation {#sec-ch19-statsmodels}
+## Statsmodels Implementation {#sec-ch19-statsmodels}
 
-## PCA
+### PCA
 
 PCA finds the directions of maximum variance in your data. If you
 have 10 variables but only 3 underlying factors drive the variation,
@@ -344,7 +344,7 @@ ax.legend()
 plt.show()
 ```
 
-## Factor analysis
+### Factor analysis
 
 `statsmodels.multivariate.factor.Factor` fits the factor model
 $\mathbf{X} = \boldsymbol{\Lambda}\mathbf{f} +
@@ -397,7 +397,7 @@ rotation matrix $\mathbf{T}$ satisfies
 $\mathbf{T}^\top\mathbf{T} = \mathbf{I}$, confirming it
 is an orthogonal rotation that preserves the fit.
 
-## Canonical correlation analysis (CCA)
+### Canonical correlation analysis (CCA)
 
 `statsmodels.multivariate.cancorr.CanCorr` computes canonical
 correlations between two variable sets and provides
@@ -431,7 +431,7 @@ The first canonical correlation should be large (reflecting
 the shared factor), while the remaining correlations should
 be near zero (pure noise).
 
-## MANOVA
+### MANOVA
 
 `statsmodels.multivariate.manova.MANOVA` tests whether group
 means differ across multiple response variables simultaneously.
@@ -466,7 +466,7 @@ groups are indistinguishable. The $F$ approximation converts
 lambda to a familiar scale; Pillai's trace is more robust
 to violations of homogeneity of covariance.
 
-## Kernel density estimation
+### Kernel density estimation
 
 KDE estimates the probability density from data, without assuming a
 parametric form (like "the data is normal"). It places a small bump
@@ -492,7 +492,7 @@ ax.set_xlabel("x"); ax.legend()
 plt.show()
 ```
 
-## LOWESS (locally weighted scatterplot smoothing)
+### LOWESS (locally weighted scatterplot smoothing)
 
 ```{python}
 #| label: lowess-demo
@@ -511,7 +511,7 @@ ax.legend()
 plt.show()
 ```
 
-## Kernel regression
+### Kernel regression
 
 `KernelReg` has two key parameters: `var_type` (variable types:
 `'c'` for continuous, `'u'` for unordered discrete, `'o'` for
@@ -549,9 +549,9 @@ plt.show()
 ```
 
 
-# From-Scratch Implementation {#sec-ch19-scratch}
+## From-Scratch Implementation {#sec-ch19-scratch}
 
-## PCA via numpy SVD
+### PCA via numpy SVD
 
 ```{python}
 #| label: pca-scratch
@@ -563,7 +563,7 @@ print(f"Top 3 variance: {var_explained[:3].round(2)}")
 print(f"statsmodels:    {pca.eigenvals[:3].round(2)}")
 ```
 
-## KDE from scratch with Silverman bandwidth
+### KDE from scratch with Silverman bandwidth
 
 The from-scratch KDE places a Gaussian bump at each data
 point and sums. Silverman's rule provides the bandwidth.
@@ -630,7 +630,7 @@ for pt in test_pts:
           f"sm={sm_interp(pt):.4f}")
 ```
 
-## Local linear regression from scratch
+### Local linear regression from scratch
 
 At each evaluation point $x$, local linear regression solves
 a weighted least squares problem: minimize
@@ -696,9 +696,9 @@ print(f"R² (statsmodels): "
 ```
 
 
-# Diagnostics {#sec-ch19-diagnostics}
+## Diagnostics {#sec-ch19-diagnostics}
 
-## How many components to keep?
+### How many components to keep?
 
 The scree plot (above) shows the "elbow" --- the point where adding
 more components captures diminishing returns. Rules of thumb:
@@ -719,7 +719,7 @@ print(f"Components for 90% variance: {n_90}")
 print(f"Cumulative variance: {cumvar[:5].round(3)}")
 ```
 
-## Loading plot for PCA interpretation
+### Loading plot for PCA interpretation
 
 The scree plot tells you *how many* components matter. The
 *loading plot* tells you *what each component means* by
@@ -755,7 +755,7 @@ are positively correlated through those components. Variables
 at 90 degrees are uncorrelated; variables in opposite
 directions are negatively correlated.
 
-## Bandwidth selection for KDE
+### Bandwidth selection for KDE
 
 Silverman's rule (`bw='silverman'`) is the default. For multimodal
 distributions, it may oversmooth. Cross-validation (leave-one-out
@@ -770,7 +770,7 @@ for bw_method in ['silverman', 'scott']:
     print(f"{bw_method}: bw = {kde_bw.bw:.4f}")
 ```
 
-## Leave-one-out cross-validation for bandwidth
+### Leave-one-out cross-validation for bandwidth
 
 LOO-CV scores bandwidths by how well the KDE trained on
 $n-1$ points predicts the held-out point. This avoids
@@ -811,7 +811,7 @@ peaks. This is the tradeoff: Silverman is fast
 ($O(1)$ computation) but assumes unimodality; LOO-CV is
 $O(n^2)$ but data-driven.
 
-## Residual diagnostics for kernel regression
+### Residual diagnostics for kernel regression
 
 Residuals from kernel regression should show no systematic
 pattern. Structured residuals indicate the bandwidth is wrong
@@ -836,7 +836,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## When PCA fails: nonlinear manifolds
+### When PCA fails: nonlinear manifolds
 
 PCA finds linear subspaces. If the data lies on a curved
 manifold (a Swiss roll, for example), PCA will spread the
@@ -853,7 +853,7 @@ decomposition). See Hastie, Tibshirani, and Friedman (2009),
 Ch. 14 for a treatment of nonlinear dimension reduction.
 
 
-# Computational Considerations {#sec-ch19-computation}
+## Computational Considerations {#sec-ch19-computation}
 
 | Method | Cost | Dimension limit |
 |---|---|---|
@@ -875,7 +875,7 @@ $O(\log n)$ per evaluation point; statsmodels uses this internally
 for 1D KDE via the `fft` parameter.
 
 
-# Worked Example {#sec-ch19-example}
+## Worked Example {#sec-ch19-example}
 
 Exploring the California Housing dataset with PCA and nonparametric
 regression.
@@ -996,7 +996,7 @@ practitioner seeing this would investigate the top-coding
 rather than trusting the OLS slope.
 
 
-# Exercises {#sec-ch19-exercises}
+## Exercises {#sec-ch19-exercises}
 
 **Exercise 19.1** ($\star\star$, diagnostic failure). Apply KDE with
 a very small bandwidth (bw=0.05) and a very large bandwidth (bw=2.0)
@@ -1078,7 +1078,7 @@ exponentially — this is the curse of dimensionality.
 %%
 
 
-# Choosing Between Methods {#sec-ch19-choosing}
+## Choosing Between Methods {#sec-ch19-choosing}
 
 | Question | Method | Why |
 |---|---|---|
@@ -1098,7 +1098,7 @@ when you don't trust the parametric form; switch to parametric
 methods when you have evidence the parametric model is correct.
 
 
-# Bibliographic Notes {#sec-ch19-biblio}
+## Bibliographic Notes {#sec-ch19-biblio}
 
 PCA: Pearson (1901), Hotelling (1933). The connection to the
 eigendecomposition of the covariance matrix is in Anderson (2003),

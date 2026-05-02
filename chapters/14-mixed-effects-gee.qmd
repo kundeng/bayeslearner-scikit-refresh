@@ -19,7 +19,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -32,7 +32,7 @@ rng = np.random.default_rng(42)
 | $\mathbf{R}_i(\boldsymbol{\alpha})$ | Working correlation matrix (GEE) | `cov_struct` |
 
 
-# Motivation {#sec-ch14-motivation}
+## Motivation {#sec-ch14-motivation}
 
 Many datasets have *clustered* observations: students within schools,
 patients within hospitals, repeated measurements on the same subject.
@@ -63,9 +63,9 @@ differ---and the choice between them is a modeling decision, not a
 computational one.
 
 
-# Mathematical Foundation {#sec-ch14-math}
+## Mathematical Foundation {#sec-ch14-math}
 
-## The linear mixed model
+### The linear mixed model
 
 $$
 \mathbf{y}_i = \mathbf{X}_i\boldsymbol{\beta} + \mathbf{Z}_i\mathbf{b}_i + \boldsymbol{\varepsilon}_i,
@@ -78,7 +78,7 @@ $\mathbf{b}_i$) is:
 $\mathbf{y}_i \sim \mathcal{N}(\mathbf{X}_i\boldsymbol{\beta}, \mathbf{V}_i)$,
 where $\mathbf{V}_i = \mathbf{Z}_i\mathbf{D}\mathbf{Z}_i^\top + \sigma^2\mathbf{I}$.
 
-### REML: correcting the variance bias {#sec-ch14-reml}
+#### REML: correcting the variance bias {#sec-ch14-reml}
 
 **REML (Restricted Maximum Likelihood)** estimates the variance
 parameters $(\mathbf{D}, \sigma^2)$ by maximizing a modified likelihood
@@ -133,7 +133,7 @@ adding a covariate), you must use ML (`reml=False`), as the REML
 likelihoods are not comparable across different $\mathbf{X}$
 matrices.
 
-### BLUP: predicting the random effects {#sec-ch14-blup}
+#### BLUP: predicting the random effects {#sec-ch14-blup}
 
 The random effects $\hat{\mathbf{b}}_i$ are not estimated by MLE---they
 are *predicted* as the conditional mean
@@ -206,7 +206,7 @@ toward the population mean. This reduces overall prediction error.
 | "I don't trust my correlation structure" | Must specify correctly | Robust to misspecification |
 | "My outcome is binary/count" | Coefficients differ from GEE | Simpler interpretation |
 
-## GEE: the marginal approach
+### GEE: the marginal approach
 
 GEE specifies only the first two moments of $\mathbf{y}_i$:
 
@@ -227,7 +227,7 @@ corrects for the misspecification. This robustness is why GEE is
 popular in practice---you don't need to know the true correlation
 structure, just a reasonable working guess.
 
-## The sandwich variance {#sec-ch14-sandwich}
+### The sandwich variance {#sec-ch14-sandwich}
 
 GEE uses a sandwich (Huber--White) covariance estimator that provides
 valid inference even when the working correlation is misspecified.
@@ -268,10 +268,10 @@ sandwich underestimates variability and coverage drops below
 nominal. We demonstrate this failure in @sec-ch14-diagnostics.
 
 
-# The Algorithm {#sec-ch14-algorithm}
+## The Algorithm {#sec-ch14-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 14.1: GEE (Iteratively Reweighted)
+### Algorithm 14.1: GEE (Iteratively Reweighted)
 
 **Input:** Data $\{(\mathbf{X}_i, \mathbf{y}_i)\}_{i=1}^G$, link $g$,
 working correlation structure, tolerance $\epsilon$
@@ -291,7 +291,7 @@ working correlation structure, tolerance $\epsilon$
 :::
 
 
-# Statistical Properties {#sec-ch14-stats}
+## Statistical Properties {#sec-ch14-stats}
 
 **Mixed models vs GEE:** For a binary outcome (logistic), the
 mixed-model $\beta$ and the GEE $\beta$ estimate different things:
@@ -312,7 +312,7 @@ working correlation is to the truth. Exchangeable is often good
 enough; independence (ignoring clustering) gives valid inference but
 wider CIs.
 
-## Marginal ≠ conditional: a simulation {#sec-ch14-attenuation}
+### Marginal ≠ conditional: a simulation {#sec-ch14-attenuation}
 
 For linear models, MixedLM and GEE give the same $\hat{\boldsymbol{\beta}}$.
 For nonlinear models, they estimate different quantities.
@@ -381,9 +381,9 @@ further. This is not a bias---GEE and the GLMM are estimating
 decision about which parameter answers your scientific question.
 
 
-# Statsmodels Implementation {#sec-ch14-statsmodels}
+## Statsmodels Implementation {#sec-ch14-statsmodels}
 
-## `MixedLM`: linear mixed model
+### `MixedLM`: linear mixed model
 
 ```{python}
 #| label: mixedlm-demo
@@ -442,7 +442,7 @@ $\hat{\mathbf{b}}_{\text{new}} = \mathbf{0}$---the prediction
 reverts to the population average. This is by design: with no
 data from the new cluster, the best prediction is the prior mean.
 
-## `GEE`: marginal model
+### `GEE`: marginal model
 
 ```{python}
 #| label: gee-demo
@@ -472,7 +472,7 @@ for struct_name, struct in [
 | AR(1) | `Autoregressive()` | 1 ($\rho$) | Longitudinal (repeated measures) |
 | Unstructured | `Unstructured()` | $n_i(n_i-1)/2$ | Small clusters, many params |
 
-## Mixed model vs GEE comparison
+### Mixed model vs GEE comparison
 
 ```{python}
 #| label: comparison
@@ -486,9 +486,9 @@ print("They would differ for logistic or Poisson models.")
 ```
 
 
-# From-Scratch Implementation {#sec-ch14-scratch}
+## From-Scratch Implementation {#sec-ch14-scratch}
 
-## Random intercept model via EM
+### Random intercept model via EM
 
 ```{python}
 #| label: lmm-scratch
@@ -573,7 +573,7 @@ print(f"{'sigma2_e':>14} {res_ours['sigma2_e']:>14.3f} "
       f"{mlm.scale:>14.3f}")
 ```
 
-## BLUP from scratch
+### BLUP from scratch
 
 The from-scratch EM above already computes BLUPs in its E-step.
 Here we verify the shrinkage formula @eq-shrinkage against
@@ -610,7 +610,7 @@ for g in range(8):
           f"{blup_sm[g]:>12.4f} {lam:>10.4f}")
 ```
 
-## GEE from scratch
+### GEE from scratch
 
 One pass of the iteratively reweighted GEE, computing the sandwich
 covariance by hand.
@@ -739,9 +739,9 @@ for j, name in enumerate(
 ```
 
 
-# Diagnostics {#sec-ch14-diagnostics}
+## Diagnostics {#sec-ch14-diagnostics}
 
-## ICC: Intraclass Correlation Coefficient
+### ICC: Intraclass Correlation Coefficient
 
 ```{python}
 #| label: icc
@@ -753,7 +753,7 @@ print(f"between schools (the rest is within schools).")
 print(f"\nICC > 0.05 generally justifies a mixed model over OLS.")
 ```
 
-## Random effects diagnostics
+### Random effects diagnostics
 
 ```{python}
 #| label: fig-re-diagnostics
@@ -786,7 +786,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Level-2 residual diagnostics
+### Level-2 residual diagnostics
 
 The random effects themselves are diagnostic targets. Plotting
 $\hat{b}_i$ against cluster-level covariates detects misspecified
@@ -827,7 +827,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Comparing working correlations (QIC)
+### Comparing working correlations (QIC)
 
 The Quasi-likelihood under the Independence model Criterion (QIC)
 extends AIC to GEE. Lower QIC indicates a better working correlation.
@@ -856,7 +856,7 @@ print("QICu = quasi-likelihood model selection (for "
 print("Lower is better for both.")
 ```
 
-## The few-clusters problem {#sec-ch14-few-clusters}
+### The few-clusters problem {#sec-ch14-few-clusters}
 
 The sandwich estimator is a large-$G$ result. With few clusters,
 it underestimates variability and confidence intervals are too
@@ -900,7 +900,7 @@ print("Use bias-corrected sandwich (e.g., Fay-Graubard)")
 print("or small-sample corrections when G is small.")
 ```
 
-## Likelihood ratio test for random effects
+### Likelihood ratio test for random effects
 
 To test whether random effects are needed at all
 ($H_0: \sigma^2_b = 0$), compare ML fits with and without the
@@ -939,7 +939,7 @@ print("places H0 on the boundary of the parameter space.")
 ```
 
 
-# Computational Considerations {#sec-ch14-computation}
+## Computational Considerations {#sec-ch14-computation}
 
 | Model | Cost | Memory | Notes |
 |---|---|---|---|
@@ -951,7 +951,7 @@ cluster-level operations ($n_i^2$ or $n_i^3$), which become expensive
 for large clusters (e.g., many repeated measures per subject).
 
 
-# Worked Example {#sec-ch14-example}
+## Worked Example {#sec-ch14-example}
 
 Longitudinal study: repeated blood pressure measurements on patients,
 comparing mixed model vs GEE.
@@ -1009,7 +1009,7 @@ print(f"\nRandom effects covariance:")
 print(mlm_bp.cov_re.round(3))
 ```
 
-## Model comparison: random intercept vs random slope
+### Model comparison: random intercept vs random slope
 
 Does adding a random slope on `visit` improve the model? Compare
 a random-intercept-only model to the random-intercept-plus-slope
@@ -1047,7 +1047,7 @@ print(f"Int-slope correlation: "
       f"{mlm_bp.cov_re.iloc[0,1] / np.sqrt(mlm_bp.cov_re.iloc[0,0] * mlm_bp.cov_re.iloc[1,1]):.3f}")
 ```
 
-## Prediction plots: individual trajectories
+### Prediction plots: individual trajectories
 
 The random slope model captures patient-specific rates of change.
 Plotting predicted trajectories for a sample of patients shows
@@ -1103,7 +1103,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## GEE vs MixedLM: coefficient interpretation
+### GEE vs MixedLM: coefficient interpretation
 
 ```{python}
 #| label: worked-interpretation
@@ -1134,7 +1134,7 @@ print("    → GEE (marginal)")
 ```
 
 
-# Exercises {#sec-ch14-exercises}
+## Exercises {#sec-ch14-exercises}
 
 **Exercise 14.1** ($\star\star$, diagnostic failure). Fit OLS
 (ignoring clustering) and MixedLM to the school data. Compare the
@@ -1280,7 +1280,7 @@ random-effect variance means more attenuation.
 %%
 
 
-# Bibliographic Notes {#sec-ch14-biblio}
+## Bibliographic Notes {#sec-ch14-biblio}
 
 Linear mixed models: Laird and Ware (1982) for the modern formulation,
 Henderson (1950) for BLUP. REML: Patterson and Thompson (1971). The

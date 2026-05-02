@@ -15,7 +15,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-# What is SciPy? {#sec-ch01-what}
+## What is SciPy? {#sec-ch01-what}
 
 SciPy is a collection of mathematical algorithms built on top of
 NumPy. Where NumPy gives you arrays and basic linear algebra, SciPy
@@ -36,7 +36,7 @@ book. By the end, you will be able to:
 We start simple and build up.
 
 
-# SciPy's Module Structure {#sec-ch01-modules}
+## SciPy's Module Structure {#sec-ch01-modules}
 
 SciPy is organized into subpackages. The ones this book uses most:
 
@@ -60,7 +60,7 @@ the submodules. This is a deliberate design choice: you load only what
 you need.
 
 
-# Your First Optimization {#sec-ch01-first-opt}
+## Your First Optimization {#sec-ch01-first-opt}
 
 The most important function in this book is
 `scipy.optimize.minimize`. It takes a Python function and finds the
@@ -127,7 +127,7 @@ too few iterations allowed, a bad starting point, or a function that
 has no minimum (e.g., $f(x) = -x$).
 
 
-# Multivariate Optimization {#sec-ch01-multivar}
+## Multivariate Optimization {#sec-ch01-multivar}
 
 Real problems have multiple parameters. Instead of minimizing over a
 single number $x$, we minimize over a *vector*
@@ -211,7 +211,7 @@ decreases more slowly (navigating along the narrow valley floor).
 Chapter 2 explains *why* BFGS behaves this way.
 
 
-# Choosing an Optimization Method {#sec-ch01-methods}
+## Choosing an Optimization Method {#sec-ch01-methods}
 
 `minimize` supports many algorithms. Here is how they compare on the
 Rosenbrock function:
@@ -257,7 +257,7 @@ derivatives at all. The tradeoff: gradient computation has a cost too.
 Each of these algorithms is developed in depth in Chapters 2--5.
 
 
-# Fitting Models to Data: `curve_fit` {#sec-ch01-curvefit}
+## Fitting Models to Data: `curve_fit` {#sec-ch01-curvefit}
 
 The most common use of optimization in science: you have data points
 $(x_i, y_i)$ and a model $y = f(x; a, b, c)$ with unknown parameters.
@@ -322,7 +322,7 @@ The `pcov` matrix comes from the Gauss--Newton approximation to the
 Hessian. Chapter 6 develops this in detail.
 
 
-# Probability Distributions: `scipy.stats` {#sec-ch01-stats}
+## Probability Distributions: `scipy.stats` {#sec-ch01-stats}
 
 SciPy provides every standard probability distribution through a
 unified API. Once you learn the interface for one distribution, you
@@ -483,7 +483,7 @@ statistic and a $p$-value. Chapter 10 develops the theory behind
 these tests.
 
 
-# Linear Algebra: `scipy.linalg` {#sec-ch01-linalg}
+## Linear Algebra: `scipy.linalg` {#sec-ch01-linalg}
 
 `scipy.linalg` extends NumPy's linear algebra with more decompositions
 and solvers.
@@ -569,7 +569,7 @@ this breaks BFGS, and Chapter 16 shows how the Kalman filter
 handles it. This book uses `scipy.linalg` throughout.
 
 
-# From SciPy to Statsmodels {#sec-ch01-statsmodels}
+## From SciPy to Statsmodels {#sec-ch01-statsmodels}
 
 SciPy gives you optimization and distributions. But when you fit a
 regression, you usually want more than just the coefficients --- you
@@ -646,7 +646,7 @@ teaches you both layers: what statsmodels computes, and how scipy
 does the computation.
 
 
-# From SciPy to scikit-learn {#sec-ch01-sklearn}
+## From SciPy to scikit-learn {#sec-ch01-sklearn}
 
 Scikit-learn is a *prediction* library built on top of scipy and
 numpy. Its API is designed around two operations: `.fit()` (learn
@@ -718,7 +718,7 @@ print(f"  R²:      {ols.rsquared:.4f}")
 ```
 
 
-# What `.fit()` Actually Calls {#sec-ch01-fit}
+## What `.fit()` Actually Calls {#sec-ch01-fit}
 
 Let's trace what happens when sklearn's `LogisticRegression.fit()` runs:
 
@@ -784,7 +784,7 @@ L-BFGS-B --- a limited-memory quasi-Newton method developed in
 Chapter 4.
 
 
-# The Roadmap {#sec-ch01-roadmap}
+## The Roadmap {#sec-ch01-roadmap}
 
 Now that you have seen the key scipy tools, here is where the book
 goes from here. Each chapter takes one method, develops the
@@ -855,7 +855,7 @@ the diagnostics that the documentation never mentions.
   double machine learning via Neyman orthogonality.
 
 
-# Exercises {#sec-ch01-exercises}
+## Exercises {#sec-ch01-exercises}
 
 **Exercise 1.1** ($\star$, getting started). Use `scipy.optimize.minimize`
 to find the minimum of $f(x_1, x_2) = x_1^2 + 2x_2^2 - x_1 x_2$
@@ -972,7 +972,7 @@ print(f"Only statsmodels gives standard errors: {ols.bse.round(4)}")
 %%
 
 
-# Bibliographic Notes {#sec-ch01-biblio}
+## Bibliographic Notes {#sec-ch01-biblio}
 
 SciPy: Virtanen et al. (2020), *SciPy 1.0: Fundamental Algorithms
 for Scientific Computing in Python*, Nature Methods. The definitive

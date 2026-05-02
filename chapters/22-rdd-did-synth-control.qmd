@@ -14,7 +14,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-# Motivation {#sec-ch22-motivation}
+## Motivation {#sec-ch22-motivation}
 
 Chapter 21 required unconfoundedness: treatment assignment is random
 conditional on observables. When unconfoundedness fails (unobserved
@@ -31,9 +31,9 @@ All three exploit specific design features rather than assuming away
 confounders.
 
 
-# Mathematical Foundation {#sec-ch22-math}
+## Mathematical Foundation {#sec-ch22-math}
 
-## RDD: why the cutoff creates quasi-randomization
+### RDD: why the cutoff creates quasi-randomization
 
 In a sharp RDD, treatment is assigned by whether a *running variable*
 $X_i$ crosses a cutoff $c$: $D_i = \mathbb{1}(X_i \geq c)$. For
@@ -63,7 +63,7 @@ determines how far from the cutoff you include data: wider bandwidth
 = more data but more bias (the relationship may be nonlinear);
 narrower bandwidth = less bias but more variance.
 
-### Identification proof sketch
+#### Identification proof sketch
 
 The RDD estimand relies on a *continuity* assumption. Suppose the
 potential outcomes $\mathbb{E}[Y(0) \mid X=x]$ and
@@ -91,7 +91,7 @@ models) that the design alone does not justify. The from-scratch
 implementation below makes this concrete: the local linear regression
 literally restricts to a narrow window around $c$.
 
-### Fuzzy RDD as instrumental variables
+#### Fuzzy RDD as instrumental variables
 
 In a sharp RDD, crossing the cutoff *perfectly* determines treatment:
 $\Pr(D=1 \mid X=c+\epsilon) = 1$ and $\Pr(D=1 \mid X=c-\epsilon) = 0$.
@@ -115,7 +115,7 @@ the jump in the treatment probability — which is exactly the IV
 estimand from Chapter 20. The implementation uses 2SLS restricted to
 observations near the cutoff.
 
-### Optimal bandwidth selection
+#### Optimal bandwidth selection
 
 The bandwidth $h$ controls the bias-variance tradeoff. Too narrow and
 variance explodes (few observations); too wide and bias dominates
@@ -145,7 +145,7 @@ $\hat{\sigma}^2(c)$ is the conditional variance at $c$, and $C_K$ is
 a kernel-specific constant. We implement a simplified version from
 scratch below.
 
-## DiD: why parallel trends removes confounding
+### DiD: why parallel trends removes confounding
 
 Difference-in-differences compares *changes* rather than levels:
 
@@ -183,7 +183,7 @@ treatment effect is positive.
 and Sant'Anna (2021) or Sun and Abraham (2021), which only use
 not-yet-treated units as controls.
 
-### Event study specification
+#### Event study specification
 
 An event study estimates treatment effects at each time period
 relative to treatment onset. The regression model is:
@@ -202,7 +202,7 @@ coefficients $\delta_k$ have two roles:
 - **Post-treatment ($k \geq 0$):** These estimate the dynamic treatment
   effect at each post-treatment horizon.
 
-### Pre-trends testing pitfalls (Roth 2022)
+#### Pre-trends testing pitfalls (Roth 2022)
 
 Testing for pre-trends sounds straightforward: if $\delta_{-2},
 \delta_{-3}, \ldots$ are insignificant, parallel trends holds. But
@@ -215,7 +215,7 @@ chance. The practical takeaway: a non-significant pre-trends test
 does *not* validate the design. Report the pre-treatment coefficients
 honestly; do not condition on them.
 
-### Callaway-Sant'Anna group-time ATTs
+#### Callaway-Sant'Anna group-time ATTs
 
 The Callaway-Sant'Anna estimator defines group-time average treatment
 effects $ATT(g, t)$: the effect at time $t$ for the group first
@@ -233,7 +233,7 @@ by event time, group-specific effects) using explicit weighting.
 The key insight is that no already-treated unit ever serves as a
 control, avoiding the negative-weight problem entirely.
 
-## Synthetic control: the counterfactual as an optimization problem
+### Synthetic control: the counterfactual as an optimization problem
 
 When you have a *single* treated unit (one state that passed a law,
 one company that merged), you cannot compute a simple average of
@@ -262,7 +262,7 @@ least-squares problem, solved by `scipy.optimize.minimize` with
 `LinearConstraint`. The optimization theory from Chapter 3 applies
 directly.
 
-### Permutation inference for synthetic control
+#### Permutation inference for synthetic control
 
 Standard inference (confidence intervals, $p$-values) does not apply
 to synthetic control — there is only one treated unit, so there is no
@@ -294,9 +294,9 @@ poor pre-fit will have large post-treatment gaps even without any
 treatment — dividing by pre-RMSPE penalizes these spurious "effects."
 
 
-# Statsmodels / From-Scratch Implementation {#sec-ch22-impl}
+## Statsmodels / From-Scratch Implementation {#sec-ch22-impl}
 
-## RDD from scratch
+### RDD from scratch
 
 In a sharp RDD, treatment is deterministic: everyone above the cutoff
 gets treated, everyone below does not. We estimate the treatment
@@ -347,7 +347,7 @@ ax.set_ylabel("Outcome")
 plt.show()
 ```
 
-## Local polynomial RDD from scratch
+### Local polynomial RDD from scratch
 
 The RDD estimator above used OLS on observations near the cutoff.
 A proper local polynomial estimator uses *kernel weighting* — giving
@@ -402,7 +402,7 @@ print(f"Local linear RDD: {tau_hat:.3f} (SE={se_hat:.3f})")
 print(f"True effect: 2.0")
 ```
 
-## IK bandwidth selector from scratch
+### IK bandwidth selector from scratch
 
 The Imbens-Kalyanaraman bandwidth requires estimates of the density
 at the cutoff, the conditional variance, and the second derivatives
@@ -477,7 +477,7 @@ for h in [0.5, h_ik, 1.0, 1.5, 2.0]:
     print(f"  h={h:.2f}{label}: tau={tau_h:.3f} (SE={se_h:.3f})")
 ```
 
-## Fuzzy RDD from scratch
+### Fuzzy RDD from scratch
 
 When the cutoff creates a jump in the *probability* of treatment
 rather than a sharp switch, we have a fuzzy RDD. The estimator is
@@ -528,7 +528,7 @@ print(f"First stage jump: {jump_D:.3f}")
 print(f"True effect: 3.0")
 ```
 
-## DiD from scratch
+### DiD from scratch
 
 Difference-in-differences compares the *change* in outcomes for the
 treated group to the *change* for the control group. The identifying
@@ -577,7 +577,7 @@ ax.set_ylabel("Outcome"); ax.legend()
 plt.show()
 ```
 
-## Event study DiD from scratch
+### Event study DiD from scratch
 
 An event study specification estimates treatment effects at each
 period relative to the treatment date. This is the workhorse
@@ -692,7 +692,7 @@ ax.legend()
 plt.show()
 ```
 
-## Synthetic control from scratch
+### Synthetic control from scratch
 
 ```{python}
 #| label: synth-demo
@@ -757,7 +757,7 @@ ax.set_xlabel("Time period"); ax.legend()
 plt.show()
 ```
 
-## Synthetic control placebo tests
+### Synthetic control placebo tests
 
 To assess whether the treated unit's effect is "significant," we
 apply the synthetic control method to each control unit (pretending
@@ -867,9 +867,9 @@ plt.show()
 ```
 
 
-# Variations, Diagnostics, and Pitfalls {#sec-ch22-diagnostics}
+## Variations, Diagnostics, and Pitfalls {#sec-ch22-diagnostics}
 
-## RDD diagnostics
+### RDD diagnostics
 
 **Placebo tests:** Run the RDD analysis at fake cutoffs where there
 is no treatment. The estimated "effect" should be zero. If you find
@@ -996,7 +996,7 @@ print("Balanced" if abs(tau_cov/se_cov) < 1.96
       else "Imbalanced — RDD validity concern")
 ```
 
-## DiD diagnostics
+### DiD diagnostics
 
 **Pre-trends test:** Plot the outcome for treated and control groups
 in the pre-treatment period. Parallel pre-trends support (but do not
@@ -1034,7 +1034,7 @@ print(f"  Mean squared t-stat: {f_stat:.2f} "
       f"(should be ≈1 under H0)")
 ```
 
-## Synthetic control diagnostics
+### Synthetic control diagnostics
 
 **Pre-treatment fit:** The synthetic control should closely match the
 treated unit in the pre-treatment period. A poor pre-treatment fit
@@ -1082,7 +1082,7 @@ for j in range(n_control):
         print(f"  Unit {j}: {w_synth[j]:.3f}")
 ```
 
-## Choosing between methods
+### Choosing between methods
 
 | Method | Requires | Identifies | Limitation |
 |---|---|---|---|
@@ -1096,7 +1096,7 @@ comparison group; synthetic control when there is a single treated
 unit and many potential controls.
 
 
-# Computational Considerations {#sec-ch22-computation}
+## Computational Considerations {#sec-ch22-computation}
 
 | Method | Cost | Notes |
 |---|---|---|
@@ -1109,7 +1109,7 @@ challenge is not computation but *design*: finding the right
 comparison group or cutoff.
 
 
-# Exercises {#sec-ch22-exercises}
+## Exercises {#sec-ch22-exercises}
 
 **Exercise 22.1** ($\star\star$, diagnostic failure). Run a "placebo"
 RDD at a fake cutoff (where there is no treatment). Does the test
@@ -1191,7 +1191,7 @@ that only use not-yet-treated units as controls.
 %%
 
 
-# Bibliographic Notes {#sec-ch22-biblio}
+## Bibliographic Notes {#sec-ch22-biblio}
 
 RDD: Thistlethwaite and Campbell (1960) introduced the idea; Hahn,
 Todd, and van der Klaauw (2001) formalized the identification

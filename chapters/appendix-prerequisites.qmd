@@ -21,13 +21,13 @@ rng = np.random.default_rng(42)
 ```
 
 
-# NumPy Essentials {.unnumbered}
+## NumPy Essentials {.unnumbered}
 
 NumPy is the foundation everything else sits on. Every chapter in
 this book creates, reshapes, slices, and combines arrays. This
 section covers the patterns that recur most often.
 
-## Array creation
+### Array creation
 
 The most common constructors:
 
@@ -62,7 +62,7 @@ print("repeat:   ", np.repeat([1, 2], 3))
 print("tile:     ", np.tile([1, 2], 3))
 ```
 
-## Indexing and slicing
+### Indexing and slicing
 
 NumPy arrays support integer indexing, slicing, boolean indexing,
 and fancy (array) indexing. Slices return *views* --- modifying the
@@ -87,7 +87,7 @@ rows = np.array([0, 2])
 print("Rows 0,2: \n", X[rows])
 ```
 
-## Broadcasting
+### Broadcasting
 
 Broadcasting lets NumPy operate on arrays with different shapes
 without explicit loops or copies. The rule: dimensions are compared
@@ -116,7 +116,7 @@ Broadcasting is used throughout the book --- centering data
 (Ch. 11), evaluating densities on grids (Ch. 7), and computing
 pairwise distances (Ch. 19) all rely on it.
 
-## Reshape, ravel, and transpose
+### Reshape, ravel, and transpose
 
 ```{python}
 #| label: np-reshape
@@ -132,7 +132,7 @@ print("M.T:\n", M.T)              # transpose
 Use `-1` in one dimension to let NumPy infer it. `ravel()` returns a
 view when possible; `flatten()` always returns a copy.
 
-## Stacking and splitting
+### Stacking and splitting
 
 Combining arrays is a constant need --- assembling design matrices,
 collecting bootstrap samples, or building block-diagonal structures.
@@ -160,7 +160,7 @@ print("concatenate (axis=0):\n",
 it builds the design matrix $\mathbf{X}$ from individual predictor
 vectors. `np.vstack` appears when stacking observation batches.
 
-## Useful functions
+### Useful functions
 
 Several NumPy functions appear often enough to warrant a brief
 catalog:
@@ -195,7 +195,7 @@ appears in Ch. 19 for multivariate statistics and in Ch. 14 for
 mixed-effects computations where explicit loops over groups would be
 slow.
 
-## Views vs copies: a common trap
+### Views vs copies: a common trap
 
 Understanding when NumPy returns a view (shared memory) vs a copy
 (independent memory) prevents subtle bugs:
@@ -220,7 +220,7 @@ This matters in Ch. 9 (bootstrap resampling) where accidentally
 modifying the original data through a view would corrupt results.
 
 
-# Matplotlib Essentials {.unnumbered}
+## Matplotlib Essentials {.unnumbered}
 
 Every figure in this book is produced with Matplotlib. The book's
 style sheet (`assets/book.mplstyle`) sets publication-quality
@@ -228,7 +228,7 @@ defaults --- serif fonts, suppressed top/right spines, a
 colorblind-friendly cycle with alternating line styles, and
 300 dpi output.
 
-## The Figure/Axes model
+### The Figure/Axes model
 
 Matplotlib distinguishes between the *figure* (the canvas) and one
 or more *axes* (the individual plots). The explicit axes API gives
@@ -263,7 +263,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-## Common plot types used in the book
+### Common plot types used in the book
 
 The chapters use a small set of plot types repeatedly. Here is a
 gallery with the calling conventions:
@@ -324,7 +324,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-## Contour plots
+### Contour plots
 
 Contour plots visualize objective-function landscapes (Ch. 2--5):
 
@@ -349,7 +349,7 @@ ax.legend()
 plt.show()
 ```
 
-## Saving figures
+### Saving figures
 
 ```python
 fig.savefig("figure.pdf")         # vector, for print
@@ -361,7 +361,7 @@ The book style sheet sets `savefig.dpi: 300` and
 `savefig.bbox: tight` by default, so the explicit keyword arguments
 are rarely needed.
 
-## What `book.mplstyle` sets
+### What `book.mplstyle` sets
 
 The style file configures: serif fonts (Latin Modern Roman / Computer
 Modern), figure size 8 x 5 at 150 dpi, suppressed top and right
@@ -372,7 +372,7 @@ ticks, and frameless legends. Loading it via
 block ensures every figure in the book has a consistent appearance.
 
 
-# Floating Point and Conditioning {.unnumbered}
+## Floating Point and Conditioning {.unnumbered}
 
 Every computation in this book runs on IEEE 754 double-precision
 floating point. Key facts:
@@ -394,7 +394,7 @@ print(f"Smallest positive: {np.finfo(float).tiny:.2e}")
 print(f"Largest finite:    {np.finfo(float).max:.2e}")
 ```
 
-## Catastrophic cancellation in practice
+### Catastrophic cancellation in practice
 
 ```{python}
 #| label: float-cancel
@@ -413,7 +413,7 @@ exceeds the double range. The stable version handles this correctly.
 This matters for log-likelihood evaluation in logistic regression
 (Ch. 12--13).
 
-## Condition number
+### Condition number
 
 The condition number $\kappa(\mathbf{A}) = \|\mathbf{A}\| \cdot \|\mathbf{A}^{-1}\|$
 measures how much a linear system $\mathbf{Ax} = \mathbf{b}$
@@ -441,7 +441,7 @@ Hessian), Ch. 11 (multicollinearity diagnosis via VIF, which is a
 condition-number proxy), and Ch. 20 (weak instruments produce
 ill-conditioned moment matrices).
 
-## Useful safeguards
+### Useful safeguards
 
 ```{python}
 #| label: float-safe
@@ -459,14 +459,14 @@ print(f"\nlogsumexp:  {logsumexp(log_vals):.6f}")
 ```
 
 
-# Dense Linear Algebra (`scipy.linalg`) {.unnumbered}
+## Dense Linear Algebra (`scipy.linalg`) {.unnumbered}
 
 SciPy's `linalg` module wraps LAPACK and provides the decompositions
 used throughout the book. Prefer `scipy.linalg` over `numpy.linalg`
 --- it is a strict superset with better LAPACK coverage and
 consistent error handling.
 
-## Key decompositions
+### Key decompositions
 
 | Decomposition | scipy call | Cost | Used in |
 |---|---|---|---|
@@ -476,7 +476,7 @@ consistent error handling.
 | SVD | `linalg.svd` | $O(mn^2)$ | PCA (Ch. 19), pseudoinverse |
 | Eigendecomposition | `linalg.eigh` | $O(n^3)$ | PCA, MANOVA (Ch. 19) |
 
-## Solving linear systems
+### Solving linear systems
 
 ```{python}
 #| label: linalg-solve
@@ -502,7 +502,7 @@ definite, so it uses Cholesky instead of LU --- halving the flop
 count. This matters when solving covariance systems repeatedly
 (Ch. 8, Ch. 14).
 
-## Decomposition examples
+### Decomposition examples
 
 ```{python}
 #| label: linalg-decomp
@@ -528,7 +528,7 @@ exploits symmetry for better speed and numerical stability, and
 guarantees real eigenvalues. The general `linalg.eig` returns complex
 values even for symmetric input due to rounding.
 
-## When to use `scipy.linalg` vs `numpy.linalg`
+### When to use `scipy.linalg` vs `numpy.linalg`
 
 `numpy.linalg` covers basic operations (`solve`, `eig`, `svd`,
 `norm`, `cond`). `scipy.linalg` adds Cholesky with `lower`
@@ -541,12 +541,12 @@ exclusively.
 **References:** Trefethen and Bau (1997), Golub and Van Loan (2013).
 
 
-# `scipy.optimize` Quick Reference {.unnumbered}
+## `scipy.optimize` Quick Reference {.unnumbered}
 
 The optimization chapters (Ch. 2--6) develop these methods in
 detail. This section is a lookup table.
 
-## `minimize`: unconstrained and constrained
+### `minimize`: unconstrained and constrained
 
 | Method | Order | Gradient | Hessian | Best for | Chapter |
 |---|---|---|---|---|---|
@@ -581,7 +581,7 @@ print(f"Converged: {result.success}")
 print(f"Iterations: {result.nit}")
 ```
 
-## `least_squares` vs `curve_fit`
+### `least_squares` vs `curve_fit`
 
 Both solve nonlinear least-squares problems (Ch. 6). `least_squares`
 is the general interface --- you supply the residual vector
@@ -618,7 +618,7 @@ print(f"Cost: {res.cost:.4f}")
 | Covariance of params | Manual from Jacobian | Returned as `pcov` |
 | Robust losses | `loss='huber'`, `'cauchy'`, etc. | No |
 
-## `root`: nonlinear equations
+### `root`: nonlinear equations
 
 `optimize.root` solves $\mathbf{F}(\mathbf{x}) = \mathbf{0}$. For
 scalar equations use `optimize.brentq` (bracketing, guaranteed
@@ -638,7 +638,7 @@ print(f"verify: x - cos(x) = "
       f"{root_val - np.cos(root_val):.2e}")
 ```
 
-## The `OptimizeResult` object
+### The `OptimizeResult` object
 
 All `scipy.optimize` functions return an `OptimizeResult` --- a
 dictionary-like object with standardized fields:
@@ -660,9 +660,9 @@ the solution may still be close to optimal, but you should not
 assume so without checking. This is a recurring theme in Ch. 2--6.
 
 
-# `scipy.stats` Quick Reference {.unnumbered}
+## `scipy.stats` Quick Reference {.unnumbered}
 
-## The frozen distribution API
+### The frozen distribution API
 
 All distributions in `scipy.stats` follow the same pattern: create a
 frozen distribution object, then call methods on it. This is the
@@ -694,7 +694,7 @@ print("cdf(3):", rv_pois.cdf(3).round(4))
 print("mean:", rv_pois.mean(), " var:", rv_pois.var())
 ```
 
-## Distribution catalog
+### Distribution catalog
 
 | Distribution | scipy call | Shape params | Used in |
 |---|---|---|---|
@@ -729,7 +729,7 @@ for name, rv in distributions.items():
           f" {'({:.2f}, {:.2f})'.format(*ci):>22}")
 ```
 
-## Fitting distributions to data
+### Fitting distributions to data
 
 ```{python}
 #| label: stats-fit
@@ -752,7 +752,7 @@ distributions that are naturally non-negative. Without it, the
 optimizer may find a negative location that improves the likelihood
 but produces a nonsensical model.
 
-## Hypothesis tests catalog
+### Hypothesis tests catalog
 
 | Test | scipy call | Null hypothesis |
 |---|---|---|
@@ -769,7 +769,7 @@ but produces a nonsensical model.
 | Mann--Whitney $U$ | `mannwhitneyu(x, y)` | Stochastic equality |
 | Kruskal--Wallis | `kruskal(*groups)` | Stochastic equality ($k$ groups) |
 
-## Quasi-Monte Carlo
+### Quasi-Monte Carlo
 
 `scipy.stats.qmc` provides low-discrepancy sequences for
 numerical integration and space-filling experimental designs
@@ -786,9 +786,9 @@ print(f"Sobol 64 points in [0,1]^2, "
 ```
 
 
-# Parametric Hypothesis Testing {.unnumbered}
+## Parametric Hypothesis Testing {.unnumbered}
 
-## The $t$, $F$, and $\chi^2$ tests
+### The $t$, $F$, and $\chi^2$ tests
 
 These are the building blocks for Wald, score, and likelihood-ratio
 tests (Ch. 10).
@@ -819,7 +819,7 @@ print(f"Chi-sq test: stat={chi2_stat:.3f}, "
       f"p={chi2_pval:.4f}")
 ```
 
-## One-way ANOVA ($F$-test)
+### One-way ANOVA ($F$-test)
 
 The one-way ANOVA tests whether $k$ groups have the same mean.
 Under the null, the $F$ statistic follows an $F_{k-1, N-k}$
@@ -840,7 +840,7 @@ print(f"One-way ANOVA: F={f_stat:.3f}, "
 ```
 
 
-# Nonparametric Tests {.unnumbered}
+## Nonparametric Tests {.unnumbered}
 
 ```{python}
 #| label: nonpar-demo
@@ -872,7 +872,7 @@ print(f"Kruskal-Wallis: stat={kw_stat:.3f}, "
 ```
 
 
-# Correlation and Dependence {.unnumbered}
+## Correlation and Dependence {.unnumbered}
 
 ```{python}
 #| label: corr-demo
@@ -892,7 +892,7 @@ tau, p_k = stats.kendalltau(x_corr, y_corr)
 print(f"Kendall:  tau={tau:.3f}, p={p_k:.4f}")
 ```
 
-## Partial correlation
+### Partial correlation
 
 Partial correlation measures the linear association between two
 variables after removing the effect of one or more confounders.
@@ -927,7 +927,7 @@ The partial correlation is typically lower than the raw
 correlation because the confounder $z$ explains some of the
 apparent association.
 
-## Correlation matrix
+### Correlation matrix
 
 ```{python}
 #| label: corr-matrix
@@ -938,7 +938,7 @@ print(R.round(3))
 ```
 
 
-# Power and Sample Size {.unnumbered}
+## Power and Sample Size {.unnumbered}
 
 Statistical power = probability of detecting a true effect. For a
 two-sample $t$-test with effect size $d = (\mu_1 - \mu_2)/\sigma$:
@@ -992,7 +992,7 @@ plt.show()
 ```
 
 
-# Random Number Generation {.unnumbered}
+## Random Number Generation {.unnumbered}
 
 The book uses the modern `numpy.random.Generator` API exclusively
 (STEERING.md §5.2). The legacy `np.random.seed()` /
@@ -1025,7 +1025,7 @@ print(f"\nReproducible: "
 `Generator` instance maintains its own state, so multiple generators
 can run independently without global state conflicts.
 
-## Passing `rng` to library functions
+### Passing `rng` to library functions
 
 scipy and statsmodels functions that accept randomness use the
 `random_state` parameter:
@@ -1052,13 +1052,13 @@ print(f"Bootstrap CI: ({res.confidence_interval.low:.3f},"
 ```
 
 
-# Statsmodels Patterns {.unnumbered}
+## Statsmodels Patterns {.unnumbered}
 
 Statsmodels is the primary library for chapters 10--18. Its API
 follows a distinctive pattern that differs from scipy's functional
 style.
 
-## The `.fit()` → results pattern
+### The `.fit()` → results pattern
 
 Every statsmodels model follows the same two-step workflow:
 construct the model, then call `.fit()` to obtain a results object.
@@ -1080,7 +1080,7 @@ results = model.fit()
 print(results.summary().tables[1])
 ```
 
-## `from_formula` vs array API
+### `from_formula` vs array API
 
 Statsmodels supports both an array API (shown above) and a formula
 API using patsy/formulaic:
@@ -1111,7 +1111,7 @@ contains. The formula API appears in examples where it makes the
 model specification more readable, particularly for interaction
 terms and categorical variables.
 
-## The results object
+### The results object
 
 The results object carries everything downstream analysis needs:
 
@@ -1128,7 +1128,7 @@ print(f"Log-likelihood:{results.llf:.1f}")
 print(f"Residuals:     {results.resid[:5].round(3)}")
 ```
 
-## Covariance type options
+### Covariance type options
 
 The default `cov_type='nonrobust'` assumes homoscedastic,
 independent errors. This is almost never defensible with real data.
@@ -1155,7 +1155,7 @@ Always specify `cov_type` explicitly. Relying on the default is a
 common source of overconfident inference. See Ch. 11 for a
 detailed treatment.
 
-## Hypothesis testing on the results object
+### Hypothesis testing on the results object
 
 ```{python}
 #| label: sm-hypotheses
@@ -1176,7 +1176,7 @@ print(f"\n95% confidence intervals:\n"
       f"{results.conf_int(alpha=0.05).round(3)}")
 ```
 
-## Marginal effects
+### Marginal effects
 
 For nonlinear models (Ch. 12--13), coefficients are not directly
 interpretable as marginal effects. The `get_margeff()` method
@@ -1200,7 +1200,7 @@ evaluates at the sample mean of all covariates, which is simpler
 but potentially misleading for non-representative "average"
 individuals.
 
-## Reading `summary()` output
+### Reading `summary()` output
 
 The `summary()` method produces three tables. The top table reports
 model-level statistics (R-squared, F-statistic, AIC, BIC, log-likelihood,
@@ -1225,7 +1225,7 @@ Key quantities to check immediately:
   autocorrelation respectively --- a warning sign for cross-sectional
   models and a modeling choice for time-series models (Ch. 15).
 
-## Predictions and diagnostics
+### Predictions and diagnostics
 
 ```{python}
 #| label: sm-predict
@@ -1237,7 +1237,7 @@ print(pred_summary[
 ].round(3))
 ```
 
-## The statsmodels diagnostic toolkit
+### The statsmodels diagnostic toolkit
 
 Statsmodels provides diagnostic tests as standalone functions and
 as methods on results objects:
@@ -1269,7 +1269,7 @@ These diagnostics are developed fully in Ch. 11 (regression
 diagnostics) and Ch. 15 (time-series residual diagnostics).
 
 
-# Environment and Reproducibility Checklist {.unnumbered}
+## Environment and Reproducibility Checklist {.unnumbered}
 
 Every code block in this book was executed in the environment
 defined by `requirements.txt`. To reproduce results:

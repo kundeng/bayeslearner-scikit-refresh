@@ -15,7 +15,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-# Motivation {#sec-ch23-motivation}
+## Motivation {#sec-ch23-motivation}
 
 Chapter 21 estimated the *average* treatment effect. But treatment
 effects are rarely constant: a drug may help older patients more than
@@ -36,9 +36,9 @@ This chapter implements DML from scratch using statsmodels for the
 final inference and scikit-learn for the nuisance models.
 
 
-# Mathematical Foundation {#sec-ch23-math}
+## Mathematical Foundation {#sec-ch23-math}
 
-## The partially linear model
+### The partially linear model
 
 $$
 Y = D\tau + g_0(\mathbf{X}) + U, \qquad D = m_0(\mathbf{X}) + V,
@@ -48,7 +48,7 @@ where $g_0$ and $m_0$ are unknown nuisance functions. The target is
 $\tau$ (the treatment effect); $g_0$ and $m_0$ are nuisances that must
 be estimated but are not of primary interest.
 
-## Why naive plug-in fails
+### Why naive plug-in fails
 
 The obvious approach: estimate $g_0$ and $m_0$ with machine learning
 (Lasso, random forest), plug them in, and estimate $\tau$ by
@@ -66,7 +66,7 @@ $\mathbb{E}[(Y - D\tau - g(\mathbf{X}))(D - m(\mathbf{X}))] = 0$
 is *sensitive* to errors in $g$ and $m$. Small errors in the nuisance
 functions propagate into first-order bias in $\hat{\tau}$.
 
-## Neyman orthogonality: the fix
+### Neyman orthogonality: the fix
 
 The key insight of Chernozhukov et al. (2018): use a *different*
 moment condition that is *insensitive* to nuisance errors at first
@@ -86,7 +86,7 @@ $O(\|\hat{g} - g_0\|)$. For $n^{-1/4}$-rate estimators, this is
 $O(n^{-1})$, which is negligible relative to the $n^{-1/2}$ sampling
 error. The bias vanishes.
 
-### The Taylor expansion in detail
+#### The Taylor expansion in detail
 
 Let's see exactly how orthogonality kills the first-order bias. Write
 the nuisance parameters as a single vector
@@ -150,7 +150,7 @@ In practice, DML for the partially linear model reduces to:
 2. Residualize $D$ on $\mathbf{X}$: $\tilde{D} = D - \hat{m}(\mathbf{X})$
 3. Regress $\tilde{Y}$ on $\tilde{D}$: $\hat{\tau} = \frac{\sum \tilde{D}_i \tilde{Y}_i}{\sum \tilde{D}_i^2}$
 
-## Cross-fitting
+### Cross-fitting
 
 To avoid overfitting bias, DML uses *cross-fitting*: split the data
 into $K$ folds. For each fold, estimate $\hat{g}$ and $\hat{m}$ on
@@ -189,7 +189,7 @@ diminishing returns. Unlike cross-validation (which averages
 predictions), cross-fitting *concatenates* held-out residuals to form
 a single full-sample estimate.
 
-## Semiparametric efficiency bound
+### Semiparametric efficiency bound
 
 The DML estimator is not just consistent --- it is *efficient*. Under
 the conditions above, the asymptotic variance $V$ in
@@ -215,7 +215,7 @@ $\hat{V} = \frac{\frac{1}{n}\sum_i \hat{U}_i^2 \hat{V}_i^2}{(\frac{1}{n}\sum_i \
 which is the heteroscedasticity-robust sandwich variance from
 Chapter 12's influence function theory.
 
-## DML for the interactive model
+### DML for the interactive model
 
 The partially linear model assumes a *constant* treatment effect
 $\tau$. A different model allows the effect to vary:
@@ -245,10 +245,10 @@ learner. The ATE is then $\hat{\tau} = \frac{1}{n}\sum_i \hat{\psi}_i$,
 and the variance is estimated by $\hat{V} = \frac{1}{n}\text{Var}(\hat{\psi}_i)$.
 
 
-# The Algorithm {#sec-ch23-algorithm}
+## The Algorithm {#sec-ch23-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 23.1: Double Machine Learning (Partially Linear Model)
+### Algorithm 23.1: Double Machine Learning (Partially Linear Model)
 
 **Input:** Data $(\mathbf{X}, D, Y)$, ML learners for $g$ and $m$,
 number of folds $K$
@@ -268,7 +268,7 @@ number of folds $K$
 :::
 
 
-# From-Scratch Implementation {#sec-ch23-scratch}
+## From-Scratch Implementation {#sec-ch23-scratch}
 
 ```{python}
 #| label: dml-scratch
@@ -323,7 +323,7 @@ def double_ml(X, D, Y, n_folds=5, seed=42):
     }
 ```
 
-## Demonstration
+### Demonstration
 
 Let's see DML in action. We simulate a problem where:
 
@@ -365,7 +365,7 @@ print(f"{'DML':<15} {dml_result['tau']:>8.3f} "
       f"{'({:.3f}, {:.3f})'.format(*dml_result['ci']):>20}")
 ```
 
-## Why cross-fitting matters
+### Why cross-fitting matters
 
 ```{python}
 #| label: crossfit-comparison
@@ -386,7 +386,7 @@ print(f"biases tau toward the naive estimate.")
 ```
 
 
-# Statistical Properties {#sec-ch23-stats}
+## Statistical Properties {#sec-ch23-stats}
 
 Under regularity conditions (nuisance rates $n^{-1/4}$ or better,
 Neyman orthogonality), the DML estimator satisfies:
@@ -418,7 +418,7 @@ the best you can do without restricting the nuisance functions to a
 parametric family.
 
 
-# Diagnostics {#sec-ch23-diagnostics}
+## Diagnostics {#sec-ch23-diagnostics}
 
 ```{python}
 #| label: fig-residuals
@@ -443,7 +443,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Sensitivity to number of folds
+### Sensitivity to number of folds
 
 The choice of $K$ affects both bias and variance. With too few folds,
 each nuisance model trains on a small subset; with too many, the
@@ -478,7 +478,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Nuisance model quality
+### Nuisance model quality
 
 DML's guarantees require nuisance models that are *reasonable* --- not
 perfect, but not terrible. The $R^2$ of the outcome model $\hat{g}$
@@ -519,7 +519,7 @@ print(f"Very low R² means nuisance residualization is weak")
 print(f"and DML may behave like naive OLS.")
 ```
 
-## Overlap diagnostic
+### Overlap diagnostic
 
 Weak overlap --- propensity scores near 0 or 1 --- makes the
 residualized treatment $\tilde{D}$ near-zero, inflating variance and
@@ -543,7 +543,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Influence function outlier detection
+### Influence function outlier detection
 
 The influence function $\hat{\psi}_i = \tilde{D}_i(\tilde{Y}_i -
 \hat{\tau}\tilde{D}_i)$ measures each observation's contribution to
@@ -594,7 +594,7 @@ print(f"Flagged {n_outliers} observations with "
 | IF outliers | $|\hat{\psi}_i| > 3\sigma$ | Extreme leverage on estimate |
 
 
-# Worked Example {#sec-ch23-example}
+## Worked Example {#sec-ch23-example}
 
 Estimating the effect of job training on earnings with high-dimensional
 confounders.
@@ -635,7 +635,7 @@ for name, mask in [("x1 < 0", X_w[:, 0] < 0),
     print(f"{name}: DML={dml_sub['tau']:.3f}, true={true_sub:.3f}")
 ```
 
-## CATE estimation: T-learner
+### CATE estimation: T-learner
 
 The T-learner fits separate outcome models for treated and control,
 then differences them. This is the simplest meta-learner for
@@ -654,7 +654,7 @@ def t_learner(X, D, Y):
 cate_t = t_learner(X_w, D_w, Y_w)
 ```
 
-## CATE estimation: R-learner
+### CATE estimation: R-learner
 
 The R-learner uses Neyman orthogonality for CATE estimation. It
 first residualizes $Y$ and $D$ on $\mathbf{X}$ (as in DML), then
@@ -706,7 +706,7 @@ def r_learner(X, D, Y, n_folds=5, seed=42):
 cate_r = r_learner(X_w, D_w, Y_w)
 ```
 
-## Comparing CATE estimators
+### Comparing CATE estimators
 
 ```{python}
 #| label: fig-cate-comparison
@@ -739,7 +739,7 @@ print(f"T-learner CATE RMSE: {rmse_t:.3f}")
 print(f"R-learner CATE RMSE: {rmse_r:.3f}")
 ```
 
-## Subgroup analysis with confidence intervals
+### Subgroup analysis with confidence intervals
 
 A common practical step: estimate the ATE within subgroups defined by
 a covariate. DML provides valid confidence intervals for each subgroup.
@@ -792,9 +792,9 @@ plt.show()
 ```
 
 
-# Variations and Extensions {#sec-ch23-variations}
+## Variations and Extensions {#sec-ch23-variations}
 
-## Beyond the ATE: estimating heterogeneous effects
+### Beyond the ATE: estimating heterogeneous effects
 
 DML gives you the *average* treatment effect. But the effect may vary
 across the population. Several approaches estimate the *conditional*
@@ -813,7 +813,7 @@ misspecification.
 | **R-learner** | Residualize, then regress on $\tilde{D} \cdot \mathbf{X}$ | Uses Neyman orthogonality | Needs good nuisance models |
 | **DR-learner** | AIPW scores as pseudo-outcomes | Doubly robust + CATE | State of the art |
 
-### From-scratch implementations
+#### From-scratch implementations
 
 We implement all five meta-learners and compare them on the worked
 example data (where $\tau(\mathbf{x}) = 2 + x_1$). Each takes the
@@ -951,7 +951,7 @@ def dr_learner(X, D, Y, n_folds=5, seed=42):
 cate_dr = dr_learner(X_w, D_w, Y_w)
 ```
 
-### Comparing all meta-learners
+#### Comparing all meta-learners
 
 ```{python}
 #| label: fig-metalearner-comparison
@@ -1005,7 +1005,7 @@ each tree is grown to maximize the *heterogeneity* of treatment effects
 across leaves, rather than minimizing prediction error. The `econml`
 package (not in our `requirements.txt`) implements these.
 
-## When DML fails
+### When DML fails
 
 1. **Bad nuisance models:** Neyman orthogonality protects against
    *small* errors. If the nuisance models are terrible (e.g.,
@@ -1022,7 +1022,7 @@ package (not in our `requirements.txt`) implements these.
    within the DML procedure helps, but there is no universal best
    choice.
 
-## Connection to the book's arc
+### Connection to the book's arc
 
 The DML framework connects three threads from the book:
 
@@ -1040,7 +1040,7 @@ causal inference → machine learning, all connected through the
 influence function.
 
 
-# Exercises {#sec-ch23-exercises}
+## Exercises {#sec-ch23-exercises}
 
 **Exercise 23.1** ($\star\star$, diagnostic failure). Run DML with a
 deliberately bad nuisance model (e.g., intercept-only for both $g$ and
@@ -1171,7 +1171,7 @@ robust to nuisance estimation.
 %%
 
 
-# Bibliographic Notes {#sec-ch23-biblio}
+## Bibliographic Notes {#sec-ch23-biblio}
 
 Double/debiased machine learning: Chernozhukov et al. (2018). Neyman
 orthogonality: Neyman (1959) for the concept; Chernozhukov et al.

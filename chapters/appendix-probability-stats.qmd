@@ -21,14 +21,14 @@ rng = np.random.default_rng(42)
 ```
 
 
-# Random Variables and Distributions {.unnumbered}
+## Random Variables and Distributions {.unnumbered}
 
 A **random variable** $X$ is a function from a sample space to
 $\mathbb{R}$. We work entirely at the non-measure-theoretic level:
 $X$ either has a countable range (discrete) or a density
 (continuous). The book never needs more generality than this.
 
-## Discrete random variables
+### Discrete random variables
 
 A discrete random variable takes values in a countable set. Its
 **probability mass function** (PMF) is $p(x) = \Pr(X = x)$. The
@@ -44,7 +44,7 @@ for ki in k:
     print(f"{ki:2d}  {X.pmf(ki):.4f}")
 ```
 
-## Continuous random variables
+### Continuous random variables
 
 A continuous random variable has a **probability density function**
 (PDF) $f(x)$ satisfying $\Pr(a \le X \le b) = \int_a^b f(x)\, dx$.
@@ -79,7 +79,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-## Expectation, variance, covariance
+### Expectation, variance, covariance
 
 The **expectation** of $g(X)$ is:
 $$
@@ -119,7 +119,7 @@ print(f"  Theoretical var:  {rv.var():.4f}, "
       f"sample var:  {sample.var():.4f}")
 ```
 
-## Joint, marginal, and conditional distributions
+### Joint, marginal, and conditional distributions
 
 For a pair $(X, Y)$:
 
@@ -161,13 +161,13 @@ print(f"Sample mean of X2 | X1≈1.5: "
 ```
 
 
-# Common Distribution Families {.unnumbered}
+## Common Distribution Families {.unnumbered}
 
 The distributions below recur throughout the book. For each, the table
 gives the scipy parameterization, key properties, and where in the
 book it appears most prominently.
 
-## Continuous distributions
+### Continuous distributions
 
 | Distribution | scipy call | Mean | Variance | Key chapters |
 |---|---|---|---|---|
@@ -204,7 +204,7 @@ independent scaled chi-squareds, governs $F$-tests in ANOVA and
 regression (Ch. 11). Both are special cases of the Gamma: $\chi^2_\nu
 = \text{Gamma}(\nu/2, \text{scale}=2)$.
 
-## Discrete distributions
+### Discrete distributions
 
 | Distribution | scipy call | Mean | Variance | Key chapters |
 |---|---|---|---|---|
@@ -217,7 +217,7 @@ regression (Ch. 11). Both are special cases of the Gamma: $\chi^2_\nu
 `lambda`. This follows scipy's convention of naming the mean
 directly: `poisson(mu=5)`.
 
-## Relationships between distributions
+### Relationships between distributions
 
 Several distributions are linked by transformations used constantly
 in hypothesis testing (Ch. 10):
@@ -252,7 +252,7 @@ plt.show()
 ```
 
 
-# Moment Generating Functions {.unnumbered}
+## Moment Generating Functions {.unnumbered}
 
 The **moment generating function** (MGF) of $X$ is
 $$
@@ -299,13 +299,13 @@ print(f"  MC estimate: {numerical:.4f}")
 ```
 
 
-# Convergence Concepts {.unnumbered}
+## Convergence Concepts {.unnumbered}
 
 Three modes of convergence appear in the book. They differ in what
 exactly "converges" means, and the distinctions matter when a theorem
 gives you one mode but you need another.
 
-## Convergence in probability
+### Convergence in probability
 
 $X_n \xrightarrow{p} X$ means: for every $\epsilon > 0$,
 $$
@@ -315,7 +315,7 @@ $$
 there is no claim about *how quickly*. This is the mode the law of
 large numbers delivers.
 
-## Convergence in distribution
+### Convergence in distribution
 
 $X_n \xrightarrow{d} X$ means: $F_n(x) \to F(x)$ at every
 continuity point $x$ of $F$. Equivalently: $\mathbb{E}[g(X_n)]
@@ -325,7 +325,7 @@ continuity point $x$ of $F$. Equivalently: $\mathbb{E}[g(X_n)]
 variables need not live on the same probability space. This is the
 mode the CLT delivers.
 
-## Almost sure convergence
+### Almost sure convergence
 
 $X_n \xrightarrow{a.s.} X$ means:
 $\Pr(\lim_{n \to \infty} X_n = X) = 1$. This is the strongest
@@ -339,7 +339,7 @@ X_n \xrightarrow{a.s.} X \implies X_n \xrightarrow{p} X
 $$
 The converses are false in general.
 
-## A crucial non-implication
+### A crucial non-implication
 
 Convergence in distribution does NOT imply convergence of
 expectations. The classic counterexample uses the Cauchy distribution,
@@ -361,7 +361,7 @@ conclude that moments converge (e.g., that the MSE of $\hat{\theta}_n$
 converges to zero), you need uniform integrability or a separate
 argument.
 
-## Slutsky's theorem
+### Slutsky's theorem
 
 A companion result used repeatedly alongside the CLT:
 
@@ -413,7 +413,7 @@ plt.show()
 ```
 
 
-# Law of Large Numbers {.unnumbered}
+## Law of Large Numbers {.unnumbered}
 
 **Theorem (Strong LLN).** If $X_1, X_2, \ldots$ are iid with
 $\mathbb{E}[|X_1|] < \infty$, then
@@ -457,7 +457,7 @@ plt.show()
 ```
 
 
-# Central Limit Theorem {.unnumbered}
+## Central Limit Theorem {.unnumbered}
 
 **Theorem (CLT).** If $X_1, X_2, \ldots$ are iid with mean $\mu$
 and finite variance $\sigma^2 > 0$, then
@@ -533,7 +533,7 @@ plt.show()
 ```
 
 
-# The Delta Method {.unnumbered}
+## The Delta Method {.unnumbered}
 
 The delta method translates CLT-type results through smooth
 transformations. It is used in Ch. 10 (confidence intervals for
@@ -569,7 +569,7 @@ $$
 \nabla g(\boldsymbol{\theta})\right).
 $$
 
-## Worked example: variance of $\log(\bar{X})$
+### Worked example: variance of $\log(\bar{X})$
 
 Suppose $X_1, \ldots, X_n$ are iid with $\mathbb{E}[X_1] = \mu > 0$
 and $\text{Var}(X_1) = \sigma^2$. What is the asymptotic variance of
@@ -612,7 +612,7 @@ print(f"Ratio (should be ≈ 1):                 "
 ```
 
 
-# Maximum Likelihood Estimation {.unnumbered}
+## Maximum Likelihood Estimation {.unnumbered}
 
 Maximum likelihood is the inferential backbone of most models in this
 book: GLMs (Ch. 12), discrete choice (Ch. 13), mixed effects (Ch. 14),
@@ -620,7 +620,7 @@ ARIMA (Ch. 15), state-space models (Ch. 16), Cox regression (Ch. 18).
 Ch. 10 develops the asymptotic theory in full; here we give the
 definitions and a from-scratch example.
 
-## Setup
+### Setup
 
 Given iid observations $X_1, \ldots, X_n$ from a density $f(x; \theta)$,
 the **likelihood** is
@@ -634,7 +634,7 @@ $$
 The **maximum likelihood estimator** (MLE) is
 $\hat{\theta}_n = \arg\max_\theta \ell(\theta)$.
 
-## Score function and Fisher information
+### Score function and Fisher information
 
 The **score function** is the gradient of the log-likelihood:
 $$
@@ -656,7 +656,7 @@ and integration):
   $\hat{\mathcal{I}} = -\nabla^2 \ell(\hat{\theta})$ as an estimator
   of $\mathcal{I}$.
 
-## Asymptotic normality
+### Asymptotic normality
 
 Under standard regularity conditions (see Ch. 10 for the precise
 statement):
@@ -669,7 +669,7 @@ where $\mathcal{I}_1(\theta_0)$ is the Fisher information for a
 *single* observation. The MLE is consistent, asymptotically normal,
 and asymptotically efficient (achieves the Cramér-Rao bound).
 
-## Cramér-Rao lower bound
+### Cramér-Rao lower bound
 
 For any unbiased estimator $T$ of $\theta$:
 $$
@@ -699,7 +699,7 @@ the uniform distribution $\text{Uniform}(0, \theta)$ has support
 depending on $\theta$, so the standard MLE theory does not apply ---
 and indeed, the MLE converges at rate $1/n$ rather than $1/\sqrt{n}$.
 
-## From-scratch MLE: fitting a Gamma distribution
+### From-scratch MLE: fitting a Gamma distribution
 
 ```{python}
 #| label: mle-gamma
@@ -797,13 +797,13 @@ plt.show()
 ```
 
 
-# Exponential Families {.unnumbered}
+## Exponential Families {.unnumbered}
 
 Most parametric models in the book belong to the exponential family.
 This structure drives the theory of GLMs (Ch. 12), links to
 sufficient statistics, and explains why IRLS works.
 
-## Canonical form
+### Canonical form
 
 A family of distributions is an **exponential family** in canonical
 form if the density can be written as:
@@ -829,7 +829,7 @@ a dispersion term and a **variance function** $V(\mu) = b''(\theta(\mu))$
 that depends on the mean. This factoring is the foundation of GLM
 theory in Ch. 12.
 
-## Canonical table
+### Canonical table
 
 | Distribution | $\theta$ | $b(\theta)$ | $\phi$ | $V(\mu) = b''(\theta)$ |
 |---|---|---|---|---|
@@ -865,7 +865,7 @@ print(f"  phi * b''(theta) = {b_double_prime:.1f}")
 print(f"  Sample var = {sample.var():.3f}")
 ```
 
-## Why exponential families matter for the book
+### Why exponential families matter for the book
 
 1. **Sufficient statistics.** The exponential family is the *only*
    family with finite-dimensional sufficient statistics (by the
@@ -888,7 +888,7 @@ print(f"  Sample var = {sample.var():.3f}")
    have closed forms.
 
 
-# Conditional Expectation and the Tower Property {.unnumbered}
+## Conditional Expectation and the Tower Property {.unnumbered}
 
 The **conditional expectation** $\mathbb{E}[Y \mid X]$ is the
 function of $X$ that best predicts $Y$ in the mean-squared-error
@@ -967,9 +967,9 @@ print(f"Theoretical E[Y]=E[2X]:  {2 * 2.5:.1f}")
 ```
 
 
-# Sufficient Statistics and Rao-Blackwell {.unnumbered}
+## Sufficient Statistics and Rao-Blackwell {.unnumbered}
 
-## Sufficient statistics
+### Sufficient statistics
 
 A statistic $T(\mathbf{X})$ is **sufficient** for $\theta$ if the
 conditional distribution of $\mathbf{X}$ given $T(\mathbf{X})$ does
@@ -996,7 +996,7 @@ whatever multiplies $\theta$ inside the exponent.
   unknown: $T = (\sum X_i, \sum X_i^2)$ is jointly sufficient for
   $(\mu, \sigma^2)$.
 
-## Rao-Blackwell theorem
+### Rao-Blackwell theorem
 
 **Theorem.** If $T$ is sufficient for $\theta$ and $\tilde{\theta}$
 is any unbiased estimator of $\theta$, define
@@ -1093,7 +1093,7 @@ that use it.
 
 ---
 
-# Jensen's Inequality {.unnumbered}
+## Jensen's Inequality {.unnumbered}
 
 **Theorem.** If $g$ is convex and $\mathbb{E}[|X|] < \infty$, then
 $$
@@ -1124,7 +1124,7 @@ the same as predicting at the average random effect. The gap is
 not a bug --- it is Jensen at work.
 
 
-# Kullback-Leibler Divergence {.unnumbered}
+## Kullback-Leibler Divergence {.unnumbered}
 
 The **Kullback-Leibler (KL) divergence** from distribution $p$ to
 distribution $q$ is:
@@ -1190,13 +1190,13 @@ print("KL is not symmetric: "
 ```
 
 
-# Stochastic Processes and Stationarity {.unnumbered}
+## Stochastic Processes and Stationarity {.unnumbered}
 
 A **stochastic process** is a collection of random variables
 $\{X_t\}$ indexed by time (or another ordered set). The simplest
 and most important example is the **random walk**.
 
-## Random walk
+### Random walk
 
 Start at $X_0 = 0$ and define $X_t = X_{t-1} + \varepsilon_t$
 where $\varepsilon_t \sim \text{iid}(0, \sigma^2)$. Equivalently,
@@ -1213,7 +1213,7 @@ usual asymptotics rely on fixed variances, and when the variance
 diverges, $t$-statistics inflate and $R^2$ drifts toward 1 even
 between unrelated series (spurious regression, Ch. 17).
 
-## Strict and weak stationarity
+### Strict and weak stationarity
 
 **Strict stationarity:** the joint distribution of
 $(X_{t_1}, \ldots, X_{t_k})$ is the same as
@@ -1226,7 +1226,7 @@ $\text{Var}(X_t) = \gamma(0)$, and autocovariance
 $\text{Cov}(X_t, X_{t+h}) = \gamma(h)$ depending only on the lag
 $h$, not on time $t$.
 
-## Integration order
+### Integration order
 
 A process is **integrated of order $d$**, written $I(d)$, if
 differencing $d$ times produces a stationary process.
@@ -1287,7 +1287,7 @@ plt.show()
 ```
 
 
-# Martingales {.unnumbered}
+## Martingales {.unnumbered}
 
 A sequence $\{X_t\}$ adapted to a filtration
 $\{\mathcal{F}_t\}$ is a **martingale** if:
@@ -1333,7 +1333,7 @@ approximately mean zero under the correct model, making them
 a diagnostic for Cox regression model fit.
 
 
-# Gâteaux Derivatives and Influence Functions {.unnumbered}
+## Gâteaux Derivatives and Influence Functions {.unnumbered}
 
 A **statistical functional** is a map $T$ from distributions to
 real numbers. The sample mean $T(F) = \int x\, dF(x)$ is a
@@ -1342,7 +1342,7 @@ and the variance are all functionals. To ask "how sensitive is $T$
 to a small contamination of $F$?" we need a notion of derivative
 in function space.
 
-## The Gâteaux derivative
+### The Gâteaux derivative
 
 The **Gâteaux derivative** of $T$ at $F$ in the direction of
 a point mass $\delta_x$ is:
@@ -1382,9 +1382,9 @@ at the truth --- making the estimator insensitive to first-order
 errors in nuisance estimation.
 
 
-# Empirical Processes and the Donsker Condition {.unnumbered}
+## Empirical Processes and the Donsker Condition {.unnumbered}
 
-## The empirical process
+### The empirical process
 
 Given iid observations $X_1, \ldots, X_n$ from distribution $F$,
 the **empirical distribution** is $F_n(x) = \frac{1}{n}
@@ -1398,7 +1398,7 @@ By the CLT, at any fixed $x$, $\mathbb{G}_n(x) \xrightarrow{d}
 the *entire function* $\mathbb{G}_n$ converges to a Gaussian
 process (a Brownian bridge) in a suitable function space.
 
-## Donsker's theorem and function classes
+### Donsker's theorem and function classes
 
 More broadly, consider a class of functions $\mathcal{F}$ and the
 process $\mathbb{G}_n f = \sqrt{n}(\mathbb{P}_n f - Pf)$, where
@@ -1418,7 +1418,7 @@ function class, measured by the **VC dimension**:
   whose depth grows with $n$): Donsker fails. The function class
   is too rich for uniform convergence at $\sqrt{n}$ rate.
 
-## Why this matters for double ML (Ch. 23)
+### Why this matters for double ML (Ch. 23)
 
 In semiparametric estimation, you estimate a nuisance function
 $\hat{\eta}$ (e.g., a propensity score or outcome regression) and
@@ -1440,7 +1440,7 @@ $\sqrt{n}$-consistency for the target parameter --- even when the
 nuisance learner is non-Donsker.
 
 
-# Semiparametric Efficiency {.unnumbered}
+## Semiparametric Efficiency {.unnumbered}
 
 In a **parametric model**, the Cramér-Rao bound
 ($\text{Var}(T) \ge (n\mathcal{I}_1)^{-1}$) sets the minimum
@@ -1449,7 +1449,7 @@ variance for any unbiased estimator. When the model also contains
 components), we enter the semiparametric setting, and the variance
 bound changes.
 
-## The semiparametric efficiency bound
+### The semiparametric efficiency bound
 
 A semiparametric model targets a finite-dimensional parameter
 $\theta$ while leaving the rest of the data-generating process
@@ -1474,7 +1474,7 @@ do better than $\text{Var}(\psi^*)$ because $\psi^*$ already
 extracts all available information about $\theta$ --- net of the
 uncertainty introduced by not knowing $\eta$.
 
-## Where this appears
+### Where this appears
 
 - **Ch. 12 (M-estimation):** The sandwich variance of an
   M-estimator equals the variance of its influence function.
@@ -1491,7 +1491,7 @@ uncertainty introduced by not knowing $\eta$.
   nuisance functions are estimated with flexible ML methods.
 
 
-# Summary of Key Results and Where They Are Used {.unnumbered}
+## Summary of Key Results and Where They Are Used {.unnumbered}
 
 This table maps each result in this appendix to the chapters that
 rely on it most directly. Use it to navigate back when a main chapter

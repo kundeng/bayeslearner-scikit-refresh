@@ -16,7 +16,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | statsmodels |
 |--------|---------|-------------|
@@ -29,7 +29,7 @@ rng = np.random.default_rng(42)
 | $h(t \mid \mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol{\beta})$ | Cox model | `PHReg` |
 
 
-# Motivation {#sec-ch18-motivation}
+## Motivation {#sec-ch18-motivation}
 
 Survival analysis models *time-to-event* data: how long until a
 machine fails, a patient relapses, or a customer churns. The
@@ -47,9 +47,9 @@ and `SurvfuncRight` for the Kaplan--Meier estimator. This chapter
 shows how to use them and what they compute.
 
 
-# Mathematical Foundation {#sec-ch18-math}
+## Mathematical Foundation {#sec-ch18-math}
 
-## Why censoring changes everything
+### Why censoring changes everything
 
 In standard regression, you observe $(x_i, y_i)$ for every unit. In
 survival analysis, some outcomes are *censored*: you know the event
@@ -79,7 +79,7 @@ events and censored observations:
 This is the key: censored observations tell you "the event time was
 *at least* this long," and the likelihood encodes this correctly.
 
-## Survival, hazard, and their relationship
+### Survival, hazard, and their relationship
 
 Three functions characterize the time-to-event distribution:
 
@@ -100,7 +100,7 @@ They are related: $S(t) = \exp(-H(t))$ and $h(t) = -\frac{d}{dt}\ln S(t)$.
 The question "does the drug reduce mortality?" translates to "does the
 drug lower the hazard function?" The Cox model formalizes this.
 
-## Kaplan--Meier: nonparametric survival estimation
+### Kaplan--Meier: nonparametric survival estimation
 
 The Kaplan--Meier (KM) estimator is the nonparametric MLE of $S(t)$.
 It works by computing the conditional probability of surviving past
@@ -126,7 +126,7 @@ censored (between event times), they leave the risk set. This is why
 KM handles censoring correctly: censored subjects contribute to the
 estimate for as long as they are observed, then drop out.
 
-### KM as the nonparametric MLE {#sec-ch18-km-npmle}
+#### KM as the nonparametric MLE {#sec-ch18-km-npmle}
 
 The claim that KM is "the nonparametric MLE" deserves a proof sketch,
 because the construction reveals *why* the product formula appears.
@@ -158,7 +158,7 @@ structure is not a heuristic: it is the *consequence* of maximizing the
 nonparametric likelihood over discrete distributions supported on the
 event times.
 
-### Greenwood's variance {#sec-ch18-greenwood}
+#### Greenwood's variance {#sec-ch18-greenwood}
 
 **Greenwood's formula** gives the variance of the KM estimator.  The
 derivation uses the delta method on the log-survival function.
@@ -186,7 +186,7 @@ $$ {#eq-greenwood}
 This is the formula `SurvfuncRight` uses to compute the confidence band
 around the KM curve.
 
-## Cox proportional hazards: the key idea
+### Cox proportional hazards: the key idea
 
 The Cox model separates the effect of covariates from the baseline
 hazard:
@@ -257,7 +257,7 @@ If $\exp(\beta_j) = 0.5$, a one-unit increase in $x_j$ halves the
 hazard (protective). If $\exp(\beta_j) = 2$, it doubles the hazard
 (harmful).
 
-## The log-rank test as a score test {#sec-ch18-logrank-score}
+### The log-rank test as a score test {#sec-ch18-logrank-score}
 
 The log-rank test compares survival curves between two groups.  Its
 connection to Cox regression is deeper than "they often agree" --- the
@@ -303,7 +303,7 @@ chi-squared statistic.  The equivalence confirms that the log-rank test
 has optimal power against proportional-hazards alternatives --- it is
 the locally most powerful rank test in that class.
 
-## Competing risks {#sec-ch18-competing-risks}
+### Competing risks {#sec-ch18-competing-risks}
 
 When multiple event types are possible --- death from cancer versus
 death from heart disease, or voluntary churn versus involuntary
@@ -350,7 +350,7 @@ Fine--Gray when your goal is to estimate $\Pr(\text{cause } k
 \text{ by time } t)$; use cause-specific hazards when you want to
 understand the biology or mechanism.
 
-## Nelson--Aalen cumulative hazard estimator {#sec-ch18-nelson-aalen}
+### Nelson--Aalen cumulative hazard estimator {#sec-ch18-nelson-aalen}
 
 The Nelson--Aalen estimator targets the cumulative hazard $H(t)$
 directly, rather than the survival function:
@@ -371,10 +371,10 @@ d_j / n_j^2$, and it connects naturally to the Breslow estimator of the
 baseline hazard after Cox regression.
 
 
-# The Algorithm {#sec-ch18-algorithm}
+## The Algorithm {#sec-ch18-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 18.1: Cox Partial Likelihood Estimation
+### Algorithm 18.1: Cox Partial Likelihood Estimation
 
 1. Sort observations by event time
 2. At each event time $t_i$:
@@ -385,7 +385,7 @@ baseline hazard after Cox regression.
 :::
 
 
-# Statistical Properties {#sec-ch18-stats}
+## Statistical Properties {#sec-ch18-stats}
 
 The partial likelihood MLE $\hat{\boldsymbol{\beta}}$ is consistent
 and asymptotically normal under the proportional hazards assumption.
@@ -397,9 +397,9 @@ directly.
 to the score test from a Cox model with a single binary covariate.
 
 
-# Statsmodels Implementation {#sec-ch18-statsmodels}
+## Statsmodels Implementation {#sec-ch18-statsmodels}
 
-## Kaplan--Meier
+### Kaplan--Meier
 
 The Kaplan--Meier estimator is the nonparametric way to estimate the
 survival curve from data with censoring. It takes two inputs:
@@ -459,7 +459,7 @@ ax.legend()
 plt.show()
 ```
 
-## Log-rank test
+### Log-rank test
 
 ```{python}
 #| label: logrank
@@ -476,7 +476,7 @@ stat, pval = survdiff(t_obs, d, group)
 print(f"Log-rank test: stat={stat:.3f}, p={pval:.4f}")
 ```
 
-## Cox regression (`PHReg`)
+### Cox regression (`PHReg`)
 
 ```{python}
 #| label: cox-demo
@@ -505,7 +505,7 @@ print(f"Estimated: age={cox.params[0]:.3f}, treatment={cox.params[1]:.3f}")
 A negative $\hat\beta$ means reduced hazard; $\exp(\hat\beta) < 1$ means
 treatment is protective. The code above prints the estimated coefficients.
 
-## Handling tied event times: Breslow vs Efron {#sec-ch18-ties}
+### Handling tied event times: Breslow vs Efron {#sec-ch18-ties}
 
 When multiple events share the same time, the partial likelihood is
 ambiguous: the ordering within a tie is unknown.  Two approximations
@@ -557,7 +557,7 @@ for i, name in enumerate(["age", "treatment"]):
           f"  Efron={cox_efron.params[i]:.4f}")
 ```
 
-## Stratified Cox model {#sec-ch18-stratified}
+### Stratified Cox model {#sec-ch18-stratified}
 
 When the PH assumption fails for a categorical variable (say, sex),
 stratification is the standard fix.  Each stratum $s$ gets its own
@@ -592,7 +592,7 @@ print(f"Stratified:   treatment={cox_strat.params[1]:.4f}")
 Each stratum has its own baseline hazard, so the PH assumption need
 not hold across strata --- only within each stratum.
 
-## Baseline hazard estimation {#sec-ch18-baseline}
+### Baseline hazard estimation {#sec-ch18-baseline}
 
 After fitting the Cox model, you often want the baseline survival
 curve $\hat{S}_0(t)$.  The **Breslow estimator** gives the cumulative
@@ -637,7 +637,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Diagnostics: Schoenfeld residuals
+### Diagnostics: Schoenfeld residuals
 
 ```{python}
 #| label: fig-schoenfeld
@@ -655,9 +655,9 @@ plt.show()
 ```
 
 
-# From-Scratch Implementation {#sec-ch18-scratch}
+## From-Scratch Implementation {#sec-ch18-scratch}
 
-## Kaplan--Meier from scratch
+### Kaplan--Meier from scratch
 
 ```{python}
 #| label: km-scratch
@@ -693,7 +693,7 @@ print(f"KM at median time: S={s_km[len(s_km)//2]:.3f}")
 print(f"statsmodels:       S={sf.surv_prob[len(sf.surv_prob)//2]:.3f}")
 ```
 
-## Nelson--Aalen from scratch
+### Nelson--Aalen from scratch
 
 ```{python}
 #| label: na-scratch
@@ -737,7 +737,7 @@ print(f"KM S(median):           {s_km[len(s_km)//2]:.3f}")
 print(f"Difference:             {abs(s_na[len(s_na)//2] - s_km[len(s_km)//2]):.4f}")
 ```
 
-## Cox partial likelihood from scratch {#sec-ch18-cox-scratch}
+### Cox partial likelihood from scratch {#sec-ch18-cox-scratch}
 
 The partial log-likelihood, its gradient, and its Hessian are all we
 need for Newton--Raphson optimization.  For the Breslow approximation
@@ -850,9 +850,9 @@ for i, name in enumerate(["age", "treatment"]):
 ```
 
 
-# Variations, Diagnostics, and Pitfalls {#sec-ch18-diagnostics}
+## Variations, Diagnostics, and Pitfalls {#sec-ch18-diagnostics}
 
-## Checking the proportional hazards assumption
+### Checking the proportional hazards assumption
 
 The PH assumption ($h(t|\mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol{\beta})$)
 says the hazard ratio is *constant over time*. If the treatment effect
@@ -893,7 +893,7 @@ effect is constant over time → PH holds. A rising or falling line means
 the effect changes → PH is violated → consider a time-varying
 coefficient or stratified Cox model.
 
-## Log-log plot: graphical PH check
+### Log-log plot: graphical PH check
 
 Another way to check PH for a categorical variable: plot
 $\ln(-\ln(\hat{S}(t)))$ vs $\ln(t)$ for each group. Under PH, the
@@ -920,7 +920,7 @@ ax.legend()
 plt.show()
 ```
 
-## When PH fails: what to do
+### When PH fails: what to do
 
 If the PH assumption is violated:
 
@@ -938,7 +938,7 @@ If the PH assumption is violated:
    $\ln T = \mathbf{x}^\top\boldsymbol{\beta} + \sigma W$. Use
    `lifelines.WeibullAFTFitter` or `LogNormalAFTFitter`.
 
-## Martingale residuals {#sec-ch18-martingale}
+### Martingale residuals {#sec-ch18-martingale}
 
 The name "martingale" comes from probability theory (Appendix A): a
 stochastic process whose expected future value, given the past, equals
@@ -1016,7 +1016,7 @@ ax.legend()
 plt.show()
 ```
 
-## Cox--Snell residuals {#sec-ch18-cox-snell}
+### Cox--Snell residuals {#sec-ch18-cox-snell}
 
 The Cox--Snell residual is the fitted cumulative hazard for subject $i$:
 
@@ -1052,7 +1052,7 @@ ax.legend()
 plt.show()
 ```
 
-## Concordance index (C-statistic) {#sec-ch18-concordance}
+### Concordance index (C-statistic) {#sec-ch18-concordance}
 
 The concordance index measures *discrimination*: among all pairs of
 subjects where the one with the shorter observed time had an event,
@@ -1099,7 +1099,7 @@ print(f"Concordance index: {c_idx:.3f}")
 print(f"(0.5 = random, 1.0 = perfect discrimination)")
 ```
 
-## Common pitfalls
+### Common pitfalls
 
 1. **Ignoring censoring:** Treating censored observations as events
    or dropping them biases the analysis. Always use survival methods.
@@ -1115,7 +1115,7 @@ print(f"(0.5 = random, 1.0 = perfect discrimination)")
    or the Fine--Gray subdistribution hazard (@sec-ch18-competing-risks).
 
 
-# Computational Considerations {#sec-ch18-computation}
+## Computational Considerations {#sec-ch18-computation}
 
 | Method | Cost | Notes |
 |---|---|---|
@@ -1135,7 +1135,7 @@ $O(n)$ pass per iteration, making the total cost $O(n \cdot p \cdot
 iterations for well-conditioned problems.
 
 
-# Worked Example {#sec-ch18-example}
+## Worked Example {#sec-ch18-example}
 
 We walk through a complete survival analysis on simulated clinical
 trial data: two treatment arms, two continuous covariates, and
@@ -1272,7 +1272,7 @@ plt.show()
 ```
 
 
-# Exercises {#sec-ch18-exercises}
+## Exercises {#sec-ch18-exercises}
 
 **Exercise 18.1** ($\star\star$, diagnostic failure). Simulate data
 where the PH assumption is violated (treatment effect decreases over
@@ -1360,7 +1360,7 @@ always worthwhile.
 %%
 
 
-# Bibliographic Notes {#sec-ch18-biblio}
+## Bibliographic Notes {#sec-ch18-biblio}
 
 **Kaplan--Meier** estimator: @kaplan1958nonparametric.  The NPMLE
 characterization was formalized by @johansen1978statistical.

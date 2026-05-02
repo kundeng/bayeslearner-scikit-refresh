@@ -13,7 +13,7 @@ plt.style.use('assets/book.mplstyle')
 rng = np.random.default_rng(42)
 ```
 
-## Notation for this chapter
+### Notation for this chapter
 
 | Symbol | Meaning | scipy parameter |
 |--------|---------|-----------------|
@@ -26,7 +26,7 @@ rng = np.random.default_rng(42)
 | $\lambda$ | Damping parameter (LM) | |
 
 
-# Motivation {#sec-ch06-motivation}
+## Motivation {#sec-ch06-motivation}
 
 Every time you fit a model to data by minimizing squared error, you
 are solving a nonlinear least-squares problem. `curve_fit` is the
@@ -55,9 +55,9 @@ For least squares, $\mathbf{F} = \nabla S = 2\mathbf{J}^\top\mathbf{r}$.
 For root finding, $\mathbf{F}$ is the system of equations directly.
 
 
-# Mathematical Foundation {#sec-ch06-math}
+## Mathematical Foundation {#sec-ch06-math}
 
-## The Gauss--Newton approximation
+### The Gauss--Newton approximation
 
 The objective is $S(\boldsymbol{\theta}) = \mathbf{r}(\boldsymbol{\theta})^\top \mathbf{r}(\boldsymbol{\theta})$.
 Its gradient and Hessian are:
@@ -93,7 +93,7 @@ residuals are large, these standard errors are unreliable because the
 Hessian approximation is poor.
 
 
-## Levenberg--Marquardt: trust-region least squares
+### Levenberg--Marquardt: trust-region least squares
 
 Gauss--Newton can fail when $\mathbf{J}^\top\mathbf{J}$ is nearly
 singular or when the step @eq-gauss-newton is too large. The
@@ -130,7 +130,7 @@ Scipy's `least_squares(method='lm')` implements this.
   descent steps within bounds. Simpler than TRF, sometimes faster.
 
 
-## Root finding
+### Root finding
 
 A system of $n$ equations in $n$ unknowns
 $\mathbf{F}(\mathbf{x}) = \mathbf{0}$ is solved by Newton's method:
@@ -155,7 +155,7 @@ with the minimal change from $\mathbf{B}_k$. Scipy's
 `root(method='broyden1')` implements this.
 
 
-## Convergence rates
+### Convergence rates
 
 Newton's method for root finding enjoys **quadratic convergence**
 when the Jacobian $\mathbf{J}_F(\mathbf{x}^*)$ is nonsingular at
@@ -198,10 +198,10 @@ but its damping prevents the catastrophic divergence that makes
 raw Gauss--Newton unusable in the large-residual regime.
 
 
-# The Algorithm {#sec-ch06-algorithm}
+## The Algorithm {#sec-ch06-algorithm}
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 6.1: Gauss--Newton
+### Algorithm 6.1: Gauss--Newton
 
 **Input:** Model $m(\mathbf{x}; \boldsymbol{\theta})$, data
 $(\mathbf{x}_i, y_i)_{i=1}^n$, initial $\boldsymbol{\theta}_0$,
@@ -219,7 +219,7 @@ tolerance $\epsilon$
 :::
 
 ::: {.callout-note appearance="minimal"}
-## Algorithm 6.2: Levenberg--Marquardt
+### Algorithm 6.2: Levenberg--Marquardt
 
 **Input:** Same as Algorithm 6.1, plus initial damping $\lambda_0 > 0$
 
@@ -236,7 +236,7 @@ tolerance $\epsilon$
 :::
 
 
-# Statistical Properties {#sec-ch06-stats}
+## Statistical Properties {#sec-ch06-stats}
 
 The connection between nonlinear least squares and statistical
 inference is through the **Gauss--Newton covariance**:
@@ -259,9 +259,9 @@ is exact (linear models) and when it is not (nonlinear models with
 large residuals).
 
 
-# SciPy Implementation {#sec-ch06-scipy}
+## SciPy Implementation {#sec-ch06-scipy}
 
-## `curve_fit`: the one-liner
+### `curve_fit`: the one-liner
 
 ```{python}
 #| label: curve-fit-demo
@@ -301,7 +301,7 @@ for name, true, est, se in zip(
   chi-squared $\chi^2/(n-p)$. Set `absolute_sigma=True` if your
   errors have known absolute scale.
 
-## `least_squares`: the full API
+### `least_squares`: the full API
 
 ```{python}
 #| label: least-squares-demo
@@ -338,7 +338,7 @@ for method in ['lm', 'trf', 'dogbox']:
 | `'trf'` | Trust-region reflective | Yes | Bounded problems, sparse Jacobians |
 | `'dogbox'` | Dogleg in a box | Yes | Small bounded problems |
 
-## `root`: solving nonlinear systems
+### `root`: solving nonlinear systems
 
 ```{python}
 #| label: root-demo
@@ -359,7 +359,7 @@ for method in ['hybr', 'broyden1']:
 trust region. `broyden1` uses Broyden's rank-one update (@eq-broyden),
 which avoids computing the Jacobian at every step.
 
-## Robust loss functions in `least_squares`
+### Robust loss functions in `least_squares`
 
 When outliers contaminate the data, squared residuals give them
 outsized influence. `least_squares` supports robust loss functions
@@ -420,7 +420,7 @@ contamination, and always set `f_scale` to the noise level
 you would expect in clean data.
 
 
-# From-Scratch Implementation {#sec-ch06-scratch}
+## From-Scratch Implementation {#sec-ch06-scratch}
 
 Gauss--Newton in ~20 lines of NumPy.
 
@@ -456,7 +456,7 @@ def gauss_newton(fun, jac, x0, args=(), tol=1e-8, maxiter=100):
             'nit': k, 'success': np.linalg.norm(p) < tol}
 ```
 
-## Verification
+### Verification
 
 ```{python}
 #| label: gauss-newton-verify
@@ -476,7 +476,7 @@ print(f"scipy LM:     params={res_scipy.x.round(4)}, "
 print(f"Match: {np.allclose(res_gn['x'], res_scipy.x, atol=1e-3)}")
 ```
 
-## Levenberg--Marquardt from scratch
+### Levenberg--Marquardt from scratch
 
 The key addition over Gauss--Newton is the damping term
 $\lambda_k \mathbf{I}$ and the gain ratio $\rho_k$ that controls
@@ -577,7 +577,7 @@ print(f"  scipy LM:     {res_lm_scipy.x.round(4)}, "
 print(f"  Match: {np.allclose(res_lm['x'], res_lm_scipy.x, atol=1e-3)}")
 ```
 
-## Newton's method for root finding from scratch
+### Newton's method for root finding from scratch
 
 Root finding is the mirror image of least squares: instead of
 minimizing $\|\mathbf{r}\|^2$, we solve
@@ -651,9 +651,9 @@ also evaluates the Jacobian numerically (we did not supply one)
 and includes safeguarding logic.
 
 
-# Diagnostics {#sec-ch06-diagnostics}
+## Diagnostics {#sec-ch06-diagnostics}
 
-## Residual analysis
+### Residual analysis
 
 ```{python}
 #| label: fig-residuals
@@ -680,7 +680,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Checking the covariance matrix
+### Checking the covariance matrix
 
 ```{python}
 #| label: cov-check
@@ -698,7 +698,7 @@ When these don't match, it usually means `curve_fit` used
 `absolute_sigma=False` (the default) while your manual calculation
 used the raw residuals. The scaling factor is $\chi^2/(n-p)$.
 
-## When to distrust `curve_fit`'s standard errors
+### When to distrust `curve_fit`'s standard errors
 
 Three warning signs:
 
@@ -714,7 +714,7 @@ Three warning signs:
    solutions with similar cost, the problem has multiple local minima
    and `curve_fit` found only one.
 
-## Convergence monitoring
+### Convergence monitoring
 
 Scipy's `least_squares` does not expose per-iteration diagnostics.
 The from-scratch Levenberg--Marquardt implementation above tracks
@@ -777,7 +777,7 @@ overlaid on the data: if the initial curve is nowhere near the
 data, no local optimizer will save you.
 
 
-# Computational Considerations {#sec-ch06-computation}
+## Computational Considerations {#sec-ch06-computation}
 
 | Method | Per-iteration cost | Storage | Notes |
 |---|---|---|---|
@@ -815,7 +815,7 @@ for $k$ Krylov iterations. The tradeoff is slower convergence
 systems this is the only feasible approach.
 
 
-# Worked Example {#sec-ch06-example}
+## Worked Example {#sec-ch06-example}
 
 Fitting a pharmacokinetic model: drug concentration as a function of
 time after oral administration.
@@ -894,7 +894,7 @@ plt.show()
 ```
 
 
-# Exercises {#sec-ch06-exercises}
+## Exercises {#sec-ch06-exercises}
 
 **Exercise 6.1** ($\star\star$, diagnostic failure). Fit `curve_fit`
 to the model $y = a \sin(bx + c) + d$ with data that actually follows
@@ -1095,7 +1095,7 @@ Gauss--Newton near it.
 %%
 
 
-# Bibliographic Notes {#sec-ch06-biblio}
+## Bibliographic Notes {#sec-ch06-biblio}
 
 The Gauss--Newton method dates to Gauss (1809). Levenberg (1944)
 introduced the damping parameter; Marquardt (1963) added the adaptive
