@@ -50,9 +50,9 @@ book:
         - chapters/22-rdd-did-synth-control.qmd
         - chapters/23-hte-double-ml.qmd
   appendices:
-      - chapters/appendix-prerequisites.qmd
-      - chapters/appendix-probability-stats.qmd
-      - chapters/appendix-matrix-algebra.qmd
+    - chapters/appendix-prerequisites.qmd
+    - chapters/appendix-probability-stats.qmd
+    - chapters/appendix-matrix-algebra.qmd
 
 format:
   html:
@@ -112,6 +112,10 @@ format:
         }
         </style>
 
+    css:
+      - present-mode.css
+    include-after-body:
+      - present-mode.html
   pdf:
     documentclass: scrbook
     papersize: letter
