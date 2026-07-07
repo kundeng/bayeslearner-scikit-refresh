@@ -112,10 +112,8 @@ format:
         }
         </style>
 
-    css:
-      - present-mode.css
-    include-after-body:
-      - present-mode.html
+    filters:
+      - present-mode
   pdf:
     documentclass: scrbook
     papersize: letter
